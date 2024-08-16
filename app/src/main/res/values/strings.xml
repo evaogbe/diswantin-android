@@ -1,0 +1,32 @@
+<resources>
+    <string name="activity_detail_fetch_error">Something went wrong loading the activity</string>
+    <string name="activity_detail_delete_error">Something went wrong deleting the activity</string>
+    <string name="activity_form_heading_edit">Edit Activity</string>
+    <string name="activity_form_heading_new">New Activity</string>
+    <string name="activity_form_save_error_edit">Something went wrong editing the activity</string>
+    <string name="activity_form_save_error_new">Something went wrong adding the activity</string>
+    <string name="activity_saved_message_edit">Activity edited</string>
+    <string name="activity_saved_message_new">Activity added</string>
+    <string name="add_activity_button">Add activity</string>
+    <string name="app_name">Diswantin</string>
+    <string name="back_button">Back</string>
+    <string name="cancel_button">Cancel</string>
+    <string name="close_button">Close</string>
+    <string name="current_activity_empty_message">No activities planned</string>
+    <string name="current_activity_fetch_error">Something went wrong loading the current activity</string>
+    <string name="current_activity_remove_error">Something went wrong removing the activity</string>
+    <string name="current_activity_skip_error">Something went wrong skipping the activity</string>
+    <string name="current_activity_title">Current Activity</string>
+    <string name="edit_button">Edit</string>
+    <string name="delete_button">Delete</string>
+    <string name="more_actions_button">More actions</string>
+    <string name="name_label">Name</string>
+    <string name="refresh_button">Refresh</string>
+    <string name="remove_button">Remove</string>
+    <string name="save_button">Save</string>
+    <string name="search_activities_button">Search activities</string>
+    <string name="search_activities_placeholder">Search activities</string>
+    <string name="search_activities_error">Something went wrong searching for activities</string>
+    <string name="search_results_empty_message">No matching activities</string>
+    <string name="skip_button">Skip</string>
+</resources>
