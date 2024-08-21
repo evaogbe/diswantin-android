@@ -6,7 +6,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import io.github.evaogbe.diswantin.activity.ui.ActivityDetailScreen
+import io.github.evaogbe.diswantin.activity.ui.ActivityFormScreen
 import io.github.evaogbe.diswantin.activity.ui.ActivitySearchScreen
 import io.github.evaogbe.diswantin.activity.ui.CurrentActivityScreen
 import io.github.evaogbe.diswantin.ui.navigation.Destination
@@ -21,25 +21,34 @@ fun DiswantinApp() {
     ) {
         composable(Destination.CurrentActivity.route) {
             CurrentActivityScreen(
-                onSearch = {
+                navigateToActivitySearch = {
                     navController.navigate(route = Destination.SearchResults.route)
+                },
+                navigateToNewActivityForm = {
+                    navController.navigate(route = Destination.NewActivityForm.route)
+                },
+                navigateToEditActivityForm = {
+                    navController.navigate(route = Destination.EditActivityForm(it).route)
                 }
             )
         }
         composable(Destination.SearchResults.route) {
             ActivitySearchScreen(
                 popBackStack = navController::popBackStack,
-                navigateToActivityDetail = {
-                    navController.navigate(route = Destination.ActivityDetail(it).route)
+                navigateToActivityForm = {
+                    navController.navigate(route = Destination.EditActivityForm(it).route)
                 })
         }
+        composable(Destination.NewActivityForm.route) {
+            ActivityFormScreen(popBackStack = navController::popBackStack)
+        }
         composable(
-            Destination.ActivityDetail.route,
-            arguments = listOf(navArgument(Destination.ActivityDetail.ID_KEY) {
+            Destination.EditActivityForm.route,
+            arguments = listOf(navArgument(Destination.EditActivityForm.ID_KEY) {
                 type = NavType.LongType
             })
         ) {
-            ActivityDetailScreen(popBackStack = navController::popBackStack)
+            ActivityFormScreen(popBackStack = navController::popBackStack)
         }
     }
 }

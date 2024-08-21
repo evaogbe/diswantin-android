@@ -8,7 +8,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.evaogbe.diswantin.R
-import io.github.evaogbe.diswantin.activity.data.Activity
 import io.github.evaogbe.diswantin.activity.data.ActivityRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.SharingStarted
@@ -41,63 +40,9 @@ class CurrentActivityViewModel @Inject constructor(
             initialValue = CurrentActivityUiState.Pending
         )
 
-    var saveResult by mutableStateOf<Result<Unit>?>(null)
-        private set
-
     @get:StringRes
     var userMessage by mutableStateOf<Int?>(null)
         private set
-
-    fun createActivity(name: String) {
-        if (name.isBlank()) return
-
-        viewModelScope.launch {
-            val newActivity = try {
-                activityRepository.create(name)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                Timber.e(e, "Failed to create activity with name: %s", name)
-                saveResult = Result.failure(e)
-                null
-            }
-            if (newActivity != null) {
-                saveResult = Result.success(Unit)
-                userMessage = R.string.activity_saved_message_new
-            }
-        }
-    }
-
-    fun updateActivity(name: String) {
-        if (name.isBlank()) return
-
-        val updatedActivity = (uiState.value as? CurrentActivityUiState.Present)
-            ?.currentActivity
-            ?.copy(name = name.trim())
-            ?: return
-        viewModelScope.launch {
-            if (update(updatedActivity)) {
-                saveResult = Result.success(Unit)
-                userMessage = R.string.activity_saved_message_edit
-            }
-        }
-    }
-
-    private suspend fun update(activity: Activity) =
-        try {
-            activityRepository.update(activity)
-            true
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            Timber.e(e, "Failed to update activity: %s", activity)
-            saveResult = Result.failure(e)
-            false
-        }
-
-    fun saveHandled() {
-        saveResult = null
-    }
 
     fun skipCurrentActivity() {
         val activity = (uiState.value as? CurrentActivityUiState.Present)?.currentActivity ?: return

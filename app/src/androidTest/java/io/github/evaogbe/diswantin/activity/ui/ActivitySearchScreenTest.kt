@@ -43,7 +43,7 @@ class ActivitySearchScreenTest {
             DiswantinTheme {
                 ActivitySearchScreen(
                     popBackStack = {},
-                    navigateToActivityDetail = {},
+                    navigateToActivityForm = {},
                     activitySearchViewModel = viewModel
                 )
             }
@@ -71,7 +71,7 @@ class ActivitySearchScreenTest {
             DiswantinTheme {
                 ActivitySearchScreen(
                     popBackStack = {},
-                    navigateToActivityDetail = {},
+                    navigateToActivityForm = {},
                     activitySearchViewModel = viewModel
                 )
             }
@@ -84,7 +84,7 @@ class ActivitySearchScreenTest {
             .performTextInput(query)
 
         composeTestRule.waitUntilExactlyOneExists(
-            hasText(stringResource(R.string.search_results_empty_message))
+            hasText(stringResource(R.string.search_results_empty))
         )
     }
 
@@ -98,7 +98,7 @@ class ActivitySearchScreenTest {
             DiswantinTheme {
                 ActivitySearchScreen(
                     popBackStack = {},
-                    navigateToActivityDetail = {},
+                    navigateToActivityForm = {},
                     activitySearchViewModel = viewModel
                 )
             }

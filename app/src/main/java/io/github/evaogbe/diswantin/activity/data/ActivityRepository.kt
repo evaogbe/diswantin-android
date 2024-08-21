@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.Flow
 interface ActivityRepository {
     val currentActivityStream: Flow<Activity?>
 
-    fun findById(id: Long): Flow<Activity?>
+    suspend fun findById(id: Long): Activity
 
     fun search(query: String): Flow<List<Activity>>
 

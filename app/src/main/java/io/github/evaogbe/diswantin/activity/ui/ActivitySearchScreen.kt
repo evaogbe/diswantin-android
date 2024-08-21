@@ -69,7 +69,7 @@ import kotlin.time.Duration.Companion.milliseconds
 @Composable
 fun ActivitySearchScreen(
     popBackStack: () -> Unit,
-    navigateToActivityDetail: (Long) -> Unit,
+    navigateToActivityForm: (Long) -> Unit,
     activitySearchViewModel: ActivitySearchViewModel = hiltViewModel()
 ) {
     val uiState by activitySearchViewModel.uiState.collectAsStateWithLifecycle()
@@ -91,7 +91,7 @@ fun ActivitySearchScreen(
         onQueryChange = setQuery,
         searchActivities = activitySearchViewModel::searchActivities,
         uiState = uiState,
-        onSelectSearchResult = { navigateToActivityDetail(it.id) }
+        onSelectSearchResult = { navigateToActivityForm(it.id) }
     )
 }
 
@@ -219,7 +219,7 @@ fun EmptyActivitySearchLayout(modifier: Modifier = Modifier) {
             )
             Spacer(Modifier.size(SpaceXl))
             Text(
-                stringResource(R.string.search_results_empty_message),
+                stringResource(R.string.search_results_empty),
                 textAlign = TextAlign.Center,
                 style = typography.headlineLarge
             )

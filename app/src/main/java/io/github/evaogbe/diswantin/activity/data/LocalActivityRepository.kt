@@ -2,6 +2,7 @@ package io.github.evaogbe.diswantin.activity.data
 
 import io.github.evaogbe.diswantin.data.IoDispatcher
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
 import java.time.Instant
 import javax.inject.Inject
@@ -10,11 +11,13 @@ class LocalActivityRepository @Inject constructor(
     private val activityDao: ActivityDao,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : ActivityRepository {
-    override val currentActivityStream = activityDao.getCurrentActivity()
+    override val currentActivityStream = activityDao.getCurrentActivity().flowOn(ioDispatcher)
 
-    override fun findById(id: Long) = activityDao.findById(id)
+    override suspend fun findById(id: Long) = withContext(ioDispatcher) {
+        activityDao.findById(id)
+    }
 
-    override fun search(query: String) = activityDao.search(escapeSql(query))
+    override fun search(query: String) = activityDao.search(escapeSql(query)).flowOn(ioDispatcher)
 
     private fun escapeSql(str: String) =
         str.replace("'", "''").replace("\"", "\"\"")

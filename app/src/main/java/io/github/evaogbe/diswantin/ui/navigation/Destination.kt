@@ -11,13 +11,17 @@ sealed interface Destination {
         override val route = "searchResults"
     }
 
-    data class ActivityDetail(private val id: Long) : Destination {
-        override val route = "activity/$id"
+    data object NewActivityForm : Destination {
+        override val route = "activityForm"
+    }
+
+    data class EditActivityForm(private val id: Long) : Destination {
+        override val route = "activityForm/$id"
 
         companion object : Destination {
             const val ID_KEY = "id"
 
-            override val route = "activity/{$ID_KEY}"
+            override val route = "activityForm/{$ID_KEY}"
         }
     }
 }

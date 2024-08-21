@@ -56,20 +56,14 @@ import java.time.Instant
 
 @Composable
 fun CurrentActivityScreen(
-    onSearch: () -> Unit,
+    navigateToActivitySearch: () -> Unit,
+    navigateToNewActivityForm: () -> Unit,
+    navigateToEditActivityForm: (Long) -> Unit,
     currentActivityViewModel: CurrentActivityViewModel = hiltViewModel()
 ) {
     val uiState by currentActivityViewModel.uiState.collectAsStateWithLifecycle()
     val resources = LocalContext.current.resources
     val snackbarHostState = remember { SnackbarHostState() }
-    val activityFormDialogState = rememberActivityFormDialogState()
-
-    if (currentActivityViewModel.saveResult?.isSuccess == true) {
-        LaunchedEffect(activityFormDialogState) {
-            activityFormDialogState.closeDialog()
-            currentActivityViewModel.saveHandled()
-        }
-    }
 
     currentActivityViewModel.userMessage?.let { message ->
         LaunchedEffect(message) {
@@ -81,58 +75,15 @@ fun CurrentActivityScreen(
     CurrentActivityScreen(
         onSearch = {
             currentActivityViewModel.userMessageShown()
-            onSearch()
+            navigateToActivitySearch()
         },
-        onAddActivity = activityFormDialogState::openDialog,
-        onEditActivity = { activityFormDialogState.openDialog(it.name) },
+        onAddActivity = navigateToNewActivityForm,
+        onEditActivity = { navigateToEditActivityForm(it.id) },
         snackbarHostState = snackbarHostState,
         uiState = uiState,
         skipActivity = currentActivityViewModel::skipCurrentActivity,
         removeActivity = currentActivityViewModel::removeCurrentActivity
     )
-
-    when (activityFormDialogState.mode) {
-        ActivityFormDialogState.Mode.Closed -> {}
-        ActivityFormDialogState.Mode.OpenForNew -> {
-            ActivityFormDialog(
-                dismiss = {
-                    activityFormDialogState.closeDialog()
-                    currentActivityViewModel.saveHandled()
-                },
-                saveActivity = {
-                    currentActivityViewModel.createActivity(activityFormDialogState.nameInput)
-                },
-                title = stringResource(R.string.activity_form_heading_new),
-                name = activityFormDialogState.nameInput,
-                onNameChange = activityFormDialogState::updateNameInput,
-                formError = if (currentActivityViewModel.saveResult?.isFailure == true) {
-                    stringResource(R.string.activity_form_save_error_new)
-                } else {
-                    null
-                },
-            )
-        }
-
-        ActivityFormDialogState.Mode.OpenForEdit -> {
-            ActivityFormDialog(
-                dismiss = {
-                    activityFormDialogState.closeDialog()
-                    currentActivityViewModel.saveHandled()
-                },
-                saveActivity = {
-                    currentActivityViewModel.updateActivity(activityFormDialogState.nameInput)
-                },
-                title = stringResource(R.string.activity_form_heading_edit),
-                name = activityFormDialogState.nameInput,
-                onNameChange = activityFormDialogState::updateNameInput,
-                formError = if (currentActivityViewModel.saveResult?.isFailure == true) {
-                    stringResource(R.string.activity_form_save_error_edit)
-                } else {
-                    null
-                },
-            )
-        }
-    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -259,7 +210,7 @@ fun EmptyCurrentActivityLayout(onAddActivity: () -> Unit, modifier: Modifier = M
             )
             Spacer(Modifier.size(SpaceXl))
             Text(
-                stringResource(R.string.current_activity_empty_message),
+                stringResource(R.string.current_activity_empty),
                 textAlign = TextAlign.Center,
                 style = typography.headlineLarge
             )

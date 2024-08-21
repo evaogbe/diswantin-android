@@ -33,14 +33,12 @@ class FakeActivityRepository(initialActivities: List<Activity>) : ActivityReposi
             activities.sortedWith(plannedActivityComparator).firstOrNull()
         }
 
-    override fun findById(id: Long): Flow<Activity?> {
-        return combine(activitiesState, throwingMethods) { activities, throwingMethods ->
-            if (::findById in throwingMethods) {
-                throw RuntimeException("Test")
-            }
-
-            activities.firstOrNull { it.id == id }
+    override suspend fun findById(id: Long): Activity {
+        if (::findById in throwingMethods.value) {
+            throw RuntimeException("Test")
         }
+
+        return activities.first { it.id == id }
     }
 
     override fun search(query: String): Flow<List<Activity>> {
