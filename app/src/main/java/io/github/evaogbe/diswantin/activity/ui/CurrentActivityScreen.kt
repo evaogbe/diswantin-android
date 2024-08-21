@@ -106,7 +106,7 @@ fun CurrentActivityScreen(
 
                     IconButton(onClick = onSearch) {
                         Icon(
-                            Icons.Default.Search,
+                            imageVector = Icons.Default.Search,
                             contentDescription = stringResource(R.string.search_activities_button)
                         )
                     }
@@ -114,7 +114,7 @@ fun CurrentActivityScreen(
                     if (activity != null) {
                         IconButton(onClick = { onEditActivity(activity) }) {
                             Icon(
-                                Icons.Default.Edit,
+                                imageVector = Icons.Default.Edit,
                                 contentDescription = stringResource(R.string.edit_button)
                             )
                         }
@@ -125,7 +125,7 @@ fun CurrentActivityScreen(
         floatingActionButton = {
             FloatingActionButton(onClick = onAddActivity) {
                 Icon(
-                    Icons.Default.Add,
+                    imageVector = Icons.Default.Add,
                     contentDescription = stringResource(R.string.add_activity_button)
                 )
             }
@@ -204,7 +204,7 @@ fun EmptyCurrentActivityLayout(onAddActivity: () -> Unit, modifier: Modifier = M
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Icon(
-                painterResource(R.drawable.baseline_add_task_24),
+                painter = painterResource(R.drawable.baseline_add_task_24),
                 contentDescription = null,
                 modifier = Modifier.size(IconSizeLg),
             )
@@ -217,7 +217,7 @@ fun EmptyCurrentActivityLayout(onAddActivity: () -> Unit, modifier: Modifier = M
             Spacer(Modifier.size(SpaceLg))
             Button(onClick = onAddActivity) {
                 Icon(
-                    Icons.Default.Add,
+                    imageVector = Icons.Default.Add,
                     contentDescription = null,
                     modifier = Modifier.size(ButtonDefaults.IconSize)
                 )

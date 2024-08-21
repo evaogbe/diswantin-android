@@ -125,7 +125,7 @@ fun ActivitySearchScreen(
             navigationIcon = {
                 IconButton(onClick = popBackStack) {
                     Icon(
-                        Icons.AutoMirrored.Default.ArrowBack,
+                        imageVector = Icons.AutoMirrored.Default.ArrowBack,
                         contentDescription = stringResource(R.string.back_button)
                     )
                 }
@@ -213,7 +213,7 @@ fun EmptyActivitySearchLayout(modifier: Modifier = Modifier) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Icon(
-                Icons.Default.Search,
+                imageVector = Icons.Default.Search,
                 contentDescription = null,
                 modifier = Modifier.size(IconSizeLg),
             )
@@ -240,17 +240,17 @@ fun ActivitySearchScreenPreview() {
                 persistentListOf(
                     Activity(
                         id = 1L,
-                        createdAt = Instant.parse("2024-08-09T08:00:00.000Z"),
+                        createdAt = Instant.parse("2024-08-09T08:00:00Z"),
                         name = "Brush teeth"
                     ),
                     Activity(
                         id = 2L,
-                        createdAt = Instant.parse("2024-08-09T08:05:00.000Z"),
+                        createdAt = Instant.parse("2024-08-09T08:05:00Z"),
                         name = "Brush hair"
                     ),
                     Activity(
                         id = 3L,
-                        createdAt = Instant.parse("2024-08-09T08:10:00.000Z"),
+                        createdAt = Instant.parse("2024-08-09T08:10:00Z"),
                         name = "Eat brunch"
                     ),
                 )

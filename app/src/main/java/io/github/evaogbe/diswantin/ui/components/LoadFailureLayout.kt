@@ -35,7 +35,7 @@ fun LoadFailureLayout(message: String, modifier: Modifier = Modifier) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Icon(
-                painterResource(R.drawable.baseline_sentiment_very_dissatisfied_24),
+                painter = painterResource(R.drawable.baseline_sentiment_very_dissatisfied_24),
                 contentDescription = null,
                 modifier = Modifier.size(IconSizeLg),
             )
