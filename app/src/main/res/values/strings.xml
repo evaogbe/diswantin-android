@@ -8,6 +8,8 @@
     <string name="add_activity_button">Add activity</string>
     <string name="app_name">Diswantin</string>
     <string name="back_button">Back</string>
+    <string name="cancel_button">Cancel</string>
+    <string name="clear_button">Clear</string>
     <string name="close_button">Close</string>
     <string name="current_activity_empty">No activities planned</string>
     <string name="current_activity_fetch_error">Something went wrong loading the current activity</string>
@@ -16,8 +18,10 @@
     <string name="current_activity_title">Current Activity</string>
     <string name="edit_button">Edit</string>
     <string name="delete_button">Delete</string>
+    <string name="due_at_label">Due at</string>
     <string name="more_actions_button">More actions</string>
     <string name="name_label">Name</string>
+    <string name="ok_button">OK</string>
     <string name="remove_button">Remove</string>
     <string name="save_button">Save</string>
     <string name="search_activities_button">Search activities</string>
@@ -25,4 +29,7 @@
     <string name="search_activities_error">Something went wrong searching for activities</string>
     <string name="search_results_empty">No matching activities</string>
     <string name="skip_button">Skip</string>
+    <string name="time_picker_dialog_title">Select time</string>
+    <string name="time_picker_switch_to_clock_mode">Switch to clock input mode</string>
+    <string name="time_picker_switch_to_input_mode">Switch to text input mode</string>
 </resources>

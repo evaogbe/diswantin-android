@@ -1,6 +1,7 @@
 package io.github.evaogbe.diswantin.activity.data
 
 import kotlinx.coroutines.flow.Flow
+import java.time.Instant
 
 interface ActivityRepository {
     val currentActivityStream: Flow<Activity?>
@@ -9,7 +10,7 @@ interface ActivityRepository {
 
     fun search(query: String): Flow<List<Activity>>
 
-    suspend fun create(name: String): Activity
+    suspend fun create(name: String, dueAt: Instant?): Activity
 
     suspend fun update(activity: Activity)
 

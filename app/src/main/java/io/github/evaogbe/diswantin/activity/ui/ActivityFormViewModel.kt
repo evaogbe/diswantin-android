@@ -14,6 +14,8 @@ import io.github.evaogbe.diswantin.ui.navigation.Destination
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import javax.inject.Inject
 
 @HiltViewModel
@@ -26,6 +28,9 @@ class ActivityFormViewModel @Inject constructor(
     val isNew = activityId == null
 
     var nameInput by mutableStateOf("")
+        private set
+
+    var dueAtInput by mutableStateOf<ZonedDateTime?>(null)
         private set
 
     private var activity: Activity? = null
@@ -43,6 +48,7 @@ class ActivityFormViewModel @Inject constructor(
                     val activity = activityRepository.findById(activityId)
                     this@ActivityFormViewModel.activity = activity
                     nameInput = activity.name
+                    dueAtInput = activity.dueAt?.atZone(ZoneId.systemDefault())
                     uiState = ActivityFormUiState.Success(hasSaveError = false)
                 } catch (e: CancellationException) {
                     throw e
@@ -60,13 +66,20 @@ class ActivityFormViewModel @Inject constructor(
         nameInput = value
     }
 
+    fun updateDueAtInput(value: ZonedDateTime?) {
+        dueAtInput = value
+    }
+
     fun saveActivity() {
         when {
             nameInput.isBlank() -> {}
             activity == null -> {
                 viewModelScope.launch {
                     try {
-                        activityRepository.create(nameInput.trim())
+                        activityRepository.create(
+                            name = nameInput.trim(),
+                            dueAt = dueAtInput?.toInstant()
+                        )
                         uiState = ActivityFormUiState.Saved
                     } catch (e: CancellationException) {
                         throw e
@@ -78,7 +91,9 @@ class ActivityFormViewModel @Inject constructor(
             }
 
             else -> {
-                val updatedActivity = activity?.copy(name = nameInput.trim()) ?: return
+                val updatedActivity =
+                    activity?.copy(name = nameInput.trim(), dueAt = dueAtInput?.toInstant())
+                        ?: return
                 viewModelScope.launch {
                     try {
                         activityRepository.update(updatedActivity)

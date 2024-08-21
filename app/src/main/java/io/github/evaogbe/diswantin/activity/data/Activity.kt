@@ -10,5 +10,6 @@ data class Activity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0L,
     @ColumnInfo("created_at") val createdAt: Instant,
     val name: String,
-    @ColumnInfo("skipped_at") val skippedAt: Instant? = null
+    @ColumnInfo("skipped_at") val skippedAt: Instant? = null,
+    @ColumnInfo("due_at") val dueAt: Instant? = null,
 )

@@ -13,9 +13,9 @@ import io.github.evaogbe.diswantin.activity.data.ActivityDao
 import io.github.evaogbe.diswantin.activity.data.ActivityFts
 
 @Database(
-    version = 3,
+    version = 4,
     entities = [Activity::class, ActivityFts::class],
-    autoMigrations = [AutoMigration(from = 2, to = 3)]
+    autoMigrations = [AutoMigration(from = 2, to = 3), AutoMigration(from = 3, to = 4)]
 )
 @TypeConverters(Converters::class)
 abstract class DiswantinDatabase : RoomDatabase() {

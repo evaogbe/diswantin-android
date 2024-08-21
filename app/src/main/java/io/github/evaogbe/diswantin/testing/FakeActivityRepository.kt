@@ -51,12 +51,13 @@ class FakeActivityRepository(initialActivities: List<Activity>) : ActivityReposi
         }
     }
 
-    override suspend fun create(name: String): Activity {
+    override suspend fun create(name: String, dueAt: Instant?): Activity {
         if (::create in throwingMethods.value) {
             throw RuntimeException("Test")
         }
 
-        val activity = Activity(id = ++idGen, createdAt = Instant.now(), name = name.trim())
+        val activity =
+            Activity(id = ++idGen, createdAt = Instant.now(), name = name.trim(), dueAt = dueAt)
         activitiesState.update { it + activity }
         return activity
     }

@@ -6,6 +6,7 @@ import assertk.assertions.containsExactly
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
+import assertk.assertions.isNotNull
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
 import io.github.evaogbe.diswantin.R
@@ -17,6 +18,8 @@ import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
 import org.junit.Rule
 import org.junit.Test
+import java.time.Instant
+import java.time.ZonedDateTime
 
 class ActivityFormViewModelTest {
     @get:Rule
@@ -38,11 +41,13 @@ class ActivityFormViewModelTest {
 
         assertThat(viewModel.uiState).isEqualTo(ActivityFormUiState.Success(hasSaveError = false))
         assertThat(viewModel.nameInput).isEmpty()
+        assertThat(viewModel.dueAtInput).isNull()
     }
 
     @Test
     fun `initialize fetches activity by id when activityId present`() {
-        val activity = genActivity()
+        val dueAt = Instant.parse("2024-08-22T21:00:00Z")
+        val activity = genActivity().copy(dueAt = dueAt)
         val activityRepository = FakeActivityRepository(activity)
         val viewModel = ActivityFormViewModel(
             SavedStateHandle(mapOf(Destination.EditActivityForm.ID_KEY to activity.id)),
@@ -56,6 +61,7 @@ class ActivityFormViewModelTest {
 
         assertThat(viewModel.uiState).isEqualTo(ActivityFormUiState.Success(hasSaveError = false))
         assertThat(viewModel.nameInput).isEqualTo(activity.name)
+        assertThat(viewModel.dueAtInput).isNotNull().transform { it.toInstant() }.isEqualTo(dueAt)
     }
 
     @Test
@@ -90,10 +96,14 @@ class ActivityFormViewModelTest {
         assertThat(viewModel.uiState).isEqualTo(ActivityFormUiState.Success(hasSaveError = false))
 
         viewModel.updateNameInput(name)
+        viewModel.updateDueAtInput(
+            ZonedDateTime.parse("2024-08-22T17:00-04:00[America/New_York]")
+        )
         viewModel.saveActivity()
 
         val activity = activityRepository.activities.single()
         assertThat(activity.name).isEqualTo(name)
+        assertThat(activity.dueAt).isEqualTo(Instant.parse("2024-08-22T21:00:00Z"))
         assertThat(viewModel.uiState).isEqualTo(ActivityFormUiState.Saved)
     }
 
@@ -135,9 +145,17 @@ class ActivityFormViewModelTest {
         assertThat(viewModel.uiState).isEqualTo(ActivityFormUiState.Success(hasSaveError = false))
 
         viewModel.updateNameInput(name)
+        viewModel.updateDueAtInput(
+            ZonedDateTime.parse("2024-08-22T17:00:00-04:00[America/New_York]")
+        )
         viewModel.saveActivity()
 
-        assertThat(activityRepository.activities).containsExactly(activity.copy(name = name))
+        assertThat(activityRepository.activities).containsExactly(
+            activity.copy(
+                name = name,
+                dueAt = Instant.parse("2024-08-22T21:00:00Z")
+            )
+        )
         assertThat(viewModel.uiState).isEqualTo(ActivityFormUiState.Saved)
     }
 

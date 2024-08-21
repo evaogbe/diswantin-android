@@ -49,7 +49,10 @@ class LocalActivityRepositoryTest {
             assertThat(awaitItem()).isNull()
 
             val activity1 =
-                activityRepository.create("${loremFaker.verbs.base()} ${loremFaker.lorem.words()}")
+                activityRepository.create(
+                    "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                    null
+                )
 
             val currentActivity1 = awaitItem()
             assertThat(currentActivity1)
@@ -57,7 +60,10 @@ class LocalActivityRepositoryTest {
                 .isDataClassEqualTo(activity1)
 
             val activity2 =
-                activityRepository.create("${loremFaker.verbs.base()} ${loremFaker.lorem.words()}")
+                activityRepository.create(
+                    "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                    null
+                )
 
             assertThat(awaitItem()).isEqualTo(currentActivity1)
 

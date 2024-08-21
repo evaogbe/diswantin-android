@@ -107,6 +107,14 @@ class ActivityFormScreenTest {
         composeTestRule.onNodeWithText(stringResource(R.string.name_label), useUnmergedTree = true)
             .onParent()
             .performTextInput(name)
+        composeTestRule.onNodeWithText(
+            stringResource(R.string.due_at_label),
+            useUnmergedTree = true
+        )
+            .onParent()
+            .performClick()
+        composeTestRule.onNodeWithText(stringResource(R.string.ok_button)).performClick()
+        composeTestRule.onNodeWithText(stringResource(R.string.ok_button)).performClick()
         composeTestRule.onNodeWithContentDescription(stringResource(R.string.save_button))
             .performClick()
 
@@ -160,6 +168,8 @@ class ActivityFormScreenTest {
         composeTestRule.onNodeWithText(stringResource(R.string.name_label), useUnmergedTree = true)
             .onParent()
             .performTextReplacement(name)
+        composeTestRule.onNodeWithContentDescription(stringResource(R.string.clear_button))
+            .performClick()
         composeTestRule.onNodeWithContentDescription(stringResource(R.string.save_button))
             .performClick()
 
@@ -248,6 +258,7 @@ class ActivityFormScreenTest {
     private fun genActivity() = Activity(
         id = 1L,
         createdAt = faker.random.randomPastDate().toInstant(),
-        name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
+        name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+        dueAt = faker.random.randomFutureDate().toInstant()
     )
 }

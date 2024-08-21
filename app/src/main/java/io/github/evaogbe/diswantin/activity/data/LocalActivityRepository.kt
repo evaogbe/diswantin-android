@@ -22,8 +22,8 @@ class LocalActivityRepository @Inject constructor(
     private fun escapeSql(str: String) =
         str.replace("'", "''").replace("\"", "\"\"")
 
-    override suspend fun create(name: String): Activity {
-        val activity = Activity(createdAt = Instant.now(), name = name.trim())
+    override suspend fun create(name: String, dueAt: Instant?): Activity {
+        val activity = Activity(createdAt = Instant.now(), name = name.trim(), dueAt = dueAt)
         return withContext(ioDispatcher) {
             activity.copy(id = activityDao.insert(activity))
         }

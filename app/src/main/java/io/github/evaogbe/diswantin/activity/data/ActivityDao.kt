@@ -9,7 +9,12 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ActivityDao {
-    @Query("SELECT * FROM activity ORDER BY skipped_at, created_at, id LIMIT 1")
+    @Query(
+        """SELECT * 
+        FROM activity 
+        ORDER BY skipped_at, due_at IS NULL, due_at, created_at, id
+        LIMIT 1"""
+    )
     fun getCurrentActivity(): Flow<Activity?>
 
     @Query("SELECT * FROM activity WHERE id = :id LIMIT 1")
