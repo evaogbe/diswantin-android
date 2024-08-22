@@ -66,53 +66,6 @@ class CurrentActivityViewModelTest {
     }
 
     @Test
-    fun `skipCurrentActivity sets skippedAt of current activity`() =
-        runTest(mainDispatcherRule.testDispatcher) {
-            val (activity1, activity2, activity3) = genActivities(3)
-            val activityRepository = FakeActivityRepository(activity1, activity2, activity3)
-            val viewModel = CurrentActivityViewModel(activityRepository)
-
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-                viewModel.uiState.collect()
-            }
-
-            assertThat(viewModel.uiState.value)
-                .isEqualTo(CurrentActivityUiState.Present(currentActivity = activity1))
-
-            viewModel.skipCurrentActivity()
-
-            assertThat(viewModel.uiState.value)
-                .isEqualTo(CurrentActivityUiState.Present(currentActivity = activity2))
-
-            viewModel.skipCurrentActivity()
-
-            assertThat(viewModel.uiState.value)
-                .isEqualTo(CurrentActivityUiState.Present(currentActivity = activity3))
-        }
-
-    @Test
-    fun `skipCurrentActivity shows error message when repository throws`() =
-        runTest(mainDispatcherRule.testDispatcher) {
-            val activity = genActivities(1).single()
-            val activityRepository = FakeActivityRepository(activity)
-            val viewModel = CurrentActivityViewModel(activityRepository)
-
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-                viewModel.uiState.collect()
-            }
-
-            assertThat(viewModel.uiState.value)
-                .isEqualTo(CurrentActivityUiState.Present(currentActivity = activity))
-
-            activityRepository.setThrows(activityRepository::update, true)
-            viewModel.skipCurrentActivity()
-
-            assertThat(viewModel.uiState.value)
-                .isEqualTo(CurrentActivityUiState.Present(currentActivity = activity))
-            assertThat(viewModel.userMessage).isEqualTo(R.string.current_activity_skip_error)
-        }
-
-    @Test
     fun `removeCurrentActivity removes current activity from repository`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val (activity1, activity2) = genActivities(2)

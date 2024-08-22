@@ -41,7 +41,7 @@ class LocalActivityRepositoryTest {
     }
 
     @Test
-    fun skipFlow() = runTest {
+    fun currentActivityStream_sortsByDueDate() = runTest {
         val activityRepository =
             LocalActivityRepository(db.activityDao(), UnconfinedTestDispatcher(testScheduler))
 
@@ -54,8 +54,7 @@ class LocalActivityRepositoryTest {
                     null
                 )
 
-            val currentActivity1 = awaitItem()
-            assertThat(currentActivity1)
+            assertThat(awaitItem())
                 .isNotNull()
                 .isDataClassEqualTo(activity1)
 
@@ -65,30 +64,21 @@ class LocalActivityRepositoryTest {
                     null
                 )
 
-            assertThat(awaitItem()).isEqualTo(currentActivity1)
+            assertThat(awaitItem()).isEqualTo(activity1)
 
-            val updatedActivity1 = currentActivity1!!.copy(skippedAt = Instant.now())
-            activityRepository.update(updatedActivity1)
-
-            val currentActivity2 = awaitItem()
-            assertThat(currentActivity2)
-                .isNotNull()
-                .isDataClassEqualTo(activity2)
-
-            val updatedActivity2 = currentActivity2!!.copy(skippedAt = Instant.now())
+            val updatedActivity2 = activity2.copy(dueAt = Instant.parse("2024-08-23T17:00:00Z"))
             activityRepository.update(updatedActivity2)
-
-            val currentActivity3 = awaitItem()
-            assertThat(currentActivity3)
-                .isNotNull()
-                .isDataClassEqualTo(updatedActivity1)
-
-            val updatedActivity3 = currentActivity3!!.copy(skippedAt = Instant.now())
-            activityRepository.update(updatedActivity3)
 
             assertThat(awaitItem())
                 .isNotNull()
                 .isDataClassEqualTo(updatedActivity2)
+
+            val updatedActivity1 = activity1.copy(dueAt = Instant.parse("2024-08-22T20:00:00Z"))
+            activityRepository.update(updatedActivity1)
+
+            assertThat(awaitItem())
+                .isNotNull()
+                .isDataClassEqualTo(updatedActivity1)
         }
     }
 }

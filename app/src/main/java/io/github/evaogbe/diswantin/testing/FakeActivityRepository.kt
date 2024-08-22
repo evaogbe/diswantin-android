@@ -28,9 +28,11 @@ class FakeActivityRepository(initialActivities: List<Activity>) : ActivityReposi
                 throw RuntimeException("Test")
             }
 
-            val plannedActivityComparator =
-                compareBy(Activity::skippedAt).thenComparing(Activity::createdAt)
-            activities.sortedWith(plannedActivityComparator).firstOrNull()
+            activities.sortedWith(
+                compareBy(nullsLast(), Activity::dueAt)
+                    .thenComparing(Activity::createdAt)
+                    .thenComparing(Activity::id)
+            ).firstOrNull()
         }
 
     override suspend fun findById(id: Long): Activity {

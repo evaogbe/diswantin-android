@@ -59,6 +59,7 @@ fun CurrentActivityScreen(
     navigateToActivitySearch: () -> Unit,
     navigateToNewActivityForm: () -> Unit,
     navigateToEditActivityForm: (Long) -> Unit,
+    navigateToAdvice: () -> Unit,
     currentActivityViewModel: CurrentActivityViewModel = hiltViewModel()
 ) {
     val uiState by currentActivityViewModel.uiState.collectAsStateWithLifecycle()
@@ -81,7 +82,7 @@ fun CurrentActivityScreen(
         onEditActivity = { navigateToEditActivityForm(it.id) },
         snackbarHostState = snackbarHostState,
         uiState = uiState,
-        skipActivity = currentActivityViewModel::skipCurrentActivity,
+        navigateToAdvice = navigateToAdvice,
         removeActivity = currentActivityViewModel::removeCurrentActivity
     )
 }
@@ -94,7 +95,7 @@ fun CurrentActivityScreen(
     onEditActivity: (Activity) -> Unit,
     snackbarHostState: SnackbarHostState,
     uiState: CurrentActivityUiState,
-    skipActivity: () -> Unit,
+    navigateToAdvice: () -> Unit,
     removeActivity: () -> Unit,
 ) {
     Scaffold(
@@ -153,7 +154,7 @@ fun CurrentActivityScreen(
             is CurrentActivityUiState.Present -> {
                 CurrentActivityLayout(
                     activity = uiState.currentActivity,
-                    skipActivity = skipActivity,
+                    navigateToAdvice = navigateToAdvice,
                     removeActivity = removeActivity,
                     modifier = Modifier.padding(innerPadding)
                 )
@@ -165,7 +166,7 @@ fun CurrentActivityScreen(
 @Composable
 fun CurrentActivityLayout(
     activity: Activity,
-    skipActivity: () -> Unit,
+    navigateToAdvice: () -> Unit,
     removeActivity: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -183,8 +184,8 @@ fun CurrentActivityLayout(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceAround
         ) {
-            OutlinedButton(onClick = skipActivity) {
-                Text(stringResource(R.string.skip_button))
+            OutlinedButton(onClick = navigateToAdvice) {
+                Text(stringResource(R.string.advice_button))
             }
             OutlinedButton(onClick = removeActivity) {
                 Text(stringResource(R.string.remove_button))
@@ -244,7 +245,7 @@ fun CurrentActivityScreenPreview() {
                     name = "Brush teeth"
                 )
             ),
-            skipActivity = {},
+            navigateToAdvice = {},
             removeActivity = {}
         )
     }

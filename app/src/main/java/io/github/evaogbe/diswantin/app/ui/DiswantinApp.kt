@@ -8,6 +8,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import io.github.evaogbe.diswantin.activity.ui.ActivityFormScreen
 import io.github.evaogbe.diswantin.activity.ui.ActivitySearchScreen
+import io.github.evaogbe.diswantin.activity.ui.AdviceScreen
 import io.github.evaogbe.diswantin.activity.ui.CurrentActivityScreen
 import io.github.evaogbe.diswantin.ui.navigation.Destination
 
@@ -29,7 +30,10 @@ fun DiswantinApp() {
                 },
                 navigateToEditActivityForm = {
                     navController.navigate(route = Destination.EditActivityForm(it).route)
-                }
+                },
+                navigateToAdvice = {
+                    navController.navigate(route = Destination.Advice.route)
+                },
             )
         }
         composable(Destination.SearchResults.route) {
@@ -49,6 +53,9 @@ fun DiswantinApp() {
             })
         ) {
             ActivityFormScreen(popBackStack = navController::popBackStack)
+        }
+        composable(Destination.Advice.route) {
+            AdviceScreen(onClose = navController::popBackStack)
         }
     }
 }

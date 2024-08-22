@@ -6,6 +6,8 @@
     <string name="activity_form_title_edit">Edit Activity</string>
     <string name="activity_form_title_new">New Activity</string>
     <string name="add_activity_button">Add activity</string>
+    <string name="advice_button">Advice</string>
+    <string name="advice_title">Advice</string>
     <string name="app_name">Diswantin</string>
     <string name="back_button">Back</string>
     <string name="cancel_button">Cancel</string>
@@ -14,7 +16,6 @@
     <string name="current_activity_empty">No activities planned</string>
     <string name="current_activity_fetch_error">Something went wrong loading the current activity</string>
     <string name="current_activity_remove_error">Something went wrong removing the activity</string>
-    <string name="current_activity_skip_error">Something went wrong skipping the activity</string>
     <string name="current_activity_title">Current Activity</string>
     <string name="edit_button">Edit</string>
     <string name="delete_button">Delete</string>
@@ -28,7 +29,26 @@
     <string name="search_activities_placeholder">Search activities</string>
     <string name="search_activities_error">Something went wrong searching for activities</string>
     <string name="search_results_empty">No matching activities</string>
-    <string name="skip_button">Skip</string>
+    <string name="suggestion_item_break_down_task"><![CDATA[Be flexible about how much of the task needs to be completed. Do just the first <b>2 minutes</b>.]]></string>
+    <string name="suggestion_item_check_the_facts"><![CDATA[<b>Check the Facts</b>]]></string>
+    <string name="suggestion_item_day_off"><![CDATA[Plan a <b>day off</b>]]></string>
+    <string name="suggestion_item_friend"><![CDATA[Call/text/video chat/visit a <b>friend</b>. Try to brighten their day or ask them if you can rant.]]></string>
+    <string name="suggestion_item_imagine"><![CDATA[<b>Imagine</b> yourself completing the task]]></string>
+    <string name="suggestion_item_journal"><![CDATA[Write in a <b>journal</b>]]></string>
+    <string name="suggestion_item_meditate"><![CDATA[<b>Meditate</b> for 1 minute]]></string>
+    <string name="suggestion_item_meds"><![CDATA[Talk to your psychiatrist about a <b>medication</b> adjustment]]></string>
+    <string name="suggestion_item_move"><![CDATA[<b>Move</b> your body]]></string>
+    <string-array name="suggestion_item_move_sublist">
+        <item>wiggle</item>
+        <item>stretch</item>
+        <item>dance</item>
+        <item>walk around your home</item>
+        <item>walk around the block</item>
+        <item>go out to the backyard</item>
+        <item>go to the library</item>
+    </string-array>
+    <string name="suggestion_item_snack"><![CDATA[Hungry? Grab a <b>snack</b>.]]></string>
+    <string name="suggestion_item_stop"><![CDATA[<b>STOP</b>. Take a deep breath. Observe your SUDS, body sensations, thoughts, and feelings. Ask your Wise Mind how to proceed.]]></string>
     <string name="time_picker_dialog_title">Select time</string>
     <string name="time_picker_switch_to_clock_mode">Switch to clock input mode</string>
     <string name="time_picker_switch_to_input_mode">Switch to text input mode</string>

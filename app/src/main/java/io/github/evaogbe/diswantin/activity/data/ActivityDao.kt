@@ -12,7 +12,7 @@ interface ActivityDao {
     @Query(
         """SELECT * 
         FROM activity 
-        ORDER BY skipped_at, due_at IS NULL, due_at, created_at, id
+        ORDER BY due_at IS NULL, due_at, created_at, id
         LIMIT 1"""
     )
     fun getCurrentActivity(): Flow<Activity?>

@@ -24,4 +24,8 @@ sealed interface Destination {
             override val route = "activityForm/{$ID_KEY}"
         }
     }
+
+    data object Advice : Destination {
+        override val route = "advice"
+    }
 }

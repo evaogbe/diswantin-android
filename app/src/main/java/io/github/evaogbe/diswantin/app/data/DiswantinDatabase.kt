@@ -3,9 +3,11 @@ package io.github.evaogbe.diswantin.app.data
 import android.content.Context
 import androidx.room.AutoMigration
 import androidx.room.Database
+import androidx.room.DeleteColumn
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import androidx.room.migration.AutoMigrationSpec
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import io.github.evaogbe.diswantin.activity.data.Activity
@@ -13,13 +15,20 @@ import io.github.evaogbe.diswantin.activity.data.ActivityDao
 import io.github.evaogbe.diswantin.activity.data.ActivityFts
 
 @Database(
-    version = 4,
+    version = 5,
     entities = [Activity::class, ActivityFts::class],
-    autoMigrations = [AutoMigration(from = 2, to = 3), AutoMigration(from = 3, to = 4)]
+    autoMigrations = [
+        AutoMigration(from = 2, to = 3),
+        AutoMigration(from = 3, to = 4),
+        AutoMigration(from = 4, to = 5, spec = DiswantinDatabase.Migration4To5::class),
+    ]
 )
 @TypeConverters(Converters::class)
 abstract class DiswantinDatabase : RoomDatabase() {
     abstract fun activityDao(): ActivityDao
+
+    @DeleteColumn(tableName = "activity", columnName = "skipped_at")
+    class Migration4To5 : AutoMigrationSpec
 
     companion object {
         const val DB_NAME = "diswantin"

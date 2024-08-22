@@ -38,6 +38,7 @@ class CurrentActivityScreenTest {
                     navigateToActivitySearch = {},
                     navigateToNewActivityForm = {},
                     navigateToEditActivityForm = {},
+                    navigateToAdvice = {},
                     currentActivityViewModel = viewModel
                 )
             }
@@ -57,6 +58,7 @@ class CurrentActivityScreenTest {
                     navigateToActivitySearch = {},
                     navigateToNewActivityForm = {},
                     navigateToEditActivityForm = {},
+                    navigateToAdvice = {},
                     currentActivityViewModel = viewModel
                 )
             }
@@ -80,6 +82,7 @@ class CurrentActivityScreenTest {
                     navigateToActivitySearch = {},
                     navigateToNewActivityForm = {},
                     navigateToEditActivityForm = {},
+                    navigateToAdvice = {},
                     currentActivityViewModel = viewModel
                 )
             }
@@ -102,6 +105,7 @@ class CurrentActivityScreenTest {
                     navigateToActivitySearch = {},
                     navigateToNewActivityForm = { navigateToNewActivityFormClicked = true },
                     navigateToEditActivityForm = {},
+                    navigateToAdvice = {},
                     currentActivityViewModel = viewModel
                 )
             }
@@ -127,6 +131,7 @@ class CurrentActivityScreenTest {
                         navigateToNewActivityFormClicked = true
                     },
                     navigateToEditActivityForm = {},
+                    navigateToAdvice = {},
                     currentActivityViewModel = viewModel
                 )
             }
@@ -154,6 +159,7 @@ class CurrentActivityScreenTest {
                         assertThat(id).isEqualTo(activity.id)
                         navigateToEditActivityFormClicked = true
                     },
+                    navigateToAdvice = {},
                     currentActivityViewModel = viewModel
                 )
             }
@@ -163,54 +169,6 @@ class CurrentActivityScreenTest {
             .performClick()
 
         assertThat(navigateToEditActivityFormClicked).isTrue()
-    }
-
-    @Test
-    fun displaysNextActivityName_whenSkipClicked() {
-        val (activity1, activity2) = genActivities(2)
-        val activityRepository = FakeActivityRepository(activity1, activity2)
-        val viewModel = CurrentActivityViewModel(activityRepository)
-
-        composeTestRule.setContent {
-            DiswantinTheme {
-                CurrentActivityScreen(
-                    navigateToActivitySearch = {},
-                    navigateToNewActivityForm = {},
-                    navigateToEditActivityForm = {},
-                    currentActivityViewModel = viewModel
-                )
-            }
-        }
-
-        composeTestRule.onNodeWithText(activity1.name).assertIsDisplayed()
-
-        composeTestRule.onNodeWithText(stringResource(R.string.skip_button)).performClick()
-
-        composeTestRule.onNodeWithText(activity2.name).assertIsDisplayed()
-    }
-
-    @Test
-    fun displaysErrorMessage_whenSkipFailed() {
-        val activity = genActivities(1).single()
-        val activityRepository = FakeActivityRepository(activity)
-        val viewModel = CurrentActivityViewModel(activityRepository)
-
-        composeTestRule.setContent {
-            DiswantinTheme {
-                CurrentActivityScreen(
-                    navigateToActivitySearch = {},
-                    navigateToNewActivityForm = {},
-                    navigateToEditActivityForm = {},
-                    currentActivityViewModel = viewModel
-                )
-            }
-        }
-
-        activityRepository.setThrows(activityRepository::update, true)
-        composeTestRule.onNodeWithText(stringResource(R.string.skip_button)).performClick()
-
-        composeTestRule.onNodeWithText(stringResource(R.string.current_activity_skip_error))
-            .assertIsDisplayed()
     }
 
     @Test
@@ -225,6 +183,7 @@ class CurrentActivityScreenTest {
                     navigateToActivitySearch = {},
                     navigateToNewActivityForm = {},
                     navigateToEditActivityForm = {},
+                    navigateToAdvice = {},
                     currentActivityViewModel = viewModel
                 )
             }
@@ -249,6 +208,7 @@ class CurrentActivityScreenTest {
                     navigateToActivitySearch = {},
                     navigateToNewActivityForm = {},
                     navigateToEditActivityForm = {},
+                    navigateToAdvice = {},
                     currentActivityViewModel = viewModel
                 )
             }
