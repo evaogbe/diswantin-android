@@ -13,7 +13,7 @@
     <string name="cancel_button">Cancel</string>
     <string name="clear_button">Clear</string>
     <string name="close_button">Close</string>
-    <string name="current_activity_empty">No activities planned</string>
+    <string name="current_activity_empty">No upcoming activities</string>
     <string name="current_activity_fetch_error">Something went wrong loading the current activity</string>
     <string name="current_activity_remove_error">Something went wrong removing the activity</string>
     <string name="current_activity_title">Current Activity</string>
@@ -25,6 +25,7 @@
     <string name="ok_button">OK</string>
     <string name="remove_button">Remove</string>
     <string name="save_button">Save</string>
+    <string name="scheduled_at_label">Scheduled at</string>
     <string name="search_activities_button">Search activities</string>
     <string name="search_activities_placeholder">Search activities</string>
     <string name="search_activities_error">Something went wrong searching for activities</string>

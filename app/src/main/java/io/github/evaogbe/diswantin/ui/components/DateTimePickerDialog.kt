@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -67,6 +69,7 @@ fun DateTimePickerDialog(
                     Text(stringResource(R.string.ok_button))
                 }
             },
+            modifier = Modifier.verticalScroll(rememberScrollState()),
             dismissButton = {
                 TextButton(onClick = onDismissRequest) {
                     Text(stringResource(R.string.cancel_button))
@@ -95,6 +98,7 @@ fun DateTimePickerDialog(
                     Text(stringResource(R.string.ok_button))
                 }
             },
+            modifier = Modifier.verticalScroll(rememberScrollState()),
             dismissButton = {
                 TextButton(onClick = onDismissRequest) {
                     Text(stringResource(R.string.cancel_button))
@@ -135,8 +139,9 @@ fun DateTimePickerDialog(
 fun TimePickerDialog(
     onDismissRequest: () -> Unit,
     confirmButton: @Composable () -> Unit,
-    dismissButton: @Composable () -> Unit,
-    toggle: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
+    dismissButton: (@Composable () -> Unit)? = null,
+    toggle: (@Composable () -> Unit)? = null,
     content: @Composable (ColumnScope.() -> Unit),
 ) {
     Dialog(
@@ -144,7 +149,7 @@ fun TimePickerDialog(
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
         Surface(
-            modifier = Modifier
+            modifier = modifier
                 .width(IntrinsicSize.Min)
                 .height(IntrinsicSize.Min)
                 .background(
@@ -174,10 +179,10 @@ fun TimePickerDialog(
                         .height(40.dp)
                         .fillMaxWidth()
                 ) {
-                    toggle()
+                    toggle?.invoke()
 
                     Spacer(modifier = Modifier.weight(1f))
-                    dismissButton()
+                    dismissButton?.invoke()
                     confirmButton()
                 }
             }

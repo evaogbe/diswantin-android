@@ -100,6 +100,8 @@ fun ActivityFormScreen(
         onNameChange = activityFormViewModel::updateNameInput,
         dueAt = activityFormViewModel.dueAtInput,
         onDueAtChange = activityFormViewModel::updateDueAtInput,
+        scheduledAt = activityFormViewModel.scheduledAtInput,
+        onScheduleAtChange = activityFormViewModel::updateScheduledAtInput,
         saveActivity = activityFormViewModel::saveActivity,
         removeActivity = activityFormViewModel::removeActivity,
         snackbarHostState = snackbarHostState,
@@ -116,6 +118,8 @@ fun ActivityFormScreen(
     onNameChange: (String) -> Unit,
     dueAt: ZonedDateTime?,
     onDueAtChange: (ZonedDateTime?) -> Unit,
+    scheduledAt: ZonedDateTime?,
+    onScheduleAtChange: (ZonedDateTime?) -> Unit,
     saveActivity: () -> Unit,
     removeActivity: () -> Unit,
     snackbarHostState: SnackbarHostState,
@@ -200,6 +204,8 @@ fun ActivityFormScreen(
                     onNameChange = onNameChange,
                     dueAt = dueAt,
                     onDueAtChange = onDueAtChange,
+                    scheduledAt = scheduledAt,
+                    onScheduleAtChange = onScheduleAtChange,
                     formError = when {
                         !uiState.hasSaveError -> null
                         isNew -> stringResource(R.string.activity_form_save_error_new)
@@ -212,16 +218,24 @@ fun ActivityFormScreen(
     }
 }
 
+enum class DateTimeConstraintField {
+    DueAt, ScheduledAt
+}
+
 @Composable
 fun ActivityFormLayout(
     name: String,
     onNameChange: (String) -> Unit,
     dueAt: ZonedDateTime?,
     onDueAtChange: (ZonedDateTime?) -> Unit,
+    scheduledAt: ZonedDateTime?,
+    onScheduleAtChange: (ZonedDateTime?) -> Unit,
     formError: String?,
     modifier: Modifier = Modifier
 ) {
-    var showDateTimePicker by rememberSaveable { mutableStateOf(false) }
+    var dateTimePickerType by rememberSaveable {
+        mutableStateOf<DateTimeConstraintField?>(null)
+    }
 
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         Column(
@@ -251,62 +265,104 @@ fun ActivityFormLayout(
                 singleLine = true
             )
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                val interactionSource = remember { MutableInteractionSource() }
-                val isPressed by interactionSource.collectIsPressedAsState()
-
-                LaunchedEffect(isPressed) {
-                    if (isPressed) {
-                        showDateTimePicker = true
-                    }
-                }
-
-                OutlinedTextField(
-                    value = dueAt?.format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT))
-                        ?: "",
-                    onValueChange = {},
+            if (scheduledAt == null) {
+                DateTimeTextField(
+                    onClick = { dateTimePickerType = DateTimeConstraintField.DueAt },
+                    dateTime = dueAt,
+                    onDateTimeChange = onDueAtChange,
                     label = { Text(stringResource(R.string.due_at_label)) },
-                    trailingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.DateRange,
-                            contentDescription = null
-                        )
-                    },
-                    singleLine = true,
-                    interactionSource = interactionSource
                 )
+            }
 
-                if (dueAt != null) {
-                    Spacer(Modifier.size(SpaceSm))
-                    IconButton(
-                        onClick = { onDueAtChange(null) },
-                        modifier = Modifier.padding(top = 4.dp),
-                        colors = IconButtonDefaults.iconButtonColors(
-                            containerColor = colorScheme.surfaceVariant,
-                            contentColor = colorScheme.onSurfaceVariant
-                        )
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Clear,
-                            contentDescription = stringResource(R.string.clear_button)
-                        )
-                    }
-                }
+            if (dueAt == null) {
+                DateTimeTextField(
+                    onClick = { dateTimePickerType = DateTimeConstraintField.ScheduledAt },
+                    dateTime = scheduledAt,
+                    onDateTimeChange = onScheduleAtChange,
+                    label = { Text(stringResource(R.string.scheduled_at_label)) },
+                )
             }
         }
     }
 
-    if (showDateTimePicker) {
-        DateTimePickerDialog(
-            onDismissRequest = { showDateTimePicker = false },
-            dateTime = dueAt,
-            onSelectDateTime = { selectedDateTime ->
-                if (selectedDateTime != null) {
-                    onDueAtChange(selectedDateTime)
+    when (dateTimePickerType) {
+        null -> {}
+        DateTimeConstraintField.DueAt -> {
+            DateTimePickerDialog(
+                onDismissRequest = { dateTimePickerType = null },
+                dateTime = dueAt,
+                onSelectDateTime = { selectedDateTime ->
+                    if (selectedDateTime != null) {
+                        onDueAtChange(selectedDateTime)
+                    }
+                    dateTimePickerType = null
                 }
-                showDateTimePicker = false
+            )
+        }
+
+        DateTimeConstraintField.ScheduledAt -> {
+            DateTimePickerDialog(
+                onDismissRequest = { dateTimePickerType = null },
+                dateTime = scheduledAt,
+                onSelectDateTime = { selectedDateTime ->
+                    if (selectedDateTime != null) {
+                        onScheduleAtChange(selectedDateTime)
+                    }
+                    dateTimePickerType = null
+                }
+            )
+        }
+    }
+}
+
+@Composable
+fun DateTimeTextField(
+    onClick: () -> Unit,
+    dateTime: ZonedDateTime?,
+    onDateTimeChange: (ZonedDateTime?) -> Unit,
+    label: @Composable (() -> Unit)
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        val interactionSource = remember { MutableInteractionSource() }
+        val isPressed by interactionSource.collectIsPressedAsState()
+
+        LaunchedEffect(isPressed) {
+            if (isPressed) {
+                onClick()
             }
+        }
+
+        OutlinedTextField(
+            value = dateTime?.format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT))
+                ?: "",
+            onValueChange = {},
+            label = label,
+            trailingIcon = {
+                Icon(
+                    imageVector = Icons.Default.DateRange,
+                    contentDescription = null
+                )
+            },
+            singleLine = true,
+            interactionSource = interactionSource
         )
+
+        if (dateTime != null) {
+            Spacer(Modifier.size(SpaceSm))
+            IconButton(
+                onClick = { onDateTimeChange(null) },
+                modifier = Modifier.padding(top = 4.dp),
+                colors = IconButtonDefaults.iconButtonColors(
+                    containerColor = colorScheme.surfaceVariant,
+                    contentColor = colorScheme.onSurfaceVariant
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Clear,
+                    contentDescription = stringResource(R.string.clear_button)
+                )
+            }
+        }
     }
 }
 
@@ -321,6 +377,8 @@ fun ActivityFormScreenPreview_New() {
             onNameChange = {},
             dueAt = null,
             onDueAtChange = {},
+            scheduledAt = null,
+            onScheduleAtChange = {},
             saveActivity = {},
             removeActivity = {},
             snackbarHostState = SnackbarHostState(),
@@ -340,6 +398,8 @@ fun ActivityFormScreenPreview_Edit() {
             onNameChange = {},
             dueAt = ZonedDateTime.now(),
             onDueAtChange = {},
+            scheduledAt = null,
+            onScheduleAtChange = {},
             saveActivity = {},
             removeActivity = {},
             snackbarHostState = SnackbarHostState(),

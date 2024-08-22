@@ -104,6 +104,15 @@ class ActivityFormScreenTest {
             }
         }
 
+        composeTestRule.onNodeWithText(
+            stringResource(R.string.due_at_label),
+            useUnmergedTree = true
+        ).assertIsDisplayed()
+        composeTestRule.onNodeWithText(
+            stringResource(R.string.scheduled_at_label),
+            useUnmergedTree = true
+        ).assertIsDisplayed()
+
         composeTestRule.onNodeWithText(stringResource(R.string.name_label), useUnmergedTree = true)
             .onParent()
             .performTextInput(name)
@@ -149,7 +158,7 @@ class ActivityFormScreenTest {
     fun popsBackStack_whenActivityUpdated() {
         val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
         var popBackStackClicked = false
-        val activity = genActivity()
+        val activity = genActivity().copy(dueAt = faker.random.randomFutureDate().toInstant())
         val activityRepository = FakeActivityRepository(activity)
         val viewModel = ActivityFormViewModel(
             SavedStateHandle(mapOf(Destination.EditActivityForm.ID_KEY to activity.id)),
@@ -165,11 +174,28 @@ class ActivityFormScreenTest {
             }
         }
 
+        composeTestRule.onNodeWithText(
+            stringResource(R.string.due_at_label),
+            useUnmergedTree = true
+        ).assertIsDisplayed()
+        composeTestRule.onNodeWithText(
+            stringResource(R.string.scheduled_at_label),
+            useUnmergedTree = true
+        ).assertDoesNotExist()
+
         composeTestRule.onNodeWithText(stringResource(R.string.name_label), useUnmergedTree = true)
             .onParent()
             .performTextReplacement(name)
         composeTestRule.onNodeWithContentDescription(stringResource(R.string.clear_button))
             .performClick()
+        composeTestRule.onNodeWithText(
+            stringResource(R.string.scheduled_at_label),
+            useUnmergedTree = true
+        )
+            .onParent()
+            .performClick()
+        composeTestRule.onNodeWithText(stringResource(R.string.ok_button)).performClick()
+        composeTestRule.onNodeWithText(stringResource(R.string.ok_button)).performClick()
         composeTestRule.onNodeWithContentDescription(stringResource(R.string.save_button))
             .performClick()
 
@@ -258,7 +284,6 @@ class ActivityFormScreenTest {
     private fun genActivity() = Activity(
         id = 1L,
         createdAt = faker.random.randomPastDate().toInstant(),
-        name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-        dueAt = faker.random.randomFutureDate().toInstant()
+        name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
     )
 }

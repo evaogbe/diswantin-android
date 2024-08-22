@@ -6,16 +6,18 @@ import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
+import java.time.Instant
 
 @Dao
 interface ActivityDao {
     @Query(
-        """SELECT * 
-        FROM activity 
-        ORDER BY due_at IS NULL, due_at, created_at, id
+        """SELECT *
+        FROM activity
+        WHERE scheduled_at IS NULL OR scheduled_at <= :scheduledBefore
+        ORDER BY scheduled_at IS NULL, scheduled_at, due_at IS NULL, due_at, created_at, id
         LIMIT 1"""
     )
-    fun getCurrentActivity(): Flow<Activity?>
+    fun getCurrentActivity(scheduledBefore: Instant): Flow<Activity?>
 
     @Query("SELECT * FROM activity WHERE id = :id LIMIT 1")
     suspend fun findById(id: Long): Activity

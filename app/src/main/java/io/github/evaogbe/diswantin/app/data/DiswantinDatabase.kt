@@ -15,7 +15,7 @@ import io.github.evaogbe.diswantin.activity.data.ActivityDao
 import io.github.evaogbe.diswantin.activity.data.ActivityFts
 
 @Database(
-    version = 5,
+    version = 6,
     entities = [Activity::class, ActivityFts::class],
     autoMigrations = [
         AutoMigration(from = 2, to = 3),
@@ -51,11 +51,33 @@ abstract class DiswantinDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """CREATE TABLE `activity2` 
+                        |( id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL
+                        |, created_at INTEGER NOT NULL
+                        |, name TEXT NOT NULL
+                        |, due_at INTEGER DEFAULT NULL
+                        |, scheduled_at INTEGER DEFAULT NULL
+                        |, CHECK (due_at IS NULL or scheduled_at IS NULL)
+                        |)""".trimMargin()
+                )
+                db.execSQL(
+                    """INSERT INTO `activity2` 
+                        |(id, created_at, name, due_at) 
+                        |SELECT id, created_at, name, due_at FROM `activity`""".trimMargin()
+                )
+                db.execSQL("DROP TABLE `activity`")
+                db.execSQL("ALTER TABLE `activity2` RENAME TO `activity`")
+            }
+        }
+
         fun createDatabase(context: Context) =
             Room.databaseBuilder(
                 context.applicationContext,
                 DiswantinDatabase::class.java,
                 DB_NAME
-            ).addMigrations(MIGRATION_1_2).build()
+            ).addMigrations(MIGRATION_1_2, MIGRATION_5_6).build()
     }
 }

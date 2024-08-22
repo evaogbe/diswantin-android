@@ -1,12 +1,14 @@
 package io.github.evaogbe.diswantin.testing
 
 import io.github.evaogbe.diswantin.activity.data.Activity
+import io.github.evaogbe.diswantin.activity.data.ActivityForm
 import io.github.evaogbe.diswantin.activity.data.ActivityRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
-import java.time.Instant
+import java.time.Clock
+import java.time.ZonedDateTime
 import kotlin.reflect.KFunction
 import kotlin.reflect.KProperty0
 
@@ -28,8 +30,13 @@ class FakeActivityRepository(initialActivities: List<Activity>) : ActivityReposi
                 throw RuntimeException("Test")
             }
 
-            activities.sortedWith(
-                compareBy(nullsLast(), Activity::dueAt)
+            activities.filter { activity ->
+                activity.scheduledAt?.let {
+                    it < ZonedDateTime.now().plusHours(1).toInstant()
+                } != false
+            }.sortedWith(
+                compareBy(nullsLast(), Activity::scheduledAt)
+                    .thenComparing(Activity::dueAt, nullsLast())
                     .thenComparing(Activity::createdAt)
                     .thenComparing(Activity::id)
             ).firstOrNull()
@@ -53,13 +60,12 @@ class FakeActivityRepository(initialActivities: List<Activity>) : ActivityReposi
         }
     }
 
-    override suspend fun create(name: String, dueAt: Instant?): Activity {
+    override suspend fun create(form: ActivityForm): Activity {
         if (::create in throwingMethods.value) {
             throw RuntimeException("Test")
         }
 
-        val activity =
-            Activity(id = ++idGen, createdAt = Instant.now(), name = name.trim(), dueAt = dueAt)
+        val activity = form.getNewActivity(Clock.systemDefaultZone()).copy(id = ++idGen)
         activitiesState.update { it + activity }
         return activity
     }

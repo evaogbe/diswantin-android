@@ -18,7 +18,9 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.time.Clock
 import java.time.Instant
+import java.time.ZoneOffset
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
@@ -41,17 +43,24 @@ class LocalActivityRepositoryTest {
     }
 
     @Test
-    fun currentActivityStream_sortsByDueDate() = runTest {
+    fun currentActivityStream_emitsFirstPlannedActivity() = runTest {
         val activityRepository =
-            LocalActivityRepository(db.activityDao(), UnconfinedTestDispatcher(testScheduler))
+            LocalActivityRepository(
+                db.activityDao(),
+                UnconfinedTestDispatcher(testScheduler),
+                Clock.fixed(Instant.parse("2024-08-23T17:00:00Z"), ZoneOffset.UTC)
+            )
 
         activityRepository.currentActivityStream.test {
             assertThat(awaitItem()).isNull()
 
             val activity1 =
                 activityRepository.create(
-                    "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-                    null
+                    ActivityForm(
+                        name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                        dueAt = null,
+                        scheduledAt = null
+                    )
                 )
 
             assertThat(awaitItem())
@@ -60,8 +69,11 @@ class LocalActivityRepositoryTest {
 
             val activity2 =
                 activityRepository.create(
-                    "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-                    null
+                    ActivityForm(
+                        name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                        dueAt = null,
+                        scheduledAt = null
+                    )
                 )
 
             assertThat(awaitItem()).isEqualTo(activity1)
@@ -73,12 +85,21 @@ class LocalActivityRepositoryTest {
                 .isNotNull()
                 .isDataClassEqualTo(updatedActivity2)
 
-            val updatedActivity1 = activity1.copy(dueAt = Instant.parse("2024-08-22T20:00:00Z"))
+            var updatedActivity1 =
+                activity1.copy(scheduledAt = Instant.parse("2024-08-23T18:00:00Z"))
             activityRepository.update(updatedActivity1)
 
             assertThat(awaitItem())
                 .isNotNull()
                 .isDataClassEqualTo(updatedActivity1)
+
+            updatedActivity1 =
+                updatedActivity1.copy(scheduledAt = Instant.parse("2024-08-23T19:00:00Z"))
+            activityRepository.update(updatedActivity1)
+
+            assertThat(awaitItem())
+                .isNotNull()
+                .isDataClassEqualTo(updatedActivity2)
         }
     }
 }

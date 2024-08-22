@@ -11,4 +11,5 @@ data class Activity(
     @ColumnInfo("created_at") val createdAt: Instant,
     val name: String,
     @ColumnInfo("due_at") val dueAt: Instant? = null,
+    @ColumnInfo("scheduled_at") val scheduledAt: Instant? = null,
 )

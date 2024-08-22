@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.activity.data.Activity
+import io.github.evaogbe.diswantin.activity.data.ActivityForm
 import io.github.evaogbe.diswantin.activity.data.ActivityRepository
 import io.github.evaogbe.diswantin.ui.navigation.Destination
 import kotlinx.coroutines.CancellationException
@@ -33,6 +34,9 @@ class ActivityFormViewModel @Inject constructor(
     var dueAtInput by mutableStateOf<ZonedDateTime?>(null)
         private set
 
+    var scheduledAtInput by mutableStateOf<ZonedDateTime?>(null)
+        private set
+
     private var activity: Activity? = null
 
     var uiState by mutableStateOf<ActivityFormUiState>(ActivityFormUiState.Pending)
@@ -49,6 +53,7 @@ class ActivityFormViewModel @Inject constructor(
                     this@ActivityFormViewModel.activity = activity
                     nameInput = activity.name
                     dueAtInput = activity.dueAt?.atZone(ZoneId.systemDefault())
+                    scheduledAtInput = activity.scheduledAt?.atZone(ZoneId.systemDefault())
                     uiState = ActivityFormUiState.Success(hasSaveError = false)
                 } catch (e: CancellationException) {
                     throw e
@@ -70,6 +75,10 @@ class ActivityFormViewModel @Inject constructor(
         dueAtInput = value
     }
 
+    fun updateScheduledAtInput(value: ZonedDateTime?) {
+        scheduledAtInput = value
+    }
+
     fun saveActivity() {
         when {
             nameInput.isBlank() -> {}
@@ -77,8 +86,11 @@ class ActivityFormViewModel @Inject constructor(
                 viewModelScope.launch {
                     try {
                         activityRepository.create(
-                            name = nameInput.trim(),
-                            dueAt = dueAtInput?.toInstant()
+                            ActivityForm(
+                                name = nameInput,
+                                dueAt = dueAtInput?.toInstant(),
+                                scheduledAt = scheduledAtInput?.toInstant()
+                            ),
                         )
                         uiState = ActivityFormUiState.Saved
                     } catch (e: CancellationException) {
@@ -91,12 +103,16 @@ class ActivityFormViewModel @Inject constructor(
             }
 
             else -> {
-                val updatedActivity =
-                    activity?.copy(name = nameInput.trim(), dueAt = dueAtInput?.toInstant())
-                        ?: return
+                val activity = this.activity ?: return
                 viewModelScope.launch {
                     try {
-                        activityRepository.update(updatedActivity)
+                        activityRepository.update(
+                            ActivityForm(
+                                name = nameInput,
+                                dueAt = dueAtInput?.toInstant(),
+                                scheduledAt = scheduledAtInput?.toInstant()
+                            ).getUpdatedActivity(activity)
+                        )
                         uiState = ActivityFormUiState.Saved
                     } catch (e: CancellationException) {
                         throw e
