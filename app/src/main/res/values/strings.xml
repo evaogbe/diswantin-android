@@ -29,10 +29,10 @@
     <string name="search_activities_placeholder">Search activities</string>
     <string name="search_activities_error">Something went wrong searching for activities</string>
     <string name="search_results_empty">No matching activities</string>
-    <string name="suggestion_item_break_down_task"><![CDATA[Be flexible about how much of the task needs to be completed. Do just the first <b>2 minutes</b>.]]></string>
+    <string name="suggestion_item_break_down_task"><![CDATA[Be flexible about how much of the task needs to be completed. Do just the first <b>2 minutes</b>]]></string>
     <string name="suggestion_item_check_the_facts"><![CDATA[<b>Check the Facts</b>]]></string>
     <string name="suggestion_item_day_off"><![CDATA[Plan a <b>day off</b>]]></string>
-    <string name="suggestion_item_friend"><![CDATA[Call/text/video chat/visit a <b>friend</b>. Try to brighten their day or ask them if you can rant.]]></string>
+    <string name="suggestion_item_friend"><![CDATA[Call/text/video chat/visit a <b>friend</b>. Try to brighten their day or ask them if you can rant]]></string>
     <string name="suggestion_item_imagine"><![CDATA[<b>Imagine</b> yourself completing the task]]></string>
     <string name="suggestion_item_journal"><![CDATA[Write in a <b>journal</b>]]></string>
     <string name="suggestion_item_meditate"><![CDATA[<b>Meditate</b> for 1 minute]]></string>
@@ -47,8 +47,8 @@
         <item>go out to the backyard</item>
         <item>go to the library</item>
     </string-array>
-    <string name="suggestion_item_snack"><![CDATA[Hungry? Grab a <b>snack</b>.]]></string>
-    <string name="suggestion_item_stop"><![CDATA[<b>STOP</b>. Take a deep breath. Observe your SUDS, body sensations, thoughts, and feelings. Ask your Wise Mind how to proceed.]]></string>
+    <string name="suggestion_item_snack"><![CDATA[Hungry? Grab a <b>snack</b>]]></string>
+    <string name="suggestion_item_stop"><![CDATA[<b>STOP</b>. Take a deep breath. Observe your SUDS, body sensations, thoughts, and feelings. Ask your Wise Mind how to proceed]]></string>
     <string name="time_picker_dialog_title">Select time</string>
     <string name="time_picker_switch_to_clock_mode">Switch to clock input mode</string>
     <string name="time_picker_switch_to_input_mode">Switch to text input mode</string>
