@@ -42,23 +42,23 @@ class FakeActivityRepository(initialActivities: List<Activity>) : ActivityReposi
             ).firstOrNull()
         }
 
-    override suspend fun findById(id: Long): Activity {
-        if (::findById in throwingMethods.value) {
-            throw RuntimeException("Test")
+    override fun findById(id: Long): Flow<Activity?> =
+        combine(activitiesState, throwingMethods) { activities, throwingMethods ->
+            if (::findById in throwingMethods) {
+                throw RuntimeException("Test")
+            }
+
+            activities.firstOrNull { it.id == id }
         }
 
-        return activities.first { it.id == id }
-    }
-
-    override fun search(query: String): Flow<List<Activity>> {
-        return combine(activitiesState, throwingMethods) { activities, throwingMethods ->
+    override fun search(query: String): Flow<List<Activity>> =
+        combine(activitiesState, throwingMethods) { activities, throwingMethods ->
             if (::search in throwingMethods) {
                 throw RuntimeException("Test")
             }
 
             activities.filter { it.name.contains(query, ignoreCase = true) }
         }
-    }
 
     override suspend fun create(form: ActivityForm): Activity {
         if (::create in throwingMethods.value) {

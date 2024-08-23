@@ -14,6 +14,7 @@ import assertk.assertThat
 import assertk.assertions.isTrue
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.activity.data.Activity
+import io.github.evaogbe.diswantin.activity.data.ActivityRepository
 import io.github.evaogbe.diswantin.testing.FakeActivityRepository
 import io.github.evaogbe.diswantin.testutils.stringResource
 import io.github.evaogbe.diswantin.ui.components.PendingLayoutTestTag
@@ -23,6 +24,7 @@ import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
 import org.junit.Rule
 import org.junit.Test
+import java.time.Clock
 
 class ActivityFormScreenTest {
     @get:Rule
@@ -35,7 +37,7 @@ class ActivityFormScreenTest {
     @Test
     fun displaysNewActivityTopBar_whenNew() {
         val activityRepository = FakeActivityRepository()
-        val viewModel = ActivityFormViewModel(SavedStateHandle(), activityRepository)
+        val viewModel = createActivityFormViewModelForNew(activityRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -45,18 +47,13 @@ class ActivityFormScreenTest {
 
         composeTestRule.onNodeWithText(stringResource(R.string.activity_form_title_new))
             .assertIsDisplayed()
-        composeTestRule.onNodeWithContentDescription(stringResource(R.string.more_actions_button))
-            .assertDoesNotExist()
     }
 
     @Test
     fun displaysEditActivityTopBar_whenEdit() {
         val activity = genActivity()
         val activityRepository = FakeActivityRepository(activity)
-        val viewModel = ActivityFormViewModel(
-            SavedStateHandle(mapOf(Destination.EditActivityForm.ID_KEY to activity.id)),
-            activityRepository
-        )
+        val viewModel = createActivityFormViewModelForEdit(activityRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -66,17 +63,12 @@ class ActivityFormScreenTest {
 
         composeTestRule.onNodeWithText(stringResource(R.string.activity_form_title_edit))
             .assertIsDisplayed()
-        composeTestRule.onNodeWithContentDescription(stringResource(R.string.more_actions_button))
-            .assertIsDisplayed()
     }
 
     @Test
     fun displaysErrorMessage_whenUiFailure() {
         val activityRepository = FakeActivityRepository()
-        val viewModel = ActivityFormViewModel(
-            SavedStateHandle(mapOf(Destination.EditActivityForm.ID_KEY to 1L)),
-            activityRepository
-        )
+        val viewModel = createActivityFormViewModelForEdit(activityRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -93,7 +85,7 @@ class ActivityFormScreenTest {
         val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
         var popBackStackClicked = false
         val activityRepository = FakeActivityRepository()
-        val viewModel = ActivityFormViewModel(SavedStateHandle(), activityRepository)
+        val viewModel = createActivityFormViewModelForNew(activityRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -124,8 +116,7 @@ class ActivityFormScreenTest {
             .performClick()
         composeTestRule.onNodeWithText(stringResource(R.string.ok_button)).performClick()
         composeTestRule.onNodeWithText(stringResource(R.string.ok_button)).performClick()
-        composeTestRule.onNodeWithContentDescription(stringResource(R.string.save_button))
-            .performClick()
+        composeTestRule.onNodeWithText(stringResource(R.string.save_button)).performClick()
 
         composeTestRule.onNodeWithTag(PendingLayoutTestTag).assertIsDisplayed()
         assertThat(popBackStackClicked).isTrue()
@@ -135,7 +126,7 @@ class ActivityFormScreenTest {
     fun displaysErrorMessage_withSaveErrorForNew() {
         val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
         val activityRepository = FakeActivityRepository()
-        val viewModel = ActivityFormViewModel(SavedStateHandle(), activityRepository)
+        val viewModel = createActivityFormViewModelForNew(activityRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -147,8 +138,7 @@ class ActivityFormScreenTest {
         composeTestRule.onNodeWithText(stringResource(R.string.name_label), useUnmergedTree = true)
             .onParent()
             .performTextInput(name)
-        composeTestRule.onNodeWithContentDescription(stringResource(R.string.save_button))
-            .performClick()
+        composeTestRule.onNodeWithText(stringResource(R.string.save_button)).performClick()
 
         composeTestRule.onNodeWithText(stringResource(R.string.activity_form_save_error_new))
             .assertIsDisplayed()
@@ -160,10 +150,7 @@ class ActivityFormScreenTest {
         var popBackStackClicked = false
         val activity = genActivity().copy(dueAt = faker.random.randomFutureDate().toInstant())
         val activityRepository = FakeActivityRepository(activity)
-        val viewModel = ActivityFormViewModel(
-            SavedStateHandle(mapOf(Destination.EditActivityForm.ID_KEY to activity.id)),
-            activityRepository
-        )
+        val viewModel = createActivityFormViewModelForEdit(activityRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -196,8 +183,7 @@ class ActivityFormScreenTest {
             .performClick()
         composeTestRule.onNodeWithText(stringResource(R.string.ok_button)).performClick()
         composeTestRule.onNodeWithText(stringResource(R.string.ok_button)).performClick()
-        composeTestRule.onNodeWithContentDescription(stringResource(R.string.save_button))
-            .performClick()
+        composeTestRule.onNodeWithText(stringResource(R.string.save_button)).performClick()
 
         composeTestRule.onNodeWithTag(PendingLayoutTestTag).assertIsDisplayed()
         assertThat(popBackStackClicked).isTrue()
@@ -208,10 +194,7 @@ class ActivityFormScreenTest {
         val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
         val activity = genActivity()
         val activityRepository = FakeActivityRepository(activity)
-        val viewModel = ActivityFormViewModel(
-            SavedStateHandle(mapOf(Destination.EditActivityForm.ID_KEY to activity.id)),
-            activityRepository
-        )
+        val viewModel = createActivityFormViewModelForEdit(activityRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -223,61 +206,9 @@ class ActivityFormScreenTest {
         composeTestRule.onNodeWithText(stringResource(R.string.name_label), useUnmergedTree = true)
             .onParent()
             .performTextReplacement(name)
-        composeTestRule.onNodeWithContentDescription(stringResource(R.string.save_button))
-            .performClick()
+        composeTestRule.onNodeWithText(stringResource(R.string.save_button)).performClick()
 
         composeTestRule.onNodeWithText(stringResource(R.string.activity_form_save_error_edit))
-            .assertIsDisplayed()
-    }
-
-    @Test
-    fun popsBackStack_whenActivityRemoved() {
-        var popBackStackClicked = false
-        val activity = genActivity()
-        val activityRepository = FakeActivityRepository(activity)
-        val viewModel = ActivityFormViewModel(
-            SavedStateHandle(mapOf(Destination.EditActivityForm.ID_KEY to activity.id)),
-            activityRepository
-        )
-
-        composeTestRule.setContent {
-            DiswantinTheme {
-                ActivityFormScreen(
-                    popBackStack = { popBackStackClicked = true },
-                    activityFormViewModel = viewModel
-                )
-            }
-        }
-
-        composeTestRule.onNodeWithContentDescription(stringResource(R.string.more_actions_button))
-            .performClick()
-        composeTestRule.onNodeWithText(stringResource(R.string.delete_button)).performClick()
-
-        composeTestRule.onNodeWithTag(PendingLayoutTestTag).assertIsDisplayed()
-        assertThat(popBackStackClicked).isTrue()
-    }
-
-    @Test
-    fun displaysErrorMessage_whenRemoveFailed() {
-        val activity = genActivity()
-        val activityRepository = FakeActivityRepository(activity)
-        val viewModel = ActivityFormViewModel(
-            SavedStateHandle(mapOf(Destination.EditActivityForm.ID_KEY to activity.id)),
-            activityRepository
-        )
-
-        composeTestRule.setContent {
-            DiswantinTheme {
-                ActivityFormScreen(popBackStack = {}, activityFormViewModel = viewModel)
-            }
-        }
-
-        activityRepository.setThrows(activityRepository::remove, true)
-        composeTestRule.onNodeWithContentDescription(stringResource(R.string.more_actions_button))
-            .performClick()
-        composeTestRule.onNodeWithText(stringResource(R.string.delete_button)).performClick()
-
-        composeTestRule.onNodeWithText(stringResource(R.string.activity_form_delete_error))
             .assertIsDisplayed()
     }
 
@@ -286,4 +217,14 @@ class ActivityFormScreenTest {
         createdAt = faker.random.randomPastDate().toInstant(),
         name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
     )
+
+    private fun createActivityFormViewModelForNew(activityRepository: ActivityRepository) =
+        ActivityFormViewModel(SavedStateHandle(), activityRepository, Clock.systemDefaultZone())
+
+    private fun createActivityFormViewModelForEdit(activityRepository: ActivityRepository) =
+        ActivityFormViewModel(
+            SavedStateHandle(mapOf(Destination.EditActivityForm.ID_KEY to 1L)),
+            activityRepository,
+            Clock.systemDefaultZone()
+        )
 }

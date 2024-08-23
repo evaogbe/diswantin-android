@@ -20,7 +20,7 @@ interface ActivityDao {
     fun getCurrentActivity(scheduledBefore: Instant): Flow<Activity?>
 
     @Query("SELECT * FROM activity WHERE id = :id LIMIT 1")
-    suspend fun findById(id: Long): Activity
+    fun findById(id: Long): Flow<Activity?>
 
     @Query(
         """SELECT DISTINCT activity.* 

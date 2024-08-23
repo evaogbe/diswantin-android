@@ -43,7 +43,7 @@ class ActivitySearchScreenTest {
             DiswantinTheme {
                 ActivitySearchScreen(
                     popBackStack = {},
-                    navigateToActivityForm = {},
+                    navigateToActivityDetail = {},
                     activitySearchViewModel = viewModel
                 )
             }
@@ -71,7 +71,7 @@ class ActivitySearchScreenTest {
             DiswantinTheme {
                 ActivitySearchScreen(
                     popBackStack = {},
-                    navigateToActivityForm = {},
+                    navigateToActivityDetail = {},
                     activitySearchViewModel = viewModel
                 )
             }
@@ -98,7 +98,7 @@ class ActivitySearchScreenTest {
             DiswantinTheme {
                 ActivitySearchScreen(
                     popBackStack = {},
-                    navigateToActivityForm = {},
+                    navigateToActivityDetail = {},
                     activitySearchViewModel = viewModel
                 )
             }

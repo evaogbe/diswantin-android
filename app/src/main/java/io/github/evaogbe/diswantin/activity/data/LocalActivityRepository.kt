@@ -17,9 +17,7 @@ class LocalActivityRepository @Inject constructor(
         scheduledBefore = ZonedDateTime.now(clock).plusHours(1).toInstant()
     ).flowOn(ioDispatcher)
 
-    override suspend fun findById(id: Long) = withContext(ioDispatcher) {
-        activityDao.findById(id)
-    }
+    override fun findById(id: Long) = activityDao.findById(id).flowOn(ioDispatcher)
 
     override fun search(query: String) = activityDao.search(escapeSql(query)).flowOn(ioDispatcher)
 

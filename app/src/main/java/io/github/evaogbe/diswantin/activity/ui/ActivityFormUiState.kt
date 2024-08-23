@@ -8,6 +8,4 @@ sealed interface ActivityFormUiState {
     data class Success(val hasSaveError: Boolean) : ActivityFormUiState
 
     data object Saved : ActivityFormUiState
-
-    data object Removed : ActivityFormUiState
 }

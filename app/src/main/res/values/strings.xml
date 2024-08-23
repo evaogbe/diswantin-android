@@ -1,5 +1,6 @@
 <resources>
-    <string name="activity_form_delete_error">Something went wrong deleting the activity</string>
+    <string name="activity_detail_delete_error">Something went wrong deleting the activity</string>
+    <string name="activity_detail_fetch_error">Something went wrong loading the activity</string>
     <string name="activity_form_fetch_error">Something went wrong loading the activity</string>
     <string name="activity_form_save_error_edit">Something went wrong editing the activity</string>
     <string name="activity_form_save_error_new">Something went wrong adding the activity</string>

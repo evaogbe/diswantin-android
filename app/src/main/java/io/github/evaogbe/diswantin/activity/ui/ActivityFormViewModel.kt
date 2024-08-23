@@ -7,24 +7,25 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.activity.data.Activity
 import io.github.evaogbe.diswantin.activity.data.ActivityForm
 import io.github.evaogbe.diswantin.activity.data.ActivityRepository
 import io.github.evaogbe.diswantin.ui.navigation.Destination
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import java.time.ZoneId
+import java.time.Clock
 import java.time.ZonedDateTime
 import javax.inject.Inject
 
 @HiltViewModel
 class ActivityFormViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    private val activityRepository: ActivityRepository
+    private val activityRepository: ActivityRepository,
+    private val clock: Clock,
 ) : ViewModel() {
-    private val activityId = savedStateHandle.get<Long>(Destination.EditActivityForm.ID_KEY)
+    private val activityId: Long? = savedStateHandle[Destination.EditActivityForm.ID_KEY]
 
     val isNew = activityId == null
 
@@ -42,18 +43,15 @@ class ActivityFormViewModel @Inject constructor(
     var uiState by mutableStateOf<ActivityFormUiState>(ActivityFormUiState.Pending)
         private set
 
-    var userMessage by mutableStateOf<Int?>(null)
-        private set
-
     fun initialize() {
         if (activityId != null) {
             viewModelScope.launch {
                 try {
-                    val activity = activityRepository.findById(activityId)
+                    val activity = checkNotNull(activityRepository.findById(activityId).first())
                     this@ActivityFormViewModel.activity = activity
                     nameInput = activity.name
-                    dueAtInput = activity.dueAt?.atZone(ZoneId.systemDefault())
-                    scheduledAtInput = activity.scheduledAt?.atZone(ZoneId.systemDefault())
+                    dueAtInput = activity.dueAt?.atZone(clock.zone)
+                    scheduledAtInput = activity.scheduledAt?.atZone(clock.zone)
                     uiState = ActivityFormUiState.Success(hasSaveError = false)
                 } catch (e: CancellationException) {
                     throw e
@@ -123,24 +121,5 @@ class ActivityFormViewModel @Inject constructor(
                 }
             }
         }
-    }
-
-    fun removeActivity() {
-        val activity = this.activity ?: return
-        viewModelScope.launch {
-            try {
-                activityRepository.remove(activity)
-                uiState = ActivityFormUiState.Removed
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                Timber.e(e, "Failed to remove activity: %s", activity)
-                userMessage = R.string.activity_form_delete_error
-            }
-        }
-    }
-
-    fun userMessageShown() {
-        userMessage = null
     }
 }

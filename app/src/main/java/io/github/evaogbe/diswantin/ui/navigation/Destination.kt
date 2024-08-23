@@ -28,4 +28,14 @@ sealed interface Destination {
     data object Advice : Destination {
         override val route = "advice"
     }
+
+    data class ActivityDetail(private val id: Long) : Destination {
+        override val route = "activity/$id"
+
+        companion object : Destination {
+            const val ID_KEY = "id"
+
+            override val route = "activity/{$ID_KEY}"
+        }
+    }
 }

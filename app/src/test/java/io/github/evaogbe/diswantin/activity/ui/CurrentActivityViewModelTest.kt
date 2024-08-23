@@ -4,7 +4,6 @@ import assertk.assertThat
 import assertk.assertions.contains
 import assertk.assertions.doesNotContain
 import assertk.assertions.isEqualTo
-import assertk.assertions.isNull
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.activity.data.Activity
 import io.github.evaogbe.diswantin.testing.FakeActivityRepository
@@ -40,14 +39,22 @@ class CurrentActivityViewModelTest {
                 viewModel.uiState.collect()
             }
 
-            assertThat(viewModel.uiState.value)
-                .isEqualTo(CurrentActivityUiState.Present(currentActivity = activity1))
+            assertThat(viewModel.uiState.value).isEqualTo(
+                CurrentActivityUiState.Present(
+                    currentActivity = activity1,
+                    userMessage = null
+                )
+            )
 
             val updatedActivity1 = activity1.copy(name = name)
             activityRepository.update(updatedActivity1)
 
-            assertThat(viewModel.uiState.value)
-                .isEqualTo(CurrentActivityUiState.Present(currentActivity = updatedActivity1))
+            assertThat(viewModel.uiState.value).isEqualTo(
+                CurrentActivityUiState.Present(
+                    currentActivity = updatedActivity1,
+                    userMessage = null
+                )
+            )
         }
 
     @Test
@@ -76,14 +83,22 @@ class CurrentActivityViewModelTest {
                 viewModel.uiState.collect()
             }
 
-            assertThat(viewModel.uiState.value)
-                .isEqualTo(CurrentActivityUiState.Present(currentActivity = activity1))
+            assertThat(viewModel.uiState.value).isEqualTo(
+                CurrentActivityUiState.Present(
+                    currentActivity = activity1,
+                    userMessage = null
+                )
+            )
 
             viewModel.removeCurrentActivity()
 
             assertThat(activityRepository.activities).doesNotContain(activity1)
-            assertThat(viewModel.uiState.value)
-                .isEqualTo(CurrentActivityUiState.Present(currentActivity = activity2))
+            assertThat(viewModel.uiState.value).isEqualTo(
+                CurrentActivityUiState.Present(
+                    currentActivity = activity2,
+                    userMessage = null
+                )
+            )
         }
 
     @Test
@@ -101,7 +116,6 @@ class CurrentActivityViewModelTest {
             viewModel.removeCurrentActivity()
 
             assertThat(viewModel.uiState.value).isEqualTo(CurrentActivityUiState.Empty)
-            assertThat(viewModel.userMessage).isNull()
         }
 
     @Test
@@ -115,15 +129,22 @@ class CurrentActivityViewModelTest {
                 viewModel.uiState.collect()
             }
 
-            assertThat(viewModel.uiState.value)
-                .isEqualTo(CurrentActivityUiState.Present(currentActivity = activity))
+            assertThat(viewModel.uiState.value).isEqualTo(
+                CurrentActivityUiState.Present(
+                    currentActivity = activity,
+                    userMessage = null
+                )
+            )
 
             activityRepository.setThrows(activityRepository::remove, true)
             viewModel.removeCurrentActivity()
 
-            assertThat(viewModel.uiState.value)
-                .isEqualTo(CurrentActivityUiState.Present(currentActivity = activity))
-            assertThat(viewModel.userMessage).isEqualTo(R.string.current_activity_remove_error)
+            assertThat(viewModel.uiState.value).isEqualTo(
+                CurrentActivityUiState.Present(
+                    currentActivity = activity,
+                    userMessage = R.string.current_activity_remove_error
+                )
+            )
             assertThat(activityRepository.activities).contains(activity)
         }
 

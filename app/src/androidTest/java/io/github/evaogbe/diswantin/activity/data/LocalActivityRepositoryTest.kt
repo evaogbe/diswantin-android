@@ -20,7 +20,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import java.time.Clock
 import java.time.Instant
-import java.time.ZoneOffset
+import java.time.ZoneId
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
@@ -48,7 +48,7 @@ class LocalActivityRepositoryTest {
             LocalActivityRepository(
                 db.activityDao(),
                 UnconfinedTestDispatcher(testScheduler),
-                Clock.fixed(Instant.parse("2024-08-23T17:00:00Z"), ZoneOffset.UTC)
+                Clock.fixed(Instant.parse("2024-08-23T17:00:00Z"), ZoneId.of("America/New_York"))
             )
 
         activityRepository.currentActivityStream.test {

@@ -1,9 +1,11 @@
 package io.github.evaogbe.diswantin.activity.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -66,8 +68,8 @@ fun CurrentActivityScreen(
     val resources = LocalContext.current.resources
     val snackbarHostState = remember { SnackbarHostState() }
 
-    currentActivityViewModel.userMessage?.let { message ->
-        LaunchedEffect(message) {
+    (uiState as? CurrentActivityUiState.Present)?.userMessage?.let { message ->
+        LaunchedEffect(message, snackbarHostState) {
             snackbarHostState.showSnackbar(resources.getString(message))
             currentActivityViewModel.userMessageShown()
         }
@@ -170,25 +172,28 @@ fun CurrentActivityLayout(
     removeActivity: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(SpaceMd),
-        verticalArrangement = Arrangement.SpaceAround,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        SelectionContainer(Modifier.widthIn(max = ScreenLg)) {
-            Text(text = activity.name, style = typography.displaySmall)
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceAround
+    Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+        Column(
+            modifier = modifier
+                .padding(SpaceMd)
+                .widthIn(max = ScreenLg)
+                .fillMaxHeight(),
+            verticalArrangement = Arrangement.SpaceAround,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            OutlinedButton(onClick = navigateToAdvice) {
-                Text(stringResource(R.string.advice_button))
+            SelectionContainer {
+                Text(text = activity.name, style = typography.displaySmall)
             }
-            OutlinedButton(onClick = removeActivity) {
-                Text(stringResource(R.string.remove_button))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceAround
+            ) {
+                OutlinedButton(onClick = navigateToAdvice) {
+                    Text(stringResource(R.string.advice_button))
+                }
+                OutlinedButton(onClick = removeActivity) {
+                    Text(stringResource(R.string.remove_button))
+                }
             }
         }
     }
@@ -239,11 +244,12 @@ fun CurrentActivityScreenPreview() {
             onEditActivity = {},
             snackbarHostState = SnackbarHostState(),
             uiState = CurrentActivityUiState.Present(
-                Activity(
+                currentActivity = Activity(
                     id = 1L,
                     createdAt = Instant.now(),
                     name = "Brush teeth"
-                )
+                ),
+                userMessage = null,
             ),
             navigateToAdvice = {},
             removeActivity = {}

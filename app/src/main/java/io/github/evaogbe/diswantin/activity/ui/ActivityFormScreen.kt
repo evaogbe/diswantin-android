@@ -5,6 +5,7 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,10 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -30,8 +28,6 @@ import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -43,8 +39,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
@@ -68,8 +62,6 @@ fun ActivityFormScreen(
     activityFormViewModel: ActivityFormViewModel = hiltViewModel()
 ) {
     val uiState = activityFormViewModel.uiState
-    val resources = LocalContext.current.resources
-    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(uiState, activityFormViewModel, popBackStack) {
         when (uiState) {
@@ -77,19 +69,11 @@ fun ActivityFormScreen(
                 activityFormViewModel.initialize()
             }
 
-            is ActivityFormUiState.Saved,
-            is ActivityFormUiState.Removed -> {
+            is ActivityFormUiState.Saved -> {
                 popBackStack()
             }
 
             else -> {}
-        }
-    }
-
-    activityFormViewModel.userMessage?.let { message ->
-        LaunchedEffect(message) {
-            snackbarHostState.showSnackbar(resources.getString(message))
-            activityFormViewModel.userMessageShown()
         }
     }
 
@@ -103,8 +87,6 @@ fun ActivityFormScreen(
         scheduledAt = activityFormViewModel.scheduledAtInput,
         onScheduleAtChange = activityFormViewModel::updateScheduledAtInput,
         saveActivity = activityFormViewModel::saveActivity,
-        removeActivity = activityFormViewModel::removeActivity,
-        snackbarHostState = snackbarHostState,
         uiState = uiState
     )
 }
@@ -121,14 +103,10 @@ fun ActivityFormScreen(
     scheduledAt: ZonedDateTime?,
     onScheduleAtChange: (ZonedDateTime?) -> Unit,
     saveActivity: () -> Unit,
-    removeActivity: () -> Unit,
-    snackbarHostState: SnackbarHostState,
     uiState: ActivityFormUiState
 ) {
     Scaffold(
         topBar = {
-            var menuExpanded by remember { mutableStateOf(false) }
-
             TopAppBar(
                 title = {
                     Text(
@@ -148,46 +126,19 @@ fun ActivityFormScreen(
                     }
                 }, actions = {
                     if (uiState is ActivityFormUiState.Success) {
-                        IconButton(onClick = saveActivity) {
-                            Icon(
-                                painter = painterResource(R.drawable.baseline_save_24),
-                                contentDescription = stringResource(R.string.save_button)
-                            )
-                        }
-
-                        if (!isNew) {
-                            IconButton(onClick = { menuExpanded = !menuExpanded }) {
-                                Icon(
-                                    imageVector = Icons.Default.MoreVert,
-                                    contentDescription = stringResource(R.string.more_actions_button)
-                                )
-                            }
-
-                            DropdownMenu(
-                                expanded = menuExpanded,
-                                onDismissRequest = { menuExpanded = false }
-                            ) {
-                                DropdownMenuItem(
-                                    text = { Text(text = stringResource(R.string.delete_button)) },
-                                    onClick = removeActivity,
-                                    leadingIcon = {
-                                        Icon(
-                                            imageVector = Icons.Default.Delete,
-                                            contentDescription = null
-                                        )
-                                    },
-                                )
-                            }
+                        Button(
+                            onClick = saveActivity,
+                            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 4.dp)
+                        ) {
+                            Text(stringResource(R.string.save_button))
                         }
                     }
                 })
         },
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { innerPadding ->
         when (uiState) {
             is ActivityFormUiState.Pending,
-            is ActivityFormUiState.Saved,
-            is ActivityFormUiState.Removed -> {
+            is ActivityFormUiState.Saved -> {
                 PendingLayout(modifier = Modifier.padding(innerPadding))
             }
 
@@ -380,8 +331,6 @@ fun ActivityFormScreenPreview_New() {
             scheduledAt = null,
             onScheduleAtChange = {},
             saveActivity = {},
-            removeActivity = {},
-            snackbarHostState = SnackbarHostState(),
             uiState = ActivityFormUiState.Success(hasSaveError = false)
         )
     }
@@ -401,8 +350,6 @@ fun ActivityFormScreenPreview_Edit() {
             scheduledAt = null,
             onScheduleAtChange = {},
             saveActivity = {},
-            removeActivity = {},
-            snackbarHostState = SnackbarHostState(),
             uiState = ActivityFormUiState.Success(hasSaveError = true)
         )
     }

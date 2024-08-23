@@ -6,6 +6,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import io.github.evaogbe.diswantin.activity.ui.ActivityDetailScreen
 import io.github.evaogbe.diswantin.activity.ui.ActivityFormScreen
 import io.github.evaogbe.diswantin.activity.ui.ActivitySearchScreen
 import io.github.evaogbe.diswantin.activity.ui.AdviceScreen
@@ -39,8 +40,8 @@ fun DiswantinApp() {
         composable(Destination.SearchResults.route) {
             ActivitySearchScreen(
                 popBackStack = navController::popBackStack,
-                navigateToActivityForm = {
-                    navController.navigate(route = Destination.EditActivityForm(it).route)
+                navigateToActivityDetail = {
+                    navController.navigate(route = Destination.ActivityDetail(it).route)
                 })
         }
         composable(Destination.NewActivityForm.route) {
@@ -56,6 +57,19 @@ fun DiswantinApp() {
         }
         composable(Destination.Advice.route) {
             AdviceScreen(onClose = navController::popBackStack)
+        }
+        composable(
+            Destination.ActivityDetail.route,
+            arguments = listOf(navArgument(Destination.ActivityDetail.ID_KEY) {
+                type = NavType.LongType
+            })
+        ) {
+            ActivityDetailScreen(
+                popBackStack = navController::popBackStack,
+                navigateToEditActivityForm = {
+                    navController.navigate(route = Destination.EditActivityForm(it).route)
+                }
+            )
         }
     }
 }

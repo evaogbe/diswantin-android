@@ -69,7 +69,7 @@ import kotlin.time.Duration.Companion.milliseconds
 @Composable
 fun ActivitySearchScreen(
     popBackStack: () -> Unit,
-    navigateToActivityForm: (Long) -> Unit,
+    navigateToActivityDetail: (Long) -> Unit,
     activitySearchViewModel: ActivitySearchViewModel = hiltViewModel()
 ) {
     val uiState by activitySearchViewModel.uiState.collectAsStateWithLifecycle()
@@ -91,7 +91,7 @@ fun ActivitySearchScreen(
         onQueryChange = setQuery,
         searchActivities = activitySearchViewModel::searchActivities,
         uiState = uiState,
-        onSelectSearchResult = { navigateToActivityForm(it.id) }
+        onSelectSearchResult = { navigateToActivityDetail(it.id) }
     )
 }
 

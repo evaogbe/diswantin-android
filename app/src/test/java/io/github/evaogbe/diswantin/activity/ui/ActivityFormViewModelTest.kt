@@ -9,8 +9,8 @@ import assertk.assertions.isFalse
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
-import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.activity.data.Activity
+import io.github.evaogbe.diswantin.activity.data.ActivityRepository
 import io.github.evaogbe.diswantin.testing.FakeActivityRepository
 import io.github.evaogbe.diswantin.testutils.MainDispatcherRule
 import io.github.evaogbe.diswantin.ui.navigation.Destination
@@ -18,6 +18,7 @@ import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
 import org.junit.Rule
 import org.junit.Test
+import java.time.Clock
 import java.time.Instant
 import java.time.ZonedDateTime
 
@@ -32,7 +33,7 @@ class ActivityFormViewModelTest {
     @Test
     fun `initialize sets uiState to success when activityId null`() {
         val activityRepository = FakeActivityRepository()
-        val viewModel = ActivityFormViewModel(SavedStateHandle(), activityRepository)
+        val viewModel = createActivityFormViewModelForNew(activityRepository)
 
         assertThat(viewModel.isNew).isTrue()
         assertThat(viewModel.uiState).isEqualTo(ActivityFormUiState.Pending)
@@ -49,10 +50,7 @@ class ActivityFormViewModelTest {
         val dueAt = Instant.parse("2024-08-22T21:00:00Z")
         val activity = genActivity().copy(dueAt = dueAt)
         val activityRepository = FakeActivityRepository(activity)
-        val viewModel = ActivityFormViewModel(
-            SavedStateHandle(mapOf(Destination.EditActivityForm.ID_KEY to activity.id)),
-            activityRepository
-        )
+        val viewModel = createActivityFormViewModelForEdit(activityRepository)
 
         assertThat(viewModel.isNew).isFalse()
         assertThat(viewModel.uiState).isEqualTo(ActivityFormUiState.Pending)
@@ -68,10 +66,7 @@ class ActivityFormViewModelTest {
     fun `initialize sets uiState to failure when repository throws`() {
         val activity = genActivity()
         val activityRepository = FakeActivityRepository(activity)
-        val viewModel = ActivityFormViewModel(
-            SavedStateHandle(mapOf(Destination.EditActivityForm.ID_KEY to activity.id)),
-            activityRepository
-        )
+        val viewModel = createActivityFormViewModelForEdit(activityRepository)
 
         activityRepository.setThrows(activityRepository::findById, true)
         viewModel.initialize()
@@ -83,7 +78,7 @@ class ActivityFormViewModelTest {
     fun `saveActivity creates activity when activityId null`() {
         val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
         val activityRepository = FakeActivityRepository()
-        val viewModel = ActivityFormViewModel(SavedStateHandle(), activityRepository)
+        val viewModel = createActivityFormViewModelForNew(activityRepository)
 
         viewModel.initialize()
 
@@ -111,7 +106,7 @@ class ActivityFormViewModelTest {
     fun `saveActivity shows error message when create throws`() {
         val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
         val activityRepository = FakeActivityRepository()
-        val viewModel = ActivityFormViewModel(SavedStateHandle(), activityRepository)
+        val viewModel = createActivityFormViewModelForNew(activityRepository)
 
         viewModel.initialize()
 
@@ -129,10 +124,7 @@ class ActivityFormViewModelTest {
         val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
         val activity = genActivity()
         val activityRepository = FakeActivityRepository(activity)
-        val viewModel = ActivityFormViewModel(
-            SavedStateHandle(mapOf(Destination.EditActivityForm.ID_KEY to activity.id)),
-            activityRepository
-        )
+        val viewModel = createActivityFormViewModelForEdit(activityRepository)
 
         viewModel.initialize()
 
@@ -164,10 +156,7 @@ class ActivityFormViewModelTest {
         val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
         val activity = genActivity()
         val activityRepository = FakeActivityRepository(activity)
-        val viewModel = ActivityFormViewModel(
-            SavedStateHandle(mapOf(Destination.EditActivityForm.ID_KEY to activity.id)),
-            activityRepository
-        )
+        val viewModel = createActivityFormViewModelForEdit(activityRepository)
 
         viewModel.initialize()
 
@@ -180,49 +169,19 @@ class ActivityFormViewModelTest {
         assertThat(viewModel.uiState).isEqualTo(ActivityFormUiState.Success(hasSaveError = true))
     }
 
-    @Test
-    fun `removeActivity sets uiState to removed`() {
-        val activity = genActivity()
-        val activityRepository = FakeActivityRepository(activity)
-        val viewModel = ActivityFormViewModel(
-            SavedStateHandle(mapOf(Destination.EditActivityForm.ID_KEY to activity.id)),
-            activityRepository
-        )
-
-        viewModel.initialize()
-
-        assertThat(viewModel.uiState).isEqualTo(ActivityFormUiState.Success(hasSaveError = false))
-
-        viewModel.removeActivity()
-
-        assertThat(activityRepository.activities).isEmpty()
-        assertThat(viewModel.uiState).isEqualTo(ActivityFormUiState.Removed)
-        assertThat(viewModel.userMessage).isNull()
-    }
-
-    @Test
-    fun `removeActivity shows error message when remove throws`() {
-        val activity = genActivity()
-        val activityRepository = FakeActivityRepository(activity)
-        val viewModel = ActivityFormViewModel(
-            SavedStateHandle(mapOf(Destination.EditActivityForm.ID_KEY to activity.id)),
-            activityRepository
-        )
-
-        viewModel.initialize()
-
-        assertThat(viewModel.uiState).isEqualTo(ActivityFormUiState.Success(hasSaveError = false))
-
-        activityRepository.setThrows(activityRepository::remove, true)
-        viewModel.removeActivity()
-
-        assertThat(viewModel.uiState).isEqualTo(ActivityFormUiState.Success(hasSaveError = false))
-        assertThat(viewModel.userMessage).isEqualTo(R.string.activity_form_delete_error)
-    }
-
     private fun genActivity() = Activity(
         id = 1L,
         createdAt = faker.random.randomPastDate().toInstant(),
         name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
     )
+
+    private fun createActivityFormViewModelForNew(activityRepository: ActivityRepository) =
+        ActivityFormViewModel(SavedStateHandle(), activityRepository, Clock.systemDefaultZone())
+
+    private fun createActivityFormViewModelForEdit(activityRepository: ActivityRepository) =
+        ActivityFormViewModel(
+            SavedStateHandle(mapOf(Destination.EditActivityForm.ID_KEY to 1L)),
+            activityRepository,
+            Clock.systemDefaultZone()
+        )
 }
