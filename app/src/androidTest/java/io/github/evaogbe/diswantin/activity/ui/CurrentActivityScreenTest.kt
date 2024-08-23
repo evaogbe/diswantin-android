@@ -35,10 +35,10 @@ class CurrentActivityScreenTest {
         composeTestRule.setContent {
             DiswantinTheme {
                 CurrentActivityScreen(
-                    navigateToActivitySearch = {},
-                    navigateToNewActivityForm = {},
-                    navigateToEditActivityForm = {},
-                    navigateToAdvice = {},
+                    onNavigateToSearch = {},
+                    onAddActivity = {},
+                    onEditActivity = {},
+                    onAdviceClick = {},
                     currentActivityViewModel = viewModel
                 )
             }
@@ -55,10 +55,10 @@ class CurrentActivityScreenTest {
         composeTestRule.setContent {
             DiswantinTheme {
                 CurrentActivityScreen(
-                    navigateToActivitySearch = {},
-                    navigateToNewActivityForm = {},
-                    navigateToEditActivityForm = {},
-                    navigateToAdvice = {},
+                    onNavigateToSearch = {},
+                    onAddActivity = {},
+                    onEditActivity = {},
+                    onAdviceClick = {},
                     currentActivityViewModel = viewModel
                 )
             }
@@ -79,10 +79,10 @@ class CurrentActivityScreenTest {
         composeTestRule.setContent {
             DiswantinTheme {
                 CurrentActivityScreen(
-                    navigateToActivitySearch = {},
-                    navigateToNewActivityForm = {},
-                    navigateToEditActivityForm = {},
-                    navigateToAdvice = {},
+                    onNavigateToSearch = {},
+                    onAddActivity = {},
+                    onEditActivity = {},
+                    onAdviceClick = {},
                     currentActivityViewModel = viewModel
                 )
             }
@@ -93,8 +93,8 @@ class CurrentActivityScreenTest {
     }
 
     @Test
-    fun navigatesToNewActivityForm_whenFabClicked() {
-        var navigateToNewActivityFormClicked = false
+    fun callsOnAddActivity_whenFabClicked() {
+        var onAddActivityCalled = false
         val activity = genActivities(1).single()
         val activityRepository = FakeActivityRepository(activity)
         val viewModel = CurrentActivityViewModel(activityRepository)
@@ -102,10 +102,10 @@ class CurrentActivityScreenTest {
         composeTestRule.setContent {
             DiswantinTheme {
                 CurrentActivityScreen(
-                    navigateToActivitySearch = {},
-                    navigateToNewActivityForm = { navigateToNewActivityFormClicked = true },
-                    navigateToEditActivityForm = {},
-                    navigateToAdvice = {},
+                    onNavigateToSearch = {},
+                    onAddActivity = { onAddActivityCalled = true },
+                    onEditActivity = {},
+                    onAdviceClick = {},
                     currentActivityViewModel = viewModel
                 )
             }
@@ -114,24 +114,22 @@ class CurrentActivityScreenTest {
         composeTestRule.onNodeWithContentDescription(stringResource(R.string.add_activity_button))
             .performClick()
 
-        assertThat(navigateToNewActivityFormClicked).isTrue()
+        assertThat(onAddActivityCalled).isTrue()
     }
 
     @Test
-    fun navigatesToNewActivityForm_whenAddActivityClicked() {
-        var navigateToNewActivityFormClicked = false
+    fun callsOnAddActivity_whenAddActivityClicked() {
+        var onAddActivityCalled = false
         val activityRepository = FakeActivityRepository()
         val viewModel = CurrentActivityViewModel(activityRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
                 CurrentActivityScreen(
-                    navigateToActivitySearch = {},
-                    navigateToNewActivityForm = {
-                        navigateToNewActivityFormClicked = true
-                    },
-                    navigateToEditActivityForm = {},
-                    navigateToAdvice = {},
+                    onNavigateToSearch = {},
+                    onAddActivity = { onAddActivityCalled = true },
+                    onEditActivity = {},
+                    onAdviceClick = {},
                     currentActivityViewModel = viewModel
                 )
             }
@@ -140,12 +138,12 @@ class CurrentActivityScreenTest {
         composeTestRule.onNodeWithContentDescription(stringResource(R.string.add_activity_button))
             .performClick()
 
-        assertThat(navigateToNewActivityFormClicked).isTrue()
+        assertThat(onAddActivityCalled).isTrue()
     }
 
     @Test
-    fun navigatesToActivityForm_whenEditClicked() {
-        var navigateToEditActivityFormClicked = false
+    fun callsOnEditActivity_whenEditClicked() {
+        var onEditActivityCalled = false
         val activity = genActivities(1).single()
         val activityRepository = FakeActivityRepository(activity)
         val viewModel = CurrentActivityViewModel(activityRepository)
@@ -153,13 +151,13 @@ class CurrentActivityScreenTest {
         composeTestRule.setContent {
             DiswantinTheme {
                 CurrentActivityScreen(
-                    navigateToActivitySearch = {},
-                    navigateToNewActivityForm = {},
-                    navigateToEditActivityForm = { id ->
+                    onNavigateToSearch = {},
+                    onAddActivity = {},
+                    onEditActivity = { id ->
                         assertThat(id).isEqualTo(activity.id)
-                        navigateToEditActivityFormClicked = true
+                        onEditActivityCalled = true
                     },
-                    navigateToAdvice = {},
+                    onAdviceClick = {},
                     currentActivityViewModel = viewModel
                 )
             }
@@ -168,7 +166,7 @@ class CurrentActivityScreenTest {
         composeTestRule.onNodeWithContentDescription(stringResource(R.string.edit_button))
             .performClick()
 
-        assertThat(navigateToEditActivityFormClicked).isTrue()
+        assertThat(onEditActivityCalled).isTrue()
     }
 
     @Test
@@ -180,10 +178,10 @@ class CurrentActivityScreenTest {
         composeTestRule.setContent {
             DiswantinTheme {
                 CurrentActivityScreen(
-                    navigateToActivitySearch = {},
-                    navigateToNewActivityForm = {},
-                    navigateToEditActivityForm = {},
-                    navigateToAdvice = {},
+                    onNavigateToSearch = {},
+                    onAddActivity = {},
+                    onEditActivity = {},
+                    onAdviceClick = {},
                     currentActivityViewModel = viewModel
                 )
             }
@@ -205,10 +203,10 @@ class CurrentActivityScreenTest {
         composeTestRule.setContent {
             DiswantinTheme {
                 CurrentActivityScreen(
-                    navigateToActivitySearch = {},
-                    navigateToNewActivityForm = {},
-                    navigateToEditActivityForm = {},
-                    navigateToAdvice = {},
+                    onNavigateToSearch = {},
+                    onAddActivity = {},
+                    onEditActivity = {},
+                    onAdviceClick = {},
                     currentActivityViewModel = viewModel
                 )
             }

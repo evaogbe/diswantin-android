@@ -42,8 +42,8 @@ class ActivitySearchScreenTest {
         composeTestRule.setContent {
             DiswantinTheme {
                 ActivitySearchScreen(
-                    popBackStack = {},
-                    navigateToActivityDetail = {},
+                    onBackClick = {},
+                    onSelectSearchResult = {},
                     activitySearchViewModel = viewModel
                 )
             }
@@ -70,8 +70,8 @@ class ActivitySearchScreenTest {
         composeTestRule.setContent {
             DiswantinTheme {
                 ActivitySearchScreen(
-                    popBackStack = {},
-                    navigateToActivityDetail = {},
+                    onBackClick = {},
+                    onSelectSearchResult = {},
                     activitySearchViewModel = viewModel
                 )
             }
@@ -97,8 +97,8 @@ class ActivitySearchScreenTest {
         composeTestRule.setContent {
             DiswantinTheme {
                 ActivitySearchScreen(
-                    popBackStack = {},
-                    navigateToActivityDetail = {},
+                    onBackClick = {},
+                    onSelectSearchResult = {},
                     activitySearchViewModel = viewModel
                 )
             }

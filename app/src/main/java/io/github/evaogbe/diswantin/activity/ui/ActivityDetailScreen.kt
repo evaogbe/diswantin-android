@@ -53,8 +53,8 @@ import java.time.Instant
 
 @Composable
 fun ActivityDetailScreen(
-    popBackStack: () -> Unit,
-    navigateToEditActivityForm: (Long) -> Unit,
+    onPopBackStack: () -> Unit,
+    onEditActivity: (Long) -> Unit,
     activityDetailViewModel: ActivityDetailViewModel = hiltViewModel()
 ) {
     val uiState by activityDetailViewModel.uiState.collectAsStateWithLifecycle()
@@ -63,7 +63,7 @@ fun ActivityDetailScreen(
 
     LaunchedEffect(uiState) {
         if (uiState is ActivityDetailUiState.Removed) {
-            popBackStack()
+            onPopBackStack()
         }
     }
 
@@ -75,9 +75,9 @@ fun ActivityDetailScreen(
     }
 
     ActivityDetailScreen(
-        onClose = popBackStack,
-        editActivity = { navigateToEditActivityForm(it.id) },
-        removeActivity = activityDetailViewModel::removeActivity,
+        onClose = onPopBackStack,
+        onEditActivity = { onEditActivity(it.id) },
+        onRemoveActivity = activityDetailViewModel::removeActivity,
         snackbarHostState = snackbarHostState,
         uiState = uiState
     )
@@ -87,8 +87,8 @@ fun ActivityDetailScreen(
 @Composable
 fun ActivityDetailScreen(
     onClose: () -> Unit,
-    editActivity: (Activity) -> Unit,
-    removeActivity: () -> Unit,
+    onEditActivity: (Activity) -> Unit,
+    onRemoveActivity: () -> Unit,
     snackbarHostState: SnackbarHostState,
     uiState: ActivityDetailUiState,
 ) {
@@ -108,7 +108,7 @@ fun ActivityDetailScreen(
                 },
                 actions = {
                     if (uiState is ActivityDetailUiState.Success) {
-                        IconButton(onClick = { editActivity(uiState.activity) }) {
+                        IconButton(onClick = { onEditActivity(uiState.activity) }) {
                             Icon(
                                 imageVector = Icons.Default.Edit,
                                 contentDescription = stringResource(R.string.edit_button)
@@ -128,7 +128,7 @@ fun ActivityDetailScreen(
                         ) {
                             DropdownMenuItem(
                                 text = { Text(text = stringResource(R.string.delete_button)) },
-                                onClick = removeActivity,
+                                onClick = onRemoveActivity,
                                 leadingIcon = {
                                     Icon(
                                         imageVector = Icons.Default.Delete,
@@ -207,8 +207,8 @@ fun ActivityDetailScreenPreview() {
     DiswantinTheme {
         ActivityDetailScreen(
             onClose = {},
-            editActivity = {},
-            removeActivity = {},
+            onEditActivity = {},
+            onRemoveActivity = {},
             snackbarHostState = SnackbarHostState(),
             uiState = ActivityDetailUiState.Success(
                 activity = Activity(

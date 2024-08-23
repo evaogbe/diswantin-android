@@ -68,8 +68,8 @@ import kotlin.time.Duration.Companion.milliseconds
 @OptIn(FlowPreview::class)
 @Composable
 fun ActivitySearchScreen(
-    popBackStack: () -> Unit,
-    navigateToActivityDetail: (Long) -> Unit,
+    onBackClick: () -> Unit,
+    onSelectSearchResult: (Long) -> Unit,
     activitySearchViewModel: ActivitySearchViewModel = hiltViewModel()
 ) {
     val uiState by activitySearchViewModel.uiState.collectAsStateWithLifecycle()
@@ -86,22 +86,22 @@ fun ActivitySearchScreen(
     }
 
     ActivitySearchScreen(
-        popBackStack = popBackStack,
+        onBackClick = onBackClick,
         query = query,
         onQueryChange = setQuery,
-        searchActivities = activitySearchViewModel::searchActivities,
+        onSearch = activitySearchViewModel::searchActivities,
         uiState = uiState,
-        onSelectSearchResult = { navigateToActivityDetail(it.id) }
+        onSelectSearchResult = { onSelectSearchResult(it.id) }
     )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ActivitySearchScreen(
-    popBackStack: () -> Unit,
+    onBackClick: () -> Unit,
     query: String,
     onQueryChange: (String) -> Unit,
-    searchActivities: (String) -> Unit,
+    onSearch: (String) -> Unit,
     uiState: ActivitySearchUiState,
     onSelectSearchResult: (Activity) -> Unit,
 ) {
@@ -114,7 +114,7 @@ fun ActivitySearchScreen(
                     modifier = Modifier.fillMaxWidth(),
                     placeholder = { Text(stringResource(R.string.search_activities_placeholder)) },
                     keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
-                    keyboardActions = KeyboardActions(onSearch = { searchActivities(query) }),
+                    keyboardActions = KeyboardActions(onSearch = { onSearch(query) }),
                     singleLine = true,
                     colors = TextFieldDefaults.colors(
                         focusedContainerColor = Color.Transparent,
@@ -123,7 +123,7 @@ fun ActivitySearchScreen(
                 )
             },
             navigationIcon = {
-                IconButton(onClick = popBackStack) {
+                IconButton(onClick = onBackClick) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Default.ArrowBack,
                         contentDescription = stringResource(R.string.back_button)
@@ -232,10 +232,10 @@ fun EmptyActivitySearchLayout(modifier: Modifier = Modifier) {
 fun ActivitySearchScreenPreview() {
     DiswantinTheme {
         ActivitySearchScreen(
-            popBackStack = {},
+            onBackClick = {},
             query = "Bru",
             onQueryChange = {},
-            searchActivities = {},
+            onSearch = {},
             uiState = ActivitySearchUiState.Success(
                 persistentListOf(
                     Activity(

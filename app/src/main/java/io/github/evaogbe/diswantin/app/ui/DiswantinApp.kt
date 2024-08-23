@@ -23,29 +23,29 @@ fun DiswantinApp() {
     ) {
         composable(Destination.CurrentActivity.route) {
             CurrentActivityScreen(
-                navigateToActivitySearch = {
+                onNavigateToSearch = {
                     navController.navigate(route = Destination.SearchResults.route)
                 },
-                navigateToNewActivityForm = {
+                onAddActivity = {
                     navController.navigate(route = Destination.NewActivityForm.route)
                 },
-                navigateToEditActivityForm = {
+                onEditActivity = {
                     navController.navigate(route = Destination.EditActivityForm(it).route)
                 },
-                navigateToAdvice = {
+                onAdviceClick = {
                     navController.navigate(route = Destination.Advice.route)
                 },
             )
         }
         composable(Destination.SearchResults.route) {
             ActivitySearchScreen(
-                popBackStack = navController::popBackStack,
-                navigateToActivityDetail = {
+                onBackClick = navController::popBackStack,
+                onSelectSearchResult = {
                     navController.navigate(route = Destination.ActivityDetail(it).route)
                 })
         }
         composable(Destination.NewActivityForm.route) {
-            ActivityFormScreen(popBackStack = navController::popBackStack)
+            ActivityFormScreen(onPopBackStack = navController::popBackStack)
         }
         composable(
             Destination.EditActivityForm.route,
@@ -53,7 +53,7 @@ fun DiswantinApp() {
                 type = NavType.LongType
             })
         ) {
-            ActivityFormScreen(popBackStack = navController::popBackStack)
+            ActivityFormScreen(onPopBackStack = navController::popBackStack)
         }
         composable(Destination.Advice.route) {
             AdviceScreen(onClose = navController::popBackStack)
@@ -65,8 +65,8 @@ fun DiswantinApp() {
             })
         ) {
             ActivityDetailScreen(
-                popBackStack = navController::popBackStack,
-                navigateToEditActivityForm = {
+                onPopBackStack = navController::popBackStack,
+                onEditActivity = {
                     navController.navigate(route = Destination.EditActivityForm(it).route)
                 }
             )

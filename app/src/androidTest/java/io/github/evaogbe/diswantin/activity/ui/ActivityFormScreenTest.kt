@@ -41,7 +41,7 @@ class ActivityFormScreenTest {
 
         composeTestRule.setContent {
             DiswantinTheme {
-                ActivityFormScreen(popBackStack = {}, activityFormViewModel = viewModel)
+                ActivityFormScreen(onPopBackStack = {}, activityFormViewModel = viewModel)
             }
         }
 
@@ -57,7 +57,7 @@ class ActivityFormScreenTest {
 
         composeTestRule.setContent {
             DiswantinTheme {
-                ActivityFormScreen(popBackStack = {}, activityFormViewModel = viewModel)
+                ActivityFormScreen(onPopBackStack = {}, activityFormViewModel = viewModel)
             }
         }
 
@@ -72,7 +72,7 @@ class ActivityFormScreenTest {
 
         composeTestRule.setContent {
             DiswantinTheme {
-                ActivityFormScreen(popBackStack = {}, activityFormViewModel = viewModel)
+                ActivityFormScreen(onPopBackStack = {}, activityFormViewModel = viewModel)
             }
         }
 
@@ -83,14 +83,14 @@ class ActivityFormScreenTest {
     @Test
     fun popsBackStack_whenActivityCreated() {
         val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
-        var popBackStackClicked = false
+        var onPopBackStackCalled = false
         val activityRepository = FakeActivityRepository()
         val viewModel = createActivityFormViewModelForNew(activityRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
                 ActivityFormScreen(
-                    popBackStack = { popBackStackClicked = true },
+                    onPopBackStack = { onPopBackStackCalled = true },
                     activityFormViewModel = viewModel
                 )
             }
@@ -119,7 +119,7 @@ class ActivityFormScreenTest {
         composeTestRule.onNodeWithText(stringResource(R.string.save_button)).performClick()
 
         composeTestRule.onNodeWithTag(PendingLayoutTestTag).assertIsDisplayed()
-        assertThat(popBackStackClicked).isTrue()
+        assertThat(onPopBackStackCalled).isTrue()
     }
 
     @Test
@@ -130,7 +130,7 @@ class ActivityFormScreenTest {
 
         composeTestRule.setContent {
             DiswantinTheme {
-                ActivityFormScreen(popBackStack = {}, activityFormViewModel = viewModel)
+                ActivityFormScreen(onPopBackStack = {}, activityFormViewModel = viewModel)
             }
         }
 
@@ -147,7 +147,7 @@ class ActivityFormScreenTest {
     @Test
     fun popsBackStack_whenActivityUpdated() {
         val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
-        var popBackStackClicked = false
+        var onPopBackStackCalled = false
         val activity = genActivity().copy(dueAt = faker.random.randomFutureDate().toInstant())
         val activityRepository = FakeActivityRepository(activity)
         val viewModel = createActivityFormViewModelForEdit(activityRepository)
@@ -155,7 +155,7 @@ class ActivityFormScreenTest {
         composeTestRule.setContent {
             DiswantinTheme {
                 ActivityFormScreen(
-                    popBackStack = { popBackStackClicked = true },
+                    onPopBackStack = { onPopBackStackCalled = true },
                     activityFormViewModel = viewModel
                 )
             }
@@ -186,7 +186,7 @@ class ActivityFormScreenTest {
         composeTestRule.onNodeWithText(stringResource(R.string.save_button)).performClick()
 
         composeTestRule.onNodeWithTag(PendingLayoutTestTag).assertIsDisplayed()
-        assertThat(popBackStackClicked).isTrue()
+        assertThat(onPopBackStackCalled).isTrue()
     }
 
     @Test
@@ -198,7 +198,7 @@ class ActivityFormScreenTest {
 
         composeTestRule.setContent {
             DiswantinTheme {
-                ActivityFormScreen(popBackStack = {}, activityFormViewModel = viewModel)
+                ActivityFormScreen(onPopBackStack = {}, activityFormViewModel = viewModel)
             }
         }
 

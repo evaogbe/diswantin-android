@@ -58,10 +58,10 @@ import java.time.Instant
 
 @Composable
 fun CurrentActivityScreen(
-    navigateToActivitySearch: () -> Unit,
-    navigateToNewActivityForm: () -> Unit,
-    navigateToEditActivityForm: (Long) -> Unit,
-    navigateToAdvice: () -> Unit,
+    onNavigateToSearch: () -> Unit,
+    onAddActivity: () -> Unit,
+    onEditActivity: (Long) -> Unit,
+    onAdviceClick: () -> Unit,
     currentActivityViewModel: CurrentActivityViewModel = hiltViewModel()
 ) {
     val uiState by currentActivityViewModel.uiState.collectAsStateWithLifecycle()
@@ -78,14 +78,14 @@ fun CurrentActivityScreen(
     CurrentActivityScreen(
         onSearch = {
             currentActivityViewModel.userMessageShown()
-            navigateToActivitySearch()
+            onNavigateToSearch()
         },
-        onAddActivity = navigateToNewActivityForm,
-        onEditActivity = { navigateToEditActivityForm(it.id) },
+        onAddActivity = onAddActivity,
+        onEditActivity = { onEditActivity(it.id) },
         snackbarHostState = snackbarHostState,
         uiState = uiState,
-        navigateToAdvice = navigateToAdvice,
-        removeActivity = currentActivityViewModel::removeCurrentActivity
+        onAdviceClick = onAdviceClick,
+        onRemoveActivity = currentActivityViewModel::removeCurrentActivity
     )
 }
 
@@ -97,8 +97,8 @@ fun CurrentActivityScreen(
     onEditActivity: (Activity) -> Unit,
     snackbarHostState: SnackbarHostState,
     uiState: CurrentActivityUiState,
-    navigateToAdvice: () -> Unit,
-    removeActivity: () -> Unit,
+    onAdviceClick: () -> Unit,
+    onRemoveActivity: () -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -156,8 +156,8 @@ fun CurrentActivityScreen(
             is CurrentActivityUiState.Present -> {
                 CurrentActivityLayout(
                     activity = uiState.currentActivity,
-                    navigateToAdvice = navigateToAdvice,
-                    removeActivity = removeActivity,
+                    onAdviceClick = onAdviceClick,
+                    onRemoveActivity = onRemoveActivity,
                     modifier = Modifier.padding(innerPadding)
                 )
             }
@@ -168,8 +168,8 @@ fun CurrentActivityScreen(
 @Composable
 fun CurrentActivityLayout(
     activity: Activity,
-    navigateToAdvice: () -> Unit,
-    removeActivity: () -> Unit,
+    onAdviceClick: () -> Unit,
+    onRemoveActivity: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
@@ -188,10 +188,10 @@ fun CurrentActivityLayout(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceAround
             ) {
-                OutlinedButton(onClick = navigateToAdvice) {
+                OutlinedButton(onClick = onAdviceClick) {
                     Text(stringResource(R.string.advice_button))
                 }
-                OutlinedButton(onClick = removeActivity) {
+                OutlinedButton(onClick = onRemoveActivity) {
                     Text(stringResource(R.string.remove_button))
                 }
             }
@@ -251,8 +251,8 @@ fun CurrentActivityScreenPreview() {
                 ),
                 userMessage = null,
             ),
-            navigateToAdvice = {},
-            removeActivity = {}
+            onAdviceClick = {},
+            onRemoveActivity = {}
         )
     }
 }

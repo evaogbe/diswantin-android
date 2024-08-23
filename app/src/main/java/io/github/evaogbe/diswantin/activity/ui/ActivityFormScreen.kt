@@ -58,19 +58,19 @@ import java.time.format.FormatStyle
 
 @Composable
 fun ActivityFormScreen(
-    popBackStack: () -> Unit,
+    onPopBackStack: () -> Unit,
     activityFormViewModel: ActivityFormViewModel = hiltViewModel()
 ) {
     val uiState = activityFormViewModel.uiState
 
-    LaunchedEffect(uiState, activityFormViewModel, popBackStack) {
+    LaunchedEffect(uiState, activityFormViewModel, onPopBackStack) {
         when (uiState) {
             is ActivityFormUiState.Pending -> {
                 activityFormViewModel.initialize()
             }
 
             is ActivityFormUiState.Saved -> {
-                popBackStack()
+                onPopBackStack()
             }
 
             else -> {}
@@ -79,14 +79,14 @@ fun ActivityFormScreen(
 
     ActivityFormScreen(
         isNew = activityFormViewModel.isNew,
-        onClose = popBackStack,
+        onClose = onPopBackStack,
         name = activityFormViewModel.nameInput,
         onNameChange = activityFormViewModel::updateNameInput,
         dueAt = activityFormViewModel.dueAtInput,
         onDueAtChange = activityFormViewModel::updateDueAtInput,
         scheduledAt = activityFormViewModel.scheduledAtInput,
         onScheduleAtChange = activityFormViewModel::updateScheduledAtInput,
-        saveActivity = activityFormViewModel::saveActivity,
+        onSave = activityFormViewModel::saveActivity,
         uiState = uiState
     )
 }
@@ -102,7 +102,7 @@ fun ActivityFormScreen(
     onDueAtChange: (ZonedDateTime?) -> Unit,
     scheduledAt: ZonedDateTime?,
     onScheduleAtChange: (ZonedDateTime?) -> Unit,
-    saveActivity: () -> Unit,
+    onSave: () -> Unit,
     uiState: ActivityFormUiState
 ) {
     Scaffold(
@@ -127,7 +127,7 @@ fun ActivityFormScreen(
                 }, actions = {
                     if (uiState is ActivityFormUiState.Success) {
                         Button(
-                            onClick = saveActivity,
+                            onClick = onSave,
                             contentPadding = PaddingValues(horizontal = 20.dp, vertical = 4.dp)
                         ) {
                             Text(stringResource(R.string.save_button))
@@ -330,7 +330,7 @@ fun ActivityFormScreenPreview_New() {
             onDueAtChange = {},
             scheduledAt = null,
             onScheduleAtChange = {},
-            saveActivity = {},
+            onSave = {},
             uiState = ActivityFormUiState.Success(hasSaveError = false)
         )
     }
@@ -349,7 +349,7 @@ fun ActivityFormScreenPreview_Edit() {
             onDueAtChange = {},
             scheduledAt = null,
             onScheduleAtChange = {},
-            saveActivity = {},
+            onSave = {},
             uiState = ActivityFormUiState.Success(hasSaveError = true)
         )
     }

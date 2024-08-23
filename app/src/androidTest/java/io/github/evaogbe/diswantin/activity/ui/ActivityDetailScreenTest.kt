@@ -47,8 +47,8 @@ class ActivityDetailScreenTest {
         composeTestRule.setContent {
             DiswantinTheme {
                 ActivityDetailScreen(
-                    popBackStack = {},
-                    navigateToEditActivityForm = {},
+                    onPopBackStack = {},
+                    onEditActivity = {},
                     activityDetailViewModel = viewModel
                 )
             }
@@ -72,8 +72,8 @@ class ActivityDetailScreenTest {
         composeTestRule.setContent {
             DiswantinTheme {
                 ActivityDetailScreen(
-                    popBackStack = {},
-                    navigateToEditActivityForm = {},
+                    onPopBackStack = {},
+                    onEditActivity = {},
                     activityDetailViewModel = viewModel
                 )
             }
@@ -86,7 +86,7 @@ class ActivityDetailScreenTest {
     @Test
     fun popsBackStack_whenActivityRemoved() {
         val activity = genActivity()
-        var popBackStackClicked = false
+        var onPopBackStackCalled = false
         val activityRepository = FakeActivityRepository(activity)
         val viewModel = ActivityDetailViewModel(
             SavedStateHandle(mapOf(Destination.ActivityDetail.ID_KEY to activity.id)),
@@ -97,8 +97,8 @@ class ActivityDetailScreenTest {
         composeTestRule.setContent {
             DiswantinTheme {
                 ActivityDetailScreen(
-                    popBackStack = { popBackStackClicked = true },
-                    navigateToEditActivityForm = {},
+                    onPopBackStack = { onPopBackStackCalled = true },
+                    onEditActivity = {},
                     activityDetailViewModel = viewModel
                 )
             }
@@ -109,7 +109,7 @@ class ActivityDetailScreenTest {
         composeTestRule.onNodeWithText(stringResource(R.string.delete_button)).performClick()
 
         composeTestRule.onNodeWithTag(PendingLayoutTestTag).assertIsDisplayed()
-        assertThat(popBackStackClicked).isTrue()
+        assertThat(onPopBackStackCalled).isTrue()
     }
 
     @Test
@@ -125,8 +125,8 @@ class ActivityDetailScreenTest {
         composeTestRule.setContent {
             DiswantinTheme {
                 ActivityDetailScreen(
-                    popBackStack = {},
-                    navigateToEditActivityForm = {},
+                    onPopBackStack = {},
+                    onEditActivity = {},
                     activityDetailViewModel = viewModel
                 )
             }
