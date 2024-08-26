@@ -214,7 +214,6 @@ fun ActivityFormLayout(
                 keyboardOptions = KeyboardOptions.Default.copy(
                     capitalization = KeyboardCapitalization.Sentences,
                 ),
-                singleLine = true
             )
 
             if (uiState.scheduledAtInput == null) {
