@@ -49,6 +49,7 @@ class ActivityDetailScreenTest {
                 ActivityDetailScreen(
                     onPopBackStack = {},
                     onEditActivity = {},
+                    onSelectChainItem = {},
                     activityDetailViewModel = viewModel
                 )
             }
@@ -61,7 +62,7 @@ class ActivityDetailScreenTest {
     @Test
     fun displaysErrorMessage_whenUiFailure() {
         val activityRepository = FakeActivityRepository()
-        activityRepository.setThrows(activityRepository::findById, true)
+        activityRepository.setThrows(activityRepository::getById, true)
 
         val viewModel = ActivityDetailViewModel(
             SavedStateHandle(mapOf(Destination.ActivityDetail.ID_KEY to 1L)),
@@ -74,6 +75,7 @@ class ActivityDetailScreenTest {
                 ActivityDetailScreen(
                     onPopBackStack = {},
                     onEditActivity = {},
+                    onSelectChainItem = {},
                     activityDetailViewModel = viewModel
                 )
             }
@@ -99,6 +101,7 @@ class ActivityDetailScreenTest {
                 ActivityDetailScreen(
                     onPopBackStack = { onPopBackStackCalled = true },
                     onEditActivity = {},
+                    onSelectChainItem = {},
                     activityDetailViewModel = viewModel
                 )
             }
@@ -113,7 +116,7 @@ class ActivityDetailScreenTest {
     }
 
     @Test
-    fun displaysErrorMessage_whenRemoveActivityFails() {
+    fun displaysErrorMessage_whenRemoveActivityFailed() {
         val activity = genActivity()
         val activityRepository = FakeActivityRepository(activity)
         val viewModel = ActivityDetailViewModel(
@@ -127,6 +130,7 @@ class ActivityDetailScreenTest {
                 ActivityDetailScreen(
                     onPopBackStack = {},
                     onEditActivity = {},
+                    onSelectChainItem = {},
                     activityDetailViewModel = viewModel
                 )
             }

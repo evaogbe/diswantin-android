@@ -1,6 +1,8 @@
 package io.github.evaogbe.diswantin.activity.ui
 
+import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -104,6 +106,10 @@ class ActivityFormScreenTest {
             stringResource(R.string.scheduled_at_label),
             useUnmergedTree = true
         ).assertIsDisplayed()
+        composeTestRule.onNodeWithText(
+            stringResource(R.string.prev_activity_label),
+            useUnmergedTree = true
+        ).assertDoesNotExist()
 
         composeTestRule.onNodeWithText(stringResource(R.string.name_label), useUnmergedTree = true)
             .onParent()
@@ -144,12 +150,14 @@ class ActivityFormScreenTest {
             .assertIsDisplayed()
     }
 
+    @OptIn(ExperimentalTestApi::class)
     @Test
     fun popsBackStack_whenActivityUpdated() {
         val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
         var onPopBackStackCalled = false
-        val activity = genActivity().copy(dueAt = faker.random.randomFutureDate().toInstant())
-        val activityRepository = FakeActivityRepository(activity)
+        val activity1 = genActivity().copy(dueAt = faker.random.randomFutureDate().toInstant())
+        val activity2 = genActivity(id = 2L)
+        val activityRepository = FakeActivityRepository(activity1, activity2)
         val viewModel = createActivityFormViewModelForEdit(activityRepository)
 
         composeTestRule.setContent {
@@ -169,6 +177,10 @@ class ActivityFormScreenTest {
             stringResource(R.string.scheduled_at_label),
             useUnmergedTree = true
         ).assertDoesNotExist()
+        composeTestRule.onNodeWithText(
+            stringResource(R.string.prev_activity_label),
+            useUnmergedTree = true
+        ).assertIsDisplayed()
 
         composeTestRule.onNodeWithText(stringResource(R.string.name_label), useUnmergedTree = true)
             .onParent()
@@ -183,6 +195,14 @@ class ActivityFormScreenTest {
             .performClick()
         composeTestRule.onNodeWithText(stringResource(R.string.ok_button)).performClick()
         composeTestRule.onNodeWithText(stringResource(R.string.ok_button)).performClick()
+        composeTestRule.onNodeWithText(
+            stringResource(R.string.prev_activity_label),
+            useUnmergedTree = true
+        )
+            .onParent()
+            .performTextInput(activity2.name.substring(0, 1))
+        composeTestRule.waitUntilExactlyOneExists(hasText(activity2.name))
+        composeTestRule.onNodeWithText(activity2.name).performClick()
         composeTestRule.onNodeWithText(stringResource(R.string.save_button)).performClick()
 
         composeTestRule.onNodeWithTag(PendingLayoutTestTag).assertIsDisplayed()
@@ -212,8 +232,8 @@ class ActivityFormScreenTest {
             .assertIsDisplayed()
     }
 
-    private fun genActivity() = Activity(
-        id = 1L,
+    private fun genActivity(id: Long = 1L) = Activity(
+        id = id,
         createdAt = faker.random.randomPastDate().toInstant(),
         name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
     )

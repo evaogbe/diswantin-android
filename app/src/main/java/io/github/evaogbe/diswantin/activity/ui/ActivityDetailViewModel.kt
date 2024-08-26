@@ -29,10 +29,15 @@ class ActivityDetailViewModel @Inject constructor(
     private val userMessage = MutableStateFlow<Int?>(null)
 
     val uiState =
-        combine(activityRepository.findById(activityId), userMessage) { activity, userMessage ->
+        combine(
+            activityRepository.getById(activityId),
+            activityRepository.getChain(activityId),
+            userMessage
+        ) { activity, activityChain, userMessage ->
             if (activity != null) {
                 ActivityDetailUiState.Success(
                     activity = activity,
+                    activityChain = if (activityChain.size > 1) activityChain else emptyList(),
                     userMessage = userMessage,
                     clock = clock
                 )
@@ -52,7 +57,7 @@ class ActivityDetailViewModel @Inject constructor(
         val activity = (uiState.value as? ActivityDetailUiState.Success)?.activity ?: return
         viewModelScope.launch {
             try {
-                activityRepository.remove(activity)
+                activityRepository.remove(activity.id)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {

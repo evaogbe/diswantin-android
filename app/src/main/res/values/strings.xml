@@ -1,4 +1,5 @@
 <resources>
+    <string name="activity_chain_label">Sequence</string>
     <string name="activity_detail_delete_error">Something went wrong deleting the activity</string>
     <string name="activity_detail_fetch_error">Something went wrong loading the activity</string>
     <string name="activity_form_fetch_error">Something went wrong loading the activity</string>
@@ -6,6 +7,9 @@
     <string name="activity_form_save_error_new">Something went wrong adding the activity</string>
     <string name="activity_form_title_edit">Edit Activity</string>
     <string name="activity_form_title_new">New Activity</string>
+    <string name="activity_search_empty">No matching activities</string>
+    <string name="activity_search_error">Something went wrong searching for activities</string>
+    <string name="activity_search_title">Search activities</string>
     <string name="add_activity_button">Add activity</string>
     <string name="advice_button">Advice</string>
     <string name="advice_title">Advice</string>
@@ -24,13 +28,11 @@
     <string name="more_actions_button">More actions</string>
     <string name="name_label">Name</string>
     <string name="ok_button">OK</string>
+    <string name="prev_activity_label">Activity Before</string>
     <string name="remove_button">Remove</string>
     <string name="save_button">Save</string>
     <string name="scheduled_at_label">Scheduled at</string>
     <string name="search_activities_button">Search activities</string>
-    <string name="search_activities_placeholder">Search activities</string>
-    <string name="search_activities_error">Something went wrong searching for activities</string>
-    <string name="search_results_empty">No matching activities</string>
     <string name="suggestion_item_break_down_task"><![CDATA[Be flexible about how much of the task needs to be completed. Do just the first <b>2 minutes</b>]]></string>
     <string name="suggestion_item_check_the_facts"><![CDATA[<b>Check the Facts</b>]]></string>
     <string name="suggestion_item_day_off"><![CDATA[Plan a <b>day off</b>]]></string>

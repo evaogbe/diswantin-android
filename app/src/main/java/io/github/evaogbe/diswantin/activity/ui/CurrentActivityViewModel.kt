@@ -45,7 +45,7 @@ class CurrentActivityViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
-                activityRepository.remove(activity)
+                activityRepository.remove(activity.id)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {

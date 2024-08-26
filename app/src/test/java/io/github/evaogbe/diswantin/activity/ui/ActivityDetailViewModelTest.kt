@@ -46,6 +46,7 @@ class ActivityDetailViewModelTest {
         assertThat(viewModel.uiState.value).isEqualTo(
             ActivityDetailUiState.Success(
                 activity = activity,
+                activityChain = listOf(),
                 userMessage = null,
                 clock = clock
             )
@@ -57,7 +58,7 @@ class ActivityDetailViewModelTest {
         val activity = genActivity()
         val clock = Clock.systemDefaultZone()
         val activityRepository = FakeActivityRepository(activity)
-        activityRepository.setThrows(activityRepository::findById, true)
+        activityRepository.setThrows(activityRepository::getById, true)
 
         val viewModel = ActivityDetailViewModel(
             SavedStateHandle(mapOf(Destination.ActivityDetail.ID_KEY to activity.id)),
@@ -90,6 +91,7 @@ class ActivityDetailViewModelTest {
         assertThat(viewModel.uiState.value).isEqualTo(
             ActivityDetailUiState.Success(
                 activity = activity,
+                activityChain = listOf(),
                 userMessage = null,
                 clock = clock
             )
@@ -122,6 +124,7 @@ class ActivityDetailViewModelTest {
             assertThat(viewModel.uiState.value).isEqualTo(
                 ActivityDetailUiState.Success(
                     activity = activity,
+                    activityChain = listOf(),
                     userMessage = R.string.activity_detail_delete_error,
                     clock = clock
                 )

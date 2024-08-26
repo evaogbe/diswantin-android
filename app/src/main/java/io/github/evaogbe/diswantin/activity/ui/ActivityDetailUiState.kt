@@ -14,6 +14,7 @@ sealed interface ActivityDetailUiState {
 
     data class Success(
         val activity: Activity,
+        val activityChain: List<Activity>,
         @StringRes val userMessage: Int?,
         private val clock: Clock
     ) : ActivityDetailUiState {
@@ -21,8 +22,9 @@ sealed interface ActivityDetailUiState {
 
         val formattedScheduledAt = activity.scheduledAt?.let(::formatDateTime)
 
-        private fun formatDateTime(dateTime: Instant) = dateTime.atZone(clock.zone)
-            .format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL, FormatStyle.SHORT))
+        private fun formatDateTime(dateTime: Instant) =
+            dateTime.atZone(clock.zone)
+                .format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL, FormatStyle.SHORT))
     }
 
     data object Removed : ActivityDetailUiState

@@ -50,7 +50,7 @@ class ActivitySearchScreenTest {
         }
 
         composeTestRule.onNodeWithText(
-            stringResource(R.string.search_activities_placeholder),
+            stringResource(R.string.activity_search_title),
             useUnmergedTree = true
         ).onParent()
             .performTextInput(query)
@@ -78,13 +78,13 @@ class ActivitySearchScreenTest {
         }
 
         composeTestRule.onNodeWithText(
-            stringResource(R.string.search_activities_placeholder),
+            stringResource(R.string.activity_search_title),
             useUnmergedTree = true
         ).onParent()
             .performTextInput(query)
 
         composeTestRule.waitUntilExactlyOneExists(
-            hasText(stringResource(R.string.search_results_empty))
+            hasText(stringResource(R.string.activity_search_empty))
         )
     }
 
@@ -106,13 +106,13 @@ class ActivitySearchScreenTest {
 
         activityRepository.setThrows(activityRepository::search, true)
         composeTestRule.onNodeWithText(
-            stringResource(R.string.search_activities_placeholder),
+            stringResource(R.string.activity_search_title),
             useUnmergedTree = true
         ).onParent()
             .performTextInput(query)
 
         composeTestRule.waitUntilExactlyOneExists(
-            hasText(stringResource(R.string.search_activities_error))
+            hasText(stringResource(R.string.activity_search_error))
         )
     }
 }

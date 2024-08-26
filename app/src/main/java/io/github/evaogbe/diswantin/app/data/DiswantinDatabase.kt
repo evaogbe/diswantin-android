@@ -13,10 +13,11 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import io.github.evaogbe.diswantin.activity.data.Activity
 import io.github.evaogbe.diswantin.activity.data.ActivityDao
 import io.github.evaogbe.diswantin.activity.data.ActivityFts
+import io.github.evaogbe.diswantin.activity.data.ActivityPath
 
 @Database(
-    version = 6,
-    entities = [Activity::class, ActivityFts::class],
+    version = 7,
+    entities = [Activity::class, ActivityFts::class, ActivityPath::class],
     autoMigrations = [
         AutoMigration(from = 2, to = 3),
         AutoMigration(from = 3, to = 4),
@@ -73,11 +74,36 @@ abstract class DiswantinDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """CREATE TABLE `activity_path`
+                        (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        ancestor INTEGER NOT NULL
+                            REFERENCES activity (id) ON DELETE CASCADE ON UPDATE CASCADE,
+                        descendant INTEGER NOT NULL
+                            REFERENCES activity (id) ON DELETE CASCADE ON UPDATE CASCADE,
+                        depth INTEGER NOT NULL
+                        )"""
+                )
+                db.execSQL(
+                    """CREATE UNIQUE INDEX IF NOT EXISTS `index_activity_path_ancestor_descendant`
+                    ON `activity_path` (`ancestor`, `descendant`)"""
+                )
+                db.execSQL(
+                    """INSERT INTO `activity_path`
+                        (ancestor, descendant, depth)
+                        SELECT id, id, 0
+                        FROM `activity`"""
+                )
+            }
+        }
+
         fun createDatabase(context: Context) =
             Room.databaseBuilder(
                 context.applicationContext,
                 DiswantinDatabase::class.java,
                 DB_NAME
-            ).addMigrations(MIGRATION_1_2, MIGRATION_5_6).build()
+            ).addMigrations(MIGRATION_1_2, MIGRATION_5_6, MIGRATION_6_7).build()
     }
 }

@@ -13,8 +13,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Close
@@ -43,7 +45,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.evaogbe.diswantin.R
+import io.github.evaogbe.diswantin.activity.data.Activity
+import io.github.evaogbe.diswantin.ui.components.AutocompleteField
 import io.github.evaogbe.diswantin.ui.components.DateTimePickerDialog
 import io.github.evaogbe.diswantin.ui.components.LoadFailureLayout
 import io.github.evaogbe.diswantin.ui.components.PendingLayout
@@ -52,6 +57,7 @@ import io.github.evaogbe.diswantin.ui.theme.ScreenLg
 import io.github.evaogbe.diswantin.ui.theme.SpaceMd
 import io.github.evaogbe.diswantin.ui.theme.SpaceSm
 import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
+import java.time.Instant
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -61,19 +67,11 @@ fun ActivityFormScreen(
     onPopBackStack: () -> Unit,
     activityFormViewModel: ActivityFormViewModel = hiltViewModel()
 ) {
-    val uiState = activityFormViewModel.uiState
+    val uiState by activityFormViewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(uiState, activityFormViewModel, onPopBackStack) {
-        when (uiState) {
-            is ActivityFormUiState.Pending -> {
-                activityFormViewModel.initialize()
-            }
-
-            is ActivityFormUiState.Saved -> {
-                onPopBackStack()
-            }
-
-            else -> {}
+        if (uiState is ActivityFormUiState.Saved) {
+            onPopBackStack()
         }
     }
 
@@ -82,10 +80,10 @@ fun ActivityFormScreen(
         onClose = onPopBackStack,
         name = activityFormViewModel.nameInput,
         onNameChange = activityFormViewModel::updateNameInput,
-        dueAt = activityFormViewModel.dueAtInput,
         onDueAtChange = activityFormViewModel::updateDueAtInput,
-        scheduledAt = activityFormViewModel.scheduledAtInput,
         onScheduleAtChange = activityFormViewModel::updateScheduledAtInput,
+        onPrevActivitySearch = activityFormViewModel::searchPrevActivity,
+        onSelectPrevActivity = activityFormViewModel::updatePrevActivity,
         onSave = activityFormViewModel::saveActivity,
         uiState = uiState
     )
@@ -98,10 +96,10 @@ fun ActivityFormScreen(
     onClose: () -> Unit,
     name: String,
     onNameChange: (String) -> Unit,
-    dueAt: ZonedDateTime?,
     onDueAtChange: (ZonedDateTime?) -> Unit,
-    scheduledAt: ZonedDateTime?,
     onScheduleAtChange: (ZonedDateTime?) -> Unit,
+    onPrevActivitySearch: (String) -> Unit,
+    onSelectPrevActivity: (Activity?) -> Unit,
     onSave: () -> Unit,
     uiState: ActivityFormUiState
 ) {
@@ -153,10 +151,11 @@ fun ActivityFormScreen(
                 ActivityFormLayout(
                     name = name,
                     onNameChange = onNameChange,
-                    dueAt = dueAt,
                     onDueAtChange = onDueAtChange,
-                    scheduledAt = scheduledAt,
                     onScheduleAtChange = onScheduleAtChange,
+                    onPrevActivitySearch = onPrevActivitySearch,
+                    onSelectPrevActivity = onSelectPrevActivity,
+                    uiState = uiState,
                     formError = when {
                         !uiState.hasSaveError -> null
                         isNew -> stringResource(R.string.activity_form_save_error_new)
@@ -177,10 +176,11 @@ enum class DateTimeConstraintField {
 fun ActivityFormLayout(
     name: String,
     onNameChange: (String) -> Unit,
-    dueAt: ZonedDateTime?,
     onDueAtChange: (ZonedDateTime?) -> Unit,
-    scheduledAt: ZonedDateTime?,
     onScheduleAtChange: (ZonedDateTime?) -> Unit,
+    onPrevActivitySearch: (String) -> Unit,
+    onSelectPrevActivity: (Activity?) -> Unit,
+    uiState: ActivityFormUiState.Success,
     formError: String?,
     modifier: Modifier = Modifier
 ) {
@@ -192,6 +192,7 @@ fun ActivityFormLayout(
         Column(
             modifier = Modifier
                 .widthIn(max = ScreenLg)
+                .verticalScroll(rememberScrollState())
                 .padding(SpaceMd),
             verticalArrangement = Arrangement.spacedBy(SpaceMd)
         ) {
@@ -216,21 +217,32 @@ fun ActivityFormLayout(
                 singleLine = true
             )
 
-            if (scheduledAt == null) {
+            if (uiState.scheduledAtInput == null) {
                 DateTimeTextField(
                     onClick = { dateTimePickerType = DateTimeConstraintField.DueAt },
-                    dateTime = dueAt,
+                    dateTime = uiState.dueAtInput,
                     onDateTimeChange = onDueAtChange,
                     label = { Text(stringResource(R.string.due_at_label)) },
                 )
             }
 
-            if (dueAt == null) {
+            if (uiState.dueAtInput == null) {
                 DateTimeTextField(
                     onClick = { dateTimePickerType = DateTimeConstraintField.ScheduledAt },
-                    dateTime = scheduledAt,
+                    dateTime = uiState.scheduledAtInput,
                     onDateTimeChange = onScheduleAtChange,
                     label = { Text(stringResource(R.string.scheduled_at_label)) },
+                )
+            }
+
+            if (uiState.canUpdatePrevActivity) {
+                AutocompleteField(
+                    label = { Text(stringResource(R.string.prev_activity_label)) },
+                    onSearch = onPrevActivitySearch,
+                    selectedOption = uiState.prevActivity,
+                    options = uiState.prevActivityOptions,
+                    formatOption = Activity::name,
+                    onSelectOption = onSelectPrevActivity,
                 )
             }
         }
@@ -241,7 +253,7 @@ fun ActivityFormLayout(
         DateTimeConstraintField.DueAt -> {
             DateTimePickerDialog(
                 onDismissRequest = { dateTimePickerType = null },
-                dateTime = dueAt,
+                dateTime = uiState.dueAtInput,
                 onSelectDateTime = { selectedDateTime ->
                     if (selectedDateTime != null) {
                         onDueAtChange(selectedDateTime)
@@ -254,7 +266,7 @@ fun ActivityFormLayout(
         DateTimeConstraintField.ScheduledAt -> {
             DateTimePickerDialog(
                 onDismissRequest = { dateTimePickerType = null },
-                dateTime = scheduledAt,
+                dateTime = uiState.scheduledAtInput,
                 onSelectDateTime = { selectedDateTime ->
                     if (selectedDateTime != null) {
                         onScheduleAtChange(selectedDateTime)
@@ -295,7 +307,7 @@ fun DateTimeTextField(
                 )
             },
             singleLine = true,
-            interactionSource = interactionSource
+            interactionSource = interactionSource,
         )
 
         if (dateTime != null) {
@@ -326,12 +338,19 @@ fun ActivityFormScreenPreview_New() {
             onClose = {},
             name = "",
             onNameChange = {},
-            dueAt = null,
             onDueAtChange = {},
-            scheduledAt = null,
             onScheduleAtChange = {},
+            onPrevActivitySearch = {},
+            onSelectPrevActivity = {},
             onSave = {},
-            uiState = ActivityFormUiState.Success(hasSaveError = false)
+            uiState = ActivityFormUiState.Success(
+                dueAtInput = null,
+                scheduledAtInput = null,
+                canUpdatePrevActivity = false,
+                prevActivity = null,
+                prevActivityOptions = emptyList(),
+                hasSaveError = false,
+            )
         )
     }
 }
@@ -343,14 +362,21 @@ fun ActivityFormScreenPreview_Edit() {
         ActivityFormScreen(
             isNew = false,
             onClose = {},
-            name = "Brush teeth",
+            name = "Shower",
             onNameChange = {},
-            dueAt = ZonedDateTime.now(),
             onDueAtChange = {},
-            scheduledAt = null,
             onScheduleAtChange = {},
+            onPrevActivitySearch = {},
+            onSelectPrevActivity = {},
             onSave = {},
-            uiState = ActivityFormUiState.Success(hasSaveError = true)
+            uiState = ActivityFormUiState.Success(
+                dueAtInput = ZonedDateTime.now(),
+                scheduledAtInput = null,
+                canUpdatePrevActivity = true,
+                prevActivity = Activity(id = 1L, createdAt = Instant.now(), name = "Brush teeth"),
+                prevActivityOptions = emptyList(),
+                hasSaveError = true,
+            )
         )
     }
 }

@@ -9,7 +9,5 @@ import dagger.hilt.components.SingletonComponent
 @InstallIn(SingletonComponent::class)
 interface ActivityDataModule {
     @Binds
-    abstract fun bindActivityRepository(
-        localActivityRepository: LocalActivityRepository
-    ): ActivityRepository
+    fun bindActivityRepository(localActivityRepository: LocalActivityRepository): ActivityRepository
 }

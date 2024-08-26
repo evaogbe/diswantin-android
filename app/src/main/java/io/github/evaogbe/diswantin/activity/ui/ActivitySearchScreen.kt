@@ -86,10 +86,10 @@ fun ActivitySearchScreen(
     }
 
     ActivitySearchScreen(
-        onBackClick = onBackClick,
         query = query,
         onQueryChange = setQuery,
         onSearch = activitySearchViewModel::searchActivities,
+        onBackClick = onBackClick,
         uiState = uiState,
         onSelectSearchResult = { onSelectSearchResult(it.id) }
     )
@@ -98,10 +98,10 @@ fun ActivitySearchScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ActivitySearchScreen(
-    onBackClick: () -> Unit,
     query: String,
     onQueryChange: (String) -> Unit,
     onSearch: (String) -> Unit,
+    onBackClick: () -> Unit,
     uiState: ActivitySearchUiState,
     onSelectSearchResult: (Activity) -> Unit,
 ) {
@@ -112,7 +112,7 @@ fun ActivitySearchScreen(
                     value = query,
                     onValueChange = onQueryChange,
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text(stringResource(R.string.search_activities_placeholder)) },
+                    placeholder = { Text(stringResource(R.string.activity_search_title)) },
                     keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
                     keyboardActions = KeyboardActions(onSearch = { onSearch(query) }),
                     singleLine = true,
@@ -140,7 +140,7 @@ fun ActivitySearchScreen(
 
             is ActivitySearchUiState.Failure -> {
                 LoadFailureLayout(
-                    message = stringResource(R.string.search_activities_error),
+                    message = stringResource(R.string.activity_search_error),
                     modifier = Modifier.padding(innerPadding)
                 )
             }
@@ -219,7 +219,7 @@ fun EmptyActivitySearchLayout(modifier: Modifier = Modifier) {
             )
             Spacer(Modifier.size(SpaceXl))
             Text(
-                stringResource(R.string.search_results_empty),
+                stringResource(R.string.activity_search_empty),
                 textAlign = TextAlign.Center,
                 style = typography.headlineLarge
             )
@@ -232,26 +232,26 @@ fun EmptyActivitySearchLayout(modifier: Modifier = Modifier) {
 fun ActivitySearchScreenPreview() {
     DiswantinTheme {
         ActivitySearchScreen(
-            onBackClick = {},
             query = "Bru",
             onQueryChange = {},
             onSearch = {},
+            onBackClick = {},
             uiState = ActivitySearchUiState.Success(
                 persistentListOf(
                     Activity(
                         id = 1L,
                         createdAt = Instant.parse("2024-08-09T08:00:00Z"),
-                        name = "Brush teeth"
+                        name = "Brush teeth",
                     ),
                     Activity(
                         id = 2L,
                         createdAt = Instant.parse("2024-08-09T08:05:00Z"),
-                        name = "Brush hair"
+                        name = "Brush hair",
                     ),
                     Activity(
                         id = 3L,
                         createdAt = Instant.parse("2024-08-09T08:10:00Z"),
-                        name = "Eat brunch"
+                        name = "Eat brunch",
                     ),
                 )
             ),

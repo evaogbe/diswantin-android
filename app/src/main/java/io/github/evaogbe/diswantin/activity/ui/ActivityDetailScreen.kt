@@ -1,13 +1,15 @@
 package io.github.evaogbe.diswantin.activity.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -17,8 +19,10 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.Scaffold
@@ -45,6 +49,7 @@ import io.github.evaogbe.diswantin.ui.components.LoadFailureLayout
 import io.github.evaogbe.diswantin.ui.components.PendingLayout
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.evaogbe.diswantin.ui.theme.ScreenLg
+import io.github.evaogbe.diswantin.ui.theme.SpaceLg
 import io.github.evaogbe.diswantin.ui.theme.SpaceMd
 import io.github.evaogbe.diswantin.ui.theme.SpaceXs
 import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
@@ -55,6 +60,7 @@ import java.time.Instant
 fun ActivityDetailScreen(
     onPopBackStack: () -> Unit,
     onEditActivity: (Long) -> Unit,
+    onSelectChainItem: (Long) -> Unit,
     activityDetailViewModel: ActivityDetailViewModel = hiltViewModel()
 ) {
     val uiState by activityDetailViewModel.uiState.collectAsStateWithLifecycle()
@@ -79,7 +85,8 @@ fun ActivityDetailScreen(
         onEditActivity = { onEditActivity(it.id) },
         onRemoveActivity = activityDetailViewModel::removeActivity,
         snackbarHostState = snackbarHostState,
-        uiState = uiState
+        uiState = uiState,
+        onSelectChainItem = { onSelectChainItem(it.id) },
     )
 }
 
@@ -91,6 +98,7 @@ fun ActivityDetailScreen(
     onRemoveActivity: () -> Unit,
     snackbarHostState: SnackbarHostState,
     uiState: ActivityDetailUiState,
+    onSelectChainItem: (Activity) -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -157,44 +165,102 @@ fun ActivityDetailScreen(
             }
 
             is ActivityDetailUiState.Success -> {
-                ActivityDetailLayout(uiState = uiState, modifier = Modifier.padding(innerPadding))
+                ActivityDetailLayout(
+                    uiState = uiState,
+                    onSelectChainItem = onSelectChainItem,
+                    modifier = Modifier.padding(innerPadding)
+                )
             }
         }
     }
 }
 
 @Composable
-fun ActivityDetailLayout(uiState: ActivityDetailUiState.Success, modifier: Modifier = Modifier) {
+fun ActivityDetailLayout(
+    uiState: ActivityDetailUiState.Success,
+    onSelectChainItem: (Activity) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
-        SelectionContainer {
-            Column(
-                modifier = Modifier
-                    .widthIn(max = ScreenLg)
-                    .fillMaxWidth()
-                    .padding(SpaceMd)
-            ) {
-                Text(text = uiState.activity.name, style = typography.displaySmall)
+        LazyColumn(
+            modifier = Modifier
+                .widthIn(max = ScreenLg)
+                .fillMaxWidth()
+                .padding(vertical = SpaceMd)
+        ) {
+            item {
+                SelectionContainer {
+                    Text(
+                        text = uiState.activity.name,
+                        modifier = Modifier.padding(horizontal = SpaceMd),
+                        style = typography.displaySmall
+                    )
+                }
+            }
 
-                if (uiState.formattedDueAt != null) {
+            if (uiState.formattedDueAt != null) {
+                item {
                     Spacer(Modifier.size(SpaceMd))
                     Text(
                         stringResource(R.string.due_at_label),
+                        modifier = Modifier.padding(horizontal = SpaceMd),
                         color = colorScheme.onSurfaceVariant,
                         style = typography.labelSmall
                     )
-                    Spacer(Modifier.size(SpaceXs))
-                    Text(text = uiState.formattedDueAt, style = typography.bodyLarge)
                 }
 
-                if (uiState.formattedScheduledAt != null) {
+                item {
+                    Spacer(Modifier.size(SpaceXs))
+                    SelectionContainer {
+                        Text(
+                            text = uiState.formattedDueAt,
+                            modifier = Modifier.padding(horizontal = SpaceMd),
+                            style = typography.bodyLarge
+                        )
+                    }
+                }
+            }
+
+            if (uiState.formattedScheduledAt != null) {
+                item {
                     Spacer(Modifier.size(SpaceMd))
                     Text(
                         stringResource(R.string.scheduled_at_label),
+                        modifier = Modifier.padding(horizontal = SpaceMd),
                         color = colorScheme.onSurfaceVariant,
                         style = typography.labelSmall
                     )
+                }
+
+                item {
                     Spacer(Modifier.size(SpaceXs))
-                    Text(text = uiState.formattedScheduledAt, style = typography.bodyLarge)
+                    SelectionContainer {
+                        Text(
+                            text = uiState.formattedScheduledAt,
+                            modifier = Modifier.padding(horizontal = SpaceMd),
+                            style = typography.bodyLarge
+                        )
+                    }
+                }
+            }
+
+            if (uiState.activityChain.isNotEmpty()) {
+                item {
+                    Spacer(Modifier.size(SpaceLg))
+                    Text(
+                        stringResource(R.string.activity_chain_label),
+                        modifier = Modifier.padding(horizontal = SpaceMd),
+                        color = colorScheme.onSurfaceVariant,
+                        style = typography.labelSmall
+                    )
+                }
+
+                items(uiState.activityChain, key = Activity::id) { activity ->
+                    ListItem(
+                        headlineContent = { Text(text = activity.name) },
+                        modifier = Modifier.clickable { onSelectChainItem(activity) },
+                    )
+                    HorizontalDivider()
                 }
             }
         }
@@ -216,16 +282,18 @@ fun ActivityDetailScreenPreview() {
                     createdAt = Instant.now(),
                     name = "Brush teeth",
                 ),
+                activityChain = emptyList(),
                 userMessage = null,
                 clock = Clock.systemDefaultZone()
-            )
+            ),
+            onSelectChainItem = {},
         )
     }
 }
 
 @DevicePreviews
 @Composable
-fun ActivityDetailLayoutPreview() {
+fun ActivityDetailLayoutPreview_withActivityChain() {
     DiswantinTheme {
         Surface {
             ActivityDetailLayout(
@@ -234,11 +302,70 @@ fun ActivityDetailLayoutPreview() {
                         id = 1L,
                         createdAt = Instant.now(),
                         name = "Brush teeth",
-                        dueAt = Instant.now()
+                    ),
+                    activityChain = listOf(
+                        Activity(
+                            id = 1L,
+                            createdAt = Instant.now(),
+                            name = "Brush teeth",
+                            dueAt = Instant.now(),
+                        ),
+                        Activity(
+                            id = 2L,
+                            createdAt = Instant.now(),
+                            name = "Shower",
+                        ),
+                        Activity(
+                            id = 3L,
+                            createdAt = Instant.now(),
+                            name = "Eat breakfast",
+                        ),
                     ),
                     userMessage = null,
                     clock = Clock.systemDefaultZone()
-                )
+                ),
+                onSelectChainItem = {},
+            )
+        }
+    }
+}
+
+
+@DevicePreviews
+@Composable
+fun ActivityDetailLayoutPreview_withDueAtAndActivityChain() {
+    DiswantinTheme {
+        Surface {
+            ActivityDetailLayout(
+                uiState = ActivityDetailUiState.Success(
+                    activity = Activity(
+                        id = 1L,
+                        createdAt = Instant.now(),
+                        name = "Brush teeth",
+                        dueAt = Instant.now(),
+                    ),
+                    activityChain = listOf(
+                        Activity(
+                            id = 1L,
+                            createdAt = Instant.now(),
+                            name = "Brush teeth",
+                            dueAt = Instant.now(),
+                        ),
+                        Activity(
+                            id = 2L,
+                            createdAt = Instant.now(),
+                            name = "Shower",
+                        ),
+                        Activity(
+                            id = 3L,
+                            createdAt = Instant.now(),
+                            name = "Eat breakfast",
+                        ),
+                    ),
+                    userMessage = null,
+                    clock = Clock.systemDefaultZone()
+                ),
+                onSelectChainItem = {},
             )
         }
     }

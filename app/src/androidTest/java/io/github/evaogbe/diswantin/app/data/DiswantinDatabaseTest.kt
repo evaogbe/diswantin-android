@@ -91,4 +91,34 @@ class DiswantinDatabaseTest {
         }
         migratedDb.close()
     }
+
+    @Test
+    fun testMigration_6_7() {
+        val activityId = faker.random.nextLong(min = 1, max = Long.MAX_VALUE)
+        val activityCreatedAt = faker.random.randomPastDate().toInstant().toEpochMilli()
+        val activityName = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
+
+        val initialDb = migrationTestHelper.createDatabase(DiswantinDatabase.DB_NAME, 6)
+        initialDb.execSQL(
+            "INSERT INTO activity (id, created_at, name) VALUES (?, ?, ?)",
+            arrayOf(activityId, activityCreatedAt, activityName)
+        )
+        initialDb.close()
+
+        val migratedDb =
+            migrationTestHelper.runMigrationsAndValidate(
+                DiswantinDatabase.DB_NAME,
+                7,
+                true,
+                DiswantinDatabase.MIGRATION_6_7
+            )
+        migratedDb.query("SELECT * FROM activity_path").use { stmt ->
+            assertThat(stmt.moveToFirst()).isTrue()
+            assertThat(stmt.getLong(0)).isPositive()
+            assertThat(stmt.getLong(1)).isEqualTo(activityId)
+            assertThat(stmt.getLong(2)).isEqualTo(activityId)
+            assertThat(stmt.getInt(3)).isEqualTo(0)
+        }
+        migratedDb.close()
+    }
 }

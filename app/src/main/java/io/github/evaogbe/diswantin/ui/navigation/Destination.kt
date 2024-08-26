@@ -7,8 +7,8 @@ sealed interface Destination {
         override val route = "currentActivity"
     }
 
-    data object SearchResults : Destination {
-        override val route = "searchResults"
+    data object ActivitySearch : Destination {
+        override val route = "activitySearch"
     }
 
     data object NewActivityForm : Destination {

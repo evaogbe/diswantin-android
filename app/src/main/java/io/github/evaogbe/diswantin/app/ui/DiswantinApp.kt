@@ -24,7 +24,7 @@ fun DiswantinApp() {
         composable(Destination.CurrentActivity.route) {
             CurrentActivityScreen(
                 onNavigateToSearch = {
-                    navController.navigate(route = Destination.SearchResults.route)
+                    navController.navigate(route = Destination.ActivitySearch.route)
                 },
                 onAddActivity = {
                     navController.navigate(route = Destination.NewActivityForm.route)
@@ -37,7 +37,7 @@ fun DiswantinApp() {
                 },
             )
         }
-        composable(Destination.SearchResults.route) {
+        composable(Destination.ActivitySearch.route) {
             ActivitySearchScreen(
                 onBackClick = navController::popBackStack,
                 onSelectSearchResult = {
@@ -63,11 +63,18 @@ fun DiswantinApp() {
             arguments = listOf(navArgument(Destination.ActivityDetail.ID_KEY) {
                 type = NavType.LongType
             })
-        ) {
+        ) { backStackEntry ->
             ActivityDetailScreen(
                 onPopBackStack = navController::popBackStack,
                 onEditActivity = {
                     navController.navigate(route = Destination.EditActivityForm(it).route)
+                },
+                onSelectChainItem = { id ->
+                    if (
+                        backStackEntry.arguments?.getLong(Destination.ActivityDetail.ID_KEY) != id
+                    ) {
+                        navController.navigate(route = Destination.ActivityDetail(id).route)
+                    }
                 }
             )
         }

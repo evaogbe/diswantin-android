@@ -6,6 +6,7 @@ import assertk.assertions.doesNotContain
 import assertk.assertions.isEqualTo
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.activity.data.Activity
+import io.github.evaogbe.diswantin.activity.data.EditActivityForm
 import io.github.evaogbe.diswantin.testing.FakeActivityRepository
 import io.github.evaogbe.diswantin.testutils.MainDispatcherRule
 import io.github.serpro69.kfaker.Faker
@@ -46,12 +47,20 @@ class CurrentActivityViewModelTest {
                 )
             )
 
-            val updatedActivity1 = activity1.copy(name = name)
-            activityRepository.update(updatedActivity1)
+            activityRepository.update(
+                EditActivityForm(
+                    name = name,
+                    dueAt = activity1.dueAt,
+                    scheduledAt = activity1.scheduledAt,
+                    oldParentId = null,
+                    parentId = null,
+                    activity = activity1,
+                )
+            )
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 CurrentActivityUiState.Present(
-                    currentActivity = updatedActivity1,
+                    currentActivity = activity1.copy(name = name),
                     userMessage = null
                 )
             )

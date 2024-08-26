@@ -174,7 +174,7 @@ fun CurrentActivityLayout(
 ) {
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         Column(
-            modifier = modifier
+            modifier = Modifier
                 .padding(SpaceMd)
                 .widthIn(max = ScreenLg)
                 .fillMaxHeight(),
