@@ -36,8 +36,8 @@
     <string name="suggestion_item_friend"><![CDATA[Call/text/video chat/visit a <b>friend</b>. Try to brighten their day or ask them if you can vent]]></string>
     <string name="suggestion_item_imagine"><![CDATA[<b>Imagine</b> yourself completing the task]]></string>
     <string name="suggestion_item_journal"><![CDATA[Write in a <b>journal</b>]]></string>
-    <string name="suggestion_item_meditate"><![CDATA[<b>Meditate</b> for 1 minute. Focus on your environment, breathing, urges, body sensations, feelings, worries, or thoughts]]></string>
-    <string name="suggestion_item_meds"><![CDATA[Talk to your psychiatrist about a <b>medication</b> adjustment]]></string>
+    <string name="suggestion_item_meditate"><![CDATA[<b>Meditate</b> for 1 minute. Focus on your surroundings, breathing, urges, body sensations, feelings, worries, or thoughts]]></string>
+    <string name="suggestion_item_meds"><![CDATA[Talk to your doctor about a <b>medication</b> adjustment]]></string>
     <string name="suggestion_item_move"><![CDATA[<b>Move</b> your body]]></string>
     <string-array name="suggestion_item_move_sublist">
         <item>wiggle</item>
@@ -62,6 +62,6 @@
     <string name="task_search_error">Something went wrong searching for to-dos</string>
     <string name="task_search_title">Search to-dos</string>
     <string name="time_picker_dialog_title">Select time</string>
-    <string name="time_picker_switch_to_clock_mode">Switch to clock input mode</string>
+    <string name="time_picker_switch_to_dial_mode">Switch to clock input mode</string>
     <string name="time_picker_switch_to_input_mode">Switch to text input mode</string>
 </resources>

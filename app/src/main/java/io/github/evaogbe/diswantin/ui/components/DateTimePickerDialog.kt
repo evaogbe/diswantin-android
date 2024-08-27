@@ -79,7 +79,7 @@ fun DateTimePickerDialog(
             DatePicker(state = datePickerState)
         }
     } else {
-        var showClock by rememberSaveable { mutableStateOf(true) }
+        var showDial by rememberSaveable { mutableStateOf(true) }
 
         TimePickerDialog(
             onDismissRequest = onDismissRequest,
@@ -105,8 +105,8 @@ fun DateTimePickerDialog(
                 }
             },
             toggle = {
-                if (showClock) {
-                    IconButton(onClick = { showClock = false }) {
+                if (showDial) {
+                    IconButton(onClick = { showDial = false }) {
                         Icon(
                             painter = painterResource(R.drawable.baseline_keyboard_24),
                             contentDescription = stringResource(
@@ -115,18 +115,18 @@ fun DateTimePickerDialog(
                         )
                     }
                 } else {
-                    IconButton(onClick = { showClock = true }) {
+                    IconButton(onClick = { showDial = true }) {
                         Icon(
                             painter = painterResource(R.drawable.baseline_schedule_24),
                             contentDescription = stringResource(
-                                R.string.time_picker_switch_to_clock_mode
+                                R.string.time_picker_switch_to_dial_mode
                             ),
                         )
                     }
                 }
             }
         ) {
-            if (showClock) {
+            if (showDial) {
                 TimePicker(state = timePickerState)
             } else {
                 TimeInput(state = timePickerState)
