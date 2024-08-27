@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import java.time.Instant
 import kotlin.reflect.KFunction
-import kotlin.reflect.KProperty0
 
 class FakeTaskRepository(initialTasks: Collection<Task>) : TaskRepository {
     constructor(vararg initialTasks: Task) : this(initialTasks.toSet())
@@ -234,10 +233,6 @@ class FakeTaskRepository(initialTasks: Collection<Task>) : TaskRepository {
                     chainPaths.map { it.copy(depth = it.depth - 1) }
         }
         tasksTable.update { it - id }
-    }
-
-    fun setThrows(property: KProperty0<*>, showThrow: Boolean) {
-        setThrows(property::get, showThrow)
     }
 
     fun setThrows(method: KFunction<*>, shouldThrow: Boolean) {
