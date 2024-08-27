@@ -18,6 +18,7 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
+import java.time.Clock
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CurrentTaskViewModelTest {
@@ -34,7 +35,7 @@ class CurrentTaskViewModelTest {
             val (task1, task2) = genTasks(2)
             val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
             val taskRepository = FakeTaskRepository(task1, task2)
-            val viewModel = CurrentTaskViewModel(taskRepository)
+            val viewModel = createCurrentTaskViewModel(taskRepository)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -66,9 +67,9 @@ class CurrentTaskViewModelTest {
     fun `uiState is failure when repository throws`() = runTest(mainDispatcherRule.testDispatcher) {
         val task = genTasks(1).single()
         val taskRepository = FakeTaskRepository(task)
-        taskRepository.setThrows(taskRepository::currentTaskStream, true)
+        taskRepository.setThrows(taskRepository::getCurrentTask, true)
 
-        val viewModel = CurrentTaskViewModel(taskRepository)
+        val viewModel = createCurrentTaskViewModel(taskRepository)
 
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect()
@@ -82,7 +83,7 @@ class CurrentTaskViewModelTest {
         runTest(mainDispatcherRule.testDispatcher) {
             val (task1, task2) = genTasks(2)
             val taskRepository = FakeTaskRepository(task1, task2)
-            val viewModel = CurrentTaskViewModel(taskRepository)
+            val viewModel = createCurrentTaskViewModel(taskRepository)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -106,7 +107,7 @@ class CurrentTaskViewModelTest {
     fun `removeCurrentTask does nothing when no current task`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val taskRepository = FakeTaskRepository()
-            val viewModel = CurrentTaskViewModel(taskRepository)
+            val viewModel = createCurrentTaskViewModel(taskRepository)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -124,7 +125,7 @@ class CurrentTaskViewModelTest {
         runTest(mainDispatcherRule.testDispatcher) {
             val task = genTasks(1).single()
             val taskRepository = FakeTaskRepository(task)
-            val viewModel = CurrentTaskViewModel(taskRepository)
+            val viewModel = createCurrentTaskViewModel(taskRepository)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -158,4 +159,7 @@ class CurrentTaskViewModelTest {
             name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
         )
     }.take(count).toList()
+
+    private fun createCurrentTaskViewModel(taskRepository: FakeTaskRepository) =
+        CurrentTaskViewModel(taskRepository, Clock.systemDefaultZone())
 }

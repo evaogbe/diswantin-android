@@ -5,18 +5,15 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
-import java.time.Clock
-import java.time.ZonedDateTime
+import java.time.Instant
 import javax.inject.Inject
 
 class LocalTaskRepository @Inject constructor(
     private val taskDao: TaskDao,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
-    clock: Clock,
 ) : TaskRepository {
-    override val currentTaskStream = taskDao.getCurrentTask(
-        scheduledBefore = ZonedDateTime.now(clock).plusHours(1).toInstant()
-    ).flowOn(ioDispatcher)
+    override fun getCurrentTask(scheduledBefore: Instant) =
+        taskDao.getCurrentTask(scheduledBefore = scheduledBefore).flowOn(ioDispatcher)
 
     override fun getById(id: Long) = taskDao.getById(id).flowOn(ioDispatcher)
 

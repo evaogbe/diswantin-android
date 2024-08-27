@@ -17,6 +17,7 @@ import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
 import org.junit.Rule
 import org.junit.Test
+import java.time.Clock
 
 class CurrentTaskScreenTest {
     @get:Rule
@@ -30,7 +31,7 @@ class CurrentTaskScreenTest {
     fun displaysCurrentTaskName_withCurrentTask() {
         val task = genTasks(1).single()
         val taskRepository = FakeTaskRepository(task)
-        val viewModel = CurrentTaskViewModel(taskRepository)
+        val viewModel = createCurrentTaskViewModel(taskRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -50,7 +51,7 @@ class CurrentTaskScreenTest {
     @Test
     fun displaysEmptyMessage_withoutCurrentTask() {
         val taskRepository = FakeTaskRepository()
-        val viewModel = CurrentTaskViewModel(taskRepository)
+        val viewModel = createCurrentTaskViewModel(taskRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -72,9 +73,9 @@ class CurrentTaskScreenTest {
     fun displayErrorMessage_whenUiFailure() {
         val task = genTasks(1).single()
         val taskRepository = FakeTaskRepository(task)
-        val viewModel = CurrentTaskViewModel(taskRepository)
+        val viewModel = createCurrentTaskViewModel(taskRepository)
 
-        taskRepository.setThrows(taskRepository::currentTaskStream, true)
+        taskRepository.setThrows(taskRepository::getCurrentTask, true)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -97,7 +98,7 @@ class CurrentTaskScreenTest {
         var onAddTaskCalled = false
         val task = genTasks(1).single()
         val taskRepository = FakeTaskRepository(task)
-        val viewModel = CurrentTaskViewModel(taskRepository)
+        val viewModel = createCurrentTaskViewModel(taskRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -121,7 +122,7 @@ class CurrentTaskScreenTest {
     fun callsOnAddTask_whenAddTaskClicked() {
         var onAddTaskCalled = false
         val taskRepository = FakeTaskRepository()
-        val viewModel = CurrentTaskViewModel(taskRepository)
+        val viewModel = createCurrentTaskViewModel(taskRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -146,7 +147,7 @@ class CurrentTaskScreenTest {
         var onEditTaskCalled = false
         val task = genTasks(1).single()
         val taskRepository = FakeTaskRepository(task)
-        val viewModel = CurrentTaskViewModel(taskRepository)
+        val viewModel = createCurrentTaskViewModel(taskRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -173,7 +174,7 @@ class CurrentTaskScreenTest {
     fun displaysNextTaskName_whenRemoveClicked() {
         val (task1, task2) = genTasks(2)
         val taskRepository = FakeTaskRepository(task1, task2)
-        val viewModel = CurrentTaskViewModel(taskRepository)
+        val viewModel = createCurrentTaskViewModel(taskRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -198,7 +199,7 @@ class CurrentTaskScreenTest {
     fun displaysErrorMessage_whenRemoveFailed() {
         val task = genTasks(1).single()
         val taskRepository = FakeTaskRepository(task)
-        val viewModel = CurrentTaskViewModel(taskRepository)
+        val viewModel = createCurrentTaskViewModel(taskRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -232,4 +233,7 @@ class CurrentTaskScreenTest {
             name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
         )
     }.take(count).toList()
+
+    private fun createCurrentTaskViewModel(taskRepository: FakeTaskRepository) =
+        CurrentTaskViewModel(taskRepository, Clock.systemDefaultZone())
 }

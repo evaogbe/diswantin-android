@@ -1,9 +1,10 @@
 package io.github.evaogbe.diswantin.task.data
 
 import kotlinx.coroutines.flow.Flow
+import java.time.Instant
 
 interface TaskRepository {
-    val currentTaskStream: Flow<Task?>
+    fun getCurrentTask(scheduledBefore: Instant): Flow<Task?>
 
     fun getById(id: Long): Flow<Task?>
 

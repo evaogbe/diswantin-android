@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
-import java.time.ZonedDateTime
+import java.time.Instant
 import kotlin.reflect.KFunction
 import kotlin.reflect.KProperty0
 
@@ -36,13 +36,12 @@ class FakeTaskRepository(initialTasks: Collection<Task>) : TaskRepository {
     val tasks
         get() = tasksTable.value.values
 
-    override val currentTaskStream: Flow<Task?> =
+    override fun getCurrentTask(scheduledBefore: Instant): Flow<Task?> =
         combine(throwingMethods, tasksTable, taskPaths) { throwingMethods, tasks, taskPaths ->
-            if (::currentTaskStream::get in throwingMethods) {
+            if (::getCurrentTask in throwingMethods) {
                 throw RuntimeException("Test")
             }
 
-            val scheduledBefore = ZonedDateTime.now().plusHours(1).toInstant()
             tasks.values.sortedWith(
                 compareBy(nullsLast(), Task::scheduledAt)
                     .thenComparing(Task::dueAt, nullsLast())

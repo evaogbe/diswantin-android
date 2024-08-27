@@ -51,129 +51,129 @@ class LocalTaskRepositoryTest {
             Clock.fixed(Instant.parse("2024-08-23T17:00:00Z"), ZoneId.of("America/New_York"))
         val taskRepository = LocalTaskRepository(
             db.taskDao(),
-            UnconfinedTestDispatcher(testScheduler),
-            clock
+            UnconfinedTestDispatcher(testScheduler)
         )
 
-        taskRepository.currentTaskStream.test {
-            assertThat(awaitItem()).isNull()
+        taskRepository.getCurrentTask(scheduledBefore = Instant.parse("2024-08-23T18:00:00Z"))
+            .test {
+                assertThat(awaitItem()).isNull()
 
-            val task1 =
-                taskRepository.create(
-                    NewTaskForm(
-                        name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-                        dueAt = null,
-                        scheduledAt = null,
-                        prevTaskId = null,
-                        clock = clock,
+                val task1 =
+                    taskRepository.create(
+                        NewTaskForm(
+                            name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                            dueAt = null,
+                            scheduledAt = null,
+                            prevTaskId = null,
+                            clock = clock,
+                        )
+                    )
+
+                assertThat(awaitItem())
+                    .isNotNull()
+                    .isDataClassEqualTo(task1)
+
+                val task2 =
+                    taskRepository.create(
+                        NewTaskForm(
+                            name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                            dueAt = null,
+                            scheduledAt = null,
+                            prevTaskId = null,
+                            clock = clock,
+                        )
+                    )
+
+                assertThat(awaitItem()).isEqualTo(task1)
+
+                val updatedTask2 = task2.copy(dueAt = Instant.parse("2024-08-23T17:00:00Z"))
+                taskRepository.update(
+                    EditTaskForm(
+                        name = updatedTask2.name,
+                        dueAt = updatedTask2.dueAt,
+                        scheduledAt = updatedTask2.scheduledAt,
+                        oldParentId = null,
+                        parentId = null,
+                        task = task2,
                     )
                 )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task1)
+                assertThat(awaitItem())
+                    .isNotNull()
+                    .isDataClassEqualTo(updatedTask2)
 
-            val task2 =
-                taskRepository.create(
-                    NewTaskForm(
-                        name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-                        dueAt = null,
-                        scheduledAt = null,
-                        prevTaskId = null,
-                        clock = clock,
+                val updatedTask1 = task1.copy(scheduledAt = Instant.parse("2024-08-23T18:00:00Z"))
+                taskRepository.update(
+                    EditTaskForm(
+                        name = updatedTask1.name,
+                        dueAt = updatedTask1.dueAt,
+                        scheduledAt = updatedTask1.scheduledAt,
+                        oldParentId = null,
+                        parentId = null,
+                        task = task1,
                     )
                 )
 
-            assertThat(awaitItem()).isEqualTo(task1)
+                assertThat(awaitItem())
+                    .isNotNull()
+                    .isDataClassEqualTo(updatedTask1)
 
-            val updatedTask2 = task2.copy(dueAt = Instant.parse("2024-08-23T17:00:00Z"))
-            taskRepository.update(
-                EditTaskForm(
-                    name = updatedTask2.name,
-                    dueAt = updatedTask2.dueAt,
-                    scheduledAt = updatedTask2.scheduledAt,
-                    oldParentId = null,
-                    parentId = null,
-                    task = task2,
-                )
-            )
-
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(updatedTask2)
-
-            val updatedTask1 = task1.copy(scheduledAt = Instant.parse("2024-08-23T18:00:00Z"))
-            taskRepository.update(
-                EditTaskForm(
-                    name = updatedTask1.name,
-                    dueAt = updatedTask1.dueAt,
-                    scheduledAt = updatedTask1.scheduledAt,
-                    oldParentId = null,
-                    parentId = null,
-                    task = task1,
-                )
-            )
-
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(updatedTask1)
-
-            taskRepository.update(
-                EditTaskForm(
-                    name = updatedTask1.name,
-                    dueAt = updatedTask1.dueAt,
-                    scheduledAt = Instant.parse("2024-08-23T19:00:00Z"),
-                    oldParentId = null,
-                    parentId = null,
-                    task = updatedTask1,
-                )
-            )
-
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(updatedTask2)
-
-            val task3 =
-                taskRepository.create(
-                    NewTaskForm(
-                        name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-                        dueAt = null,
-                        scheduledAt = null,
-                        prevTaskId = null,
-                        clock = clock,
+                taskRepository.update(
+                    EditTaskForm(
+                        name = updatedTask1.name,
+                        dueAt = updatedTask1.dueAt,
+                        scheduledAt = Instant.parse("2024-08-23T19:00:00Z"),
+                        oldParentId = null,
+                        parentId = null,
+                        task = updatedTask1,
                     )
                 )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(updatedTask2)
+                assertThat(awaitItem())
+                    .isNotNull()
+                    .isDataClassEqualTo(updatedTask2)
 
-            taskRepository.update(
-                EditTaskForm(
-                    name = updatedTask2.name,
-                    dueAt = updatedTask2.dueAt,
-                    scheduledAt = updatedTask2.scheduledAt,
-                    oldParentId = null,
-                    parentId = task3.id,
-                    task = updatedTask2,
+                val task3 =
+                    taskRepository.create(
+                        NewTaskForm(
+                            name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                            dueAt = null,
+                            scheduledAt = null,
+                            prevTaskId = null,
+                            clock = clock,
+                        )
+                    )
+
+                assertThat(awaitItem())
+                    .isNotNull()
+                    .isDataClassEqualTo(updatedTask2)
+
+                taskRepository.update(
+                    EditTaskForm(
+                        name = updatedTask2.name,
+                        dueAt = updatedTask2.dueAt,
+                        scheduledAt = updatedTask2.scheduledAt,
+                        oldParentId = null,
+                        parentId = task3.id,
+                        task = updatedTask2,
+                    )
                 )
-            )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task3)
+                assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task3)
 
-            taskRepository.update(
-                EditTaskForm(
-                    name = task3.name,
-                    dueAt = task3.dueAt,
-                    scheduledAt = task3.scheduledAt,
-                    oldParentId = null,
-                    parentId = updatedTask1.id,
-                    task = task3,
+                taskRepository.update(
+                    EditTaskForm(
+                        name = task3.name,
+                        dueAt = task3.dueAt,
+                        scheduledAt = task3.scheduledAt,
+                        oldParentId = null,
+                        parentId = updatedTask1.id,
+                        task = task3,
+                    )
                 )
-            )
 
-            assertThat(awaitItem()).isNull()
-        }
+                assertThat(awaitItem()).isNull()
+            }
     }
 
     @Test
@@ -182,8 +182,7 @@ class LocalTaskRepositoryTest {
             Clock.fixed(Instant.parse("2024-08-23T17:00:00Z"), ZoneId.of("America/New_York"))
         val taskRepository = LocalTaskRepository(
             db.taskDao(),
-            UnconfinedTestDispatcher(testScheduler),
-            clock
+            UnconfinedTestDispatcher(testScheduler)
         )
 
         val tasks = List(6) {
@@ -338,8 +337,7 @@ class LocalTaskRepositoryTest {
             Clock.fixed(Instant.parse("2024-08-23T17:00:00Z"), ZoneId.of("America/New_York"))
         val taskRepository = LocalTaskRepository(
             db.taskDao(),
-            UnconfinedTestDispatcher(testScheduler),
-            clock
+            UnconfinedTestDispatcher(testScheduler)
         )
 
         val (task1, task2, task3) = List(3) {
