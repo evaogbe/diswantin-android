@@ -46,14 +46,17 @@ import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
 @Composable
 fun AdviceScreen(onClose: () -> Unit) {
     Scaffold(topBar = {
-        TopAppBar(title = { Text(stringResource(R.string.advice_title)) }, navigationIcon = {
-            IconButton(onClick = onClose) {
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = stringResource(R.string.close_button)
-                )
+        TopAppBar(
+            title = { Text(stringResource(R.string.advice_title)) },
+            navigationIcon = {
+                IconButton(onClick = onClose) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = stringResource(R.string.close_button)
+                    )
+                }
             }
-        })
+        )
     }) { innerPadding ->
         Box(
             modifier = Modifier
@@ -71,10 +74,16 @@ fun AdviceScreen(onClose: () -> Unit) {
                                 BulletedItem(AnnotatedString(it))
                             }
                         ),
+                        BulletedItem(
+                            annotatedStringResource(R.string.suggestion_item_check_the_facts),
+                            stringArrayResource(R.array.suggestion_item_check_the_facts_steps).map {
+                                BulletedItem(
+                                    AnnotatedString(it)
+                                )
+                            }),
                         BulletedItem(annotatedStringResource(R.string.suggestion_item_imagine)),
                         BulletedItem(annotatedStringResource(R.string.suggestion_item_snack)),
                         BulletedItem(annotatedStringResource(R.string.suggestion_item_meditate)),
-                        BulletedItem(annotatedStringResource(R.string.suggestion_item_check_the_facts)),
                         BulletedItem(annotatedStringResource(R.string.suggestion_item_journal)),
                         BulletedItem(annotatedStringResource(R.string.suggestion_item_break_down_task)),
                         BulletedItem(annotatedStringResource(R.string.suggestion_item_friend)),

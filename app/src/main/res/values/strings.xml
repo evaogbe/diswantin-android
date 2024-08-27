@@ -33,13 +33,21 @@
     <string name="save_button">Save</string>
     <string name="scheduled_at_label">Scheduled at</string>
     <string name="search_activities_button">Search activities</string>
-    <string name="suggestion_item_break_down_task"><![CDATA[Be flexible about how much of the task needs to be completed. Do just the first <b>2 minutes</b>]]></string>
+    <string name="suggestion_item_break_down_task"><![CDATA[Be <b>flexible</b> about how much of the task needs to be completed. Do just the first <b>2 minutes</b>]]></string>
     <string name="suggestion_item_check_the_facts"><![CDATA[<b>Check the Facts</b>]]></string>
+    <string-array name="suggestion_item_check_the_facts_steps">
+        <item>Name the emotion and intensity</item>
+        <item>Describe the prompting event</item>
+        <item>List the possible interpretations</item>
+        <item>Assess the probability of a threat. List other possible outcomes</item>
+        <item>Imagine yourself coping with the worst case scenario</item>
+        <item>If your emotions and their intensity fit the facts, then problem-solve. Otherwise, act opposite to the emotion</item>
+    </string-array>
     <string name="suggestion_item_day_off"><![CDATA[Plan a <b>day off</b>]]></string>
-    <string name="suggestion_item_friend"><![CDATA[Call/text/video chat/visit a <b>friend</b>. Try to brighten their day or ask them if you can rant]]></string>
+    <string name="suggestion_item_friend"><![CDATA[Call/text/video chat/visit a <b>friend</b>. Try to brighten their day or ask them if you can vent]]></string>
     <string name="suggestion_item_imagine"><![CDATA[<b>Imagine</b> yourself completing the task]]></string>
     <string name="suggestion_item_journal"><![CDATA[Write in a <b>journal</b>]]></string>
-    <string name="suggestion_item_meditate"><![CDATA[<b>Meditate</b> for 1 minute]]></string>
+    <string name="suggestion_item_meditate"><![CDATA[<b>Meditate</b> for 1 minute. Focus on your environment, breathing, urges, body sensations, feelings, worries, or thoughts]]></string>
     <string name="suggestion_item_meds"><![CDATA[Talk to your psychiatrist about a <b>medication</b> adjustment]]></string>
     <string name="suggestion_item_move"><![CDATA[<b>Move</b> your body]]></string>
     <string-array name="suggestion_item_move_sublist">
