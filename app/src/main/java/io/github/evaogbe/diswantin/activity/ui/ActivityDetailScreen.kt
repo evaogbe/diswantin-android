@@ -12,7 +12,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
@@ -81,7 +81,7 @@ fun ActivityDetailScreen(
     }
 
     ActivityDetailScreen(
-        onClose = onPopBackStack,
+        onBackClick = onPopBackStack,
         onEditActivity = { onEditActivity(it.id) },
         onRemoveActivity = activityDetailViewModel::removeActivity,
         snackbarHostState = snackbarHostState,
@@ -93,7 +93,7 @@ fun ActivityDetailScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ActivityDetailScreen(
-    onClose: () -> Unit,
+    onBackClick: () -> Unit,
     onEditActivity: (Activity) -> Unit,
     onRemoveActivity: () -> Unit,
     snackbarHostState: SnackbarHostState,
@@ -107,10 +107,10 @@ fun ActivityDetailScreen(
             TopAppBar(
                 title = {},
                 navigationIcon = {
-                    IconButton(onClick = onClose) {
+                    IconButton(onClick = onBackClick) {
                         Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = stringResource(R.string.close_button)
+                            imageVector = Icons.AutoMirrored.Default.ArrowBack,
+                            contentDescription = stringResource(R.string.back_button)
                         )
                     }
                 },
@@ -272,7 +272,7 @@ fun ActivityDetailLayout(
 fun ActivityDetailScreenPreview() {
     DiswantinTheme {
         ActivityDetailScreen(
-            onClose = {},
+            onBackClick = {},
             onEditActivity = {},
             onRemoveActivity = {},
             snackbarHostState = SnackbarHostState(),
