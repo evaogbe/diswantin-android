@@ -181,7 +181,7 @@ private fun AutocompleteFieldPreview() {
                 query = "Br",
                 onQueryChange = {},
                 onBlur = {},
-                label = { Text("Activity Before") },
+                label = { Text("Task before") },
                 onSearch = {},
                 options = listOf("Brush teeth", "Brush hair", "Eat breakfast"),
                 formatOption = { it },

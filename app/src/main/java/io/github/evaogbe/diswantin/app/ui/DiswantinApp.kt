@@ -6,11 +6,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import io.github.evaogbe.diswantin.activity.ui.ActivityDetailScreen
-import io.github.evaogbe.diswantin.activity.ui.ActivityFormScreen
-import io.github.evaogbe.diswantin.activity.ui.ActivitySearchScreen
-import io.github.evaogbe.diswantin.activity.ui.AdviceScreen
-import io.github.evaogbe.diswantin.activity.ui.CurrentActivityScreen
+import io.github.evaogbe.diswantin.task.ui.AdviceScreen
+import io.github.evaogbe.diswantin.task.ui.CurrentTaskScreen
+import io.github.evaogbe.diswantin.task.ui.TaskDetailScreen
+import io.github.evaogbe.diswantin.task.ui.TaskFormScreen
+import io.github.evaogbe.diswantin.task.ui.TaskSearchScreen
 import io.github.evaogbe.diswantin.ui.navigation.Destination
 
 @Composable
@@ -19,61 +19,61 @@ fun DiswantinApp() {
 
     NavHost(
         navController = navController,
-        startDestination = Destination.CurrentActivity.route,
+        startDestination = Destination.CurrentTask.route,
     ) {
-        composable(Destination.CurrentActivity.route) {
-            CurrentActivityScreen(
+        composable(Destination.CurrentTask.route) {
+            CurrentTaskScreen(
                 onNavigateToSearch = {
-                    navController.navigate(route = Destination.ActivitySearch.route)
+                    navController.navigate(route = Destination.TaskSearch.route)
                 },
-                onAddActivity = {
-                    navController.navigate(route = Destination.NewActivityForm.route)
+                onAddTask = {
+                    navController.navigate(route = Destination.NewTaskForm.route)
                 },
-                onEditActivity = {
-                    navController.navigate(route = Destination.EditActivityForm(it).route)
+                onEditTask = {
+                    navController.navigate(route = Destination.EditTaskForm(it).route)
                 },
                 onAdviceClick = {
                     navController.navigate(route = Destination.Advice.route)
                 },
             )
         }
-        composable(Destination.ActivitySearch.route) {
-            ActivitySearchScreen(
+        composable(Destination.TaskSearch.route) {
+            TaskSearchScreen(
                 onBackClick = navController::popBackStack,
                 onSelectSearchResult = {
-                    navController.navigate(route = Destination.ActivityDetail(it).route)
+                    navController.navigate(route = Destination.TaskDetail(it).route)
                 })
         }
-        composable(Destination.NewActivityForm.route) {
-            ActivityFormScreen(onPopBackStack = navController::popBackStack)
+        composable(Destination.NewTaskForm.route) {
+            TaskFormScreen(onPopBackStack = navController::popBackStack)
         }
         composable(
-            Destination.EditActivityForm.route,
-            arguments = listOf(navArgument(Destination.EditActivityForm.ID_KEY) {
+            Destination.EditTaskForm.route,
+            arguments = listOf(navArgument(Destination.EditTaskForm.ID_KEY) {
                 type = NavType.LongType
             })
         ) {
-            ActivityFormScreen(onPopBackStack = navController::popBackStack)
+            TaskFormScreen(onPopBackStack = navController::popBackStack)
         }
         composable(Destination.Advice.route) {
             AdviceScreen(onClose = navController::popBackStack)
         }
         composable(
-            Destination.ActivityDetail.route,
-            arguments = listOf(navArgument(Destination.ActivityDetail.ID_KEY) {
+            Destination.TaskDetail.route,
+            arguments = listOf(navArgument(Destination.TaskDetail.ID_KEY) {
                 type = NavType.LongType
             })
         ) { backStackEntry ->
-            ActivityDetailScreen(
+            TaskDetailScreen(
                 onPopBackStack = navController::popBackStack,
-                onEditActivity = {
-                    navController.navigate(route = Destination.EditActivityForm(it).route)
+                onEditTask = {
+                    navController.navigate(route = Destination.EditTaskForm(it).route)
                 },
                 onSelectChainItem = { id ->
                     if (
-                        backStackEntry.arguments?.getLong(Destination.ActivityDetail.ID_KEY) != id
+                        backStackEntry.arguments?.getLong(Destination.TaskDetail.ID_KEY) != id
                     ) {
-                        navController.navigate(route = Destination.ActivityDetail(id).route)
+                        navController.navigate(route = Destination.TaskDetail(id).route)
                     }
                 }
             )

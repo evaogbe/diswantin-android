@@ -17,5 +17,5 @@ object DatabaseModule {
         DiswantinDatabase.createDatabase(appContext)
 
     @Provides
-    fun provideActivityDao(db: DiswantinDatabase) = db.activityDao()
+    fun provideTaskDao(db: DiswantinDatabase) = db.taskDao()
 }

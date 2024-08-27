@@ -4,32 +4,39 @@ import android.content.Context
 import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.DeleteColumn
+import androidx.room.RenameTable
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.room.migration.AutoMigrationSpec
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
-import io.github.evaogbe.diswantin.activity.data.Activity
-import io.github.evaogbe.diswantin.activity.data.ActivityDao
-import io.github.evaogbe.diswantin.activity.data.ActivityFts
-import io.github.evaogbe.diswantin.activity.data.ActivityPath
+import io.github.evaogbe.diswantin.task.data.Task
+import io.github.evaogbe.diswantin.task.data.TaskDao
+import io.github.evaogbe.diswantin.task.data.TaskFts
+import io.github.evaogbe.diswantin.task.data.TaskPath
 
 @Database(
-    version = 7,
-    entities = [Activity::class, ActivityFts::class, ActivityPath::class],
+    version = 8,
+    entities = [Task::class, TaskFts::class, TaskPath::class],
     autoMigrations = [
         AutoMigration(from = 2, to = 3),
         AutoMigration(from = 3, to = 4),
         AutoMigration(from = 4, to = 5, spec = DiswantinDatabase.Migration4To5::class),
+        AutoMigration(from = 7, to = 8, spec = DiswantinDatabase.Migration7to8::class),
     ]
 )
 @TypeConverters(Converters::class)
 abstract class DiswantinDatabase : RoomDatabase() {
-    abstract fun activityDao(): ActivityDao
+    abstract fun taskDao(): TaskDao
 
     @DeleteColumn(tableName = "activity", columnName = "skipped_at")
     class Migration4To5 : AutoMigrationSpec
+
+    @RenameTable(fromTableName = "activity", toTableName = "task")
+    @RenameTable(fromTableName = "activity_fts", toTableName = "task_fts")
+    @RenameTable(fromTableName = "activity_path", toTableName = "task_path")
+    class Migration7to8 : AutoMigrationSpec
 
     companion object {
         const val DB_NAME = "diswantin"
