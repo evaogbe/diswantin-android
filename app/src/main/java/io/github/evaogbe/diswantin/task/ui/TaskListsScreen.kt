@@ -66,9 +66,9 @@ fun TaskListsScreen(
 }
 
 @Composable
-fun TaskListsLayout(taskLists: ImmutableList<TaskList>) {
+fun TaskListsLayout(taskLists: ImmutableList<TaskList>, modifier: Modifier = Modifier) {
     Box(
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.TopCenter
     ) {
         LazyColumn(
@@ -85,8 +85,8 @@ fun TaskListsLayout(taskLists: ImmutableList<TaskList>) {
 }
 
 @Composable
-fun EmptyTaskListsLayout(onAddList: () -> Unit) {
-    Surface(modifier = Modifier.fillMaxSize(), color = colorScheme.surfaceVariant) {
+fun EmptyTaskListsLayout(onAddList: () -> Unit, modifier: Modifier = Modifier) {
+    Surface(modifier = modifier.fillMaxSize(), color = colorScheme.surfaceVariant) {
         Column(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally

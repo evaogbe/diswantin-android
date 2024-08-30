@@ -62,7 +62,7 @@ fun TaskDetailScreen(
     onPopBackStack: () -> Unit,
     onEditTask: (Long) -> Unit,
     onSelectTaskItem: (Long) -> Unit,
-    taskDetailViewModel: TaskDetailViewModel = hiltViewModel()
+    taskDetailViewModel: TaskDetailViewModel = hiltViewModel(),
 ) {
     val uiState by taskDetailViewModel.uiState.collectAsStateWithLifecycle()
     val resources = LocalContext.current.resources
@@ -100,8 +100,10 @@ fun TaskDetailScreen(
     snackbarHostState: SnackbarHostState,
     uiState: TaskDetailUiState,
     onSelectTaskItem: (Task) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Scaffold(
+        modifier = modifier,
         topBar = {
             var menuExpanded by remember { mutableStateOf(false) }
 
@@ -147,7 +149,7 @@ fun TaskDetailScreen(
                             )
                         }
                     }
-                }
+                },
             )
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }

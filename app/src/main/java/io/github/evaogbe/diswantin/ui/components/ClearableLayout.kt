@@ -26,9 +26,10 @@ import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
 fun ClearableLayout(
     canClear: Boolean,
     onClear: () -> Unit,
+    modifier: Modifier = Modifier,
     content: @Composable RowScope.() -> Unit,
 ) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
+    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
         content()
 
         if (canClear) {

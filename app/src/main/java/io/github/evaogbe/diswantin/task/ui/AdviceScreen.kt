@@ -47,20 +47,23 @@ import kotlinx.collections.immutable.toImmutableList
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AdviceScreen(onClose: () -> Unit) {
-    Scaffold(topBar = {
-        TopAppBar(
-            title = { Text(stringResource(R.string.advice_title)) },
-            navigationIcon = {
-                IconButton(onClick = onClose) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = stringResource(R.string.close_button)
-                    )
-                }
-            }
-        )
-    }) { innerPadding ->
+fun AdviceScreen(onClose: () -> Unit, modifier: Modifier = Modifier) {
+    Scaffold(
+        modifier = modifier,
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.advice_title)) },
+                navigationIcon = {
+                    IconButton(onClick = onClose) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = stringResource(R.string.close_button)
+                        )
+                    }
+                },
+            )
+        },
+    ) { innerPadding ->
         Box(
             modifier = Modifier
                 .padding(innerPadding)

@@ -57,7 +57,7 @@ import java.time.format.FormatStyle
 @Composable
 fun TaskFormScreen(
     onPopBackStack: () -> Unit,
-    taskFormViewModel: TaskFormViewModel = hiltViewModel()
+    taskFormViewModel: TaskFormViewModel = hiltViewModel(),
 ) {
     val uiState by taskFormViewModel.uiState.collectAsStateWithLifecycle()
 
@@ -75,7 +75,7 @@ fun TaskFormScreen(
         onDeadlineChange = taskFormViewModel::updateDeadlineInput,
         onScheduleAtChange = taskFormViewModel::updateScheduledAtInput,
         onSave = taskFormViewModel::saveTask,
-        uiState = uiState
+        uiState = uiState,
     )
 }
 
@@ -89,9 +89,11 @@ fun TaskFormScreen(
     onDeadlineChange: (ZonedDateTime?) -> Unit,
     onScheduleAtChange: (ZonedDateTime?) -> Unit,
     onSave: () -> Unit,
-    uiState: TaskFormUiState
+    uiState: TaskFormUiState,
+    modifier: Modifier = Modifier,
 ) {
     Scaffold(
+        modifier = modifier,
         topBar = {
             TopAppBar(
                 title = {
@@ -121,7 +123,8 @@ fun TaskFormScreen(
                             Text(stringResource(R.string.save_button))
                         }
                     }
-                })
+                },
+            )
         },
     ) { innerPadding ->
         when (uiState) {
@@ -168,7 +171,7 @@ fun TaskFormLayout(
     onScheduleAtChange: (ZonedDateTime?) -> Unit,
     uiState: TaskFormUiState.Success,
     formError: String?,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     var dateTimePickerType by rememberSaveable {
         mutableStateOf<DateTimeConstraintField?>(null)
@@ -257,7 +260,8 @@ fun DateTimeTextField(
     onClick: () -> Unit,
     dateTime: ZonedDateTime?,
     onDateTimeChange: (ZonedDateTime?) -> Unit,
-    label: @Composable (() -> Unit)
+    label: @Composable (() -> Unit),
+    modifier: Modifier = Modifier,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
@@ -268,7 +272,11 @@ fun DateTimeTextField(
         }
     }
 
-    ClearableLayout(canClear = dateTime != null, onClear = { onDateTimeChange(null) }) {
+    ClearableLayout(
+        canClear = dateTime != null,
+        onClear = { onDateTimeChange(null) },
+        modifier = modifier,
+    ) {
         OutlinedTextField(
             value = dateTime?.format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT))
                 ?: "",

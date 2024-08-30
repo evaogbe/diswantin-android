@@ -52,7 +52,7 @@ fun CurrentTaskScreen(
     setUserMessage: (String) -> Unit,
     onAddTask: () -> Unit,
     onAdviceClick: () -> Unit,
-    currentTaskViewModel: CurrentTaskViewModel = hiltViewModel()
+    currentTaskViewModel: CurrentTaskViewModel = hiltViewModel(),
 ) {
     val uiState by currentTaskViewModel.uiState.collectAsStateWithLifecycle()
     val resources = LocalContext.current.resources

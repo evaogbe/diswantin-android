@@ -71,7 +71,7 @@ import kotlin.time.Duration.Companion.milliseconds
 fun TaskSearchScreen(
     onBackClick: () -> Unit,
     onSelectSearchResult: (Long) -> Unit,
-    taskSearchViewModel: TaskSearchViewModel = hiltViewModel()
+    taskSearchViewModel: TaskSearchViewModel = hiltViewModel(),
 ) {
     val uiState by taskSearchViewModel.uiState.collectAsStateWithLifecycle()
     val (query, setQuery) = rememberSaveable { mutableStateOf("") }
@@ -92,7 +92,7 @@ fun TaskSearchScreen(
         onSearch = taskSearchViewModel::searchTasks,
         onBackClick = onBackClick,
         uiState = uiState,
-        onSelectSearchResult = { onSelectSearchResult(it.id) }
+        onSelectSearchResult = { onSelectSearchResult(it.id) },
     )
 }
 
@@ -105,33 +105,38 @@ fun TaskSearchScreen(
     onBackClick: () -> Unit,
     uiState: TaskSearchUiState,
     onSelectSearchResult: (Task) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    Scaffold(topBar = {
-        TopAppBar(
-            title = {
-                AutoFocusTextField(
-                    value = query,
-                    onValueChange = onQueryChange,
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text(stringResource(R.string.task_search_title)) },
-                    keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
-                    keyboardActions = KeyboardActions(onSearch = { onSearch(query) }),
-                    singleLine = true,
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color.Transparent,
-                        unfocusedContainerColor = Color.Transparent
+    Scaffold(
+        modifier = modifier,
+        topBar = {
+            TopAppBar(
+                title = {
+                    AutoFocusTextField(
+                        value = query,
+                        onValueChange = onQueryChange,
+                        modifier = Modifier.fillMaxWidth(),
+                        placeholder = { Text(stringResource(R.string.task_search_title)) },
+                        keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
+                        keyboardActions = KeyboardActions(onSearch = { onSearch(query) }),
+                        singleLine = true,
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent
+                        )
                     )
-                )
-            },
-            navigationIcon = {
-                IconButton(onClick = onBackClick) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Default.ArrowBack,
-                        contentDescription = stringResource(R.string.back_button)
-                    )
-                }
-            })
-    }) { innerPadding ->
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Default.ArrowBack,
+                            contentDescription = stringResource(R.string.back_button)
+                        )
+                    }
+                },
+            )
+        },
+    ) { innerPadding ->
         when (uiState) {
             is TaskSearchUiState.Initial -> {}
 

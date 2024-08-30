@@ -66,7 +66,7 @@ import java.time.Instant
 @Composable
 fun TaskListFormScreen(
     onPopBackStack: () -> Unit,
-    taskListFormViewModel: TaskListFormViewModel = hiltViewModel()
+    taskListFormViewModel: TaskListFormViewModel = hiltViewModel(),
 ) {
     val uiState by taskListFormViewModel.uiState.collectAsStateWithLifecycle()
 
@@ -103,31 +103,35 @@ fun TaskListFormScreen(
     onSelectTaskOption: (Int, Task) -> Unit,
     startEditTask: (Int) -> Unit,
     stopEditTask: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    Scaffold(topBar = {
-        TopAppBar(
-            title = { Text(stringResource(R.string.task_list_form_title)) },
-            navigationIcon = {
-                IconButton(onClick = onClose) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = stringResource(R.string.close_button)
-                    )
-                }
-            },
-            actions = {
-                if (uiState is TaskListFormUiState.Editing) {
-                    Button(
-                        onClick = onSave,
-                        enabled = name.isNotBlank(),
-                        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 4.dp),
-                    ) {
-                        Text(stringResource(R.string.save_button))
+    Scaffold(
+        modifier = modifier,
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.task_list_form_title)) },
+                navigationIcon = {
+                    IconButton(onClick = onClose) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = stringResource(R.string.close_button)
+                        )
                     }
-                }
-            },
-        )
-    }) { innerPadding ->
+                },
+                actions = {
+                    if (uiState is TaskListFormUiState.Editing) {
+                        Button(
+                            onClick = onSave,
+                            enabled = name.isNotBlank(),
+                            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 4.dp),
+                        ) {
+                            Text(stringResource(R.string.save_button))
+                        }
+                    }
+                },
+            )
+        },
+    ) { innerPadding ->
         when (uiState) {
             is TaskListFormUiState.Editing -> {
                 TaskListFormLayout(

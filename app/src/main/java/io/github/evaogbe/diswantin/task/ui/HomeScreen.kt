@@ -48,6 +48,7 @@ fun HomeScreen(
     onAddTask: () -> Unit,
     onAddList: () -> Unit,
     onAdviceClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val scope = rememberCoroutineScope()
     val pagerState = rememberPagerState(pageCount = { 2 })
@@ -78,6 +79,7 @@ fun HomeScreen(
             }
         },
         pagerState = pagerState,
+        modifier = modifier,
     ) { page ->
         when (page) {
             0 -> CurrentTaskScreen(
@@ -103,9 +105,11 @@ fun HomeScreen(
     onFabClick: () -> Unit,
     onTabClick: (Int) -> Unit,
     pagerState: PagerState,
+    modifier: Modifier = Modifier,
     pageContent: @Composable PagerScope.(Int) -> Unit,
 ) {
     Scaffold(
+        modifier = modifier,
         topBar = {
             TopAppBar(
                 title = {},

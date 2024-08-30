@@ -51,6 +51,7 @@ fun DateTimePickerDialog(
     onDismissRequest: () -> Unit,
     dateTime: ZonedDateTime?,
     onSelectDateTime: (ZonedDateTime?) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     var showDate by rememberSaveable { mutableStateOf(true) }
     val datePickerState = rememberDatePickerState(
@@ -69,7 +70,7 @@ fun DateTimePickerDialog(
                     Text(stringResource(R.string.ok_button))
                 }
             },
-            modifier = Modifier.verticalScroll(rememberScrollState()),
+            modifier = modifier.verticalScroll(rememberScrollState()),
             dismissButton = {
                 TextButton(onClick = onDismissRequest) {
                     Text(stringResource(R.string.cancel_button))
