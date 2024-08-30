@@ -14,21 +14,26 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskDao
 import io.github.evaogbe.diswantin.task.data.TaskFts
+import io.github.evaogbe.diswantin.task.data.TaskList
+import io.github.evaogbe.diswantin.task.data.TaskListDao
 import io.github.evaogbe.diswantin.task.data.TaskPath
 
 @Database(
-    version = 8,
-    entities = [Task::class, TaskFts::class, TaskPath::class],
+    version = 9,
+    entities = [Task::class, TaskFts::class, TaskPath::class, TaskList::class],
     autoMigrations = [
         AutoMigration(from = 2, to = 3),
         AutoMigration(from = 3, to = 4),
         AutoMigration(from = 4, to = 5, spec = DiswantinDatabase.Migration4To5::class),
         AutoMigration(from = 7, to = 8, spec = DiswantinDatabase.Migration7to8::class),
+        AutoMigration(from = 8, to = 9),
     ]
 )
 @TypeConverters(Converters::class)
 abstract class DiswantinDatabase : RoomDatabase() {
     abstract fun taskDao(): TaskDao
+
+    abstract fun taskListDao(): TaskListDao
 
     @DeleteColumn(tableName = "activity", columnName = "skipped_at")
     class Migration4To5 : AutoMigrationSpec

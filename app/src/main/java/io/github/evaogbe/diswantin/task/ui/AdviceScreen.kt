@@ -41,6 +41,9 @@ import io.github.evaogbe.diswantin.ui.theme.SpaceMd
 import io.github.evaogbe.diswantin.ui.theme.SpaceSm
 import io.github.evaogbe.diswantin.ui.theme.SpaceXs
 import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -66,13 +69,13 @@ fun AdviceScreen(onClose: () -> Unit) {
         ) {
             SelectionContainer {
                 BulletedList(
-                    items = listOf(
+                    items = persistentListOf(
                         BulletedItem(annotatedStringResource(R.string.suggestion_item_stop)),
                         BulletedItem(
                             annotatedStringResource(R.string.suggestion_item_move),
                             stringArrayResource(R.array.suggestion_item_move_sublist).map {
                                 BulletedItem(AnnotatedString(it))
-                            }
+                            }.toImmutableList()
                         ),
                         BulletedItem(
                             annotatedStringResource(R.string.suggestion_item_check_the_facts),
@@ -80,7 +83,8 @@ fun AdviceScreen(onClose: () -> Unit) {
                                 BulletedItem(
                                     AnnotatedString(it)
                                 )
-                            }),
+                            }.toImmutableList()
+                        ),
                         BulletedItem(annotatedStringResource(R.string.suggestion_item_imagine)),
                         BulletedItem(annotatedStringResource(R.string.suggestion_item_snack)),
                         BulletedItem(annotatedStringResource(R.string.suggestion_item_meditate)),
@@ -100,10 +104,13 @@ fun AdviceScreen(onClose: () -> Unit) {
     }
 }
 
-data class BulletedItem(val text: AnnotatedString, val children: List<BulletedItem> = emptyList())
+data class BulletedItem(
+    val text: AnnotatedString,
+    val children: ImmutableList<BulletedItem> = persistentListOf(),
+)
 
 @Composable
-fun BulletedList(items: List<BulletedItem>, modifier: Modifier = Modifier) {
+fun BulletedList(items: ImmutableList<BulletedItem>, modifier: Modifier = Modifier) {
     Column(modifier = modifier) {
         items.forEachIndexed { index, item ->
             if (index > 0) {
@@ -145,7 +152,7 @@ fun annotatedStringResource(@StringRes id: Int): AnnotatedString {
 
 @DevicePreviews
 @Composable
-fun AdviceScreenPreview() {
+private fun AdviceScreenPreview() {
     DiswantinTheme {
         AdviceScreen(onClose = {})
     }

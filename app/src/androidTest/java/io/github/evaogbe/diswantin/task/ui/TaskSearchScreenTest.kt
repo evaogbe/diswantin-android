@@ -10,7 +10,7 @@ import androidx.compose.ui.test.performTextInput
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
-import io.github.evaogbe.diswantin.testutils.stringResource
+import io.github.evaogbe.diswantin.testing.stringResource
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker

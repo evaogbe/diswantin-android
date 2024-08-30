@@ -19,50 +19,34 @@ class LocalTaskRepository @Inject constructor(
 
     override fun search(
         query: String,
-        tailsOnly: Boolean,
-        excludeChainFor: Long?
-    ): Flow<List<Task>> = when {
-        !tailsOnly -> taskDao.search(escapeSql(query))
-        excludeChainFor == null -> taskDao.searchTails(escapeSql(query))
-        else -> taskDao.searchAvailableParents(escapeSql(query), excludeChainFor)
-    }.flowOn(ioDispatcher)
+        singletonsOnly: Boolean
+    ): Flow<List<Task>> = (if (singletonsOnly) {
+        taskDao.searchSingletons(escapeSql(query))
+    } else {
+        taskDao.search(escapeSql(query))
+    }).flowOn(ioDispatcher)
 
     private fun escapeSql(str: String) =
         str.replace("'", "''").replace("\"", "\"\"")
 
-    override fun getChain(id: Long) = taskDao.getChain(id).flowOn(ioDispatcher)
-
-    override fun getParent(id: Long) = taskDao.getParent(id).flowOn(ioDispatcher)
-
-    override fun hasTasks(excludeChainFor: Long?) =
-        (excludeChainFor?.let { taskDao.hasTasksOutsideChain(it) }
-            ?: taskDao.hasTasks())
-            .flowOn(ioDispatcher)
+    override fun getTaskListItems(id: Long) = taskDao.getTaskListItems(id).flowOn(ioDispatcher)
 
     override suspend fun create(form: NewTaskForm): Task {
         val task = form.newTask
         return withContext(ioDispatcher) {
-            task.copy(id = taskDao.insertWithParent(task, form.prevTaskId))
+            task.copy(id = taskDao.insertWithPath(task))
         }
     }
 
-    override suspend fun update(form: EditTaskForm) {
+    override suspend fun update(form: EditTaskForm) =
         withContext(ioDispatcher) {
-            if (form.parentId == form.oldParentId) {
-                taskDao.update(form.updatedTask)
-            } else {
-                taskDao.updateAndReplaceParent(
-                    task = form.updatedTask,
-                    parentId = form.parentId,
-                    oldParentId = form.oldParentId,
-                )
-            }
+            taskDao.update(form.updatedTask)
+            form.updatedTask
         }
-    }
 
     override suspend fun remove(id: Long) {
         withContext(ioDispatcher) {
-            taskDao.deleteWithChain(id)
+            taskDao.deleteWithPath(id)
         }
     }
 }

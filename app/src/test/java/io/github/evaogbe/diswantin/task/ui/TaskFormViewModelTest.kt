@@ -15,7 +15,7 @@ import assertk.assertions.prop
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskRepository
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
-import io.github.evaogbe.diswantin.testutils.MainDispatcherRule
+import io.github.evaogbe.diswantin.testing.MainDispatcherRule
 import io.github.evaogbe.diswantin.ui.navigation.Destination
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
@@ -40,7 +40,7 @@ class TaskFormViewModelTest {
     private val faker = Faker()
 
     @Test
-    fun `initialize sets uiState to success when taskId null`() =
+    fun `initializes for new when taskId null`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val taskRepository = FakeTaskRepository()
             val viewModel = createTaskFormViewModelForNew(taskRepository)
@@ -54,9 +54,6 @@ class TaskFormViewModelTest {
                 TaskFormUiState.Success(
                     dueAtInput = null,
                     scheduledAtInput = null,
-                    canUpdatePrevTask = false,
-                    prevTask = null,
-                    prevTaskOptions = emptyList(),
                     hasSaveError = false,
                 )
             )
@@ -64,7 +61,7 @@ class TaskFormViewModelTest {
         }
 
     @Test
-    fun `initialize fetches task by id when taskId present`() =
+    fun `initializes for edit when taskId present`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val dueAt = Instant.parse("2024-08-22T21:00:00Z")
             val task = genTask().copy(dueAt = dueAt)
@@ -81,9 +78,6 @@ class TaskFormViewModelTest {
                     TaskFormUiState.Success(
                         dueAtInput = null,
                         scheduledAtInput = null,
-                        canUpdatePrevTask = false,
-                        prevTask = null,
-                        prevTaskOptions = emptyList(),
                         hasSaveError = false,
                     ),
                     TaskFormUiState.Success::dueAtInput
@@ -97,7 +91,7 @@ class TaskFormViewModelTest {
         }
 
     @Test
-    fun `initialize sets uiState to failure when repository throws`() =
+    fun `uiState is failure when repository throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val task = genTask()
             val taskRepository = FakeTaskRepository(task)
@@ -127,9 +121,6 @@ class TaskFormViewModelTest {
                 TaskFormUiState.Success(
                     dueAtInput = null,
                     scheduledAtInput = null,
-                    canUpdatePrevTask = false,
-                    prevTask = null,
-                    prevTaskOptions = emptyList(),
                     hasSaveError = false,
                 )
             )
@@ -142,9 +133,6 @@ class TaskFormViewModelTest {
                 TaskFormUiState.Success(
                     dueAtInput = null,
                     scheduledAtInput = null,
-                    canUpdatePrevTask = false,
-                    prevTask = null,
-                    prevTaskOptions = emptyList(),
                     hasSaveError = false,
                 )
             )
@@ -172,17 +160,6 @@ class TaskFormViewModelTest {
                 viewModel.uiState.collect()
             }
 
-            assertThat(viewModel.uiState.value).isEqualTo(
-                TaskFormUiState.Success(
-                    dueAtInput = null,
-                    scheduledAtInput = null,
-                    canUpdatePrevTask = false,
-                    prevTask = null,
-                    prevTaskOptions = emptyList(),
-                    hasSaveError = false,
-                )
-            )
-
             taskRepository.setThrows(taskRepository::create, true)
             viewModel.updateNameInput(name)
             viewModel.saveTask()
@@ -191,9 +168,6 @@ class TaskFormViewModelTest {
                 TaskFormUiState.Success(
                     dueAtInput = null,
                     scheduledAtInput = null,
-                    canUpdatePrevTask = false,
-                    prevTask = null,
-                    prevTaskOptions = emptyList(),
                     hasSaveError = true,
                 )
             )
@@ -215,9 +189,6 @@ class TaskFormViewModelTest {
                 TaskFormUiState.Success(
                     dueAtInput = null,
                     scheduledAtInput = null,
-                    canUpdatePrevTask = false,
-                    prevTask = null,
-                    prevTaskOptions = emptyList(),
                     hasSaveError = false,
                 )
             )
@@ -230,9 +201,6 @@ class TaskFormViewModelTest {
                 TaskFormUiState.Success(
                     dueAtInput = null,
                     scheduledAtInput = null,
-                    canUpdatePrevTask = false,
-                    prevTask = null,
-                    prevTaskOptions = emptyList(),
                     hasSaveError = false,
                 )
             )
@@ -264,17 +232,6 @@ class TaskFormViewModelTest {
                 viewModel.uiState.collect()
             }
 
-            assertThat(viewModel.uiState.value).isEqualTo(
-                TaskFormUiState.Success(
-                    dueAtInput = null,
-                    scheduledAtInput = null,
-                    canUpdatePrevTask = false,
-                    prevTask = null,
-                    prevTaskOptions = emptyList(),
-                    hasSaveError = false,
-                )
-            )
-
             taskRepository.setThrows(taskRepository::update, true)
             viewModel.updateNameInput(name)
             viewModel.saveTask()
@@ -283,9 +240,6 @@ class TaskFormViewModelTest {
                 TaskFormUiState.Success(
                     dueAtInput = null,
                     scheduledAtInput = null,
-                    canUpdatePrevTask = false,
-                    prevTask = null,
-                    prevTaskOptions = emptyList(),
                     hasSaveError = true,
                 )
             )

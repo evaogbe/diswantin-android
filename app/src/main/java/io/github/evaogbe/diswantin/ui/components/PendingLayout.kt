@@ -29,7 +29,7 @@ fun PendingLayout(modifier: Modifier = Modifier) {
 
 @Preview
 @Composable
-fun PendingLayoutPreview() {
+private fun PendingLayoutPreview() {
     DiswantinTheme {
         Surface {
             PendingLayout()

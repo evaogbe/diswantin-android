@@ -7,6 +7,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.TaskRepository
 import io.github.evaogbe.diswantin.ui.navigation.Destination
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -31,13 +33,17 @@ class TaskDetailViewModel @Inject constructor(
     val uiState =
         combine(
             taskRepository.getById(taskId),
-            taskRepository.getChain(taskId),
+            taskRepository.getTaskListItems(taskId),
             userMessage
-        ) { task, taskChain, userMessage ->
+        ) { task, taskListItems, userMessage ->
             if (task != null) {
                 TaskDetailUiState.Success(
                     task = task,
-                    taskChain = if (taskChain.size > 1) taskChain else emptyList(),
+                    taskListItems = if (taskListItems.size > 1) {
+                        taskListItems.toImmutableList()
+                    } else {
+                        persistentListOf()
+                    },
                     userMessage = userMessage,
                     clock = clock
                 )

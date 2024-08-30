@@ -8,7 +8,7 @@ import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.EditTaskForm
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
-import io.github.evaogbe.diswantin.testutils.MainDispatcherRule
+import io.github.evaogbe.diswantin.testing.MainDispatcherRule
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -49,8 +49,6 @@ class CurrentTaskViewModelTest {
                     name = name,
                     dueAt = task1.dueAt,
                     scheduledAt = task1.scheduledAt,
-                    oldParentId = null,
-                    parentId = null,
                     task = task1,
                 )
             )

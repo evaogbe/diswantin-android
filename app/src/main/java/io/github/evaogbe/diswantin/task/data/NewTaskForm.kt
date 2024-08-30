@@ -7,10 +7,10 @@ data class NewTaskForm(
     private val name: String,
     private val dueAt: Instant?,
     private val scheduledAt: Instant?,
-    val prevTaskId: Long?,
     private val clock: Clock,
 ) {
     init {
+        require(name.isNotBlank()) { "Name must be present" }
         require(dueAt == null || scheduledAt == null) {
             "Must have only one of dueAt and scheduledAt, but got $dueAt and $scheduledAt"
         }

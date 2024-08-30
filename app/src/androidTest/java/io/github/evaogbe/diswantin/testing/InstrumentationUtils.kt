@@ -1,4 +1,4 @@
-package io.github.evaogbe.diswantin.testutils
+package io.github.evaogbe.diswantin.testing
 
 import androidx.annotation.StringRes
 import androidx.test.platform.app.InstrumentationRegistry

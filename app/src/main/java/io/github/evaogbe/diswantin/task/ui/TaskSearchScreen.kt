@@ -57,6 +57,7 @@ import io.github.evaogbe.diswantin.ui.theme.ScreenLg
 import io.github.evaogbe.diswantin.ui.theme.SpaceMd
 import io.github.evaogbe.diswantin.ui.theme.SpaceXl
 import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.collectLatest
@@ -164,7 +165,7 @@ fun TaskSearchScreen(
 @Composable
 fun TaskSearchLayout(
     query: String,
-    searchResults: List<Task>,
+    searchResults: ImmutableList<Task>,
     onSelectSearchResult: (Task) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -229,7 +230,7 @@ fun EmptyTaskSearchLayout(modifier: Modifier = Modifier) {
 
 @DevicePreviews
 @Composable
-fun TaskSearchScreenPreview() {
+private fun TaskSearchScreenPreview() {
     DiswantinTheme {
         TaskSearchScreen(
             query = "Bru",
@@ -262,7 +263,7 @@ fun TaskSearchScreenPreview() {
 
 @DevicePreviews
 @Composable
-fun EmptyTaskSearchLayoutPreview() {
+private fun EmptyTaskSearchLayoutPreview() {
     DiswantinTheme {
         EmptyTaskSearchLayout()
     }

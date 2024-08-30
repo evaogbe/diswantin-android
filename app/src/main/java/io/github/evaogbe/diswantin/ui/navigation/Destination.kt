@@ -3,8 +3,8 @@ package io.github.evaogbe.diswantin.ui.navigation
 sealed interface Destination {
     val route: String
 
-    data object CurrentTask : Destination {
-        override val route = "currentTask"
+    data object Home : Destination {
+        override val route = "home"
     }
 
     data object TaskSearch : Destination {
@@ -37,5 +37,9 @@ sealed interface Destination {
 
             override val route = "task/{$ID_KEY}"
         }
+    }
+
+    data object NewTaskListForm : Destination {
+        override val route = "taskListForm"
     }
 }

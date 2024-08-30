@@ -50,21 +50,10 @@ interface TaskDao {
         FROM task
         JOIN task_fts ON task_fts.name = task.name
         WHERE task_fts MATCH :query || '*'
-            AND task.id NOT IN (SELECT ancestor FROM task_path WHERE depth > 0)
+            AND task.list_id IS NULL
         LIMIT 20"""
     )
-    fun searchTails(query: String): Flow<List<Task>>
-
-    @Query(
-        """SELECT DISTINCT task.*
-        FROM task
-        JOIN task_fts ON task_fts.name = task.name
-        WHERE task_fts MATCH :query || '*'
-            AND task.id NOT IN (SELECT ancestor FROM task_path WHERE depth > 0)
-            AND task.id NOT IN (SELECT descendant FROM task_path WHERE ancestor = :id)
-        LIMIT 20"""
-    )
-    fun searchAvailableParents(query: String, id: Long): Flow<List<Task>>
+    fun searchSingletons(query: String): Flow<List<Task>>
 
     @Query(
         """SELECT t.*
@@ -89,19 +78,7 @@ interface TaskDao {
         ORDER BY p1.depth
         LIMIT 20"""
     )
-    fun getChain(id: Long): Flow<List<Task>>
-
-    @Query("""SELECT EXISTS(SELECT * FROM task)""")
-    fun hasTasks(): Flow<Boolean>
-
-    @Query(
-        """SELECT EXISTS(
-            SELECT *
-            FROM task
-            WHERE id NOT IN (SELECT ancestor FROM task_path WHERE descendant = :id)
-                AND id NOT IN (SELECT descendant FROM task_path WHERE ancestor = :id))"""
-    )
-    fun hasTasksOutsideChain(id: Long): Flow<Boolean>
+    fun getTaskListItems(id: Long): Flow<List<Task>>
 
     @Insert
     suspend fun insert(task: Task): Long
@@ -109,54 +86,15 @@ interface TaskDao {
     @Insert
     suspend fun insertPath(path: TaskPath)
 
-    @Query(
-        """INSERT INTO task_path (ancestor, descendant, depth)
-        SELECT ancestor, :id, depth + 1
-        FROM task_path
-        WHERE descendant = :parentId"""
-    )
-    suspend fun insertAncestors(id: Long, parentId: Long)
-
-    @Query(
-        """INSERT INTO task_path (ancestor, descendant, depth)
-        SELECT p1.ancestor, p2.descendant, p1.depth + p2.depth + 1
-        FROM task_path p1, task_path p2
-        WHERE p1.descendant = :id
-        AND p2.ancestor = :childId AND p2.depth > 0"""
-    )
-    suspend fun insertDescendants(id: Long, childId: Long)
-
     @Transaction
-    suspend fun insertWithParent(task: Task, parentId: Long?): Long {
+    suspend fun insertWithPath(task: Task): Long {
         val id = insert(task)
         insertPath(TaskPath(ancestor = id, descendant = id, depth = 0))
-        if (parentId != null) {
-            insertAncestors(id = id, parentId = parentId)
-        }
         return id
     }
 
     @Update
     suspend fun update(task: Task)
-
-    @Query(
-        """DELETE FROM task_path
-        WHERE ancestor IN (SELECT ancestor FROM task_path WHERE descendant = :parentId)
-            AND descendant IN (SELECT descendant FROM task_path WHERE ancestor = :id)"""
-    )
-    suspend fun deleteChain(id: Long, parentId: Long)
-
-    @Transaction
-    suspend fun updateAndReplaceParent(task: Task, parentId: Long?, oldParentId: Long?) {
-        update(task)
-        if (oldParentId != null) {
-            deleteChain(id = task.id, parentId = oldParentId)
-        }
-        if (parentId != null) {
-            insertAncestors(id = task.id, parentId = parentId)
-            insertDescendants(id = parentId, childId = task.id)
-        }
-    }
 
     @Query("SELECT descendant FROM task_path WHERE ancestor = :id AND depth = 1 LIMIT 1")
     suspend fun getChildId(id: Long): Long?
@@ -173,7 +111,7 @@ interface TaskDao {
     suspend fun decrementDepth(id: Long, parentId: Long)
 
     @Transaction
-    suspend fun deleteWithChain(id: Long) {
+    suspend fun deleteWithPath(id: Long) {
         val parentId = getParent(id).first()?.id
         val childId = getChildId(id)
         deleteById(id)

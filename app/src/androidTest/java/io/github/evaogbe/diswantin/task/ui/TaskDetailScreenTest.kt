@@ -12,7 +12,7 @@ import assertk.assertions.isTrue
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
-import io.github.evaogbe.diswantin.testutils.stringResource
+import io.github.evaogbe.diswantin.testing.stringResource
 import io.github.evaogbe.diswantin.ui.components.PendingLayoutTestTag
 import io.github.evaogbe.diswantin.ui.navigation.Destination
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
@@ -49,7 +49,7 @@ class TaskDetailScreenTest {
                 TaskDetailScreen(
                     onPopBackStack = {},
                     onEditTask = {},
-                    onSelectChainItem = {},
+                    onSelectTaskItem = {},
                     taskDetailViewModel = viewModel
                 )
             }
@@ -75,7 +75,7 @@ class TaskDetailScreenTest {
                 TaskDetailScreen(
                     onPopBackStack = {},
                     onEditTask = {},
-                    onSelectChainItem = {},
+                    onSelectTaskItem = {},
                     taskDetailViewModel = viewModel
                 )
             }
@@ -101,7 +101,7 @@ class TaskDetailScreenTest {
                 TaskDetailScreen(
                     onPopBackStack = { onPopBackStackCalled = true },
                     onEditTask = {},
-                    onSelectChainItem = {},
+                    onSelectTaskItem = {},
                     taskDetailViewModel = viewModel
                 )
             }
@@ -130,7 +130,7 @@ class TaskDetailScreenTest {
                 TaskDetailScreen(
                     onPopBackStack = {},
                     onEditTask = {},
-                    onSelectChainItem = {},
+                    onSelectTaskItem = {},
                     taskDetailViewModel = viewModel
                 )
             }

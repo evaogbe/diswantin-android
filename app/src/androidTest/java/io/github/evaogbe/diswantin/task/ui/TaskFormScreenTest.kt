@@ -1,8 +1,6 @@
 package io.github.evaogbe.diswantin.task.ui
 
-import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -18,7 +16,7 @@ import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskRepository
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
-import io.github.evaogbe.diswantin.testutils.stringResource
+import io.github.evaogbe.diswantin.testing.stringResource
 import io.github.evaogbe.diswantin.ui.components.PendingLayoutTestTag
 import io.github.evaogbe.diswantin.ui.navigation.Destination
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
@@ -106,10 +104,6 @@ class TaskFormScreenTest {
             stringResource(R.string.scheduled_at_label),
             useUnmergedTree = true
         ).assertIsDisplayed()
-        composeTestRule.onNodeWithText(
-            stringResource(R.string.prev_task_label),
-            useUnmergedTree = true
-        ).assertDoesNotExist()
 
         composeTestRule.onNodeWithText(stringResource(R.string.name_label), useUnmergedTree = true)
             .onParent()
@@ -140,6 +134,9 @@ class TaskFormScreenTest {
             }
         }
 
+        composeTestRule.onNodeWithText(stringResource(R.string.task_form_save_error_new))
+            .assertDoesNotExist()
+
         taskRepository.setThrows(taskRepository::create, true)
         composeTestRule.onNodeWithText(stringResource(R.string.name_label), useUnmergedTree = true)
             .onParent()
@@ -150,7 +147,6 @@ class TaskFormScreenTest {
             .assertIsDisplayed()
     }
 
-    @OptIn(ExperimentalTestApi::class)
     @Test
     fun popsBackStack_whenTaskUpdated() {
         val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
@@ -177,10 +173,6 @@ class TaskFormScreenTest {
             stringResource(R.string.scheduled_at_label),
             useUnmergedTree = true
         ).assertDoesNotExist()
-        composeTestRule.onNodeWithText(
-            stringResource(R.string.prev_task_label),
-            useUnmergedTree = true
-        ).assertIsDisplayed()
 
         composeTestRule.onNodeWithText(stringResource(R.string.name_label), useUnmergedTree = true)
             .onParent()
@@ -195,14 +187,6 @@ class TaskFormScreenTest {
             .performClick()
         composeTestRule.onNodeWithText(stringResource(R.string.ok_button)).performClick()
         composeTestRule.onNodeWithText(stringResource(R.string.ok_button)).performClick()
-        composeTestRule.onNodeWithText(
-            stringResource(R.string.prev_task_label),
-            useUnmergedTree = true
-        )
-            .onParent()
-            .performTextInput(task2.name.substring(0, 1))
-        composeTestRule.waitUntilExactlyOneExists(hasText(task2.name))
-        composeTestRule.onNodeWithText(task2.name).performClick()
         composeTestRule.onNodeWithText(stringResource(R.string.save_button)).performClick()
 
         composeTestRule.onNodeWithTag(PendingLayoutTestTag).assertIsDisplayed()
@@ -221,6 +205,9 @@ class TaskFormScreenTest {
                 TaskFormScreen(onPopBackStack = {}, taskFormViewModel = viewModel)
             }
         }
+
+        composeTestRule.onNodeWithText(stringResource(R.string.task_form_save_error_edit))
+            .assertDoesNotExist()
 
         taskRepository.setThrows(taskRepository::update, true)
         composeTestRule.onNodeWithText(stringResource(R.string.name_label), useUnmergedTree = true)

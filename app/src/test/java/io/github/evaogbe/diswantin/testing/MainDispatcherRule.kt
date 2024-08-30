@@ -1,4 +1,4 @@
-package io.github.evaogbe.diswantin.testutils
+package io.github.evaogbe.diswantin.testing
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi

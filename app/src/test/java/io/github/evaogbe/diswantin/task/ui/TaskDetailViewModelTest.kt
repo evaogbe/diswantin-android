@@ -6,10 +6,11 @@ import assertk.assertions.isEqualTo
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
-import io.github.evaogbe.diswantin.testutils.MainDispatcherRule
+import io.github.evaogbe.diswantin.testing.MainDispatcherRule
 import io.github.evaogbe.diswantin.ui.navigation.Destination
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
@@ -46,7 +47,7 @@ class TaskDetailViewModelTest {
         assertThat(viewModel.uiState.value).isEqualTo(
             TaskDetailUiState.Success(
                 task = task,
-                taskChain = listOf(),
+                taskListItems = persistentListOf(),
                 userMessage = null,
                 clock = clock
             )
@@ -91,7 +92,7 @@ class TaskDetailViewModelTest {
         assertThat(viewModel.uiState.value).isEqualTo(
             TaskDetailUiState.Success(
                 task = task,
-                taskChain = listOf(),
+                taskListItems = persistentListOf(),
                 userMessage = null,
                 clock = clock
             )
@@ -124,7 +125,7 @@ class TaskDetailViewModelTest {
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskDetailUiState.Success(
                     task = task,
-                    taskChain = listOf(),
+                    taskListItems = persistentListOf(),
                     userMessage = R.string.task_detail_delete_error,
                     clock = clock
                 )

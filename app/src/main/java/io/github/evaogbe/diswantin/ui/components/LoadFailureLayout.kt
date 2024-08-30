@@ -53,10 +53,8 @@ fun LoadFailureLayout(message: String, modifier: Modifier = Modifier) {
 
 @DevicePreviews
 @Composable
-fun LoadFailureLayoutPreview() {
+private fun LoadFailureLayoutPreview() {
     DiswantinTheme {
-        Surface {
-            LoadFailureLayout(message = "Something went wrong performing that operation")
-        }
+        LoadFailureLayout(message = "Something went wrong performing that operation")
     }
 }

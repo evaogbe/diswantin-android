@@ -2,6 +2,7 @@ package io.github.evaogbe.diswantin.task.ui
 
 import androidx.annotation.StringRes
 import io.github.evaogbe.diswantin.task.data.Task
+import kotlinx.collections.immutable.ImmutableList
 import java.time.Clock
 import java.time.Instant
 import java.time.format.DateTimeFormatter
@@ -14,7 +15,7 @@ sealed interface TaskDetailUiState {
 
     data class Success(
         val task: Task,
-        val taskChain: List<Task>,
+        val taskListItems: ImmutableList<Task>,
         @StringRes val userMessage: Int?,
         private val clock: Clock
     ) : TaskDetailUiState {

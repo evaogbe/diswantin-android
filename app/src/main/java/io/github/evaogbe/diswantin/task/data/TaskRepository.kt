@@ -8,21 +8,13 @@ interface TaskRepository {
 
     fun getById(id: Long): Flow<Task?>
 
-    fun search(
-        query: String,
-        tailsOnly: Boolean = false,
-        excludeChainFor: Long? = null
-    ): Flow<List<Task>>
+    fun search(query: String, singletonsOnly: Boolean = false): Flow<List<Task>>
 
-    fun getChain(id: Long): Flow<List<Task>>
-
-    fun getParent(id: Long): Flow<Task?>
-
-    fun hasTasks(excludeChainFor: Long?): Flow<Boolean>
+    fun getTaskListItems(id: Long): Flow<List<Task>>
 
     suspend fun create(form: NewTaskForm): Task
 
-    suspend fun update(form: EditTaskForm)
+    suspend fun update(form: EditTaskForm): Task
 
     suspend fun remove(id: Long)
 }

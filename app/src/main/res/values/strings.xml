@@ -1,5 +1,7 @@
 <resources>
+    <string name="add_button">Add</string>
     <string name="add_task_button">Add to-do</string>
+    <string name="add_task_list_button">Add list</string>
     <string name="advice_button">Advice</string>
     <string name="advice_title">Advice</string>
     <string name="app_name">Diswantin</string>
@@ -50,7 +52,6 @@
     </string-array>
     <string name="suggestion_item_snack"><![CDATA[Hungry? Grab a <b>snack</b>]]></string>
     <string name="suggestion_item_stop"><![CDATA[<b>STOP</b>. Take a deep breath. Observe your SUDS, body sensations, thoughts, and feelings. Ask your Wise Mind how to proceed]]></string>
-    <string name="task_chain_label">Task list</string>
     <string name="task_detail_delete_error">Something went wrong deleting the to-do</string>
     <string name="task_detail_fetch_error">Something went wrong loading the to-do</string>
     <string name="task_form_fetch_error">Something went wrong loading the to-do</string>
@@ -58,9 +59,17 @@
     <string name="task_form_save_error_new">Something went wrong adding the to-do</string>
     <string name="task_form_title_edit">Edit To-do</string>
     <string name="task_form_title_new">New To-do</string>
+    <string name="task_list_form_save_error">Something went wrong adding the list</string>
+    <string name="task_list_form_title">New List</string>
+    <string name="task_list_label">To-do list</string>
+    <string name="task_lists_empty">No lists added</string>
+    <string name="task_lists_fetch_error">Something went wrong loading the lists</string>
+    <string name="task_lists_title">Lists</string>
+    <string name="task_name_label">To-do name</string>
     <string name="task_search_empty">No matching to-dos</string>
     <string name="task_search_error">Something went wrong searching for to-dos</string>
     <string name="task_search_title">Search to-dos</string>
+    <string name="tasks_label">To-dos</string>
     <string name="time_picker_dialog_title">Select time</string>
     <string name="time_picker_switch_to_dial_mode">Switch to clock input mode</string>
     <string name="time_picker_switch_to_input_mode">Switch to text input mode</string>

@@ -7,9 +7,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import io.github.evaogbe.diswantin.task.ui.AdviceScreen
-import io.github.evaogbe.diswantin.task.ui.CurrentTaskScreen
+import io.github.evaogbe.diswantin.task.ui.HomeScreen
 import io.github.evaogbe.diswantin.task.ui.TaskDetailScreen
 import io.github.evaogbe.diswantin.task.ui.TaskFormScreen
+import io.github.evaogbe.diswantin.task.ui.TaskListFormScreen
 import io.github.evaogbe.diswantin.task.ui.TaskSearchScreen
 import io.github.evaogbe.diswantin.ui.navigation.Destination
 
@@ -19,18 +20,21 @@ fun DiswantinApp() {
 
     NavHost(
         navController = navController,
-        startDestination = Destination.CurrentTask.route,
+        startDestination = Destination.Home.route,
     ) {
-        composable(Destination.CurrentTask.route) {
-            CurrentTaskScreen(
-                onNavigateToSearch = {
+        composable(Destination.Home.route) {
+            HomeScreen(
+                onSearch = {
                     navController.navigate(route = Destination.TaskSearch.route)
+                },
+                onEditTask = {
+                    navController.navigate(route = Destination.EditTaskForm(it).route)
                 },
                 onAddTask = {
                     navController.navigate(route = Destination.NewTaskForm.route)
                 },
-                onEditTask = {
-                    navController.navigate(route = Destination.EditTaskForm(it).route)
+                onAddList = {
+                    navController.navigate(route = Destination.NewTaskListForm.route)
                 },
                 onAdviceClick = {
                     navController.navigate(route = Destination.Advice.route)
@@ -69,7 +73,7 @@ fun DiswantinApp() {
                 onEditTask = {
                     navController.navigate(route = Destination.EditTaskForm(it).route)
                 },
-                onSelectChainItem = { id ->
+                onSelectTaskItem = { id ->
                     if (
                         backStackEntry.arguments?.getLong(Destination.TaskDetail.ID_KEY) != id
                     ) {
@@ -77,6 +81,9 @@ fun DiswantinApp() {
                     }
                 }
             )
+        }
+        composable(Destination.NewTaskListForm.route) {
+            TaskListFormScreen(onPopBackStack = navController::popBackStack)
         }
     }
 }

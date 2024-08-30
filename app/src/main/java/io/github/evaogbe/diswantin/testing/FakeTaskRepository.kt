@@ -65,30 +65,27 @@ class FakeTaskRepository(initialTasks: Collection<Task>) : TaskRepository {
 
     override fun search(
         query: String,
-        tailsOnly: Boolean,
-        excludeChainFor: Long?
+        singletonsOnly: Boolean
     ): Flow<List<Task>> =
-        combine(throwingMethods, tasksTable, taskPaths) { throwingMethods, tasks, taskPaths ->
+        combine(throwingMethods, tasksTable) { throwingMethods, tasks ->
             if (::search in throwingMethods) {
                 throw RuntimeException("Test")
             }
 
-            val excludeIds = if (tailsOnly) {
-                taskPaths.filter { it.depth > 0 }
-                    .map { it.ancestor }
-                    .toSet() + taskPaths.filter { it.ancestor == excludeChainFor }
-                    .map { it.descendant }
+            if (singletonsOnly) {
+                tasks.values.filter {
+                    it.name.contains(query, ignoreCase = true) && it.listId == null
+                }
             } else {
-                emptySet()
-            }
-            tasks.values.filter {
-                it.name.contains(query, ignoreCase = true) && it.id !in excludeIds
+                tasks.values.filter {
+                    it.name.contains(query, ignoreCase = true)
+                }
             }
         }
 
-    override fun getChain(id: Long): Flow<List<Task>> =
+    override fun getTaskListItems(id: Long): Flow<List<Task>> =
         combine(throwingMethods, tasksTable, taskPaths) { throwingMethods, tasks, taskPaths ->
-            if (::getChain in throwingMethods) {
+            if (::getTaskListItems in throwingMethods) {
                 throw RuntimeException("Test")
             }
 
@@ -96,39 +93,6 @@ class FakeTaskRepository(initialTasks: Collection<Task>) : TaskRepository {
             taskPaths.filter { it.ancestor == head?.ancestor }
                 .sortedByDescending { it.depth }
                 .mapNotNull { tasks[it.descendant] }
-        }
-
-    override fun getParent(id: Long): Flow<Task?> =
-        combine(throwingMethods, tasksTable, taskPaths) { throwingMethods, tasks, taskPaths ->
-            if (::getParent in throwingMethods) {
-                throw RuntimeException("Test")
-            }
-
-            taskPaths.firstOrNull { it.descendant == id && it.depth == 1 }?.let {
-                tasks[it.ancestor]
-            }
-        }
-
-    override fun hasTasks(excludeChainFor: Long?): Flow<Boolean> =
-        combine(throwingMethods, tasksTable, taskPaths) { throwingMethods, tasks, taskPaths ->
-            if (::hasTasks in throwingMethods) {
-                throw RuntimeException("Test")
-            }
-
-            if (excludeChainFor == null) {
-                tasks.isNotEmpty()
-            } else {
-                val chainIds = taskPaths.filter {
-                    it.descendant == excludeChainFor
-                }.map {
-                    it.ancestor
-                }.toSet() + taskPaths.filter {
-                    it.ancestor == excludeChainFor
-                }.map {
-                    it.descendant
-                }
-                tasks.values.any { it.id !in chainIds }
-            }
         }
 
     override suspend fun create(form: NewTaskForm): Task {
@@ -144,67 +108,18 @@ class FakeTaskRepository(initialTasks: Collection<Task>) : TaskRepository {
             depth = 0,
         )
         tasksTable.update { it + (task.id to task) }
-        taskPaths.update { paths ->
-            paths + singletonPath + paths.filter {
-                it.descendant == form.prevTaskId
-            }.map {
-                TaskPath(
-                    id = ++taskPathIdGen,
-                    ancestor = it.id,
-                    descendant = task.id,
-                    depth = it.depth + 1
-                )
-            }
-        }
+        taskPaths.update { it + singletonPath }
         return task
     }
 
-    override suspend fun update(form: EditTaskForm) {
+    override suspend fun update(form: EditTaskForm): Task {
         if (::update in throwingMethods.value) {
             throw RuntimeException("Test")
         }
 
         val task = form.updatedTask
         tasksTable.update { it + (task.id to task) }
-
-        if (form.parentId != form.oldParentId) {
-            taskPaths.update { paths ->
-                val pathsToRemove = form.oldParentId?.let { oldParentId ->
-                    val ancestors =
-                        paths.filter { it.descendant == oldParentId }.map { it.ancestor }.toSet()
-                    val descendants =
-                        paths.filter { it.ancestor == task.id }.map { it.descendant }.toSet()
-                    paths.filter { it.ancestor in ancestors && it.descendant in descendants }
-                        .toSet()
-                } ?: emptySet()
-                val pathsToAdd = form.parentId?.let { parentId ->
-                    paths.filter {
-                        it.descendant == parentId
-                    }.map {
-                        TaskPath(
-                            id = ++taskPathIdGen,
-                            ancestor = it.id,
-                            descendant = task.id,
-                            depth = it.depth + 1
-                        )
-                    } + paths.filter {
-                        it.descendant == parentId
-                    }.flatMap { p1 ->
-                        paths.filter {
-                            it.ancestor == task.id && it.depth > 0
-                        }.map { p2 ->
-                            TaskPath(
-                                id = ++taskPathIdGen,
-                                ancestor = p1.ancestor,
-                                descendant = p2.descendant,
-                                depth = p1.depth + p2.depth + 1,
-                            )
-                        }
-                    }
-                } ?: emptySet()
-                paths - pathsToRemove + pathsToAdd
-            }
-        }
+        return task
     }
 
     override suspend fun remove(id: Long) {

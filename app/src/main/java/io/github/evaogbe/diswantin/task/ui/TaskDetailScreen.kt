@@ -53,6 +53,7 @@ import io.github.evaogbe.diswantin.ui.theme.SpaceLg
 import io.github.evaogbe.diswantin.ui.theme.SpaceMd
 import io.github.evaogbe.diswantin.ui.theme.SpaceXs
 import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
+import kotlinx.collections.immutable.persistentListOf
 import java.time.Clock
 import java.time.Instant
 
@@ -60,15 +61,15 @@ import java.time.Instant
 fun TaskDetailScreen(
     onPopBackStack: () -> Unit,
     onEditTask: (Long) -> Unit,
-    onSelectChainItem: (Long) -> Unit,
+    onSelectTaskItem: (Long) -> Unit,
     taskDetailViewModel: TaskDetailViewModel = hiltViewModel()
 ) {
     val uiState by taskDetailViewModel.uiState.collectAsStateWithLifecycle()
     val resources = LocalContext.current.resources
     val snackbarHostState = remember { SnackbarHostState() }
 
-    LaunchedEffect(uiState) {
-        if (uiState is TaskDetailUiState.Removed) {
+    if (uiState is TaskDetailUiState.Removed) {
+        LaunchedEffect(onPopBackStack) {
             onPopBackStack()
         }
     }
@@ -86,7 +87,7 @@ fun TaskDetailScreen(
         onRemoveTask = taskDetailViewModel::removeTask,
         snackbarHostState = snackbarHostState,
         uiState = uiState,
-        onSelectChainItem = { onSelectChainItem(it.id) },
+        onSelectTaskItem = { onSelectTaskItem(it.id) },
     )
 }
 
@@ -98,7 +99,7 @@ fun TaskDetailScreen(
     onRemoveTask: () -> Unit,
     snackbarHostState: SnackbarHostState,
     uiState: TaskDetailUiState,
-    onSelectChainItem: (Task) -> Unit,
+    onSelectTaskItem: (Task) -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -167,7 +168,7 @@ fun TaskDetailScreen(
             is TaskDetailUiState.Success -> {
                 TaskDetailLayout(
                     uiState = uiState,
-                    onSelectChainItem = onSelectChainItem,
+                    onSelectTaskItem = onSelectTaskItem,
                     modifier = Modifier.padding(innerPadding)
                 )
             }
@@ -178,7 +179,7 @@ fun TaskDetailScreen(
 @Composable
 fun TaskDetailLayout(
     uiState: TaskDetailUiState.Success,
-    onSelectChainItem: (Task) -> Unit,
+    onSelectTaskItem: (Task) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
@@ -244,21 +245,21 @@ fun TaskDetailLayout(
                 }
             }
 
-            if (uiState.taskChain.isNotEmpty()) {
+            if (uiState.taskListItems.isNotEmpty()) {
                 item {
                     Spacer(Modifier.size(SpaceLg))
                     Text(
-                        stringResource(R.string.task_chain_label),
+                        stringResource(R.string.task_list_label),
                         modifier = Modifier.padding(horizontal = SpaceMd),
                         color = colorScheme.onSurfaceVariant,
                         style = typography.labelSmall
                     )
                 }
 
-                items(uiState.taskChain, key = Task::id) { task ->
+                items(uiState.taskListItems, key = Task::id) { task ->
                     ListItem(
                         headlineContent = { Text(text = task.name) },
-                        modifier = Modifier.clickable { onSelectChainItem(task) },
+                        modifier = Modifier.clickable { onSelectTaskItem(task) },
                     )
                     HorizontalDivider()
                 }
@@ -269,7 +270,7 @@ fun TaskDetailLayout(
 
 @DevicePreviews
 @Composable
-fun TaskDetailScreenPreview() {
+private fun TaskDetailScreenPreview() {
     DiswantinTheme {
         TaskDetailScreen(
             onBackClick = {},
@@ -282,18 +283,18 @@ fun TaskDetailScreenPreview() {
                     createdAt = Instant.now(),
                     name = "Brush teeth",
                 ),
-                taskChain = emptyList(),
+                taskListItems = persistentListOf(),
                 userMessage = null,
                 clock = Clock.systemDefaultZone()
             ),
-            onSelectChainItem = {},
+            onSelectTaskItem = {},
         )
     }
 }
 
 @DevicePreviews
 @Composable
-fun TaskDetailLayoutPreview_withTaskChain() {
+private fun TaskDetailLayoutPreview_withTaskList() {
     DiswantinTheme {
         Surface {
             TaskDetailLayout(
@@ -303,7 +304,7 @@ fun TaskDetailLayoutPreview_withTaskChain() {
                         createdAt = Instant.now(),
                         name = "Brush teeth",
                     ),
-                    taskChain = listOf(
+                    taskListItems = persistentListOf(
                         Task(
                             id = 1L,
                             createdAt = Instant.now(),
@@ -324,7 +325,7 @@ fun TaskDetailLayoutPreview_withTaskChain() {
                     userMessage = null,
                     clock = Clock.systemDefaultZone()
                 ),
-                onSelectChainItem = {},
+                onSelectTaskItem = {},
             )
         }
     }
@@ -333,7 +334,7 @@ fun TaskDetailLayoutPreview_withTaskChain() {
 
 @DevicePreviews
 @Composable
-fun TaskDetailLayoutPreview_withDueAtAndTaskChain() {
+private fun TaskDetailLayoutPreview_withDueAtAndTaskList() {
     DiswantinTheme {
         Surface {
             TaskDetailLayout(
@@ -344,7 +345,7 @@ fun TaskDetailLayoutPreview_withDueAtAndTaskChain() {
                         name = "Brush teeth",
                         dueAt = Instant.now(),
                     ),
-                    taskChain = listOf(
+                    taskListItems = persistentListOf(
                         Task(
                             id = 1L,
                             createdAt = Instant.now(),
@@ -365,7 +366,7 @@ fun TaskDetailLayoutPreview_withDueAtAndTaskChain() {
                     userMessage = null,
                     clock = Clock.systemDefaultZone()
                 ),
-                onSelectChainItem = {},
+                onSelectTaskItem = {},
             )
         }
     }

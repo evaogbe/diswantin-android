@@ -2,7 +2,6 @@ package io.github.evaogbe.diswantin.task.ui
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import assertk.assertThat
@@ -11,7 +10,7 @@ import assertk.assertions.isTrue
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
-import io.github.evaogbe.diswantin.testutils.stringResource
+import io.github.evaogbe.diswantin.testing.stringResource
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
@@ -36,11 +35,11 @@ class CurrentTaskScreenTest {
         composeTestRule.setContent {
             DiswantinTheme {
                 CurrentTaskScreen(
-                    onNavigateToSearch = {},
+                    setCurrentTaskId = {},
+                    setUserMessage = {},
                     onAddTask = {},
-                    onEditTask = {},
                     onAdviceClick = {},
-                    currentTaskViewModel = viewModel
+                    currentTaskViewModel = viewModel,
                 )
             }
         }
@@ -56,11 +55,11 @@ class CurrentTaskScreenTest {
         composeTestRule.setContent {
             DiswantinTheme {
                 CurrentTaskScreen(
-                    onNavigateToSearch = {},
+                    setCurrentTaskId = {},
+                    setUserMessage = {},
                     onAddTask = {},
-                    onEditTask = {},
                     onAdviceClick = {},
-                    currentTaskViewModel = viewModel
+                    currentTaskViewModel = viewModel,
                 )
             }
         }
@@ -80,42 +79,17 @@ class CurrentTaskScreenTest {
         composeTestRule.setContent {
             DiswantinTheme {
                 CurrentTaskScreen(
-                    onNavigateToSearch = {},
+                    setCurrentTaskId = {},
+                    setUserMessage = {},
                     onAddTask = {},
-                    onEditTask = {},
                     onAdviceClick = {},
-                    currentTaskViewModel = viewModel
+                    currentTaskViewModel = viewModel,
                 )
             }
         }
 
         composeTestRule.onNodeWithText(stringResource(R.string.current_task_fetch_error))
             .assertIsDisplayed()
-    }
-
-    @Test
-    fun callsOnAddTask_whenFabClicked() {
-        var onAddTaskCalled = false
-        val task = genTasks(1).single()
-        val taskRepository = FakeTaskRepository(task)
-        val viewModel = createCurrentTaskViewModel(taskRepository)
-
-        composeTestRule.setContent {
-            DiswantinTheme {
-                CurrentTaskScreen(
-                    onNavigateToSearch = {},
-                    onAddTask = { onAddTaskCalled = true },
-                    onEditTask = {},
-                    onAdviceClick = {},
-                    currentTaskViewModel = viewModel
-                )
-            }
-        }
-
-        composeTestRule.onNodeWithContentDescription(stringResource(R.string.add_task_button))
-            .performClick()
-
-        assertThat(onAddTaskCalled).isTrue()
     }
 
     @Test
@@ -127,47 +101,19 @@ class CurrentTaskScreenTest {
         composeTestRule.setContent {
             DiswantinTheme {
                 CurrentTaskScreen(
-                    onNavigateToSearch = {},
+                    setCurrentTaskId = {},
+                    setUserMessage = {},
                     onAddTask = { onAddTaskCalled = true },
-                    onEditTask = {},
                     onAdviceClick = {},
-                    currentTaskViewModel = viewModel
+                    currentTaskViewModel = viewModel,
                 )
             }
         }
 
-        composeTestRule.onNodeWithContentDescription(stringResource(R.string.add_task_button))
+        composeTestRule.onNodeWithText(stringResource(R.string.add_task_button))
             .performClick()
 
         assertThat(onAddTaskCalled).isTrue()
-    }
-
-    @Test
-    fun callsOnEditTask_whenEditClicked() {
-        var onEditTaskCalled = false
-        val task = genTasks(1).single()
-        val taskRepository = FakeTaskRepository(task)
-        val viewModel = createCurrentTaskViewModel(taskRepository)
-
-        composeTestRule.setContent {
-            DiswantinTheme {
-                CurrentTaskScreen(
-                    onNavigateToSearch = {},
-                    onAddTask = {},
-                    onEditTask = { id ->
-                        assertThat(id).isEqualTo(task.id)
-                        onEditTaskCalled = true
-                    },
-                    onAdviceClick = {},
-                    currentTaskViewModel = viewModel
-                )
-            }
-        }
-
-        composeTestRule.onNodeWithContentDescription(stringResource(R.string.edit_button))
-            .performClick()
-
-        assertThat(onEditTaskCalled).isTrue()
     }
 
     @Test
@@ -179,11 +125,11 @@ class CurrentTaskScreenTest {
         composeTestRule.setContent {
             DiswantinTheme {
                 CurrentTaskScreen(
-                    onNavigateToSearch = {},
+                    setCurrentTaskId = {},
+                    setUserMessage = {},
                     onAddTask = {},
-                    onEditTask = {},
                     onAdviceClick = {},
-                    currentTaskViewModel = viewModel
+                    currentTaskViewModel = viewModel,
                 )
             }
         }
@@ -197,6 +143,7 @@ class CurrentTaskScreenTest {
 
     @Test
     fun displaysErrorMessage_whenRemoveFailed() {
+        var setUserMessageCalled = false
         val task = genTasks(1).single()
         val taskRepository = FakeTaskRepository(task)
         val viewModel = createCurrentTaskViewModel(taskRepository)
@@ -204,9 +151,12 @@ class CurrentTaskScreenTest {
         composeTestRule.setContent {
             DiswantinTheme {
                 CurrentTaskScreen(
-                    onNavigateToSearch = {},
+                    setCurrentTaskId = {},
+                    setUserMessage = {
+                        assertThat(it).isEqualTo(stringResource(R.string.current_task_remove_error))
+                        setUserMessageCalled = true
+                    },
                     onAddTask = {},
-                    onEditTask = {},
                     onAdviceClick = {},
                     currentTaskViewModel = viewModel
                 )
@@ -215,9 +165,9 @@ class CurrentTaskScreenTest {
 
         taskRepository.setThrows(taskRepository::remove, true)
         composeTestRule.onNodeWithText(stringResource(R.string.remove_button)).performClick()
+        composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText(stringResource(R.string.current_task_remove_error))
-            .assertIsDisplayed()
+        assertThat(setUserMessageCalled).isTrue()
     }
 
     private fun genTasks(count: Int) = generateSequence(

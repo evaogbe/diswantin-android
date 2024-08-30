@@ -6,7 +6,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskRepository
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.toPersistentList
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -37,7 +37,7 @@ class TaskSearchViewModel @Inject constructor(
                 query.isNotBlank() -> {
                     taskRepository.search(query.trim())
                         .map<List<Task>, TaskSearchUiState> {
-                            TaskSearchUiState.Success(searchResults = it.toPersistentList())
+                            TaskSearchUiState.Success(searchResults = it.toImmutableList())
                         }.catch { e ->
                             Timber.e(e, "Failed to search for tasks by query: %s", query)
                             emit(TaskSearchUiState.Failure)
@@ -60,8 +60,8 @@ class TaskSearchViewModel @Inject constructor(
             initialValue = TaskSearchUiState.Initial
         )
 
-    fun searchTasks(value: String) {
-        query.value = value
+    fun searchTasks(query: String) {
+        this.query.value = query
     }
 }
 

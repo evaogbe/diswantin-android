@@ -4,7 +4,7 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
-import io.github.evaogbe.diswantin.testutils.MainDispatcherRule
+import io.github.evaogbe.diswantin.testing.MainDispatcherRule
 import io.github.serpro69.kfaker.Faker
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
@@ -15,7 +15,6 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
-import java.time.Instant
 import java.util.regex.Pattern
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -31,15 +30,14 @@ class TaskSearchViewModelTest {
             val blankQuery = faker.string.regexify(""" *""")
             val query = faker.string.regexify("""\S+""")
             val tasks = List(faker.random.nextInt(bound = 5)) {
-                faker.randomClass.randomClassInstance<Task> {
-                    typeGenerator<Instant> { faker.random.randomPastDate().toInstant() }
-                    typeGenerator<String> {
-                        faker.string.regexify(
-                            """([^\r\n]* )?${Pattern.quote(query)}[^\r\n]*"""
-                                .toRegex(RegexOption.IGNORE_CASE)
-                        )
-                    }
-                }
+                Task(
+                    id = it + 1L,
+                    createdAt = faker.random.randomPastDate().toInstant(),
+                    name = faker.string.regexify(
+                        """([^\r\n]* )?${Pattern.quote(query)}[^\r\n]*"""
+                            .toRegex(RegexOption.IGNORE_CASE)
+                    ),
+                )
             }
             val taskRepository = FakeTaskRepository(tasks)
             val viewModel = TaskSearchViewModel(taskRepository)

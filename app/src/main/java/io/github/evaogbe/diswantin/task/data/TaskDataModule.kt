@@ -10,4 +10,9 @@ import dagger.hilt.components.SingletonComponent
 interface TaskDataModule {
     @Binds
     fun bindTaskRepository(localTaskRepository: LocalTaskRepository): TaskRepository
+
+    @Binds
+    fun bindTaskListRepository(
+        localTaskListRepository: LocalTaskListRepository
+    ): TaskListRepository
 }
