@@ -97,7 +97,7 @@ class TaskFormScreenTest {
         }
 
         composeTestRule.onNodeWithText(
-            stringResource(R.string.due_at_label),
+            stringResource(R.string.deadline_label),
             useUnmergedTree = true
         ).assertIsDisplayed()
         composeTestRule.onNodeWithText(
@@ -109,7 +109,7 @@ class TaskFormScreenTest {
             .onParent()
             .performTextInput(name)
         composeTestRule.onNodeWithText(
-            stringResource(R.string.due_at_label),
+            stringResource(R.string.deadline_label),
             useUnmergedTree = true
         )
             .onParent()
@@ -151,7 +151,7 @@ class TaskFormScreenTest {
     fun popsBackStack_whenTaskUpdated() {
         val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
         var onPopBackStackCalled = false
-        val task1 = genTask().copy(dueAt = faker.random.randomFutureDate().toInstant())
+        val task1 = genTask().copy(deadline = faker.random.randomFutureDate().toInstant())
         val task2 = genTask(id = 2L)
         val taskRepository = FakeTaskRepository(task1, task2)
         val viewModel = createTaskFormViewModelForEdit(taskRepository)
@@ -166,7 +166,7 @@ class TaskFormScreenTest {
         }
 
         composeTestRule.onNodeWithText(
-            stringResource(R.string.due_at_label),
+            stringResource(R.string.deadline_label),
             useUnmergedTree = true
         ).assertIsDisplayed()
         composeTestRule.onNodeWithText(

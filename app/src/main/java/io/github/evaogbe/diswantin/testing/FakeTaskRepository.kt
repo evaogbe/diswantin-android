@@ -43,7 +43,7 @@ class FakeTaskRepository(initialTasks: Collection<Task>) : TaskRepository {
 
             tasks.values.sortedWith(
                 compareBy(nullsLast(), Task::scheduledAt)
-                    .thenComparing(Task::dueAt, nullsLast())
+                    .thenComparing(Task::deadline, nullsLast())
                     .thenComparing(Task::createdAt)
                     .thenComparing(Task::id)
             ).mapNotNull { task ->

@@ -64,7 +64,7 @@ class LocalTaskRepositoryTest {
                     taskRepository.create(
                         NewTaskForm(
                             name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-                            dueAt = null,
+                            deadline = null,
                             scheduledAt = null,
                             clock = clock,
                         )
@@ -78,7 +78,7 @@ class LocalTaskRepositoryTest {
                     taskRepository.create(
                         NewTaskForm(
                             name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-                            dueAt = null,
+                            deadline = null,
                             scheduledAt = null,
                             clock = clock,
                         )
@@ -89,7 +89,7 @@ class LocalTaskRepositoryTest {
                 val updatedTask2 = taskRepository.update(
                     EditTaskForm(
                         name = task2.name,
-                        dueAt = Instant.parse("2024-08-23T17:00:00Z"),
+                        deadline = Instant.parse("2024-08-23T17:00:00Z"),
                         scheduledAt = task2.scheduledAt,
                         task = task2,
                     )
@@ -102,7 +102,7 @@ class LocalTaskRepositoryTest {
                 var updatedTask1 = taskRepository.update(
                     EditTaskForm(
                         name = task1.name,
-                        dueAt = task1.dueAt,
+                        deadline = task1.deadline,
                         scheduledAt = Instant.parse("2024-08-23T18:00:00Z"),
                         task = task1,
                     )
@@ -115,7 +115,7 @@ class LocalTaskRepositoryTest {
                 updatedTask1 = taskRepository.update(
                     EditTaskForm(
                         name = updatedTask1.name,
-                        dueAt = updatedTask1.dueAt,
+                        deadline = updatedTask1.deadline,
                         scheduledAt = Instant.parse("2024-08-23T19:00:00Z"),
                         task = updatedTask1,
                     )
@@ -129,7 +129,7 @@ class LocalTaskRepositoryTest {
                     taskRepository.create(
                         NewTaskForm(
                             name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-                            dueAt = null,
+                            deadline = null,
                             scheduledAt = null,
                             clock = clock,
                         )
@@ -177,7 +177,7 @@ class LocalTaskRepositoryTest {
             taskRepository.create(
                 NewTaskForm(
                     name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-                    dueAt = null,
+                    deadline = null,
                     scheduledAt = null,
                     clock = clock,
                 )

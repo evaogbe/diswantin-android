@@ -47,7 +47,7 @@ class CurrentTaskViewModelTest {
             taskRepository.update(
                 EditTaskForm(
                     name = name,
-                    dueAt = task1.dueAt,
+                    deadline = task1.deadline,
                     scheduledAt = task1.scheduledAt,
                     task = task1,
                 )

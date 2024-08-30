@@ -25,8 +25,8 @@ interface TaskDao {
         ORDER BY
             t2.scheduled_at IS NULL,
             t2.scheduled_at,
-            t2.due_at IS NULL,
-            t2.due_at,
+            t2.deadline IS NULL,
+            t2.deadline,
             t2.created_at,
             t2.id
         LIMIT 1"""

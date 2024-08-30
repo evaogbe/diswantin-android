@@ -52,7 +52,7 @@ class TaskFormViewModelTest {
             assertThat(viewModel.isNew).isTrue()
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    dueAtInput = null,
+                    deadlineInput = null,
                     scheduledAtInput = null,
                     hasSaveError = false,
                 )
@@ -63,8 +63,8 @@ class TaskFormViewModelTest {
     @Test
     fun `initializes for edit when taskId present`() =
         runTest(mainDispatcherRule.testDispatcher) {
-            val dueAt = Instant.parse("2024-08-22T21:00:00Z")
-            val task = genTask().copy(dueAt = dueAt)
+            val deadline = Instant.parse("2024-08-22T21:00:00Z")
+            val task = genTask().copy(deadline = deadline)
             val taskRepository = FakeTaskRepository(task)
             val viewModel = createTaskFormViewModelForEdit(taskRepository)
 
@@ -76,16 +76,16 @@ class TaskFormViewModelTest {
             assertThat(viewModel.uiState.value).isInstanceOf<TaskFormUiState.Success>().all {
                 isEqualToIgnoringGivenProperties(
                     TaskFormUiState.Success(
-                        dueAtInput = null,
+                        deadlineInput = null,
                         scheduledAtInput = null,
                         hasSaveError = false,
                     ),
-                    TaskFormUiState.Success::dueAtInput
+                    TaskFormUiState.Success::deadlineInput
                 )
-                prop(TaskFormUiState.Success::dueAtInput)
+                prop(TaskFormUiState.Success::deadlineInput)
                     .isNotNull()
                     .transform { it.toInstant() }
-                    .isEqualTo(dueAt)
+                    .isEqualTo(deadline)
             }
             assertThat(viewModel.nameInput).isEqualTo(task.name)
         }
@@ -119,7 +119,7 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    dueAtInput = null,
+                    deadlineInput = null,
                     scheduledAtInput = null,
                     hasSaveError = false,
                 )
@@ -131,21 +131,21 @@ class TaskFormViewModelTest {
             assertThat(taskRepository.tasks).isEmpty()
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    dueAtInput = null,
+                    deadlineInput = null,
                     scheduledAtInput = null,
                     hasSaveError = false,
                 )
             )
 
             viewModel.updateNameInput(name)
-            viewModel.updateDueAtInput(
+            viewModel.updateDeadlineInput(
                 ZonedDateTime.parse("2024-08-22T17:00-04:00[America/New_York]")
             )
             viewModel.saveTask()
 
             val task = taskRepository.tasks.single()
             assertThat(task.name).isEqualTo(name)
-            assertThat(task.dueAt).isEqualTo(Instant.parse("2024-08-22T21:00:00Z"))
+            assertThat(task.deadline).isEqualTo(Instant.parse("2024-08-22T21:00:00Z"))
             assertThat(viewModel.uiState.value).isEqualTo(TaskFormUiState.Saved)
         }
 
@@ -166,7 +166,7 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    dueAtInput = null,
+                    deadlineInput = null,
                     scheduledAtInput = null,
                     hasSaveError = true,
                 )
@@ -187,7 +187,7 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    dueAtInput = null,
+                    deadlineInput = null,
                     scheduledAtInput = null,
                     hasSaveError = false,
                 )
@@ -199,14 +199,14 @@ class TaskFormViewModelTest {
             assertThat(taskRepository.tasks).containsExactlyInAnyOrder(task)
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    dueAtInput = null,
+                    deadlineInput = null,
                     scheduledAtInput = null,
                     hasSaveError = false,
                 )
             )
 
             viewModel.updateNameInput(name)
-            viewModel.updateDueAtInput(
+            viewModel.updateDeadlineInput(
                 ZonedDateTime.parse("2024-08-22T17:00:00-04:00[America/New_York]")
             )
             viewModel.saveTask()
@@ -214,7 +214,7 @@ class TaskFormViewModelTest {
             assertThat(taskRepository.tasks).containsExactlyInAnyOrder(
                 task.copy(
                     name = name,
-                    dueAt = Instant.parse("2024-08-22T21:00:00Z")
+                    deadline = Instant.parse("2024-08-22T21:00:00Z")
                 )
             )
             assertThat(viewModel.uiState.value).isEqualTo(TaskFormUiState.Saved)
@@ -238,7 +238,7 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    dueAtInput = null,
+                    deadlineInput = null,
                     scheduledAtInput = null,
                     hasSaveError = true,
                 )

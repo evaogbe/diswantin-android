@@ -72,7 +72,7 @@ fun TaskFormScreen(
         onClose = onPopBackStack,
         name = taskFormViewModel.nameInput,
         onNameChange = taskFormViewModel::updateNameInput,
-        onDueAtChange = taskFormViewModel::updateDueAtInput,
+        onDeadlineChange = taskFormViewModel::updateDeadlineInput,
         onScheduleAtChange = taskFormViewModel::updateScheduledAtInput,
         onSave = taskFormViewModel::saveTask,
         uiState = uiState
@@ -86,7 +86,7 @@ fun TaskFormScreen(
     onClose: () -> Unit,
     name: String,
     onNameChange: (String) -> Unit,
-    onDueAtChange: (ZonedDateTime?) -> Unit,
+    onDeadlineChange: (ZonedDateTime?) -> Unit,
     onScheduleAtChange: (ZonedDateTime?) -> Unit,
     onSave: () -> Unit,
     uiState: TaskFormUiState
@@ -141,7 +141,7 @@ fun TaskFormScreen(
                 TaskFormLayout(
                     name = name,
                     onNameChange = onNameChange,
-                    onDueAtChange = onDueAtChange,
+                    onDeadlineChange = onDeadlineChange,
                     onScheduleAtChange = onScheduleAtChange,
                     uiState = uiState,
                     formError = when {
@@ -157,14 +157,14 @@ fun TaskFormScreen(
 }
 
 enum class DateTimeConstraintField {
-    DueAt, ScheduledAt
+    Deadline, ScheduledAt
 }
 
 @Composable
 fun TaskFormLayout(
     name: String,
     onNameChange: (String) -> Unit,
-    onDueAtChange: (ZonedDateTime?) -> Unit,
+    onDeadlineChange: (ZonedDateTime?) -> Unit,
     onScheduleAtChange: (ZonedDateTime?) -> Unit,
     uiState: TaskFormUiState.Success,
     formError: String?,
@@ -204,14 +204,14 @@ fun TaskFormLayout(
 
             if (uiState.scheduledAtInput == null) {
                 DateTimeTextField(
-                    onClick = { dateTimePickerType = DateTimeConstraintField.DueAt },
-                    dateTime = uiState.dueAtInput,
-                    onDateTimeChange = onDueAtChange,
-                    label = { Text(stringResource(R.string.due_at_label)) },
+                    onClick = { dateTimePickerType = DateTimeConstraintField.Deadline },
+                    dateTime = uiState.deadlineInput,
+                    onDateTimeChange = onDeadlineChange,
+                    label = { Text(stringResource(R.string.deadline_label)) },
                 )
             }
 
-            if (uiState.dueAtInput == null) {
+            if (uiState.deadlineInput == null) {
                 DateTimeTextField(
                     onClick = { dateTimePickerType = DateTimeConstraintField.ScheduledAt },
                     dateTime = uiState.scheduledAtInput,
@@ -224,13 +224,13 @@ fun TaskFormLayout(
 
     when (dateTimePickerType) {
         null -> {}
-        DateTimeConstraintField.DueAt -> {
+        DateTimeConstraintField.Deadline -> {
             DateTimePickerDialog(
                 onDismissRequest = { dateTimePickerType = null },
-                dateTime = uiState.dueAtInput,
+                dateTime = uiState.deadlineInput,
                 onSelectDateTime = { selectedDateTime ->
                     if (selectedDateTime != null) {
-                        onDueAtChange(selectedDateTime)
+                        onDeadlineChange(selectedDateTime)
                     }
                     dateTimePickerType = null
                 }
@@ -295,11 +295,11 @@ private fun TaskFormScreenPreview_New() {
             onClose = {},
             name = "",
             onNameChange = {},
-            onDueAtChange = {},
+            onDeadlineChange = {},
             onScheduleAtChange = {},
             onSave = {},
             uiState = TaskFormUiState.Success(
-                dueAtInput = null,
+                deadlineInput = null,
                 scheduledAtInput = null,
                 hasSaveError = false,
             )
@@ -316,11 +316,11 @@ private fun TaskFormScreenPreview_Edit() {
             onClose = {},
             name = "Shower",
             onNameChange = {},
-            onDueAtChange = {},
+            onDeadlineChange = {},
             onScheduleAtChange = {},
             onSave = {},
             uiState = TaskFormUiState.Success(
-                dueAtInput = ZonedDateTime.now(),
+                deadlineInput = ZonedDateTime.now(),
                 scheduledAtInput = null,
                 hasSaveError = true,
             )

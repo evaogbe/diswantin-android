@@ -19,7 +19,7 @@ sealed interface TaskDetailUiState {
         @StringRes val userMessage: Int?,
         private val clock: Clock
     ) : TaskDetailUiState {
-        val formattedDueAt = task.dueAt?.let(::formatDateTime)
+        val formattedDeadline = task.deadline?.let(::formatDateTime)
 
         val formattedScheduledAt = task.scheduledAt?.let(::formatDateTime)
 

@@ -34,7 +34,7 @@ class TaskDetailScreenTest {
 
     @Test
     fun displaysTask() {
-        val task = genTask().copy(dueAt = Instant.parse("2024-08-23T21:00:00Z"))
+        val task = genTask().copy(deadline = Instant.parse("2024-08-23T21:00:00Z"))
         val clock =
             Clock.fixed(Instant.parse("2024-08-23T21:00:00Z"), ZoneId.of("America/New_York"))
         val taskRepository = FakeTaskRepository(task)

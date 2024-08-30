@@ -38,7 +38,7 @@ class TaskFormViewModel @Inject constructor(
     var nameInput by mutableStateOf("")
         private set
 
-    private val dueAtInput = MutableStateFlow<ZonedDateTime?>(null)
+    private val deadlineInput = MutableStateFlow<ZonedDateTime?>(null)
 
     private val scheduledAtInput = MutableStateFlow<ZonedDateTime?>(null)
 
@@ -52,16 +52,16 @@ class TaskFormViewModel @Inject constructor(
     } ?: flowOf(null)
 
     val uiState = combine(
-        dueAtInput,
+        deadlineInput,
         scheduledAtInput,
         saveResult,
         taskStream,
-    ) { dueAtInput, scheduledAtInput, saveResult, task ->
+    ) { deadlineInput, scheduledAtInput, saveResult, task ->
         when {
             saveResult?.isSuccess == true -> TaskFormUiState.Saved
             taskId != null && task == null -> TaskFormUiState.Failure
             else -> TaskFormUiState.Success(
-                dueAtInput = dueAtInput,
+                deadlineInput = deadlineInput,
                 scheduledAtInput = scheduledAtInput,
                 hasSaveError = saveResult?.isFailure == true,
             )
@@ -76,7 +76,7 @@ class TaskFormViewModel @Inject constructor(
         viewModelScope.launch {
             val task = taskStream.first() ?: return@launch
             nameInput = task.name
-            dueAtInput.value = task.dueAt?.atZone(clock.zone)
+            deadlineInput.value = task.deadline?.atZone(clock.zone)
             scheduledAtInput.value = task.scheduledAt?.atZone(clock.zone)
         }
     }
@@ -85,8 +85,8 @@ class TaskFormViewModel @Inject constructor(
         nameInput = value
     }
 
-    fun updateDueAtInput(value: ZonedDateTime?) {
-        dueAtInput.value = value
+    fun updateDeadlineInput(value: ZonedDateTime?) {
+        deadlineInput.value = value
     }
 
     fun updateScheduledAtInput(value: ZonedDateTime?) {
@@ -99,7 +99,7 @@ class TaskFormViewModel @Inject constructor(
         if (taskId == null) {
             val form = NewTaskForm(
                 name = nameInput,
-                dueAt = state.dueAtInput?.toInstant(),
+                deadline = state.deadlineInput?.toInstant(),
                 scheduledAt = state.scheduledAtInput?.toInstant(),
                 clock = clock,
             )
@@ -121,7 +121,7 @@ class TaskFormViewModel @Inject constructor(
                     taskRepository.update(
                         EditTaskForm(
                             name = nameInput,
-                            dueAt = state.dueAtInput?.toInstant(),
+                            deadline = state.deadlineInput?.toInstant(),
                             scheduledAt = state.scheduledAtInput?.toInstant(),
                             task = task,
                         )

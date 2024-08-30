@@ -20,7 +20,7 @@ data class Task(
     @PrimaryKey(autoGenerate = true) val id: Long = 0L,
     @ColumnInfo("created_at") val createdAt: Instant,
     val name: String,
-    @ColumnInfo("due_at") val dueAt: Instant? = null,
+    val deadline: Instant? = null,
     @ColumnInfo("scheduled_at") val scheduledAt: Instant? = null,
     @ColumnInfo("list_id") val listId: Long? = null,
 )

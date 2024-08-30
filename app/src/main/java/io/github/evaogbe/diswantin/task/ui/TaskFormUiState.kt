@@ -8,7 +8,7 @@ sealed interface TaskFormUiState {
     data object Failure : TaskFormUiState
 
     data class Success(
-        val dueAtInput: ZonedDateTime?,
+        val deadlineInput: ZonedDateTime?,
         val scheduledAtInput: ZonedDateTime?,
         val hasSaveError: Boolean,
     ) : TaskFormUiState

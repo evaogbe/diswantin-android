@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.DeleteColumn
+import androidx.room.RenameColumn
 import androidx.room.RenameTable
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -19,7 +20,7 @@ import io.github.evaogbe.diswantin.task.data.TaskListDao
 import io.github.evaogbe.diswantin.task.data.TaskPath
 
 @Database(
-    version = 9,
+    version = 10,
     entities = [Task::class, TaskFts::class, TaskPath::class, TaskList::class],
     autoMigrations = [
         AutoMigration(from = 2, to = 3),
@@ -27,6 +28,7 @@ import io.github.evaogbe.diswantin.task.data.TaskPath
         AutoMigration(from = 4, to = 5, spec = DiswantinDatabase.Migration4To5::class),
         AutoMigration(from = 7, to = 8, spec = DiswantinDatabase.Migration7to8::class),
         AutoMigration(from = 8, to = 9),
+        AutoMigration(from = 9, to = 10, spec = DiswantinDatabase.Migration9to10::class),
     ]
 )
 @TypeConverters(Converters::class)
@@ -42,6 +44,9 @@ abstract class DiswantinDatabase : RoomDatabase() {
     @RenameTable(fromTableName = "activity_fts", toTableName = "task_fts")
     @RenameTable(fromTableName = "activity_path", toTableName = "task_path")
     class Migration7to8 : AutoMigrationSpec
+
+    @RenameColumn(tableName = "task", fromColumnName = "due_at", toColumnName = "deadline")
+    class Migration9to10 : AutoMigrationSpec
 
     companion object {
         const val DB_NAME = "diswantin"

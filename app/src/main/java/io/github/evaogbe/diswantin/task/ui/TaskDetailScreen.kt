@@ -199,11 +199,11 @@ fun TaskDetailLayout(
                 }
             }
 
-            if (uiState.formattedDueAt != null) {
+            if (uiState.formattedDeadline != null) {
                 item {
                     Spacer(Modifier.size(SpaceMd))
                     Text(
-                        stringResource(R.string.due_at_label),
+                        stringResource(R.string.deadline_label),
                         modifier = Modifier.padding(horizontal = SpaceMd),
                         color = colorScheme.onSurfaceVariant,
                         style = typography.labelSmall
@@ -214,7 +214,7 @@ fun TaskDetailLayout(
                     Spacer(Modifier.size(SpaceXs))
                     SelectionContainer {
                         Text(
-                            text = uiState.formattedDueAt,
+                            text = uiState.formattedDeadline,
                             modifier = Modifier.padding(horizontal = SpaceMd),
                             style = typography.bodyLarge
                         )
@@ -309,7 +309,7 @@ private fun TaskDetailLayoutPreview_withTaskList() {
                             id = 1L,
                             createdAt = Instant.now(),
                             name = "Brush teeth",
-                            dueAt = Instant.now(),
+                            deadline = Instant.now(),
                         ),
                         Task(
                             id = 2L,
@@ -334,7 +334,7 @@ private fun TaskDetailLayoutPreview_withTaskList() {
 
 @DevicePreviews
 @Composable
-private fun TaskDetailLayoutPreview_withDueAtAndTaskList() {
+private fun TaskDetailLayoutPreview_withDeadlineAndTaskList() {
     DiswantinTheme {
         Surface {
             TaskDetailLayout(
@@ -343,14 +343,14 @@ private fun TaskDetailLayoutPreview_withDueAtAndTaskList() {
                         id = 1L,
                         createdAt = Instant.now(),
                         name = "Brush teeth",
-                        dueAt = Instant.now(),
+                        deadline = Instant.now(),
                     ),
                     taskListItems = persistentListOf(
                         Task(
                             id = 1L,
                             createdAt = Instant.now(),
                             name = "Brush teeth",
-                            dueAt = Instant.now(),
+                            deadline = Instant.now(),
                         ),
                         Task(
                             id = 2L,

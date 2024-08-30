@@ -15,11 +15,10 @@
     <string name="current_task_title">Current To-do</string>
     <string name="edit_button">Edit</string>
     <string name="delete_button">Delete</string>
-    <string name="due_at_label">Due at</string>
+    <string name="deadline_label">Deadline</string>
     <string name="more_actions_button">More actions</string>
     <string name="name_label">Name</string>
     <string name="ok_button">OK</string>
-    <string name="prev_task_label">To-do before</string>
     <string name="remove_button">Remove</string>
     <string name="save_button">Save</string>
     <string name="scheduled_at_label">Scheduled at</string>
