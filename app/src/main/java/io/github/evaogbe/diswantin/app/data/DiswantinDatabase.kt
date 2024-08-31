@@ -1,6 +1,8 @@
 package io.github.evaogbe.diswantin.app.data
 
+import android.content.ContentValues
 import android.content.Context
+import android.database.sqlite.SQLiteDatabase
 import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.DeleteColumn
@@ -20,7 +22,7 @@ import io.github.evaogbe.diswantin.task.data.TaskListDao
 import io.github.evaogbe.diswantin.task.data.TaskPath
 
 @Database(
-    version = 11,
+    version = 12,
     entities = [Task::class, TaskFts::class, TaskPath::class, TaskList::class],
     autoMigrations = [
         AutoMigration(from = 2, to = 3),
@@ -117,11 +119,48 @@ abstract class DiswantinDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_11_12 = object : Migration(11, 12) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                val chainsByHead = mutableMapOf<Long, Set<Long>>()
+                db.query(
+                    """SELECT `p`.`ancestor`, `p`.`descendant`
+                    FROM `task_path` `p`
+                    JOIN (
+                        SELECT `descendant`, MAX(`depth`) AS `depth`
+                        FROM `task_path`
+                        GROUP BY `descendant`
+                    ) `tail` ON `tail`.`descendant` = `p`.`descendant`
+                        AND `tail`.`depth` = `p`.`depth`
+                    WHERE `p`.`depth` > 0"""
+                )
+                    .use { stmt ->
+                        while (stmt.moveToNext()) {
+                            val ancestor = stmt.getLong(0)
+                            val descendant = stmt.getLong(1)
+                            chainsByHead.compute(ancestor) { _, v ->
+                                v.orEmpty() + setOf(ancestor, descendant)
+                            }
+                        }
+                    }
+                chainsByHead.entries.forEachIndexed { i, (_, taskIds) ->
+                    val listId = db.insert(
+                        "task_list",
+                        SQLiteDatabase.CONFLICT_ABORT,
+                        ContentValues().apply { put("name", "List ${i + 1}") },
+                    )
+                    db.execSQL(
+                        "UPDATE `task` SET list_id = ? WHERE id IN (${taskIds.joinToString()})",
+                        arrayOf(listId)
+                    )
+                }
+            }
+        }
+
         fun createDatabase(context: Context) =
             Room.databaseBuilder(
                 context.applicationContext,
                 DiswantinDatabase::class.java,
-                DB_NAME
-            ).addMigrations(MIGRATION_1_2, MIGRATION_5_6, MIGRATION_6_7).build()
+                DB_NAME,
+            ).addMigrations(MIGRATION_1_2, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_11_12).build()
     }
 }

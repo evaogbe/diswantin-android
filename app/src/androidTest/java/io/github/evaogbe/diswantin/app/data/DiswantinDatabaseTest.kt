@@ -121,4 +121,81 @@ class DiswantinDatabaseTest {
         }
         migratedDb.close()
     }
+
+    @Test
+    fun testMigration_11_12() {
+        val taskValues = List(6) {
+            arrayOf(
+                it + 1L,
+                faker.random.randomPastDate().toInstant().toEpochMilli(),
+                "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+            )
+        }
+        val taskPathValues = taskValues.map { arrayOf(it[0], it[0], 0) } +
+                listOf(
+                    arrayOf(taskValues[0][0], taskValues[1][0], 1),
+                    arrayOf(taskValues[0][0], taskValues[2][0], 2),
+                    arrayOf(taskValues[1][0], taskValues[2][0], 1),
+                    arrayOf(taskValues[3][0], taskValues[4][0], 1),
+                )
+
+        val initialDb = migrationTestHelper.createDatabase(DiswantinDatabase.DB_NAME, 11)
+        taskValues.forEach {
+            initialDb.execSQL("INSERT INTO `task` (id, created_at, name) VALUES (?, ?, ?)", it)
+        }
+        taskPathValues.forEach {
+            initialDb.execSQL(
+                "INSERT INTO `task_path` (ancestor, descendant, depth) VALUES (?, ?, ?)",
+                it,
+            )
+        }
+        initialDb.close()
+
+        val migratedDb =
+            migrationTestHelper.runMigrationsAndValidate(
+                DiswantinDatabase.DB_NAME,
+                12,
+                true,
+                DiswantinDatabase.MIGRATION_11_12,
+            )
+        migratedDb.query("SELECT COUNT(*) FROM `task_list`").use { stmt ->
+            assertThat(stmt.moveToFirst()).isTrue()
+            assertThat(stmt.getLong(0)).isEqualTo(2)
+        }
+        migratedDb.query("SELECT * FROM `task_list` ORDER BY `id`").use { stmt ->
+            assertThat(stmt.moveToFirst()).isTrue()
+            assertThat(stmt.getLong(0)).isEqualTo(1)
+            assertThat(stmt.getString(1)).isEqualTo("List 1")
+
+            assertThat(stmt.moveToNext()).isTrue()
+            assertThat(stmt.getLong(0)).isEqualTo(2)
+            assertThat(stmt.getString(1)).isEqualTo("List 2")
+        }
+        migratedDb.query("SELECT `id`, `list_id` FROM `task` ORDER BY `id`").use { stmt ->
+            assertThat(stmt.moveToFirst()).isTrue()
+            assertThat(stmt.getLong(0)).isEqualTo(1)
+            assertThat(stmt.getLong(1)).isEqualTo(1)
+
+            assertThat(stmt.moveToNext()).isTrue()
+            assertThat(stmt.getLong(0)).isEqualTo(2)
+            assertThat(stmt.getLong(1)).isEqualTo(1)
+
+            assertThat(stmt.moveToNext()).isTrue()
+            assertThat(stmt.getLong(0)).isEqualTo(3)
+            assertThat(stmt.getLong(1)).isEqualTo(1)
+
+            assertThat(stmt.moveToNext()).isTrue()
+            assertThat(stmt.getLong(0)).isEqualTo(4)
+            assertThat(stmt.getLong(1)).isEqualTo(2)
+
+            assertThat(stmt.moveToNext()).isTrue()
+            assertThat(stmt.getLong(0)).isEqualTo(5)
+            assertThat(stmt.getLong(1)).isEqualTo(2)
+
+            assertThat(stmt.moveToNext()).isTrue()
+            assertThat(stmt.getLong(0)).isEqualTo(6)
+            assertThat(stmt.getLongOrNull(1)).isNull()
+        }
+        migratedDb.close()
+    }
 }
