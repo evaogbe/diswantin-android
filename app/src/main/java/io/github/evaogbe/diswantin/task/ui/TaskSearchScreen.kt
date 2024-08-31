@@ -19,6 +19,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -126,12 +127,26 @@ fun TaskSearchScreen(
                         onValueChange = onQueryChange,
                         modifier = Modifier.fillMaxWidth(),
                         placeholder = { Text(stringResource(R.string.task_search_title)) },
-                        keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
+                        trailingIcon = if (query.isNotEmpty()) {
+                            {
+                                IconButton(onClick = { onQueryChange("") }) {
+                                    Icon(
+                                        imageVector = Icons.Default.Clear,
+                                        contentDescription = stringResource(R.string.clear_button)
+                                    )
+                                }
+                            }
+                        } else {
+                            null
+                        },
+                        keyboardOptions = KeyboardOptions.Default.copy(
+                            imeAction = ImeAction.Search,
+                        ),
                         keyboardActions = KeyboardActions(onSearch = { onSearch(query) }),
                         singleLine = true,
                         colors = TextFieldDefaults.colors(
                             focusedContainerColor = Color.Transparent,
-                            unfocusedContainerColor = Color.Transparent
+                            unfocusedContainerColor = Color.Transparent,
                         )
                     )
                 },

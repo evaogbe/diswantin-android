@@ -2,8 +2,8 @@ package io.github.evaogbe.diswantin.ui.components
 
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -24,6 +24,7 @@ fun AutoFocusTextField(
     modifier: Modifier = Modifier,
     label: @Composable (() -> Unit)? = null,
     placeholder: @Composable (() -> Unit)? = null,
+    trailingIcon: @Composable (() -> Unit)? = null,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     singleLine: Boolean = false,
@@ -38,7 +39,7 @@ fun AutoFocusTextField(
         textFieldValue = textFieldValue.copy(text = value)
     }
 
-    OutlinedTextField(
+    TextField(
         value = textFieldValue,
         onValueChange = {
             textFieldValue = it
@@ -47,6 +48,7 @@ fun AutoFocusTextField(
         modifier = modifier.focusRequester(focusRequester),
         label = label,
         placeholder = placeholder,
+        trailingIcon = trailingIcon,
         keyboardOptions = keyboardOptions,
         keyboardActions = keyboardActions,
         singleLine = singleLine,
