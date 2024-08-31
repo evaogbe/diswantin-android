@@ -6,7 +6,6 @@ import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.MainDispatcherRule
 import io.github.serpro69.kfaker.Faker
-import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collect
@@ -59,8 +58,7 @@ class TaskSearchViewModelTest {
 
             viewModel.searchTasks(blankQuery)
 
-            assertThat(viewModel.uiState.value)
-                .isEqualTo(TaskSearchUiState.Success(searchResults = persistentListOf()))
+            assertThat(viewModel.uiState.value).isEqualTo(TaskSearchUiState.Initial)
         }
 
     @Test

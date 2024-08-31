@@ -43,6 +43,7 @@ class TaskSearchScreenTest {
             DiswantinTheme {
                 TaskSearchScreen(
                     onBackClick = {},
+                    onAddTask = {},
                     onSelectSearchResult = {},
                     taskSearchViewModel = viewModel
                 )
@@ -71,6 +72,7 @@ class TaskSearchScreenTest {
             DiswantinTheme {
                 TaskSearchScreen(
                     onBackClick = {},
+                    onAddTask = {},
                     onSelectSearchResult = {},
                     taskSearchViewModel = viewModel
                 )
@@ -98,6 +100,7 @@ class TaskSearchScreenTest {
             DiswantinTheme {
                 TaskSearchScreen(
                     onBackClick = {},
+                    onAddTask = {},
                     onSelectSearchResult = {},
                     taskSearchViewModel = viewModel
                 )

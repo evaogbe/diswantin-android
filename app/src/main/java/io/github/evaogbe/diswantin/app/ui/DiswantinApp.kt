@@ -27,7 +27,9 @@ fun DiswantinApp() {
             HomeScreen(
                 onSearch = { navController.navigate(route = Destination.TaskSearch.route) },
                 onEditTask = { navController.navigate(route = Destination.EditTaskForm(it).route) },
-                onAddTask = { navController.navigate(route = Destination.NewTaskForm.route) },
+                onAddTask = {
+                    navController.navigate(route = Destination.NewTaskForm(name = null).route)
+                },
                 onAddList = { navController.navigate(route = Destination.NewTaskListForm.route) },
                 onAdviceClick = { navController.navigate(route = Destination.Advice.route) },
                 onSelectTaskList = {
@@ -38,12 +40,21 @@ fun DiswantinApp() {
         composable(Destination.TaskSearch.route) {
             TaskSearchScreen(
                 onBackClick = navController::popBackStack,
+                onAddTask = {
+                    navController.navigate(route = Destination.NewTaskForm(name = it).route)
+                },
                 onSelectSearchResult = {
                     navController.navigate(route = Destination.TaskDetail(it).route)
                 },
             )
         }
-        composable(Destination.NewTaskForm.route) {
+        composable(
+            Destination.NewTaskForm.route,
+            arguments = listOf(navArgument(Destination.NewTaskForm.NAME_KEY) {
+                type = NavType.StringType
+                nullable = true
+            }),
+        ) {
             TaskFormScreen(onPopBackStack = navController::popBackStack)
         }
         composable(

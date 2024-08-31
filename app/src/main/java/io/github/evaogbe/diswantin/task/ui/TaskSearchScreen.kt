@@ -1,5 +1,6 @@
 package io.github.evaogbe.diswantin.task.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -7,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -16,7 +18,10 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -54,6 +59,7 @@ import io.github.evaogbe.diswantin.ui.components.PendingLayout
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.evaogbe.diswantin.ui.theme.IconSizeLg
 import io.github.evaogbe.diswantin.ui.theme.ScreenLg
+import io.github.evaogbe.diswantin.ui.theme.SpaceLg
 import io.github.evaogbe.diswantin.ui.theme.SpaceMd
 import io.github.evaogbe.diswantin.ui.theme.SpaceXl
 import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
@@ -70,6 +76,7 @@ import kotlin.time.Duration.Companion.milliseconds
 @Composable
 fun TaskSearchScreen(
     onBackClick: () -> Unit,
+    onAddTask: (String) -> Unit,
     onSelectSearchResult: (Long) -> Unit,
     taskSearchViewModel: TaskSearchViewModel = hiltViewModel(),
 ) {
@@ -92,6 +99,7 @@ fun TaskSearchScreen(
         onSearch = taskSearchViewModel::searchTasks,
         onBackClick = onBackClick,
         uiState = uiState,
+        onAddTask = { onAddTask(query) },
         onSelectSearchResult = { onSelectSearchResult(it.id) },
     )
 }
@@ -104,6 +112,7 @@ fun TaskSearchScreen(
     onSearch: (String) -> Unit,
     onBackClick: () -> Unit,
     uiState: TaskSearchUiState,
+    onAddTask: () -> Unit,
     onSelectSearchResult: (Task) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -138,7 +147,14 @@ fun TaskSearchScreen(
         },
     ) { innerPadding ->
         when (uiState) {
-            is TaskSearchUiState.Initial -> {}
+            is TaskSearchUiState.Initial -> {
+                Box(
+                    modifier = Modifier
+                        .padding(innerPadding)
+                        .fillMaxSize()
+                        .background(color = colorScheme.surfaceVariant),
+                )
+            }
 
             is TaskSearchUiState.Pending -> {
                 PendingLayout(modifier = Modifier.padding(innerPadding))
@@ -153,7 +169,10 @@ fun TaskSearchScreen(
 
             is TaskSearchUiState.Success -> {
                 if (uiState.searchResults.isEmpty()) {
-                    EmptyTaskSearchLayout(modifier = Modifier.padding(innerPadding))
+                    EmptyTaskSearchLayout(
+                        onAddTask = onAddTask,
+                        modifier = Modifier.padding(innerPadding),
+                    )
                 } else {
                     TaskSearchLayout(
                         query = query,
@@ -209,8 +228,13 @@ fun TaskSearchLayout(
 }
 
 @Composable
-fun EmptyTaskSearchLayout(modifier: Modifier = Modifier) {
-    Surface(modifier = modifier.fillMaxSize(), color = colorScheme.surfaceVariant) {
+fun EmptyTaskSearchLayout(onAddTask: () -> Unit, modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier
+            .imePadding()
+            .fillMaxSize(),
+        color = colorScheme.surfaceVariant,
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -229,13 +253,26 @@ fun EmptyTaskSearchLayout(modifier: Modifier = Modifier) {
                 textAlign = TextAlign.Center,
                 style = typography.headlineLarge
             )
+            Spacer(Modifier.size(SpaceLg))
+            Button(
+                onClick = onAddTask,
+                contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = null,
+                    modifier = Modifier.size(ButtonDefaults.IconSize)
+                )
+                Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                Text(stringResource(R.string.add_task_button))
+            }
         }
     }
 }
 
 @DevicePreviews
 @Composable
-private fun TaskSearchScreenPreview() {
+private fun TaskSearchScreenPreview_Present() {
     DiswantinTheme {
         TaskSearchScreen(
             query = "Bru",
@@ -243,7 +280,7 @@ private fun TaskSearchScreenPreview() {
             onSearch = {},
             onBackClick = {},
             uiState = TaskSearchUiState.Success(
-                persistentListOf(
+                searchResults = persistentListOf(
                     Task(
                         id = 1L,
                         createdAt = Instant.parse("2024-08-09T08:00:00Z"),
@@ -261,6 +298,7 @@ private fun TaskSearchScreenPreview() {
                     ),
                 )
             ),
+            onAddTask = {},
             onSelectSearchResult = {}
         )
     }
@@ -268,8 +306,32 @@ private fun TaskSearchScreenPreview() {
 
 @DevicePreviews
 @Composable
-private fun EmptyTaskSearchLayoutPreview() {
+private fun TaskSearchScreenPreview_Empty() {
     DiswantinTheme {
-        EmptyTaskSearchLayout()
+        TaskSearchScreen(
+            query = "Bru",
+            onQueryChange = {},
+            onSearch = {},
+            onBackClick = {},
+            uiState = TaskSearchUiState.Success(searchResults = persistentListOf()),
+            onAddTask = {},
+            onSelectSearchResult = {}
+        )
+    }
+}
+
+@DevicePreviews
+@Composable
+private fun TaskSearchScreenPreview_Initial() {
+    DiswantinTheme {
+        TaskSearchScreen(
+            query = "",
+            onQueryChange = {},
+            onSearch = {},
+            onBackClick = {},
+            uiState = TaskSearchUiState.Initial,
+            onAddTask = {},
+            onSelectSearchResult = {}
+        )
     }
 }

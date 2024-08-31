@@ -35,7 +35,7 @@ class TaskFormViewModel @Inject constructor(
 
     val isNew = taskId == null
 
-    var nameInput by mutableStateOf("")
+    var nameInput by mutableStateOf(savedStateHandle[Destination.NewTaskForm.NAME_KEY] ?: "")
         private set
 
     private val deadlineInput = MutableStateFlow<ZonedDateTime?>(null)
