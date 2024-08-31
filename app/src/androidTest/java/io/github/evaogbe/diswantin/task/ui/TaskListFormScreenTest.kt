@@ -13,6 +13,7 @@ import assertk.assertThat
 import assertk.assertions.isTrue
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.Task
+import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTaskListRepository
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.stringResource
@@ -43,8 +44,11 @@ class TaskListFormScreenTest {
                 name = "${loremFaker.verbs.unique.base()} ${loremFaker.lorem.words()}"
             )
         }
-        val taskRepository = FakeTaskRepository(tasks)
-        val taskListRepository = FakeTaskListRepository()
+        val db = FakeDatabase().also { db ->
+            tasks.forEach(db::addTask)
+        }
+        val taskRepository = FakeTaskRepository(db)
+        val taskListRepository = FakeTaskListRepository(db)
         val viewModel = TaskListFormViewModel(taskListRepository, taskRepository)
 
         composeTestRule.setContent {
@@ -98,8 +102,9 @@ class TaskListFormScreenTest {
     @Test
     fun displaysErrorMessage_withSaveError() {
         val name = loremFaker.lorem.words()
-        val taskRepository = FakeTaskRepository()
-        val taskListRepository = FakeTaskListRepository()
+        val db = FakeDatabase()
+        val taskRepository = FakeTaskRepository(db)
+        val taskListRepository = FakeTaskListRepository(db)
         val viewModel = TaskListFormViewModel(taskListRepository, taskRepository)
 
         composeTestRule.setContent {

@@ -37,7 +37,7 @@ class TaskDetailScreenTest {
         val task = genTask().copy(deadline = Instant.parse("2024-08-23T21:00:00Z"))
         val clock =
             Clock.fixed(Instant.parse("2024-08-23T21:00:00Z"), ZoneId.of("America/New_York"))
-        val taskRepository = FakeTaskRepository(task)
+        val taskRepository = FakeTaskRepository.withTasks(task)
         val viewModel = TaskDetailViewModel(
             SavedStateHandle(mapOf(Destination.TaskDetail.ID_KEY to task.id)),
             taskRepository,
@@ -49,8 +49,8 @@ class TaskDetailScreenTest {
                 TaskDetailScreen(
                     onPopBackStack = {},
                     onEditTask = {},
-                    onSelectTaskItem = {},
-                    taskDetailViewModel = viewModel
+                    onSelectTaskList = {},
+                    taskDetailViewModel = viewModel,
                 )
             }
         }
@@ -62,7 +62,7 @@ class TaskDetailScreenTest {
     @Test
     fun displaysErrorMessage_whenUiFailure() {
         val taskRepository = FakeTaskRepository()
-        taskRepository.setThrows(taskRepository::getById, true)
+        taskRepository.setThrows(taskRepository::getTaskWithTaskListById, true)
 
         val viewModel = TaskDetailViewModel(
             SavedStateHandle(mapOf(Destination.TaskDetail.ID_KEY to 1L)),
@@ -75,8 +75,8 @@ class TaskDetailScreenTest {
                 TaskDetailScreen(
                     onPopBackStack = {},
                     onEditTask = {},
-                    onSelectTaskItem = {},
-                    taskDetailViewModel = viewModel
+                    onSelectTaskList = {},
+                    taskDetailViewModel = viewModel,
                 )
             }
         }
@@ -89,7 +89,7 @@ class TaskDetailScreenTest {
     fun popsBackStack_whenTaskRemoved() {
         val task = genTask()
         var onPopBackStackCalled = false
-        val taskRepository = FakeTaskRepository(task)
+        val taskRepository = FakeTaskRepository.withTasks(task)
         val viewModel = TaskDetailViewModel(
             SavedStateHandle(mapOf(Destination.TaskDetail.ID_KEY to task.id)),
             taskRepository,
@@ -101,8 +101,8 @@ class TaskDetailScreenTest {
                 TaskDetailScreen(
                     onPopBackStack = { onPopBackStackCalled = true },
                     onEditTask = {},
-                    onSelectTaskItem = {},
-                    taskDetailViewModel = viewModel
+                    onSelectTaskList = {},
+                    taskDetailViewModel = viewModel,
                 )
             }
         }
@@ -118,7 +118,7 @@ class TaskDetailScreenTest {
     @Test
     fun displaysErrorMessage_whenRemoveTaskFailed() {
         val task = genTask()
-        val taskRepository = FakeTaskRepository(task)
+        val taskRepository = FakeTaskRepository.withTasks(task)
         val viewModel = TaskDetailViewModel(
             SavedStateHandle(mapOf(Destination.TaskDetail.ID_KEY to task.id)),
             taskRepository,
@@ -130,8 +130,8 @@ class TaskDetailScreenTest {
                 TaskDetailScreen(
                     onPopBackStack = {},
                     onEditTask = {},
-                    onSelectTaskItem = {},
-                    taskDetailViewModel = viewModel
+                    onSelectTaskList = {},
+                    taskDetailViewModel = viewModel,
                 )
             }
         }

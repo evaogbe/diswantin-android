@@ -8,9 +8,9 @@ interface TaskRepository {
 
     fun getById(id: Long): Flow<Task?>
 
-    fun search(query: String, singletonsOnly: Boolean = false): Flow<List<Task>>
+    fun getTaskWithTaskListById(id: Long): Flow<TaskWithTaskList?>
 
-    fun getTaskListItems(id: Long): Flow<List<Task>>
+    fun search(query: String, singletonsOnly: Boolean = false): Flow<List<Task>>
 
     suspend fun create(form: NewTaskForm): Task
 

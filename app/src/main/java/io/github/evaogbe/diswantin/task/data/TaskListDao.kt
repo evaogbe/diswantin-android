@@ -12,6 +12,9 @@ interface TaskListDao {
     @Query("SELECT * FROM task_list ORDER BY name LIMIT 20")
     fun getTaskLists(): Flow<List<TaskList>>
 
+    @Query("SELECT * FROM task_list WHERE id = :id LIMIT 1")
+    fun getById(id: Long): Flow<TaskList>
+
     @Insert
     suspend fun insert(taskList: TaskList): Long
 
@@ -39,7 +42,10 @@ interface TaskListDao {
     @Query("UPDATE task SET list_id = NULL WHERE id in (:taskIds)")
     suspend fun removeListFromTasks(taskIds: List<Long>)
 
-    @Query("DELETE FROM task_path WHERE ancestor IN (:taskIds) OR descendant IN (:taskIds)")
+    @Query(
+        """DELETE FROM task_path
+        WHERE (ancestor IN (:taskIds) OR descendant IN (:taskIds)) AND depth > 0"""
+    )
     suspend fun deleteTaskPathsByTaskIds(taskIds: List<Long>)
 
     @Transaction
@@ -48,7 +54,7 @@ interface TaskListDao {
         taskIdsToInsert: List<Long>,
         taskPathsToInsert: List<TaskPath>,
         taskIdsToRemove: List<Long>,
-        taskPathTaskIdsToRemove: List<Long>
+        taskPathTaskIdsToRemove: List<Long>,
     ) {
         update(taskList)
         removeListFromTasks(taskIdsToRemove)

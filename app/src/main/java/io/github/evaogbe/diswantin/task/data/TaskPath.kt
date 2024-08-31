@@ -1,5 +1,6 @@
 package io.github.evaogbe.diswantin.task.data
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -25,6 +26,6 @@ import androidx.room.PrimaryKey
 data class TaskPath(
     @PrimaryKey(autoGenerate = true) val id: Long = 0L,
     val ancestor: Long,
-    val descendant: Long,
+    @ColumnInfo(index = true) val descendant: Long,
     val depth: Int,
 )

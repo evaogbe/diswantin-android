@@ -29,7 +29,7 @@ class CurrentTaskScreenTest {
     @Test
     fun displaysCurrentTaskName_withCurrentTask() {
         val task = genTasks(1).single()
-        val taskRepository = FakeTaskRepository(task)
+        val taskRepository = FakeTaskRepository.withTasks(task)
         val viewModel = createCurrentTaskViewModel(taskRepository)
 
         composeTestRule.setContent {
@@ -71,7 +71,7 @@ class CurrentTaskScreenTest {
     @Test
     fun displayErrorMessage_whenUiFailure() {
         val task = genTasks(1).single()
-        val taskRepository = FakeTaskRepository(task)
+        val taskRepository = FakeTaskRepository.withTasks(task)
         val viewModel = createCurrentTaskViewModel(taskRepository)
 
         taskRepository.setThrows(taskRepository::getCurrentTask, true)
@@ -119,7 +119,7 @@ class CurrentTaskScreenTest {
     @Test
     fun displaysNextTaskName_whenRemoveClicked() {
         val (task1, task2) = genTasks(2)
-        val taskRepository = FakeTaskRepository(task1, task2)
+        val taskRepository = FakeTaskRepository.withTasks(task1, task2)
         val viewModel = createCurrentTaskViewModel(taskRepository)
 
         composeTestRule.setContent {
@@ -145,7 +145,7 @@ class CurrentTaskScreenTest {
     fun displaysErrorMessage_whenRemoveFailed() {
         var setUserMessageCalled = false
         val task = genTasks(1).single()
-        val taskRepository = FakeTaskRepository(task)
+        val taskRepository = FakeTaskRepository.withTasks(task)
         val viewModel = createCurrentTaskViewModel(taskRepository)
 
         composeTestRule.setContent {

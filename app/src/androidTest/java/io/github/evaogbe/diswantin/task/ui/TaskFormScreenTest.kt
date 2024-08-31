@@ -52,7 +52,7 @@ class TaskFormScreenTest {
     @Test
     fun displaysEditTaskTopBar_whenEdit() {
         val task = genTask()
-        val taskRepository = FakeTaskRepository(task)
+        val taskRepository = FakeTaskRepository.withTasks(task)
         val viewModel = createTaskFormViewModelForEdit(taskRepository)
 
         composeTestRule.setContent {
@@ -151,9 +151,8 @@ class TaskFormScreenTest {
     fun popsBackStack_whenTaskUpdated() {
         val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
         var onPopBackStackCalled = false
-        val task1 = genTask().copy(deadline = faker.random.randomFutureDate().toInstant())
-        val task2 = genTask(id = 2L)
-        val taskRepository = FakeTaskRepository(task1, task2)
+        val task = genTask().copy(deadline = faker.random.randomFutureDate().toInstant())
+        val taskRepository = FakeTaskRepository.withTasks(task)
         val viewModel = createTaskFormViewModelForEdit(taskRepository)
 
         composeTestRule.setContent {
@@ -197,7 +196,7 @@ class TaskFormScreenTest {
     fun displaysErrorMessage_withSaveErrorForEdit() {
         val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
         val task = genTask()
-        val taskRepository = FakeTaskRepository(task)
+        val taskRepository = FakeTaskRepository.withTasks(task)
         val viewModel = createTaskFormViewModelForEdit(taskRepository)
 
         composeTestRule.setContent {

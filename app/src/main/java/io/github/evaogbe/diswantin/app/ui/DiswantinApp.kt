@@ -10,6 +10,7 @@ import io.github.evaogbe.diswantin.task.ui.AdviceScreen
 import io.github.evaogbe.diswantin.task.ui.HomeScreen
 import io.github.evaogbe.diswantin.task.ui.TaskDetailScreen
 import io.github.evaogbe.diswantin.task.ui.TaskFormScreen
+import io.github.evaogbe.diswantin.task.ui.TaskListDetailScreen
 import io.github.evaogbe.diswantin.task.ui.TaskListFormScreen
 import io.github.evaogbe.diswantin.task.ui.TaskSearchScreen
 import io.github.evaogbe.diswantin.ui.navigation.Destination
@@ -39,6 +40,9 @@ fun DiswantinApp() {
                 onAdviceClick = {
                     navController.navigate(route = Destination.Advice.route)
                 },
+                onSelectTaskList = {
+                    navController.navigate(route = Destination.TaskListDetail(it).route)
+                },
             )
         }
         composable(Destination.TaskSearch.route) {
@@ -46,7 +50,8 @@ fun DiswantinApp() {
                 onBackClick = navController::popBackStack,
                 onSelectSearchResult = {
                     navController.navigate(route = Destination.TaskDetail(it).route)
-                })
+                },
+            )
         }
         composable(Destination.NewTaskForm.route) {
             TaskFormScreen(onPopBackStack = navController::popBackStack)
@@ -67,23 +72,30 @@ fun DiswantinApp() {
             arguments = listOf(navArgument(Destination.TaskDetail.ID_KEY) {
                 type = NavType.LongType
             })
-        ) { backStackEntry ->
+        ) {
             TaskDetailScreen(
                 onPopBackStack = navController::popBackStack,
                 onEditTask = {
                     navController.navigate(route = Destination.EditTaskForm(it).route)
                 },
-                onSelectTaskItem = { id ->
-                    if (
-                        backStackEntry.arguments?.getLong(Destination.TaskDetail.ID_KEY) != id
-                    ) {
-                        navController.navigate(route = Destination.TaskDetail(id).route)
-                    }
-                }
+                onSelectTaskList = {
+                    navController.navigate(route = Destination.TaskListDetail(it).route)
+                },
             )
         }
         composable(Destination.NewTaskListForm.route) {
             TaskListFormScreen(onPopBackStack = navController::popBackStack)
+        }
+        composable(
+            Destination.TaskListDetail.route,
+            arguments = listOf(navArgument(Destination.TaskListDetail.ID_KEY) {
+                type = NavType.LongType
+            })
+        ) {
+            TaskListDetailScreen(
+                onBackClick = navController::popBackStack,
+                onSelectTask = { navController.navigate(route = Destination.TaskDetail(it).route) },
+            )
         }
     }
 }

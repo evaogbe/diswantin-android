@@ -5,12 +5,12 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.Task
+import io.github.evaogbe.diswantin.task.data.TaskWithTaskList
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.MainDispatcherRule
 import io.github.evaogbe.diswantin.ui.navigation.Destination
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
-import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
@@ -33,11 +33,11 @@ class TaskDetailViewModelTest {
     fun `uiState fetches task by id`() = runTest(mainDispatcherRule.testDispatcher) {
         val task = genTask()
         val clock = Clock.systemDefaultZone()
-        val taskRepository = FakeTaskRepository(task)
+        val taskRepository = FakeTaskRepository.withTasks(task)
         val viewModel = TaskDetailViewModel(
             SavedStateHandle(mapOf(Destination.TaskDetail.ID_KEY to task.id)),
             taskRepository,
-            clock
+            clock,
         )
 
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
@@ -46,43 +46,68 @@ class TaskDetailViewModelTest {
 
         assertThat(viewModel.uiState.value).isEqualTo(
             TaskDetailUiState.Success(
-                task = task,
-                taskListItems = persistentListOf(),
+                task = TaskWithTaskList(
+                    id = task.id,
+                    name = task.name,
+                    deadline = task.deadline,
+                    scheduledAt = task.scheduledAt,
+                    listId = null,
+                    listName = null,
+                ),
                 userMessage = null,
-                clock = clock
+                clock = clock,
             )
         )
     }
 
     @Test
-    fun `uiState is failure when repository throws`() = runTest(mainDispatcherRule.testDispatcher) {
-        val task = genTask()
-        val clock = Clock.systemDefaultZone()
-        val taskRepository = FakeTaskRepository(task)
-        taskRepository.setThrows(taskRepository::getById, true)
+    fun `uiState emits failure when no initial task`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val clock = Clock.systemDefaultZone()
+            val taskRepository = FakeTaskRepository()
+            val viewModel = TaskDetailViewModel(
+                SavedStateHandle(mapOf(Destination.TaskDetail.ID_KEY to 1L)),
+                taskRepository,
+                clock,
+            )
 
-        val viewModel = TaskDetailViewModel(
-            SavedStateHandle(mapOf(Destination.TaskDetail.ID_KEY to task.id)),
-            taskRepository,
-            clock
-        )
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect()
+            }
 
-        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-            viewModel.uiState.collect()
+            assertThat(viewModel.uiState.value).isEqualTo(TaskDetailUiState.Failure)
         }
 
-        assertThat(viewModel.uiState.value).isEqualTo(TaskDetailUiState.Failure)
-    }
+    @Test
+    fun `uiState emits failure when repository throws`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val task = genTask()
+            val clock = Clock.systemDefaultZone()
+            val taskRepository = FakeTaskRepository.withTasks(task)
+            taskRepository.setThrows(taskRepository::getTaskWithTaskListById, true)
+
+            val viewModel = TaskDetailViewModel(
+                SavedStateHandle(mapOf(Destination.TaskDetail.ID_KEY to task.id)),
+                taskRepository,
+                clock,
+            )
+
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect()
+            }
+
+            assertThat(viewModel.uiState.value).isEqualTo(TaskDetailUiState.Failure)
+        }
 
     @Test
     fun `removeTask sets uiState to removed`() = runTest(mainDispatcherRule.testDispatcher) {
         val task = genTask()
         val clock = Clock.systemDefaultZone()
-        val taskRepository = FakeTaskRepository(task)
+        val taskRepository = FakeTaskRepository.withTasks(task)
         val viewModel = TaskDetailViewModel(
             SavedStateHandle(mapOf(Destination.TaskDetail.ID_KEY to task.id)),
             taskRepository,
-            clock
+            clock,
         )
 
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
@@ -91,10 +116,16 @@ class TaskDetailViewModelTest {
 
         assertThat(viewModel.uiState.value).isEqualTo(
             TaskDetailUiState.Success(
-                task = task,
-                taskListItems = persistentListOf(),
+                task = TaskWithTaskList(
+                    id = task.id,
+                    name = task.name,
+                    deadline = task.deadline,
+                    scheduledAt = task.scheduledAt,
+                    listId = null,
+                    listName = null,
+                ),
                 userMessage = null,
-                clock = clock
+                clock = clock,
             )
         )
 
@@ -108,11 +139,11 @@ class TaskDetailViewModelTest {
         runTest(mainDispatcherRule.testDispatcher) {
             val task = genTask()
             val clock = Clock.systemDefaultZone()
-            val taskRepository = FakeTaskRepository(task)
+            val taskRepository = FakeTaskRepository.withTasks(task)
             val viewModel = TaskDetailViewModel(
                 SavedStateHandle(mapOf(Destination.TaskDetail.ID_KEY to task.id)),
                 taskRepository,
-                clock
+                clock,
             )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
@@ -124,10 +155,16 @@ class TaskDetailViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskDetailUiState.Success(
-                    task = task,
-                    taskListItems = persistentListOf(),
+                    task = TaskWithTaskList(
+                        id = task.id,
+                        name = task.name,
+                        deadline = task.deadline,
+                        scheduledAt = task.scheduledAt,
+                        listId = null,
+                        listName = null,
+                    ),
                     userMessage = R.string.task_detail_delete_error,
-                    clock = clock
+                    clock = clock,
                 )
             )
         }

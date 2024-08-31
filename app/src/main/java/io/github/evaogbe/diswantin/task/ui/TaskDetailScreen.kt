@@ -1,15 +1,13 @@
 package io.github.evaogbe.diswantin.task.ui
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -23,13 +21,13 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
-import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -44,16 +42,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.evaogbe.diswantin.R
-import io.github.evaogbe.diswantin.task.data.Task
+import io.github.evaogbe.diswantin.task.data.TaskWithTaskList
 import io.github.evaogbe.diswantin.ui.components.LoadFailureLayout
 import io.github.evaogbe.diswantin.ui.components.PendingLayout
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.evaogbe.diswantin.ui.theme.ScreenLg
-import io.github.evaogbe.diswantin.ui.theme.SpaceLg
 import io.github.evaogbe.diswantin.ui.theme.SpaceMd
-import io.github.evaogbe.diswantin.ui.theme.SpaceXs
 import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
-import kotlinx.collections.immutable.persistentListOf
 import java.time.Clock
 import java.time.Instant
 
@@ -61,7 +56,7 @@ import java.time.Instant
 fun TaskDetailScreen(
     onPopBackStack: () -> Unit,
     onEditTask: (Long) -> Unit,
-    onSelectTaskItem: (Long) -> Unit,
+    onSelectTaskList: (Long) -> Unit,
     taskDetailViewModel: TaskDetailViewModel = hiltViewModel(),
 ) {
     val uiState by taskDetailViewModel.uiState.collectAsStateWithLifecycle()
@@ -83,11 +78,11 @@ fun TaskDetailScreen(
 
     TaskDetailScreen(
         onBackClick = onPopBackStack,
-        onEditTask = { onEditTask(it.id) },
+        onEditTask = onEditTask,
         onRemoveTask = taskDetailViewModel::removeTask,
         snackbarHostState = snackbarHostState,
         uiState = uiState,
-        onSelectTaskItem = { onSelectTaskItem(it.id) },
+        onSelectTaskList = onSelectTaskList,
     )
 }
 
@@ -95,11 +90,11 @@ fun TaskDetailScreen(
 @Composable
 fun TaskDetailScreen(
     onBackClick: () -> Unit,
-    onEditTask: (Task) -> Unit,
+    onEditTask: (Long) -> Unit,
     onRemoveTask: () -> Unit,
     snackbarHostState: SnackbarHostState,
     uiState: TaskDetailUiState,
-    onSelectTaskItem: (Task) -> Unit,
+    onSelectTaskList: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -119,7 +114,7 @@ fun TaskDetailScreen(
                 },
                 actions = {
                     if (uiState is TaskDetailUiState.Success) {
-                        IconButton(onClick = { onEditTask(uiState.task) }) {
+                        IconButton(onClick = { onEditTask(uiState.task.id) }) {
                             Icon(
                                 imageVector = Icons.Default.Edit,
                                 contentDescription = stringResource(R.string.edit_button)
@@ -170,7 +165,7 @@ fun TaskDetailScreen(
             is TaskDetailUiState.Success -> {
                 TaskDetailLayout(
                     uiState = uiState,
-                    onSelectTaskItem = onSelectTaskItem,
+                    onSelectTaskList = onSelectTaskList,
                     modifier = Modifier.padding(innerPadding)
                 )
             }
@@ -181,90 +176,66 @@ fun TaskDetailScreen(
 @Composable
 fun TaskDetailLayout(
     uiState: TaskDetailUiState.Success,
-    onSelectTaskItem: (Task) -> Unit,
+    onSelectTaskList: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
-        LazyColumn(
+        Column(
             modifier = Modifier
                 .widthIn(max = ScreenLg)
                 .fillMaxWidth()
                 .padding(vertical = SpaceMd)
         ) {
-            item {
-                SelectionContainer {
-                    Text(
-                        text = uiState.task.name,
-                        modifier = Modifier.padding(horizontal = SpaceMd),
-                        style = typography.displaySmall
-                    )
-                }
+            SelectionContainer(modifier = Modifier.padding(horizontal = SpaceMd)) {
+                Text(text = uiState.task.name, style = typography.displaySmall)
             }
+            Spacer(Modifier.size(SpaceMd))
+            HorizontalDivider()
 
             if (uiState.formattedDeadline != null) {
-                item {
-                    Spacer(Modifier.size(SpaceMd))
-                    Text(
-                        stringResource(R.string.deadline_label),
-                        modifier = Modifier.padding(horizontal = SpaceMd),
-                        color = colorScheme.onSurfaceVariant,
-                        style = typography.labelSmall
-                    )
-                }
-
-                item {
-                    Spacer(Modifier.size(SpaceXs))
-                    SelectionContainer {
-                        Text(
-                            text = uiState.formattedDeadline,
-                            modifier = Modifier.padding(horizontal = SpaceMd),
-                            style = typography.bodyLarge
-                        )
-                    }
-                }
+                ListItem(
+                    headlineContent = {
+                        SelectionContainer {
+                            Text(text = uiState.formattedDeadline)
+                        }
+                    },
+                    overlineContent = { Text(stringResource(R.string.deadline_label)) }
+                )
+                HorizontalDivider()
             }
 
             if (uiState.formattedScheduledAt != null) {
-                item {
-                    Spacer(Modifier.size(SpaceMd))
-                    Text(
-                        stringResource(R.string.scheduled_at_label),
-                        modifier = Modifier.padding(horizontal = SpaceMd),
-                        color = colorScheme.onSurfaceVariant,
-                        style = typography.labelSmall
-                    )
-                }
-
-                item {
-                    Spacer(Modifier.size(SpaceXs))
-                    SelectionContainer {
-                        Text(
-                            text = uiState.formattedScheduledAt,
-                            modifier = Modifier.padding(horizontal = SpaceMd),
-                            style = typography.bodyLarge
-                        )
-                    }
-                }
+                ListItem(
+                    headlineContent = {
+                        SelectionContainer {
+                            Text(text = uiState.formattedScheduledAt)
+                        }
+                    },
+                    overlineContent = { Text(stringResource(R.string.scheduled_at_label)) }
+                )
+                HorizontalDivider()
             }
 
-            if (uiState.taskListItems.isNotEmpty()) {
-                item {
-                    Spacer(Modifier.size(SpaceLg))
-                    Text(
-                        stringResource(R.string.task_list_label),
-                        modifier = Modifier.padding(horizontal = SpaceMd),
-                        color = colorScheme.onSurfaceVariant,
-                        style = typography.labelSmall
-                    )
-                }
-
-                items(uiState.taskListItems, key = Task::id) { task ->
-                    ListItem(
-                        headlineContent = { Text(text = task.name) },
-                        modifier = Modifier.clickable { onSelectTaskItem(task) },
-                    )
-                    HorizontalDivider()
-                }
+            if (uiState.task.listId != null && uiState.task.listName != null) {
+                ListItem(
+                    headlineContent = {
+                        SelectionContainer {
+                            Text(text = uiState.task.listName)
+                        }
+                    },
+                    overlineContent = { Text(stringResource(R.string.task_list_label)) },
+                    supportingContent = {
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.TopEnd,
+                        ) {
+                            TextButton(onClick = { onSelectTaskList(uiState.task.listId) }) {
+                                Text("Go to list")
+                            }
+                        }
+                    }
+                )
+                HorizontalDivider()
             }
         }
     }
@@ -280,95 +251,41 @@ private fun TaskDetailScreenPreview() {
             onRemoveTask = {},
             snackbarHostState = SnackbarHostState(),
             uiState = TaskDetailUiState.Success(
-                task = Task(
+                task = TaskWithTaskList(
                     id = 1L,
-                    createdAt = Instant.now(),
                     name = "Brush teeth",
+                    deadline = null,
+                    scheduledAt = null,
+                    listId = null,
+                    listName = null,
                 ),
-                taskListItems = persistentListOf(),
                 userMessage = null,
                 clock = Clock.systemDefaultZone()
             ),
-            onSelectTaskItem = {},
+            onSelectTaskList = {},
         )
     }
 }
 
 @DevicePreviews
 @Composable
-private fun TaskDetailLayoutPreview_withTaskList() {
+private fun TaskDetailLayoutPreview() {
     DiswantinTheme {
         Surface {
             TaskDetailLayout(
                 uiState = TaskDetailUiState.Success(
-                    task = Task(
+                    task = TaskWithTaskList(
                         id = 1L,
-                        createdAt = Instant.now(),
-                        name = "Brush teeth",
-                    ),
-                    taskListItems = persistentListOf(
-                        Task(
-                            id = 1L,
-                            createdAt = Instant.now(),
-                            name = "Brush teeth",
-                            deadline = Instant.now(),
-                        ),
-                        Task(
-                            id = 2L,
-                            createdAt = Instant.now(),
-                            name = "Shower",
-                        ),
-                        Task(
-                            id = 3L,
-                            createdAt = Instant.now(),
-                            name = "Eat breakfast",
-                        ),
-                    ),
-                    userMessage = null,
-                    clock = Clock.systemDefaultZone()
-                ),
-                onSelectTaskItem = {},
-            )
-        }
-    }
-}
-
-
-@DevicePreviews
-@Composable
-private fun TaskDetailLayoutPreview_withDeadlineAndTaskList() {
-    DiswantinTheme {
-        Surface {
-            TaskDetailLayout(
-                uiState = TaskDetailUiState.Success(
-                    task = Task(
-                        id = 1L,
-                        createdAt = Instant.now(),
                         name = "Brush teeth",
                         deadline = Instant.now(),
-                    ),
-                    taskListItems = persistentListOf(
-                        Task(
-                            id = 1L,
-                            createdAt = Instant.now(),
-                            name = "Brush teeth",
-                            deadline = Instant.now(),
-                        ),
-                        Task(
-                            id = 2L,
-                            createdAt = Instant.now(),
-                            name = "Shower",
-                        ),
-                        Task(
-                            id = 3L,
-                            createdAt = Instant.now(),
-                            name = "Eat breakfast",
-                        ),
+                        scheduledAt = null,
+                        listId = 1L,
+                        listName = "Morning Routine",
                     ),
                     userMessage = null,
                     clock = Clock.systemDefaultZone()
                 ),
-                onSelectTaskItem = {},
+                onSelectTaskList = {},
             )
         }
     }

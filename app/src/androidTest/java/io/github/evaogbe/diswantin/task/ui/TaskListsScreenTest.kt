@@ -5,6 +5,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.TaskList
+import io.github.evaogbe.diswantin.task.data.TaskListWithTasks
 import io.github.evaogbe.diswantin.testing.FakeTaskListRepository
 import io.github.evaogbe.diswantin.testing.stringResource
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
@@ -21,12 +22,18 @@ class TaskListsScreenTest {
     @Test
     fun displaysListNames_withTaskLists() {
         val taskLists = List(3) { TaskList(id = it + 1L, name = loremFaker.lorem.words()) }
-        val taskListRepository = FakeTaskListRepository(taskLists)
+        val taskListRepository = FakeTaskListRepository.withTaskLists(taskLists.map {
+            TaskListWithTasks(it, emptyList())
+        })
         val viewModel = TaskListsViewModel(taskListRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
-                TaskListsScreen(onAddList = {}, taskListsViewModel = viewModel)
+                TaskListsScreen(
+                    onAddList = {},
+                    onSelectTaskList = {},
+                    taskListsViewModel = viewModel,
+                )
             }
         }
 
@@ -42,7 +49,11 @@ class TaskListsScreenTest {
 
         composeTestRule.setContent {
             DiswantinTheme {
-                TaskListsScreen(onAddList = {}, taskListsViewModel = viewModel)
+                TaskListsScreen(
+                    onAddList = {},
+                    onSelectTaskList = {},
+                    taskListsViewModel = viewModel,
+                )
             }
         }
 
@@ -59,7 +70,11 @@ class TaskListsScreenTest {
 
         composeTestRule.setContent {
             DiswantinTheme {
-                TaskListsScreen(onAddList = {}, taskListsViewModel = viewModel)
+                TaskListsScreen(
+                    onAddList = {},
+                    onSelectTaskList = {},
+                    taskListsViewModel = viewModel,
+                )
             }
         }
 

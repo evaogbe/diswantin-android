@@ -39,7 +39,7 @@ class TaskSearchViewModelTest {
                     ),
                 )
             }
-            val taskRepository = FakeTaskRepository(tasks)
+            val taskRepository = FakeTaskRepository.withTasks(tasks)
             val viewModel = TaskSearchViewModel(taskRepository)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
@@ -64,18 +64,19 @@ class TaskSearchViewModelTest {
         }
 
     @Test
-    fun `uiState is failure when repository throws`() = runTest(mainDispatcherRule.testDispatcher) {
-        val query = faker.string.regexify("""\S+""")
-        val taskRepository = FakeTaskRepository()
-        val viewModel = TaskSearchViewModel(taskRepository)
+    fun `uiState emits failure when repository throws`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val query = faker.string.regexify("""\S+""")
+            val taskRepository = FakeTaskRepository()
+            val viewModel = TaskSearchViewModel(taskRepository)
 
-        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-            viewModel.uiState.collect()
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect()
+            }
+
+            taskRepository.setThrows(taskRepository::search, true)
+            viewModel.searchTasks(query)
+
+            assertThat(viewModel.uiState.value).isEqualTo(TaskSearchUiState.Failure)
         }
-
-        taskRepository.setThrows(taskRepository::search, true)
-        viewModel.searchTasks(query)
-
-        assertThat(viewModel.uiState.value).isEqualTo(TaskSearchUiState.Failure)
-    }
 }

@@ -7,7 +7,6 @@ import app.cash.turbine.test
 import assertk.assertThat
 import assertk.assertions.containsExactly
 import assertk.assertions.isDataClassEqualTo
-import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
@@ -51,10 +50,13 @@ class LocalTaskRepositoryTest {
             Clock.fixed(Instant.parse("2024-08-23T17:00:00Z"), ZoneId.of("America/New_York"))
         val taskRepository = LocalTaskRepository(
             db.taskDao(),
-            UnconfinedTestDispatcher(testScheduler)
+            UnconfinedTestDispatcher(testScheduler),
         )
-        val taskListRepository =
-            LocalTaskListRepository(db.taskListDao(), UnconfinedTestDispatcher(testScheduler))
+        val taskListRepository = LocalTaskListRepository(
+            db.taskListDao(),
+            db.taskDao(),
+            UnconfinedTestDispatcher(testScheduler),
+        )
 
         taskRepository.getCurrentTask(scheduledBefore = Instant.parse("2024-08-23T18:00:00Z"))
             .test {
@@ -168,10 +170,13 @@ class LocalTaskRepositoryTest {
             Clock.fixed(Instant.parse("2024-08-23T17:00:00Z"), ZoneId.of("America/New_York"))
         val taskRepository = LocalTaskRepository(
             db.taskDao(),
-            UnconfinedTestDispatcher(testScheduler)
+            UnconfinedTestDispatcher(testScheduler),
         )
-        val taskListRepository =
-            LocalTaskListRepository(db.taskListDao(), UnconfinedTestDispatcher(testScheduler))
+        val taskListRepository = LocalTaskListRepository(
+            db.taskListDao(),
+            db.taskDao(),
+            UnconfinedTestDispatcher(testScheduler),
+        )
 
         val tasks = List(3) {
             taskRepository.create(
@@ -184,28 +189,18 @@ class LocalTaskRepositoryTest {
             )
         }
 
-        val (task1, task2, task3) =
+        val taskListWithTasks =
             taskListRepository.create(
                 NewTaskListForm(
                     name = loremFaker.lorem.words(),
-                    tasks = tasks
+                    tasks = tasks,
                 )
-            ).tasks
+            )
 
-        assertThat(taskRepository.getTaskListItems(task1.id).first())
-            .containsExactly(task1, task2, task3)
-        assertThat(taskRepository.getTaskListItems(task2.id).first())
-            .containsExactly(task1, task2, task3)
-        assertThat(taskRepository.getTaskListItems(task3.id).first())
-            .containsExactly(task1, task2, task3)
+        taskRepository.remove(taskListWithTasks.tasks[1].id)
 
-        taskRepository.remove(task2.id)
-
-        assertThat(taskRepository.getById(task2.id).first()).isNull()
-        assertThat(taskRepository.getTaskListItems(task1.id).first())
-            .containsExactly(task1, task3)
-        assertThat(taskRepository.getTaskListItems(task2.id).first()).isEmpty()
-        assertThat(taskRepository.getTaskListItems(task3.id).first())
-            .containsExactly(task1, task3)
+        assertThat(taskRepository.getById(taskListWithTasks.tasks[1].id).first()).isNull()
+        assertThat(taskListRepository.getById(taskListWithTasks.taskList.id).first().tasks)
+            .containsExactly(taskListWithTasks.tasks[0], taskListWithTasks.tasks[2])
     }
 }

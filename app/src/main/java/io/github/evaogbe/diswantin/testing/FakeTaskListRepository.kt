@@ -12,25 +12,36 @@ import kotlinx.coroutines.flow.update
 import kotlin.reflect.KFunction
 import kotlin.reflect.KProperty0
 
-class FakeTaskListRepository(initialTaskLists: List<TaskList>) : TaskListRepository {
-    constructor(vararg initialTaskLists: TaskList) : this(initialTaskLists.toList())
+class FakeTaskListRepository(private val db: FakeDatabase = FakeDatabase()) : TaskListRepository {
 
     private val throwingMethods = MutableStateFlow(setOf<KFunction<*>>())
 
-    private var taskListIdGen = initialTaskLists.maxOfOrNull { it.id } ?: 0L
-
-    private val taskListsState = MutableStateFlow(initialTaskLists)
-
     val taskLists
-        get() = taskListsState.value
+        get() = db.taskListTable.value.values
 
     override val taskListsStream: Flow<List<TaskList>> =
-        combine(throwingMethods, taskListsState) { throwingMethods, taskLists ->
+        combine(throwingMethods, db.taskListTable) { throwingMethods, taskLists ->
             if (::taskListsStream::get in throwingMethods) {
                 throw RuntimeException("Test")
             }
 
-            taskLists.sortedBy { it.name }
+            taskLists.values.sortedBy { it.name }
+        }
+
+    override fun getById(id: Long): Flow<TaskListWithTasks> =
+        combine(
+            throwingMethods,
+            db.taskListTable,
+            db.taskTable
+        ) { throwingMethods, taskLists, tasks ->
+            if (::getById in throwingMethods) {
+                throw RuntimeException("Test")
+            }
+
+            TaskListWithTasks(
+                requireNotNull(taskLists[id]),
+                tasks.values.filter { it.listId == id },
+            )
         }
 
     override suspend fun create(form: NewTaskListForm): TaskListWithTasks {
@@ -38,12 +49,7 @@ class FakeTaskListRepository(initialTaskLists: List<TaskList>) : TaskListReposit
             throw RuntimeException("Test")
         }
 
-        val taskList = form.newTaskListWithTasks.taskList.copy(id = ++taskListIdGen)
-        taskListsState.update { it + taskList }
-        return TaskListWithTasks(
-            taskList,
-            form.newTaskListWithTasks.tasks.map { it.copy(listId = taskList.id) },
-        )
+        return db.addTaskList(form.newTaskListWithTasks, form.taskPaths)
     }
 
     override suspend fun update(form: EditTaskListForm): TaskListWithTasks {
@@ -51,15 +57,13 @@ class FakeTaskListRepository(initialTaskLists: List<TaskList>) : TaskListReposit
             throw RuntimeException("Test")
         }
 
-        taskListsState.update { taskLists ->
-            taskLists.map {
-                if (it.id == form.updatedTaskListWithTasks.taskList.id) {
-                    form.updatedTaskListWithTasks.taskList
-                } else {
-                    it
-                }
-            }
-        }
+        db.updateTaskList(
+            taskList = form.updatedTaskListWithTasks.taskList,
+            taskIdsToInsert = form.taskIdsToInsert,
+            taskPathsToInsert = form.taskPathsToInsert,
+            taskIdsToRemove = form.taskIdsToRemove,
+            taskPathTaskIdsToRemove = form.taskPathTaskIdsToRemove.toSet(),
+        )
         return form.updatedTaskListWithTasks
     }
 
@@ -72,6 +76,17 @@ class FakeTaskListRepository(initialTaskLists: List<TaskList>) : TaskListReposit
             throwingMethods.update { it + method }
         } else {
             throwingMethods.update { it - method }
+        }
+    }
+
+    companion object {
+        fun withTaskLists(vararg taskListsWithTasks: TaskListWithTasks) =
+            withTaskLists(taskListsWithTasks.toSet())
+
+        fun withTaskLists(taskListsWithTasks: Iterable<TaskListWithTasks>): FakeTaskListRepository {
+            val db = FakeDatabase()
+            taskListsWithTasks.forEach(db::addTaskList)
+            return FakeTaskListRepository(db)
         }
     }
 }

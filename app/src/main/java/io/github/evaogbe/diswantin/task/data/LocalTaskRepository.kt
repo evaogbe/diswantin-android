@@ -17,6 +17,9 @@ class LocalTaskRepository @Inject constructor(
 
     override fun getById(id: Long) = taskDao.getById(id).flowOn(ioDispatcher)
 
+    override fun getTaskWithTaskListById(id: Long) =
+        taskDao.getTaskWithTaskListById(id).flowOn(ioDispatcher)
+
     override fun search(
         query: String,
         singletonsOnly: Boolean
@@ -28,8 +31,6 @@ class LocalTaskRepository @Inject constructor(
 
     private fun escapeSql(str: String) =
         str.replace("'", "''").replace("\"", "\"\"")
-
-    override fun getTaskListItems(id: Long) = taskDao.getTaskListItems(id).flowOn(ioDispatcher)
 
     override suspend fun create(form: NewTaskForm): Task {
         val task = form.newTask

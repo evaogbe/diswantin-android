@@ -65,7 +65,7 @@ class TaskFormViewModelTest {
         runTest(mainDispatcherRule.testDispatcher) {
             val deadline = Instant.parse("2024-08-22T21:00:00Z")
             val task = genTask().copy(deadline = deadline)
-            val taskRepository = FakeTaskRepository(task)
+            val taskRepository = FakeTaskRepository.withTasks(task)
             val viewModel = createTaskFormViewModelForEdit(taskRepository)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
@@ -91,10 +91,10 @@ class TaskFormViewModelTest {
         }
 
     @Test
-    fun `uiState is failure when repository throws`() =
+    fun `uiState emits failure when repository throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val task = genTask()
-            val taskRepository = FakeTaskRepository(task)
+            val taskRepository = FakeTaskRepository.withTasks(task)
             taskRepository.setThrows(taskRepository::getById, true)
 
             val viewModel = createTaskFormViewModelForEdit(taskRepository)
@@ -178,7 +178,7 @@ class TaskFormViewModelTest {
         runTest(mainDispatcherRule.testDispatcher) {
             val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
             val task = genTask()
-            val taskRepository = FakeTaskRepository(task)
+            val taskRepository = FakeTaskRepository.withTasks(task)
             val viewModel = createTaskFormViewModelForEdit(taskRepository)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
@@ -225,7 +225,7 @@ class TaskFormViewModelTest {
         runTest(mainDispatcherRule.testDispatcher) {
             val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
             val task = genTask()
-            val taskRepository = FakeTaskRepository(task)
+            val taskRepository = FakeTaskRepository.withTasks(task)
             val viewModel = createTaskFormViewModelForEdit(taskRepository)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {

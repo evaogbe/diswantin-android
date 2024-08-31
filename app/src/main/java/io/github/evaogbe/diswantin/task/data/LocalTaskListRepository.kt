@@ -2,15 +2,21 @@ package io.github.evaogbe.diswantin.task.data
 
 import io.github.evaogbe.diswantin.data.IoDispatcher
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class LocalTaskListRepository @Inject constructor(
     private val taskListDao: TaskListDao,
+    private val taskDao: TaskDao,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : TaskListRepository {
     override val taskListsStream = taskListDao.getTaskLists().flowOn(ioDispatcher)
+
+    override fun getById(id: Long) =
+        combine(taskListDao.getById(id), taskDao.getTasksByListId(id), ::TaskListWithTasks)
+            .flowOn(ioDispatcher)
 
     override suspend fun create(form: NewTaskListForm) = withContext(ioDispatcher) {
         val id = taskListDao.insertWithTasks(

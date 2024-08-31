@@ -3,8 +3,8 @@ package io.github.evaogbe.diswantin.testing
 import io.github.evaogbe.diswantin.task.data.EditTaskForm
 import io.github.evaogbe.diswantin.task.data.NewTaskForm
 import io.github.evaogbe.diswantin.task.data.Task
-import io.github.evaogbe.diswantin.task.data.TaskPath
 import io.github.evaogbe.diswantin.task.data.TaskRepository
+import io.github.evaogbe.diswantin.task.data.TaskWithTaskList
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
@@ -12,31 +12,18 @@ import kotlinx.coroutines.flow.update
 import java.time.Instant
 import kotlin.reflect.KFunction
 
-class FakeTaskRepository(initialTasks: Collection<Task>) : TaskRepository {
-    constructor(vararg initialTasks: Task) : this(initialTasks.toSet())
-
+class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRepository {
     private val throwingMethods = MutableStateFlow(setOf<KFunction<*>>())
 
-    private var taskIdGen = initialTasks.maxOfOrNull { it.id } ?: 0L
-
-    private var taskPathIdGen = 0L
-
-    private val tasksTable = MutableStateFlow(initialTasks.associateBy { it.id })
-
-    private val taskPaths = MutableStateFlow(initialTasks.map { task ->
-        TaskPath(
-            id = ++taskPathIdGen,
-            ancestor = task.id,
-            descendant = task.id,
-            depth = 0,
-        )
-    }.toSet())
-
     val tasks
-        get() = tasksTable.value.values
+        get() = db.taskTable.value.values
 
     override fun getCurrentTask(scheduledBefore: Instant): Flow<Task?> =
-        combine(throwingMethods, tasksTable, taskPaths) { throwingMethods, tasks, taskPaths ->
+        combine(
+            throwingMethods,
+            db.taskTable,
+            db.taskPathTable
+        ) { throwingMethods, tasks, taskPaths ->
             if (::getCurrentTask in throwingMethods) {
                 throw RuntimeException("Test")
             }
@@ -47,15 +34,17 @@ class FakeTaskRepository(initialTasks: Collection<Task>) : TaskRepository {
                     .thenComparing(Task::createdAt)
                     .thenComparing(Task::id)
             ).mapNotNull { task ->
-                val path = taskPaths.filter { it.descendant == task.id }.maxBy { it.depth }
-                tasks[path.ancestor]
+                taskPaths.values
+                    .filter { it.descendant == task.id }
+                    .maxByOrNull { it.depth }
+                    ?.let { tasks[it.ancestor] }
             }.firstOrNull { task ->
                 task.scheduledAt?.let { it <= scheduledBefore } != false
             }
         }
 
     override fun getById(id: Long): Flow<Task?> =
-        combine(throwingMethods, tasksTable) { throwingMethods, tasks ->
+        combine(throwingMethods, db.taskTable) { throwingMethods, tasks ->
             if (::getById in throwingMethods) {
                 throw RuntimeException("Test")
             }
@@ -63,11 +52,33 @@ class FakeTaskRepository(initialTasks: Collection<Task>) : TaskRepository {
             tasks[id]
         }
 
+    override fun getTaskWithTaskListById(id: Long): Flow<TaskWithTaskList?> =
+        combine(
+            throwingMethods,
+            db.taskListTable,
+            db.taskTable
+        ) { throwingMethods, taskLists, tasks ->
+            if (::getTaskWithTaskListById in throwingMethods) {
+                throw RuntimeException("Test")
+            }
+
+            tasks[id]?.let { task ->
+                TaskWithTaskList(
+                    id = task.id,
+                    name = task.name,
+                    deadline = task.deadline,
+                    scheduledAt = task.scheduledAt,
+                    listId = task.listId,
+                    listName = task.listId?.let { taskLists[it] }?.name,
+                )
+            }
+        }
+
     override fun search(
         query: String,
         singletonsOnly: Boolean
     ): Flow<List<Task>> =
-        combine(throwingMethods, tasksTable) { throwingMethods, tasks ->
+        combine(throwingMethods, db.taskTable) { throwingMethods, tasks ->
             if (::search in throwingMethods) {
                 throw RuntimeException("Test")
             }
@@ -83,33 +94,12 @@ class FakeTaskRepository(initialTasks: Collection<Task>) : TaskRepository {
             }
         }
 
-    override fun getTaskListItems(id: Long): Flow<List<Task>> =
-        combine(throwingMethods, tasksTable, taskPaths) { throwingMethods, tasks, taskPaths ->
-            if (::getTaskListItems in throwingMethods) {
-                throw RuntimeException("Test")
-            }
-
-            val head = taskPaths.filter { it.descendant == id }.maxByOrNull { it.depth }
-            taskPaths.filter { it.ancestor == head?.ancestor }
-                .sortedByDescending { it.depth }
-                .mapNotNull { tasks[it.descendant] }
-        }
-
     override suspend fun create(form: NewTaskForm): Task {
         if (::create in throwingMethods.value) {
             throw RuntimeException("Test")
         }
 
-        val task = form.newTask.copy(id = ++taskIdGen)
-        val singletonPath = TaskPath(
-            id = ++taskPathIdGen,
-            ancestor = task.id,
-            descendant = task.id,
-            depth = 0,
-        )
-        tasksTable.update { it + (task.id to task) }
-        taskPaths.update { it + singletonPath }
-        return task
+        return db.addTask(form.newTask)
     }
 
     override suspend fun update(form: EditTaskForm): Task {
@@ -117,9 +107,8 @@ class FakeTaskRepository(initialTasks: Collection<Task>) : TaskRepository {
             throw RuntimeException("Test")
         }
 
-        val task = form.updatedTask
-        tasksTable.update { it + (task.id to task) }
-        return task
+        db.updateTask(form.updatedTask)
+        return form.updatedTask
     }
 
     override suspend fun remove(id: Long) {
@@ -127,27 +116,7 @@ class FakeTaskRepository(initialTasks: Collection<Task>) : TaskRepository {
             throw RuntimeException("Test")
         }
 
-        taskPaths.update { paths ->
-            val parentId = paths.firstOrNull { it.descendant == id && it.depth == 1 }?.let {
-                tasksTable.value[it.ancestor]
-            }?.id
-            val childId = paths.firstOrNull { it.ancestor == id && it.depth == 1 }?.let {
-                tasksTable.value[it.descendant]
-            }?.id
-            val chainPaths = if (parentId != null && childId != null) {
-                val ancestors =
-                    paths.filter { it.descendant == parentId }.map { it.ancestor }.toSet()
-                val descendants =
-                    paths.filter { it.ancestor == childId }.map { it.descendant }.toSet()
-                paths.filter { it.ancestor in ancestors && it.descendant in descendants }.toSet()
-            } else {
-                emptySet()
-            }
-            paths - paths.filter { it.ancestor == id || it.descendant == id }.toSet() -
-                    chainPaths +
-                    chainPaths.map { it.copy(depth = it.depth - 1) }
-        }
-        tasksTable.update { it - id }
+        db.removeTask(id)
     }
 
     fun setThrows(method: KFunction<*>, shouldThrow: Boolean) {
@@ -155,6 +124,16 @@ class FakeTaskRepository(initialTasks: Collection<Task>) : TaskRepository {
             throwingMethods.update { it + method }
         } else {
             throwingMethods.update { it - method }
+        }
+    }
+
+    companion object {
+        fun withTasks(vararg initialTasks: Task) = withTasks(initialTasks.toSet())
+
+        fun withTasks(initialTasks: Iterable<Task>): FakeTaskRepository {
+            val db = FakeDatabase()
+            initialTasks.forEach(db::addTask)
+            return FakeTaskRepository(db)
         }
     }
 }

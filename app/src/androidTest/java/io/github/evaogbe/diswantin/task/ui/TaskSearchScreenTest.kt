@@ -36,7 +36,7 @@ class TaskSearchScreenTest {
                 typeGenerator<String> { "$query ${loremFaker.lorem.unique.words()}" }
             }
         }
-        val taskRepository = FakeTaskRepository(tasks)
+        val taskRepository = FakeTaskRepository.withTasks(tasks)
         val viewModel = TaskSearchViewModel(taskRepository)
 
         composeTestRule.setContent {

@@ -22,5 +22,5 @@ data class Task(
     val name: String,
     val deadline: Instant? = null,
     @ColumnInfo("scheduled_at") val scheduledAt: Instant? = null,
-    @ColumnInfo("list_id") val listId: Long? = null,
+    @ColumnInfo("list_id", index = true) val listId: Long? = null,
 )

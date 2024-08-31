@@ -3,6 +3,7 @@ package io.github.evaogbe.diswantin.task.ui
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import io.github.evaogbe.diswantin.task.data.Task
+import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTaskListRepository
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.MainDispatcherRule
@@ -12,6 +13,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
@@ -37,8 +39,11 @@ class TaskListFormViewModelTest {
                 name = "$query ${loremFaker.lorem.words()}",
             )
         }
-        val taskRepository = FakeTaskRepository(tasks)
-        val taskListRepository = FakeTaskListRepository()
+        val db = FakeDatabase().also { db ->
+            tasks.forEach(db::addTask)
+        }
+        val taskRepository = FakeTaskRepository(db)
+        val taskListRepository = FakeTaskListRepository(db)
         val viewModel = TaskListFormViewModel(taskListRepository, taskRepository)
 
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
@@ -61,8 +66,9 @@ class TaskListFormViewModelTest {
     fun `searchTasks sets task options to empty when repository throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val query = loremFaker.verbs.base()
-            val taskRepository = FakeTaskRepository()
-            val taskListRepository = FakeTaskListRepository()
+            val db = FakeDatabase()
+            val taskRepository = FakeTaskRepository(db)
+            val taskListRepository = FakeTaskListRepository(db)
             val viewModel = TaskListFormViewModel(taskListRepository, taskRepository)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
@@ -92,8 +98,11 @@ class TaskListFormViewModelTest {
                 name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
             )
         }
-        val taskRepository = FakeTaskRepository(tasks)
-        val taskListRepository = FakeTaskListRepository()
+        val db = FakeDatabase().also { db ->
+            tasks.forEach(db::addTask)
+        }
+        val taskRepository = FakeTaskRepository(db)
+        val taskListRepository = FakeTaskListRepository(db)
         val viewModel = TaskListFormViewModel(taskListRepository, taskRepository)
 
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
@@ -117,6 +126,8 @@ class TaskListFormViewModelTest {
 
         val taskList = taskListRepository.taskLists.single()
         assertThat(taskList.name).isEqualTo(name)
+        assertThat(taskListRepository.getById(taskList.id).first().tasks)
+            .isEqualTo(tasks.map { it.copy(listId = taskList.id) })
         assertThat(viewModel.uiState.value).isEqualTo(TaskListFormUiState.Saved)
     }
 
@@ -124,8 +135,9 @@ class TaskListFormViewModelTest {
     fun `saveTaskList shows error when repository throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val name = loremFaker.lorem.words()
-            val taskRepository = FakeTaskRepository()
-            val taskListRepository = FakeTaskListRepository()
+            val db = FakeDatabase()
+            val taskRepository = FakeTaskRepository(db)
+            val taskListRepository = FakeTaskListRepository(db)
             val viewModel = TaskListFormViewModel(taskListRepository, taskRepository)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {

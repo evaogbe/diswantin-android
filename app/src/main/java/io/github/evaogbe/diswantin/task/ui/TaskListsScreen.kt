@@ -1,5 +1,6 @@
 package io.github.evaogbe.diswantin.task.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -45,6 +46,7 @@ import kotlinx.collections.immutable.persistentListOf
 @Composable
 fun TaskListsScreen(
     onAddList: () -> Unit,
+    onSelectTaskList: (Long) -> Unit,
     taskListsViewModel: TaskListsViewModel = hiltViewModel(),
 ) {
     val uiState by taskListsViewModel.uiState.collectAsStateWithLifecycle()
@@ -59,14 +61,21 @@ fun TaskListsScreen(
             if (state.taskLists.isEmpty()) {
                 EmptyTaskListsLayout(onAddList = onAddList)
             } else {
-                TaskListsLayout(taskLists = state.taskLists)
+                TaskListsLayout(
+                    taskLists = state.taskLists,
+                    onSelectTaskList = { onSelectTaskList(it.id) },
+                )
             }
         }
     }
 }
 
 @Composable
-fun TaskListsLayout(taskLists: ImmutableList<TaskList>, modifier: Modifier = Modifier) {
+fun TaskListsLayout(
+    taskLists: ImmutableList<TaskList>,
+    onSelectTaskList: (TaskList) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Box(
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.TopCenter
@@ -77,7 +86,10 @@ fun TaskListsLayout(taskLists: ImmutableList<TaskList>, modifier: Modifier = Mod
                 .fillMaxSize(),
         ) {
             items(taskLists, key = TaskList::id) { taskList ->
-                ListItem(headlineContent = { Text(text = taskList.name) })
+                ListItem(
+                    headlineContent = { Text(text = taskList.name) },
+                    modifier = Modifier.clickable { onSelectTaskList(taskList) },
+                )
                 HorizontalDivider()
             }
         }
@@ -130,6 +142,7 @@ private fun TaskListsLayoutPreview() {
                     TaskList(id = 2L, name = "Work"),
                     TaskList(id = 3L, name = "Bedtime routine")
                 ),
+                onSelectTaskList = {},
             )
         }
     }

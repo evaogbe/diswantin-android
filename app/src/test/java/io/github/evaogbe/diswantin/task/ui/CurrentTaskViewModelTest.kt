@@ -34,7 +34,7 @@ class CurrentTaskViewModelTest {
         runTest(mainDispatcherRule.testDispatcher) {
             val (task1, task2) = genTasks(2)
             val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
-            val taskRepository = FakeTaskRepository(task1, task2)
+            val taskRepository = FakeTaskRepository.withTasks(task1, task2)
             val viewModel = createCurrentTaskViewModel(taskRepository)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
@@ -62,25 +62,26 @@ class CurrentTaskViewModelTest {
         }
 
     @Test
-    fun `uiState is failure when repository throws`() = runTest(mainDispatcherRule.testDispatcher) {
-        val task = genTasks(1).single()
-        val taskRepository = FakeTaskRepository(task)
-        taskRepository.setThrows(taskRepository::getCurrentTask, true)
+    fun `uiState emits failure when repository throws`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val task = genTasks(1).single()
+            val taskRepository = FakeTaskRepository.withTasks(task)
+            taskRepository.setThrows(taskRepository::getCurrentTask, true)
 
-        val viewModel = createCurrentTaskViewModel(taskRepository)
+            val viewModel = createCurrentTaskViewModel(taskRepository)
 
-        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-            viewModel.uiState.collect()
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect()
+            }
+
+            assertThat(viewModel.uiState.value).isEqualTo(CurrentTaskUiState.Failure)
         }
-
-        assertThat(viewModel.uiState.value).isEqualTo(CurrentTaskUiState.Failure)
-    }
 
     @Test
     fun `removeCurrentTask removes current task from repository`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val (task1, task2) = genTasks(2)
-            val taskRepository = FakeTaskRepository(task1, task2)
+            val taskRepository = FakeTaskRepository.withTasks(task1, task2)
             val viewModel = createCurrentTaskViewModel(taskRepository)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
@@ -122,7 +123,7 @@ class CurrentTaskViewModelTest {
     fun `removeCurrentTask shows error message when repository throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val task = genTasks(1).single()
-            val taskRepository = FakeTaskRepository(task)
+            val taskRepository = FakeTaskRepository.withTasks(task)
             val viewModel = createCurrentTaskViewModel(taskRepository)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {

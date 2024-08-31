@@ -48,6 +48,7 @@ fun HomeScreen(
     onAddTask: () -> Unit,
     onAddList: () -> Unit,
     onAdviceClick: () -> Unit,
+    onSelectTaskList: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val scope = rememberCoroutineScope()
@@ -90,7 +91,7 @@ fun HomeScreen(
             )
 
             1 -> {
-                TaskListsScreen(onAddList = onAddList)
+                TaskListsScreen(onAddList = onAddList, onSelectTaskList = onSelectTaskList)
             }
         }
     }

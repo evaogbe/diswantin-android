@@ -7,13 +7,12 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.TaskRepository
 import io.github.evaogbe.diswantin.ui.navigation.Destination
-import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -28,27 +27,26 @@ class TaskDetailViewModel @Inject constructor(
 ) : ViewModel() {
     private val taskId: Long = checkNotNull(savedStateHandle[Destination.TaskDetail.ID_KEY])
 
+    private val initialized = MutableStateFlow(false)
+
     private val userMessage = MutableStateFlow<Int?>(null)
 
     val uiState =
         combine(
-            taskRepository.getById(taskId),
-            taskRepository.getTaskListItems(taskId),
+            initialized,
+            taskRepository.getTaskWithTaskListById(taskId),
             userMessage
-        ) { task, taskListItems, userMessage ->
+        ) { initialized, task, userMessage ->
             if (task != null) {
-                TaskDetailUiState.Success(
-                    task = task,
-                    taskListItems = if (taskListItems.size > 1) {
-                        taskListItems.toImmutableList()
-                    } else {
-                        persistentListOf()
-                    },
-                    userMessage = userMessage,
-                    clock = clock
-                )
+                TaskDetailUiState.Success(task = task, userMessage = userMessage, clock = clock)
+            } else if (!initialized) {
+                TaskDetailUiState.Failure
             } else {
                 TaskDetailUiState.Removed
+            }
+        }.onEach {
+            if (it is TaskDetailUiState.Success) {
+                initialized.value = true
             }
         }.catch { e ->
             Timber.e(e, "Failed to fetch task by id: %d", taskId)
