@@ -11,15 +11,15 @@
     <string name="close_button">Close</string>
     <string name="current_task_empty">No upcoming to-dos</string>
     <string name="current_task_fetch_error">Something went wrong loading the current to-do</string>
-    <string name="current_task_remove_error">Something went wrong removing the to-do</string>
+    <string name="current_task_mark_done_error">Something went wrong marking the to-do as done</string>
     <string name="current_task_title">Current To-do</string>
     <string name="edit_button">Edit</string>
     <string name="delete_button">Delete</string>
     <string name="deadline_label">Deadline</string>
+    <string name="mark_done_button">Done</string>
     <string name="more_actions_button">More actions</string>
     <string name="name_label">Name</string>
     <string name="ok_button">OK</string>
-    <string name="remove_button">Remove</string>
     <string name="save_button">Save</string>
     <string name="scheduled_at_label">Scheduled at</string>
     <string name="search_tasks_button">Search to-dos</string>

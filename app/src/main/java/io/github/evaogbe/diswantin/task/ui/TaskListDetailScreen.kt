@@ -40,6 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.evaogbe.diswantin.R
@@ -207,7 +208,16 @@ fun TaskListDetailLayout(
 
                 items(uiState.tasks, key = Task::id) { task ->
                     ListItem(
-                        headlineContent = { Text(text = task.name) },
+                        headlineContent = {
+                            Text(
+                                text = task.name,
+                                textDecoration = if (task.doneAt != null) {
+                                    TextDecoration.LineThrough
+                                } else {
+                                    null
+                                },
+                            )
+                        },
                         modifier = Modifier.clickable { onSelectTask(task) },
                     )
                     HorizontalDivider()
@@ -226,7 +236,12 @@ private fun TaskListDetailScreenPreview() {
             uiState = TaskListDetailUiState.Success(
                 taskList = TaskList(name = "Morning Routine"),
                 tasks = persistentListOf(
-                    Task(id = 1L, createdAt = Instant.now(), name = "Brush teeth"),
+                    Task(
+                        id = 1L,
+                        createdAt = Instant.now(),
+                        name = "Brush teeth",
+                        doneAt = Instant.now(),
+                    ),
                     Task(id = 2L, createdAt = Instant.now(), name = "Shower"),
                     Task(id = 3L, createdAt = Instant.now(), name = "Eat breakfast"),
                 ),

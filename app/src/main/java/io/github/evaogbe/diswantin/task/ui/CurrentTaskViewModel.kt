@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.time.Clock
+import java.time.Instant
 import java.time.ZonedDateTime
 import javax.inject.Inject
 
@@ -52,18 +53,18 @@ class CurrentTaskViewModel @Inject constructor(
         scheduledBefore.value = ZonedDateTime.now(clock).plusHours(1).toInstant()
     }
 
-    fun removeCurrentTask() {
+    fun markCurrentTaskDone() {
         val task = (uiState.value as? CurrentTaskUiState.Present)?.currentTask ?: return
 
         viewModelScope.launch {
             try {
-                taskRepository.delete(task.id)
+                taskRepository.update(task.copy(doneAt = Instant.now(clock)))
                 scheduledBefore.value = ZonedDateTime.now(clock).plusHours(1).toInstant()
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Timber.e(e, "Failed to remove task: %s", task)
-                userMessage.value = R.string.current_task_remove_error
+                Timber.e(e, "Failed to mark task done: %s", task)
+                userMessage.value = R.string.current_task_mark_done_error
             }
         }
     }

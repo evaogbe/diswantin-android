@@ -162,6 +162,17 @@ class LocalTaskRepositoryTest {
                 )
 
                 assertThat(awaitItem()).isNull()
+
+                taskRepository.update(
+                    updatedTask1.copy(
+                        scheduledAt = null,
+                        doneAt = Instant.parse("2024-08-23T17:00:00Z"),
+                    )
+                )
+
+                assertThat(awaitItem())
+                    .isNotNull()
+                    .isDataClassEqualTo(taskListWithTasks.tasks[0])
             }
     }
 

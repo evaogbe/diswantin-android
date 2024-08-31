@@ -39,6 +39,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.evaogbe.diswantin.R
@@ -187,7 +188,15 @@ fun TaskDetailLayout(
                 .padding(vertical = SpaceMd)
         ) {
             SelectionContainer(modifier = Modifier.padding(horizontal = SpaceMd)) {
-                Text(text = uiState.task.name, style = typography.displaySmall)
+                Text(
+                    text = uiState.task.name,
+                    textDecoration = if (uiState.task.doneAt != null) {
+                        TextDecoration.LineThrough
+                    } else {
+                        null
+                    },
+                    style = typography.displaySmall,
+                )
             }
             Spacer(Modifier.size(SpaceMd))
             HorizontalDivider()
@@ -256,6 +265,7 @@ private fun TaskDetailScreenPreview() {
                     name = "Brush teeth",
                     deadline = null,
                     scheduledAt = null,
+                    doneAt = null,
                     listId = null,
                     listName = null,
                 ),
@@ -279,6 +289,7 @@ private fun TaskDetailLayoutPreview() {
                         name = "Brush teeth",
                         deadline = Instant.now(),
                         scheduledAt = null,
+                        doneAt = Instant.now(),
                         listId = 1L,
                         listName = "Morning Routine",
                     ),

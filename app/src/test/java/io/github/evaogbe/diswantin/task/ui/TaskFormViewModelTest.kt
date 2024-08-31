@@ -233,7 +233,7 @@ class TaskFormViewModelTest {
                 viewModel.uiState.collect()
             }
 
-            taskRepository.setThrows(taskRepository::update, true)
+            taskRepository.setThrows("update", true)
             viewModel.updateNameInput(name)
             viewModel.saveTask()
 

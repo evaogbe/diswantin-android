@@ -117,7 +117,7 @@ class CurrentTaskScreenTest {
     }
 
     @Test
-    fun displaysNextTaskName_whenRemoveClicked() {
+    fun displaysNextTaskName_whenMarkDoneClicked() {
         val (task1, task2) = genTasks(2)
         val taskRepository = FakeTaskRepository.withTasks(task1, task2)
         val viewModel = createCurrentTaskViewModel(taskRepository)
@@ -136,13 +136,13 @@ class CurrentTaskScreenTest {
 
         composeTestRule.onNodeWithText(task1.name).assertIsDisplayed()
 
-        composeTestRule.onNodeWithText(stringResource(R.string.remove_button)).performClick()
+        composeTestRule.onNodeWithText(stringResource(R.string.mark_done_button)).performClick()
 
         composeTestRule.onNodeWithText(task2.name).assertIsDisplayed()
     }
 
     @Test
-    fun displaysErrorMessage_whenRemoveFailed() {
+    fun displaysErrorMessage_whenMarkDoneFailed() {
         var setUserMessageCalled = false
         val task = genTasks(1).single()
         val taskRepository = FakeTaskRepository.withTasks(task)
@@ -153,7 +153,8 @@ class CurrentTaskScreenTest {
                 CurrentTaskScreen(
                     setCurrentTaskId = {},
                     setUserMessage = {
-                        assertThat(it).isEqualTo(stringResource(R.string.current_task_remove_error))
+                        assertThat(it)
+                            .isEqualTo(stringResource(R.string.current_task_mark_done_error))
                         setUserMessageCalled = true
                     },
                     onAddTask = {},
@@ -163,8 +164,8 @@ class CurrentTaskScreenTest {
             }
         }
 
-        taskRepository.setThrows(taskRepository::delete, true)
-        composeTestRule.onNodeWithText(stringResource(R.string.remove_button)).performClick()
+        taskRepository.setThrows("update", true)
+        composeTestRule.onNodeWithText(stringResource(R.string.mark_done_button)).performClick()
         composeTestRule.waitForIdle()
 
         assertThat(setUserMessageCalled).isTrue()

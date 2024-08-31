@@ -193,7 +193,7 @@ private fun HomeScreenPreview() {
                     name = "Brush teeth"
                 ),
                 onAdviceClick = {},
-                onRemoveTask = {},
+                onMarkTaskDone = {},
             )
         }
     }

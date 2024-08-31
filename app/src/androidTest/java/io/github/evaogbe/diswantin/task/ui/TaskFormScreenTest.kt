@@ -208,7 +208,7 @@ class TaskFormScreenTest {
         composeTestRule.onNodeWithText(stringResource(R.string.task_form_save_error_edit))
             .assertDoesNotExist()
 
-        taskRepository.setThrows(taskRepository::update, true)
+        taskRepository.setThrows("update", true)
         composeTestRule.onNodeWithText(stringResource(R.string.name_label), useUnmergedTree = true)
             .onParent()
             .performTextReplacement(name)

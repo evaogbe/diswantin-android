@@ -16,5 +16,7 @@ interface TaskRepository {
 
     suspend fun update(form: EditTaskForm): Task
 
+    suspend fun update(task: Task)
+
     suspend fun delete(id: Long)
 }

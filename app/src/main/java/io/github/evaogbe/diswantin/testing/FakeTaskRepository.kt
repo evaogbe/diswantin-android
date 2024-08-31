@@ -13,7 +13,7 @@ import java.time.Instant
 import kotlin.reflect.KFunction
 
 class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRepository {
-    private val throwingMethods = MutableStateFlow(setOf<KFunction<*>>())
+    private val throwingMethods = MutableStateFlow(setOf<String>())
 
     val tasks
         get() = db.taskTable.value.values
@@ -24,7 +24,7 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
             db.taskTable,
             db.taskPathTable
         ) { throwingMethods, tasks, taskPaths ->
-            if (::getCurrentTask in throwingMethods) {
+            if (::getCurrentTask.name in throwingMethods) {
                 throw RuntimeException("Test")
             }
 
@@ -35,7 +35,7 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
                     .thenComparing(Task::id)
             ).mapNotNull { task ->
                 taskPaths.values
-                    .filter { it.descendant == task.id }
+                    .filter { it.descendant == task.id && tasks[it.ancestor]?.doneAt == null }
                     .maxByOrNull { it.depth }
                     ?.let { tasks[it.ancestor] }
             }.firstOrNull { task ->
@@ -45,7 +45,7 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
 
     override fun getById(id: Long): Flow<Task?> =
         combine(throwingMethods, db.taskTable) { throwingMethods, tasks ->
-            if (::getById in throwingMethods) {
+            if (::getById.name in throwingMethods) {
                 throw RuntimeException("Test")
             }
 
@@ -56,9 +56,9 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
         combine(
             throwingMethods,
             db.taskListTable,
-            db.taskTable
+            db.taskTable,
         ) { throwingMethods, taskLists, tasks ->
-            if (::getTaskWithTaskListById in throwingMethods) {
+            if (::getTaskWithTaskListById.name in throwingMethods) {
                 throw RuntimeException("Test")
             }
 
@@ -68,6 +68,7 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
                     name = task.name,
                     deadline = task.deadline,
                     scheduledAt = task.scheduledAt,
+                    doneAt = task.doneAt,
                     listId = task.listId,
                     listName = task.listId?.let { taskLists[it] }?.name,
                 )
@@ -79,7 +80,7 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
         singletonsOnly: Boolean
     ): Flow<List<Task>> =
         combine(throwingMethods, db.taskTable) { throwingMethods, tasks ->
-            if (::search in throwingMethods) {
+            if (::search.name in throwingMethods) {
                 throw RuntimeException("Test")
             }
 
@@ -95,7 +96,7 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
         }
 
     override suspend fun create(form: NewTaskForm): Task {
-        if (::create in throwingMethods.value) {
+        if (::create.name in throwingMethods.value) {
             throw RuntimeException("Test")
         }
 
@@ -103,7 +104,7 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
     }
 
     override suspend fun update(form: EditTaskForm): Task {
-        if (::update in throwingMethods.value) {
+        if (object {}.javaClass.enclosingMethod?.name in throwingMethods.value) {
             throw RuntimeException("Test")
         }
 
@@ -111,8 +112,16 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
         return form.updatedTask
     }
 
+    override suspend fun update(task: Task) {
+        if (object {}.javaClass.enclosingMethod?.name in throwingMethods.value) {
+            throw RuntimeException("Test")
+        }
+
+        db.updateTask(task)
+    }
+
     override suspend fun delete(id: Long) {
-        if (::delete in throwingMethods.value) {
+        if (::delete.name in throwingMethods.value) {
             throw RuntimeException("Test")
         }
 
@@ -120,10 +129,14 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
     }
 
     fun setThrows(method: KFunction<*>, shouldThrow: Boolean) {
+        setThrows(method.name, shouldThrow)
+    }
+
+    fun setThrows(methodName: String, shouldThrow: Boolean) {
         if (shouldThrow) {
-            throwingMethods.update { it + method }
+            throwingMethods.update { it + methodName }
         } else {
-            throwingMethods.update { it - method }
+            throwingMethods.update { it - methodName }
         }
     }
 

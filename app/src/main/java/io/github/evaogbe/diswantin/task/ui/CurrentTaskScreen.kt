@@ -83,7 +83,7 @@ fun CurrentTaskScreen(
             CurrentTaskLayout(
                 task = state.currentTask,
                 onAdviceClick = onAdviceClick,
-                onRemoveTask = { currentTaskViewModel.removeCurrentTask() },
+                onMarkTaskDone = currentTaskViewModel::markCurrentTaskDone,
             )
         }
     }
@@ -93,7 +93,7 @@ fun CurrentTaskScreen(
 fun CurrentTaskLayout(
     task: Task,
     onAdviceClick: () -> Unit,
-    onRemoveTask: () -> Unit,
+    onMarkTaskDone: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
@@ -115,8 +115,8 @@ fun CurrentTaskLayout(
                 OutlinedButton(onClick = onAdviceClick) {
                     Text(stringResource(R.string.advice_button))
                 }
-                OutlinedButton(onClick = onRemoveTask) {
-                    Text(stringResource(R.string.remove_button))
+                OutlinedButton(onClick = onMarkTaskDone) {
+                    Text(stringResource(R.string.mark_done_button))
                 }
             }
         }
@@ -173,7 +173,7 @@ private fun CurrentTaskLayoutPreview() {
                     name = "Brush teeth"
                 ),
                 onAdviceClick = {},
-                onRemoveTask = {},
+                onMarkTaskDone = {},
             )
         }
     }

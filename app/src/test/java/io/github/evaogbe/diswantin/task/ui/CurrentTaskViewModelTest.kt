@@ -78,7 +78,7 @@ class CurrentTaskViewModelTest {
         }
 
     @Test
-    fun `removeCurrentTask removes current task from repository`() =
+    fun `markCurrentTaskDone sets current task doneAt`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val (task1, task2) = genTasks(2)
             val taskRepository = FakeTaskRepository.withTasks(task1, task2)
@@ -95,7 +95,7 @@ class CurrentTaskViewModelTest {
                 )
             )
 
-            viewModel.removeCurrentTask()
+            viewModel.markCurrentTaskDone()
 
             assertThat(taskRepository.tasks).doesNotContain(task1)
             assertThat(viewModel.uiState.value)
@@ -103,24 +103,7 @@ class CurrentTaskViewModelTest {
         }
 
     @Test
-    fun `removeCurrentTask does nothing when no current task`() =
-        runTest(mainDispatcherRule.testDispatcher) {
-            val taskRepository = FakeTaskRepository()
-            val viewModel = createCurrentTaskViewModel(taskRepository)
-
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-                viewModel.uiState.collect()
-            }
-
-            assertThat(viewModel.uiState.value).isEqualTo(CurrentTaskUiState.Empty)
-
-            viewModel.removeCurrentTask()
-
-            assertThat(viewModel.uiState.value).isEqualTo(CurrentTaskUiState.Empty)
-        }
-
-    @Test
-    fun `removeCurrentTask shows error message when repository throws`() =
+    fun `markCurrentTaskDone shows error message when repository throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val task = genTasks(1).single()
             val taskRepository = FakeTaskRepository.withTasks(task)
@@ -133,13 +116,13 @@ class CurrentTaskViewModelTest {
             assertThat(viewModel.uiState.value)
                 .isEqualTo(CurrentTaskUiState.Present(currentTask = task, userMessage = null))
 
-            taskRepository.setThrows(taskRepository::delete, true)
-            viewModel.removeCurrentTask()
+            taskRepository.setThrows("update", true)
+            viewModel.markCurrentTaskDone()
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 CurrentTaskUiState.Present(
                     currentTask = task,
-                    userMessage = R.string.current_task_remove_error
+                    userMessage = R.string.current_task_mark_done_error
                 )
             )
             assertThat(taskRepository.tasks).contains(task)

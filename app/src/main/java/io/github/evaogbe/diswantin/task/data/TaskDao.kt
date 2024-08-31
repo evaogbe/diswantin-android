@@ -15,9 +15,11 @@ interface TaskDao {
         FROM task t
         JOIN task_path p ON p.ancestor = t.id
         JOIN (
-                SELECT descendant, MAX(depth) AS depth
-                FROM task_path
-                GROUP BY descendant
+                SELECT p2.descendant, MAX(p2.depth) AS depth
+                FROM task_path p2
+                JOIN task t3 ON p2.ancestor = t3.id
+                WHERE t3.done_at IS NULL
+                GROUP BY p2.descendant
             ) leaf ON leaf.descendant = p.descendant AND leaf.depth = p.depth
         JOIN task t2 ON p.descendant = t2.id
         WHERE t.scheduled_at IS NULL OR t.scheduled_at <= :scheduledBefore
@@ -36,7 +38,14 @@ interface TaskDao {
     fun getById(id: Long): Flow<Task?>
 
     @Query(
-        """SELECT t.id, t.name, t.deadline, t.scheduled_at, t.list_id, l.name AS list_name
+        """SELECT
+            t.id,
+            t.name,
+            t.deadline,
+            t.scheduled_at,
+            t.done_at,
+            t.list_id,
+            l.name AS list_name
         FROM task t
         LEFT JOIN task_list l ON l.id = t.list_id
         WHERE t.id = :id 
