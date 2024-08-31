@@ -62,7 +62,7 @@ class TaskListsScreenTest {
     }
 
     @Test
-    fun displaysErrorMessage_whenUiFailed() {
+    fun displaysErrorMessage_withFailureUi() {
         val taskListRepository = FakeTaskListRepository()
         taskListRepository.setThrows(taskListRepository::taskListsStream, true)
 

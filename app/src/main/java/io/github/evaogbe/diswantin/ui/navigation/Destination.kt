@@ -43,6 +43,16 @@ sealed interface Destination {
         override val route = "taskListForm"
     }
 
+    data class EditTaskListForm(private val id: Long) : Destination {
+        override val route = "taskListForm/$id"
+
+        companion object : Destination {
+            const val ID_KEY = "id"
+
+            override val route = "taskListForm/{$ID_KEY}"
+        }
+    }
+
     data class TaskListDetail(private val id: Long) : Destination {
         override val route = "taskList/$id"
 

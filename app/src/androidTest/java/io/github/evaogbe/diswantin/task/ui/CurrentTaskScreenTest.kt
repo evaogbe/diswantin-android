@@ -69,7 +69,7 @@ class CurrentTaskScreenTest {
     }
 
     @Test
-    fun displayErrorMessage_whenUiFailure() {
+    fun displayErrorMessage_withFailureUi() {
         val task = genTasks(1).single()
         val taskRepository = FakeTaskRepository.withTasks(task)
         val viewModel = createCurrentTaskViewModel(taskRepository)

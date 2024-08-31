@@ -25,21 +25,11 @@ fun DiswantinApp() {
     ) {
         composable(Destination.Home.route) {
             HomeScreen(
-                onSearch = {
-                    navController.navigate(route = Destination.TaskSearch.route)
-                },
-                onEditTask = {
-                    navController.navigate(route = Destination.EditTaskForm(it).route)
-                },
-                onAddTask = {
-                    navController.navigate(route = Destination.NewTaskForm.route)
-                },
-                onAddList = {
-                    navController.navigate(route = Destination.NewTaskListForm.route)
-                },
-                onAdviceClick = {
-                    navController.navigate(route = Destination.Advice.route)
-                },
+                onSearch = { navController.navigate(route = Destination.TaskSearch.route) },
+                onEditTask = { navController.navigate(route = Destination.EditTaskForm(it).route) },
+                onAddTask = { navController.navigate(route = Destination.NewTaskForm.route) },
+                onAddList = { navController.navigate(route = Destination.NewTaskListForm.route) },
+                onAdviceClick = { navController.navigate(route = Destination.Advice.route) },
                 onSelectTaskList = {
                     navController.navigate(route = Destination.TaskListDetail(it).route)
                 },
@@ -60,7 +50,7 @@ fun DiswantinApp() {
             Destination.EditTaskForm.route,
             arguments = listOf(navArgument(Destination.EditTaskForm.ID_KEY) {
                 type = NavType.LongType
-            })
+            }),
         ) {
             TaskFormScreen(onPopBackStack = navController::popBackStack)
         }
@@ -71,13 +61,11 @@ fun DiswantinApp() {
             Destination.TaskDetail.route,
             arguments = listOf(navArgument(Destination.TaskDetail.ID_KEY) {
                 type = NavType.LongType
-            })
+            }),
         ) {
             TaskDetailScreen(
                 onPopBackStack = navController::popBackStack,
-                onEditTask = {
-                    navController.navigate(route = Destination.EditTaskForm(it).route)
-                },
+                onEditTask = { navController.navigate(route = Destination.EditTaskForm(it).route) },
                 onSelectTaskList = {
                     navController.navigate(route = Destination.TaskListDetail(it).route)
                 },
@@ -87,13 +75,24 @@ fun DiswantinApp() {
             TaskListFormScreen(onPopBackStack = navController::popBackStack)
         }
         composable(
+            Destination.EditTaskListForm.route,
+            arguments = listOf(navArgument(Destination.EditTaskListForm.ID_KEY) {
+                type = NavType.LongType
+            }),
+        ) {
+            TaskListFormScreen(onPopBackStack = navController::popBackStack)
+        }
+        composable(
             Destination.TaskListDetail.route,
             arguments = listOf(navArgument(Destination.TaskListDetail.ID_KEY) {
                 type = NavType.LongType
-            })
+            }),
         ) {
             TaskListDetailScreen(
                 onPopBackStack = navController::popBackStack,
+                onEditTaskList = {
+                    navController.navigate(route = Destination.EditTaskListForm(it).route)
+                },
                 onSelectTask = { navController.navigate(route = Destination.TaskDetail(it).route) },
             )
         }

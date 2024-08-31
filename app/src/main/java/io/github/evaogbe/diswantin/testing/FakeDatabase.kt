@@ -38,7 +38,11 @@ class FakeDatabase {
         taskListWithTasks: TaskListWithTasks,
         taskPaths: List<TaskPath>
     ): TaskListWithTasks {
-        val taskList = taskListWithTasks.taskList.copy(id = ++taskListIdGen)
+        val taskList = if (taskListWithTasks.taskList.id > 0) {
+            taskListWithTasks.taskList
+        } else {
+            taskListWithTasks.taskList.copy(id = ++taskListIdGen)
+        }
         val tasks = taskListWithTasks.tasks.map { it.copy(listId = taskList.id) }
         _taskListTable.update { it + (taskList.id to taskList) }
         _taskTable.update { taskTable ->
@@ -89,7 +93,7 @@ class FakeDatabase {
     }
 
     fun insertTask(task: Task): Task {
-        val newTask = task.copy(id = ++taskIdGen)
+        val newTask = if (task.id > 0) task else task.copy(id = ++taskIdGen)
         val path = TaskPath(
             id = ++taskPathIdGen,
             ancestor = newTask.id,

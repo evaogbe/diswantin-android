@@ -36,16 +36,15 @@ class TaskListDetailViewModel @Inject constructor(
             taskListRepository.getById(taskListId),
             userMessage,
         ) { initialized, taskListWithTasks, userMessage ->
-            if (taskListWithTasks != null) {
-                TaskListDetailUiState.Success(
+            when {
+                taskListWithTasks != null -> TaskListDetailUiState.Success(
                     taskList = taskListWithTasks.taskList,
                     tasks = taskListWithTasks.tasks.toImmutableList(),
                     userMessage = userMessage,
                 )
-            } else if (initialized) {
-                TaskListDetailUiState.Deleted
-            } else {
-                TaskListDetailUiState.Failure
+
+                initialized -> TaskListDetailUiState.Deleted
+                else -> TaskListDetailUiState.Failure
             }
         }.onEach {
             if (it is TaskListDetailUiState.Success) {

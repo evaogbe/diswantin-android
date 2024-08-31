@@ -9,15 +9,20 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onParent
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTextReplacement
+import androidx.lifecycle.SavedStateHandle
 import assertk.assertThat
 import assertk.assertions.isTrue
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.Task
+import io.github.evaogbe.diswantin.task.data.TaskList
+import io.github.evaogbe.diswantin.task.data.TaskListWithTasks
 import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTaskListRepository
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.stringResource
 import io.github.evaogbe.diswantin.ui.components.PendingLayoutTestTag
+import io.github.evaogbe.diswantin.ui.navigation.Destination
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
@@ -31,6 +36,28 @@ class TaskListFormScreenTest {
     private val loremFaker = LoremFaker()
 
     private val faker = Faker()
+
+    @Test
+    fun displaysErrorMessage_withFailureUi() {
+        val db = FakeDatabase()
+        val taskRepository = FakeTaskRepository(db)
+        val taskListRepository = FakeTaskListRepository(db)
+        taskListRepository.setThrows(taskListRepository::getById, true)
+
+        val viewModel = TaskListFormViewModel(
+            SavedStateHandle(mapOf(Destination.EditTaskListForm.ID_KEY to 1L)),
+            taskListRepository,
+            taskRepository
+        )
+
+        composeTestRule.setContent {
+            DiswantinTheme {
+                TaskListFormScreen(onPopBackStack = {}, taskListFormViewModel = viewModel)
+            }
+        }
+
+        composeTestRule.onNodeWithText(stringResource(R.string.task_list_form_fetch_error))
+    }
 
     @OptIn(ExperimentalTestApi::class)
     @Test
@@ -49,7 +76,8 @@ class TaskListFormScreenTest {
         }
         val taskRepository = FakeTaskRepository(db)
         val taskListRepository = FakeTaskListRepository(db)
-        val viewModel = TaskListFormViewModel(taskListRepository, taskRepository)
+        val viewModel =
+            TaskListFormViewModel(SavedStateHandle(), taskListRepository, taskRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -100,12 +128,13 @@ class TaskListFormScreenTest {
     }
 
     @Test
-    fun displaysErrorMessage_withSaveError() {
+    fun displaysErrorMessage_withSaveErrorForNew() {
         val name = loremFaker.lorem.words()
         val db = FakeDatabase()
         val taskRepository = FakeTaskRepository(db)
         val taskListRepository = FakeTaskListRepository(db)
-        val viewModel = TaskListFormViewModel(taskListRepository, taskRepository)
+        val viewModel =
+            TaskListFormViewModel(SavedStateHandle(), taskListRepository, taskRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -113,7 +142,7 @@ class TaskListFormScreenTest {
             }
         }
 
-        composeTestRule.onNodeWithText(stringResource(R.string.task_list_form_save_error))
+        composeTestRule.onNodeWithText(stringResource(R.string.task_list_form_save_error_new))
             .assertDoesNotExist()
 
         taskListRepository.setThrows(taskListRepository::create, true)
@@ -122,7 +151,75 @@ class TaskListFormScreenTest {
             .performTextInput(name)
         composeTestRule.onNodeWithText(stringResource(R.string.save_button)).performClick()
 
-        composeTestRule.onNodeWithText(stringResource(R.string.task_list_form_save_error))
+        composeTestRule.onNodeWithText(stringResource(R.string.task_list_form_save_error_new))
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun popsBackStack_whenTaskListUpdated() {
+        var onPopBackStackCalled = false
+        val name = loremFaker.lorem.words()
+        val taskList = TaskList(id = 1L, name = loremFaker.lorem.words())
+        val db = FakeDatabase().also { db ->
+            db.insertTaskList(TaskListWithTasks(taskList, emptyList()))
+        }
+        val taskRepository = FakeTaskRepository(db)
+        val taskListRepository = FakeTaskListRepository(db)
+        val viewModel = TaskListFormViewModel(
+            SavedStateHandle(mapOf(Destination.EditTaskListForm.ID_KEY to taskList.id)),
+            taskListRepository,
+            taskRepository,
+        )
+
+        composeTestRule.setContent {
+            DiswantinTheme {
+                TaskListFormScreen(
+                    onPopBackStack = { onPopBackStackCalled = true },
+                    taskListFormViewModel = viewModel
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(stringResource(R.string.name_label), useUnmergedTree = true)
+            .onParent()
+            .performTextReplacement(name)
+        composeTestRule.onNodeWithText(stringResource(R.string.save_button)).performClick()
+
+        composeTestRule.onNodeWithTag(PendingLayoutTestTag).assertIsDisplayed()
+        assertThat(onPopBackStackCalled).isTrue()
+    }
+
+    @Test
+    fun displaysErrorMessage_withSaveErrorForEdit() {
+        val name = loremFaker.lorem.words()
+        val taskList = TaskList(id = 1L, name = loremFaker.lorem.words())
+        val db = FakeDatabase().also { db ->
+            db.insertTaskList(TaskListWithTasks(taskList, emptyList()))
+        }
+        val taskRepository = FakeTaskRepository(db)
+        val taskListRepository = FakeTaskListRepository(db)
+        val viewModel = TaskListFormViewModel(
+            SavedStateHandle(mapOf(Destination.EditTaskListForm.ID_KEY to taskList.id)),
+            taskListRepository,
+            taskRepository,
+        )
+
+        composeTestRule.setContent {
+            DiswantinTheme {
+                TaskListFormScreen(onPopBackStack = {}, taskListFormViewModel = viewModel)
+            }
+        }
+
+        composeTestRule.onNodeWithText(stringResource(R.string.task_list_form_save_error_edit))
+            .assertDoesNotExist()
+
+        taskListRepository.setThrows(taskListRepository::update, true)
+        composeTestRule.onNodeWithText(stringResource(R.string.name_label), useUnmergedTree = true)
+            .onParent()
+            .performTextReplacement(name)
+        composeTestRule.onNodeWithText(stringResource(R.string.save_button)).performClick()
+
+        composeTestRule.onNodeWithText(stringResource(R.string.task_list_form_save_error_edit))
             .assertIsDisplayed()
     }
 }

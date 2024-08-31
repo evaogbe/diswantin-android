@@ -117,7 +117,7 @@ fun TaskDetailScreen(
                         IconButton(onClick = { onEditTask(uiState.task.id) }) {
                             Icon(
                                 imageVector = Icons.Default.Edit,
-                                contentDescription = stringResource(R.string.edit_button)
+                                contentDescription = stringResource(R.string.edit_button),
                             )
                         }
 

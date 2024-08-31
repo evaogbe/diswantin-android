@@ -52,6 +52,7 @@ class TaskListDetailScreenTest {
             DiswantinTheme {
                 TaskListDetailScreen(
                     onPopBackStack = {},
+                    onEditTaskList = {},
                     onSelectTask = {},
                     taskListDetailViewModel = viewModel,
                 )
@@ -65,7 +66,7 @@ class TaskListDetailScreenTest {
     }
 
     @Test
-    fun displaysErrorMessage_whenUiFailed() {
+    fun displaysErrorMessage_withFailureUi() {
         val taskListRepository = FakeTaskListRepository()
         val viewModel = TaskListDetailViewModel(
             SavedStateHandle(mapOf(Destination.TaskListDetail.ID_KEY to 1L)),
@@ -76,6 +77,7 @@ class TaskListDetailScreenTest {
             DiswantinTheme {
                 TaskListDetailScreen(
                     onPopBackStack = {},
+                    onEditTaskList = {},
                     onSelectTask = {},
                     taskListDetailViewModel = viewModel,
                 )
@@ -108,6 +110,7 @@ class TaskListDetailScreenTest {
             DiswantinTheme {
                 TaskListDetailScreen(
                     onPopBackStack = { onPopBackStackClicked = true },
+                    onEditTaskList = {},
                     onSelectTask = {},
                     taskListDetailViewModel = viewModel,
                 )
@@ -143,6 +146,7 @@ class TaskListDetailScreenTest {
             DiswantinTheme {
                 TaskListDetailScreen(
                     onPopBackStack = {},
+                    onEditTaskList = {},
                     onSelectTask = {},
                     taskListDetailViewModel = viewModel,
                 )

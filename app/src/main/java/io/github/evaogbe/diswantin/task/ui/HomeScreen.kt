@@ -122,14 +122,12 @@ fun HomeScreen(
                         )
                     }
 
-                    if (pagerState.currentPage == 0) {
-                        onEditTask?.let {
-                            IconButton(onClick = it) {
-                                Icon(
-                                    imageVector = Icons.Default.Edit,
-                                    contentDescription = stringResource(R.string.edit_button)
-                                )
-                            }
+                    if (pagerState.currentPage == 0 && onEditTask != null) {
+                        IconButton(onClick = onEditTask) {
+                            Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = stringResource(R.string.edit_button),
+                            )
                         }
                     }
                 },

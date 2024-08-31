@@ -53,6 +53,7 @@ import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.ui.components.AutocompleteField
 import io.github.evaogbe.diswantin.ui.components.ClearableLayout
+import io.github.evaogbe.diswantin.ui.components.LoadFailureLayout
 import io.github.evaogbe.diswantin.ui.components.PendingLayout
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.evaogbe.diswantin.ui.theme.ScreenLg
@@ -77,6 +78,7 @@ fun TaskListFormScreen(
     }
 
     TaskListFormScreen(
+        isNew = taskListFormViewModel.isNew,
         onClose = onPopBackStack,
         onSave = taskListFormViewModel::saveTaskList,
         uiState = uiState,
@@ -93,6 +95,7 @@ fun TaskListFormScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskListFormScreen(
+    isNew: Boolean,
     onClose: () -> Unit,
     onSave: () -> Unit,
     uiState: TaskListFormUiState,
@@ -109,7 +112,15 @@ fun TaskListFormScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.task_list_form_title)) },
+                title = {
+                    Text(
+                        text = if (isNew) {
+                            stringResource(R.string.task_list_form_title_new)
+                        } else {
+                            stringResource(R.string.task_list_form_title_edit)
+                        }
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onClose) {
                         Icon(
@@ -119,7 +130,7 @@ fun TaskListFormScreen(
                     }
                 },
                 actions = {
-                    if (uiState is TaskListFormUiState.Editing) {
+                    if (uiState is TaskListFormUiState.Success) {
                         Button(
                             onClick = onSave,
                             enabled = name.isNotBlank(),
@@ -133,7 +144,17 @@ fun TaskListFormScreen(
         },
     ) { innerPadding ->
         when (uiState) {
-            is TaskListFormUiState.Editing -> {
+            is TaskListFormUiState.Pending,
+            is TaskListFormUiState.Saved -> PendingLayout(modifier = Modifier.padding(innerPadding))
+
+            is TaskListFormUiState.Failure -> {
+                LoadFailureLayout(
+                    message = stringResource(R.string.task_list_form_fetch_error),
+                    modifier = Modifier.padding(innerPadding)
+                )
+            }
+
+            is TaskListFormUiState.Success -> {
                 TaskListFormLayout(
                     uiState = uiState,
                     name = name,
@@ -143,11 +164,14 @@ fun TaskListFormScreen(
                     onSelectTaskOption = onSelectTaskOption,
                     startEditTask = startEditTask,
                     stopEditTask = stopEditTask,
+                    formError = when {
+                        !uiState.hasSaveError -> null
+                        isNew -> stringResource(R.string.task_list_form_save_error_new)
+                        else -> stringResource(R.string.task_list_form_save_error_edit)
+                    },
                     modifier = Modifier.padding(innerPadding),
                 )
             }
-
-            is TaskListFormUiState.Saved -> PendingLayout(modifier = Modifier.padding(innerPadding))
         }
     }
 }
@@ -155,7 +179,7 @@ fun TaskListFormScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskListFormLayout(
-    uiState: TaskListFormUiState.Editing,
+    uiState: TaskListFormUiState.Success,
     name: String,
     onNameChange: (String) -> Unit,
     onRemoveTask: (Task) -> Unit,
@@ -163,6 +187,7 @@ fun TaskListFormLayout(
     onSelectTaskOption: (Int, Task) -> Unit,
     startEditTask: (Int) -> Unit,
     stopEditTask: () -> Unit,
+    formError: String?,
     modifier: Modifier = Modifier,
 ) {
     val tasks = uiState.tasks
@@ -177,11 +202,11 @@ fun TaskListFormLayout(
                 .widthIn(max = ScreenLg)
                 .padding(SpaceMd),
         ) {
-            if (uiState.hasSaveError) {
+            if (formError != null) {
                 item {
                     SelectionContainer {
                         Text(
-                            text = stringResource(R.string.task_list_form_save_error),
+                            text = formError,
                             color = colorScheme.error,
                             style = typography.titleSmall
                         )
@@ -296,12 +321,13 @@ fun TaskListFormLayout(
 
 @DevicePreviews
 @Composable
-private fun TaskListFormScreenPreview() {
+private fun TaskListFormScreenPreview_New() {
     DiswantinTheme {
         TaskListFormScreen(
+            isNew = true,
             onClose = {},
             onSave = {},
-            uiState = TaskListFormUiState.Editing(
+            uiState = TaskListFormUiState.Success(
                 tasks = persistentListOf(),
                 editingTaskIndex = 0,
                 taskOptions = persistentListOf(),
@@ -320,13 +346,14 @@ private fun TaskListFormScreenPreview() {
 
 @DevicePreviews
 @Composable
-private fun TaskListFormScreenPreview_Error() {
+private fun TaskListFormScreenPreview_Edit() {
     DiswantinTheme {
         Surface {
             TaskListFormScreen(
+                isNew = false,
                 onClose = {},
                 onSave = {},
-                uiState = TaskListFormUiState.Editing(
+                uiState = TaskListFormUiState.Success(
                     tasks = persistentListOf(
                         Task(
                             id = 1L,

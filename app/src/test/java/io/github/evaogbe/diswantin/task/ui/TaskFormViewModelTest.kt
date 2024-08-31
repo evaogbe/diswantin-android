@@ -40,7 +40,7 @@ class TaskFormViewModelTest {
     private val faker = Faker()
 
     @Test
-    fun `initializes for new when taskId null`() =
+    fun `initializes for new without taskId`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val taskRepository = FakeTaskRepository()
             val viewModel = createTaskFormViewModelForNew(taskRepository)
@@ -61,7 +61,7 @@ class TaskFormViewModelTest {
         }
 
     @Test
-    fun `initializes for edit when taskId present`() =
+    fun `initializes for edit with taskId`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val deadline = Instant.parse("2024-08-22T21:00:00Z")
             val task = genTask().copy(deadline = deadline)
@@ -103,11 +103,12 @@ class TaskFormViewModelTest {
                 viewModel.uiState.collect()
             }
 
+            assertThat(viewModel.isNew).isFalse()
             assertThat(viewModel.uiState.value).isEqualTo(TaskFormUiState.Failure)
         }
 
     @Test
-    fun `saveTask creates task when taskId null`() =
+    fun `saveTask creates task without taskId`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
             val taskRepository = FakeTaskRepository()
@@ -174,7 +175,7 @@ class TaskFormViewModelTest {
         }
 
     @Test
-    fun `saveTask updates task when taskId present`() =
+    fun `saveTask updates task with taskId`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
             val task = genTask()

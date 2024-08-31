@@ -37,12 +37,13 @@ class TaskDetailViewModel @Inject constructor(
             taskRepository.getTaskWithTaskListById(taskId),
             userMessage
         ) { initialized, task, userMessage ->
-            if (task != null) {
-                TaskDetailUiState.Success(task = task, userMessage = userMessage, clock = clock)
-            } else if (initialized) {
-                TaskDetailUiState.Deleted
-            } else {
-                TaskDetailUiState.Failure
+            when {
+                task != null -> {
+                    TaskDetailUiState.Success(task = task, userMessage = userMessage, clock = clock)
+                }
+
+                initialized -> TaskDetailUiState.Deleted
+                else -> TaskDetailUiState.Failure
             }
         }.onEach {
             if (it is TaskDetailUiState.Success) {

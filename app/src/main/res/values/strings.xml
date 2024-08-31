@@ -58,8 +58,11 @@
     <string name="task_form_save_error_new">Something went wrong adding the to-do</string>
     <string name="task_form_title_edit">Edit To-do</string>
     <string name="task_form_title_new">New To-do</string>
-    <string name="task_list_form_save_error">Something went wrong adding the list</string>
-    <string name="task_list_form_title">New List</string>
+    <string name="task_list_form_fetch_error">Something went wrong loading the list</string>
+    <string name="task_list_form_save_error_edit">Something went wrong editing the list</string>
+    <string name="task_list_form_save_error_new">Something went wrong adding the list</string>
+    <string name="task_list_form_title_edit">Edit List</string>
+    <string name="task_list_form_title_new">New List</string>
     <string name="task_list_detail_delete_error">Something went wrong deleting the list</string>
     <string name="task_list_detail_fetch_error">Something went wrong loading the list</string>
     <string name="task_list_label">To-do list</string>

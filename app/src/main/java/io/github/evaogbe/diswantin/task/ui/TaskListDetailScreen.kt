@@ -14,6 +14,7 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -56,6 +57,7 @@ import java.time.Instant
 @Composable
 fun TaskListDetailScreen(
     onPopBackStack: () -> Unit,
+    onEditTaskList: (Long) -> Unit,
     onSelectTask: (Long) -> Unit,
     taskListDetailViewModel: TaskListDetailViewModel = hiltViewModel(),
 ) {
@@ -79,6 +81,7 @@ fun TaskListDetailScreen(
     TaskListDetailScreen(
         onBackClick = onPopBackStack,
         uiState = uiState,
+        onEditTaskList = { onEditTaskList(it.id) },
         onDeleteTaskList = taskListDetailViewModel::deleteTaskList,
         snackbarHostState = snackbarHostState,
         onSelectTask = { onSelectTask(it.id) },
@@ -90,6 +93,7 @@ fun TaskListDetailScreen(
 fun TaskListDetailScreen(
     onBackClick: () -> Unit,
     uiState: TaskListDetailUiState,
+    onEditTaskList: (TaskList) -> Unit,
     onDeleteTaskList: () -> Unit,
     snackbarHostState: SnackbarHostState,
     onSelectTask: (Task) -> Unit,
@@ -112,6 +116,13 @@ fun TaskListDetailScreen(
                 },
                 actions = {
                     if (uiState is TaskListDetailUiState.Success) {
+                        IconButton(onClick = { onEditTaskList(uiState.taskList) }) {
+                            Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = stringResource(R.string.edit_button),
+                            )
+                        }
+
                         IconButton(onClick = { menuExpanded = !menuExpanded }) {
                             Icon(
                                 imageVector = Icons.Default.MoreVert,
@@ -221,6 +232,7 @@ private fun TaskListDetailScreenPreview() {
                 ),
                 userMessage = null,
             ),
+            onEditTaskList = {},
             onDeleteTaskList = {},
             snackbarHostState = SnackbarHostState(),
             onSelectTask = {},

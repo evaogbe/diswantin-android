@@ -89,7 +89,7 @@ class TaskSearchScreenTest {
     }
 
     @Test
-    fun displayErrorMessage_whenUiFailure() {
+    fun displayErrorMessage_withFailureUi() {
         val query = loremFaker.verbs.base()
         val taskRepository = FakeTaskRepository()
         val viewModel = TaskSearchViewModel(taskRepository)

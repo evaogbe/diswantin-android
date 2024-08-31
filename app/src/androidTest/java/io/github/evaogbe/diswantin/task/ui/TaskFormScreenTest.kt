@@ -66,7 +66,7 @@ class TaskFormScreenTest {
     }
 
     @Test
-    fun displaysErrorMessage_whenUiFailure() {
+    fun displaysErrorMessage_withFailureUi() {
         val taskRepository = FakeTaskRepository()
         val viewModel = createTaskFormViewModelForEdit(taskRepository)
 

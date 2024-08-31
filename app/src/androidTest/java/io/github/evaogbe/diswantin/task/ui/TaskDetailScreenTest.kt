@@ -60,7 +60,7 @@ class TaskDetailScreenTest {
     }
 
     @Test
-    fun displaysErrorMessage_whenUiFailure() {
+    fun displaysErrorMessage_withFailureUi() {
         val taskRepository = FakeTaskRepository()
         taskRepository.setThrows(taskRepository::getTaskWithTaskListById, true)
 
