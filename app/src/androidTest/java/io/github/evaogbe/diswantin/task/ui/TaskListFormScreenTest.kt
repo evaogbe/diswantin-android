@@ -71,8 +71,8 @@ class TaskListFormScreenTest {
                 name = "${loremFaker.verbs.unique.base()} ${loremFaker.lorem.words()}"
             )
         }
-        val db = FakeDatabase().also { db ->
-            tasks.forEach(db::insertTask)
+        val db = FakeDatabase().apply {
+            tasks.forEach(::insertTask)
         }
         val taskRepository = FakeTaskRepository(db)
         val taskListRepository = FakeTaskListRepository(db)
@@ -160,8 +160,8 @@ class TaskListFormScreenTest {
         var onPopBackStackCalled = false
         val name = loremFaker.lorem.words()
         val taskList = TaskList(id = 1L, name = loremFaker.lorem.words())
-        val db = FakeDatabase().also { db ->
-            db.insertTaskList(TaskListWithTasks(taskList, emptyList()))
+        val db = FakeDatabase().apply {
+            insertTaskList(TaskListWithTasks(taskList, emptyList()))
         }
         val taskRepository = FakeTaskRepository(db)
         val taskListRepository = FakeTaskListRepository(db)
@@ -193,8 +193,8 @@ class TaskListFormScreenTest {
     fun displaysErrorMessage_withSaveErrorForEdit() {
         val name = loremFaker.lorem.words()
         val taskList = TaskList(id = 1L, name = loremFaker.lorem.words())
-        val db = FakeDatabase().also { db ->
-            db.insertTaskList(TaskListWithTasks(taskList, emptyList()))
+        val db = FakeDatabase().apply {
+            insertTaskList(TaskListWithTasks(taskList, emptyList()))
         }
         val taskRepository = FakeTaskRepository(db)
         val taskListRepository = FakeTaskListRepository(db)

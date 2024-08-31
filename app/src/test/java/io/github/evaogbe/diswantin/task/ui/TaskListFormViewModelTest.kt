@@ -72,9 +72,9 @@ class TaskListFormViewModelTest {
                 listId = taskList.id,
             )
         }
-        val db = FakeDatabase().also { db ->
-            tasks.forEach(db::insertTask)
-            db.insertTaskList(TaskListWithTasks(taskList, tasks))
+        val db = FakeDatabase().apply {
+            tasks.forEach(::insertTask)
+            insertTaskList(TaskListWithTasks(taskList, tasks))
         }
         val taskRepository = FakeTaskRepository(db)
         val taskListRepository = FakeTaskListRepository(db)
@@ -132,8 +132,8 @@ class TaskListFormViewModelTest {
                 name = "$query ${loremFaker.lorem.words()}",
             )
         }
-        val db = FakeDatabase().also { db ->
-            tasks.forEach(db::insertTask)
+        val db = FakeDatabase().apply {
+            tasks.forEach(::insertTask)
         }
         val taskRepository = FakeTaskRepository(db)
         val taskListRepository = FakeTaskListRepository(db)
@@ -194,8 +194,8 @@ class TaskListFormViewModelTest {
                     name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
                 )
             }
-            val db = FakeDatabase().also { db ->
-                tasks.forEach(db::insertTask)
+            val db = FakeDatabase().apply {
+                tasks.forEach(::insertTask)
             }
             val taskRepository = FakeTaskRepository(db)
             val taskListRepository = FakeTaskListRepository(db)
@@ -271,9 +271,9 @@ class TaskListFormViewModelTest {
                     listId = taskList.id,
                 )
             }
-            val db = FakeDatabase().also { db ->
-                tasks.forEach(db::insertTask)
-                db.insertTaskList(TaskListWithTasks(taskList, tasks))
+            val db = FakeDatabase().apply {
+                tasks.forEach(::insertTask)
+                insertTaskList(TaskListWithTasks(taskList, tasks))
             }
             val taskRepository = FakeTaskRepository(db)
             val taskListRepository = FakeTaskListRepository(db)
@@ -318,9 +318,9 @@ class TaskListFormViewModelTest {
                     listId = taskList.id,
                 )
             }
-            val db = FakeDatabase().also { db ->
-                tasks.forEach(db::insertTask)
-                db.insertTaskList(TaskListWithTasks(taskList, tasks))
+            val db = FakeDatabase().apply {
+                tasks.forEach(::insertTask)
+                insertTaskList(TaskListWithTasks(taskList, tasks))
             }
             val taskRepository = FakeTaskRepository(db)
             val taskListRepository = FakeTaskListRepository(db)
