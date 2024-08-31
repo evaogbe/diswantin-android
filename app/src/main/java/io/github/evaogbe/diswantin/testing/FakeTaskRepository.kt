@@ -18,7 +18,7 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
     val tasks
         get() = db.taskTable.value.values
 
-    override fun getCurrentTask(scheduledBefore: Instant): Flow<Task?> =
+    override fun getCurrentTask(scheduledBefore: Instant, doneBefore: Instant): Flow<Task?> =
         combine(
             throwingMethods,
             db.taskTable,
@@ -35,7 +35,11 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
                     .thenComparing(Task::id)
             ).mapNotNull { task ->
                 taskPaths.values
-                    .filter { it.descendant == task.id && tasks[it.ancestor]?.doneAt == null }
+                    .filter { path ->
+                        path.descendant == task.id && tasks[path.ancestor]?.let {
+                            it.doneAt == null || it.recurring && it.doneAt < doneBefore
+                        } == true
+                    }
                     .maxByOrNull { it.depth }
                     ?.let { tasks[it.ancestor] }
             }.firstOrNull { task ->
@@ -69,6 +73,7 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
                     deadline = task.deadline,
                     scheduledAt = task.scheduledAt,
                     doneAt = task.doneAt,
+                    recurring = task.recurring,
                     listId = task.listId,
                     listName = task.listId?.let { taskLists[it] }?.name,
                 )

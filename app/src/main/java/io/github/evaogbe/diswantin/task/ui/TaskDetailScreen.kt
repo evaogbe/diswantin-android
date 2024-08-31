@@ -8,7 +8,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
@@ -17,7 +19,6 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -39,6 +40,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -185,21 +188,24 @@ fun TaskDetailLayout(
             modifier = Modifier
                 .widthIn(max = ScreenLg)
                 .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
                 .padding(vertical = SpaceMd)
         ) {
             SelectionContainer(modifier = Modifier.padding(horizontal = SpaceMd)) {
-                Text(
-                    text = uiState.task.name,
-                    textDecoration = if (uiState.task.doneAt != null) {
-                        TextDecoration.LineThrough
-                    } else {
-                        null
-                    },
-                    style = typography.displaySmall,
-                )
+                if (uiState.isDone) {
+                    Text(
+                        text = uiState.task.name,
+                        modifier = Modifier.semantics {
+                            contentDescription = "${uiState.task.name}, done"
+                        },
+                        textDecoration = TextDecoration.LineThrough,
+                        style = typography.displaySmall,
+                    )
+                } else {
+                    Text(text = uiState.task.name, style = typography.displaySmall)
+                }
             }
             Spacer(Modifier.size(SpaceMd))
-            HorizontalDivider()
 
             if (uiState.formattedDeadline != null) {
                 ListItem(
@@ -210,7 +216,6 @@ fun TaskDetailLayout(
                     },
                     overlineContent = { Text(stringResource(R.string.deadline_label)) }
                 )
-                HorizontalDivider()
             }
 
             if (uiState.formattedScheduledAt != null) {
@@ -222,7 +227,13 @@ fun TaskDetailLayout(
                     },
                     overlineContent = { Text(stringResource(R.string.scheduled_at_label)) }
                 )
-                HorizontalDivider()
+            }
+
+            if (uiState.task.recurring) {
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.boolean_yes)) },
+                    overlineContent = { Text(stringResource(R.string.recurring_label)) },
+                )
             }
 
             if (uiState.task.listId != null && uiState.task.listName != null) {
@@ -234,17 +245,11 @@ fun TaskDetailLayout(
                     },
                     overlineContent = { Text(stringResource(R.string.task_list_label)) },
                     supportingContent = {
-                        Box(
-                            modifier = Modifier.fillMaxWidth(),
-                            contentAlignment = Alignment.TopEnd,
-                        ) {
-                            TextButton(onClick = { onSelectTaskList(uiState.task.listId) }) {
-                                Text("Go to list")
-                            }
+                        TextButton(onClick = { onSelectTaskList(uiState.task.listId) }) {
+                            Text(stringResource(R.string.go_to_task_list))
                         }
                     }
                 )
-                HorizontalDivider()
             }
         }
     }
@@ -266,6 +271,7 @@ private fun TaskDetailScreenPreview() {
                     deadline = null,
                     scheduledAt = null,
                     doneAt = null,
+                    recurring = false,
                     listId = null,
                     listName = null,
                 ),
@@ -290,6 +296,7 @@ private fun TaskDetailLayoutPreview() {
                         deadline = Instant.now(),
                         scheduledAt = null,
                         doneAt = Instant.now(),
+                        recurring = true,
                         listId = 1L,
                         listName = "Morning Routine",
                     ),

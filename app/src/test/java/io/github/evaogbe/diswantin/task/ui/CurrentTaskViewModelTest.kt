@@ -49,6 +49,7 @@ class CurrentTaskViewModelTest {
                     name = name,
                     deadline = task1.deadline,
                     scheduledAt = task1.scheduledAt,
+                    recurring = task1.recurring,
                     task = task1,
                 )
             )

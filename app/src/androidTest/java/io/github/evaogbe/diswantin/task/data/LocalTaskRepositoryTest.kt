@@ -59,7 +59,10 @@ class LocalTaskRepositoryTest {
             UnconfinedTestDispatcher(testScheduler),
         )
 
-        taskRepository.getCurrentTask(scheduledBefore = Instant.parse("2024-08-23T18:00:00Z"))
+        taskRepository.getCurrentTask(
+            scheduledBefore = Instant.parse("2024-08-23T18:00:00Z"),
+            doneBefore = Instant.parse("2024-08-23T04:00:00Z"),
+        )
             .test {
                 assertThat(awaitItem()).isNull()
 
@@ -69,6 +72,7 @@ class LocalTaskRepositoryTest {
                             name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
                             deadline = null,
                             scheduledAt = null,
+                            recurring = false,
                             clock = clock,
                         )
                     )
@@ -83,6 +87,7 @@ class LocalTaskRepositoryTest {
                             name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
                             deadline = null,
                             scheduledAt = null,
+                            recurring = false,
                             clock = clock,
                         )
                     )
@@ -94,6 +99,7 @@ class LocalTaskRepositoryTest {
                         name = task2.name,
                         deadline = Instant.parse("2024-08-23T17:00:00Z"),
                         scheduledAt = task2.scheduledAt,
+                        recurring = false,
                         task = task2,
                     )
                 )
@@ -107,6 +113,7 @@ class LocalTaskRepositoryTest {
                         name = task1.name,
                         deadline = task1.deadline,
                         scheduledAt = Instant.parse("2024-08-23T18:00:00Z"),
+                        recurring = false,
                         task = task1,
                     )
                 )
@@ -120,6 +127,7 @@ class LocalTaskRepositoryTest {
                         name = updatedTask1.name,
                         deadline = updatedTask1.deadline,
                         scheduledAt = Instant.parse("2024-08-23T19:00:00Z"),
+                        recurring = false,
                         task = updatedTask1,
                     )
                 )
@@ -134,6 +142,7 @@ class LocalTaskRepositoryTest {
                             name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
                             deadline = null,
                             scheduledAt = null,
+                            recurring = false,
                             clock = clock,
                         )
                     )
@@ -163,16 +172,29 @@ class LocalTaskRepositoryTest {
 
                 assertThat(awaitItem()).isNull()
 
-                taskRepository.update(
-                    updatedTask1.copy(
-                        scheduledAt = null,
-                        doneAt = Instant.parse("2024-08-23T17:00:00Z"),
+                updatedTask1 = updatedTask1.copy(
+                    scheduledAt = null,
+                    doneAt = Instant.parse("2024-08-22T11:59:59Z"),
+                )
+                taskRepository.update(updatedTask1)
+
+                assertThat(awaitItem())
+                    .isNotNull()
+                    .isDataClassEqualTo(taskListWithTasks.tasks[0])
+
+                updatedTask1 = taskRepository.update(
+                    EditTaskForm(
+                        name = updatedTask1.name,
+                        deadline = updatedTask1.deadline,
+                        scheduledAt = updatedTask1.scheduledAt,
+                        recurring = true,
+                        task = updatedTask1,
                     )
                 )
 
                 assertThat(awaitItem())
                     .isNotNull()
-                    .isDataClassEqualTo(taskListWithTasks.tasks[0])
+                    .isDataClassEqualTo(updatedTask1)
             }
     }
 
@@ -196,6 +218,7 @@ class LocalTaskRepositoryTest {
                     name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
                     deadline = null,
                     scheduledAt = null,
+                    recurring = false,
                     clock = clock,
                 )
             )

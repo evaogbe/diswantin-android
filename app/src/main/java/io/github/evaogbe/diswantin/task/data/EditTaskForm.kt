@@ -6,6 +6,7 @@ data class EditTaskForm(
     private val name: String,
     private val deadline: Instant?,
     private val scheduledAt: Instant?,
+    private val recurring: Boolean,
     private val task: Task,
 ) {
     init {
@@ -19,5 +20,6 @@ data class EditTaskForm(
         name = name.trim(),
         deadline = deadline,
         scheduledAt = scheduledAt,
+        recurring = recurring,
     )
 }

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -18,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -74,6 +76,7 @@ fun TaskFormScreen(
         onNameChange = taskFormViewModel::updateNameInput,
         onDeadlineChange = taskFormViewModel::updateDeadlineInput,
         onScheduleAtChange = taskFormViewModel::updateScheduledAtInput,
+        onRecurringChange = taskFormViewModel::updateRecurringInput,
         onSave = taskFormViewModel::saveTask,
         uiState = uiState,
     )
@@ -88,6 +91,7 @@ fun TaskFormScreen(
     onNameChange: (String) -> Unit,
     onDeadlineChange: (ZonedDateTime?) -> Unit,
     onScheduleAtChange: (ZonedDateTime?) -> Unit,
+    onRecurringChange: (Boolean) -> Unit,
     onSave: () -> Unit,
     uiState: TaskFormUiState,
     modifier: Modifier = Modifier,
@@ -136,7 +140,7 @@ fun TaskFormScreen(
             is TaskFormUiState.Failure -> {
                 LoadFailureLayout(
                     message = stringResource(R.string.task_form_fetch_error),
-                    modifier = Modifier.padding(innerPadding)
+                    modifier = Modifier.padding(innerPadding),
                 )
             }
 
@@ -146,13 +150,14 @@ fun TaskFormScreen(
                     onNameChange = onNameChange,
                     onDeadlineChange = onDeadlineChange,
                     onScheduleAtChange = onScheduleAtChange,
+                    onRecurringChange = onRecurringChange,
                     uiState = uiState,
                     formError = when {
                         !uiState.hasSaveError -> null
                         isNew -> stringResource(R.string.task_form_save_error_new)
                         else -> stringResource(R.string.task_form_save_error_edit)
                     },
-                    modifier = Modifier.padding(innerPadding)
+                    modifier = Modifier.padding(innerPadding),
                 )
             }
         }
@@ -169,6 +174,7 @@ fun TaskFormLayout(
     onNameChange: (String) -> Unit,
     onDeadlineChange: (ZonedDateTime?) -> Unit,
     onScheduleAtChange: (ZonedDateTime?) -> Unit,
+    onRecurringChange: (Boolean) -> Unit,
     uiState: TaskFormUiState.Success,
     formError: String?,
     modifier: Modifier = Modifier,
@@ -221,6 +227,11 @@ fun TaskFormLayout(
                     onDateTimeChange = onScheduleAtChange,
                     label = { Text(stringResource(R.string.scheduled_at_label)) },
                 )
+            }
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Checkbox(checked = uiState.recurringInput, onCheckedChange = onRecurringChange)
+                Text(stringResource(R.string.recurring_label))
             }
         }
     }
@@ -305,10 +316,12 @@ private fun TaskFormScreenPreview_New() {
             onNameChange = {},
             onDeadlineChange = {},
             onScheduleAtChange = {},
+            onRecurringChange = {},
             onSave = {},
             uiState = TaskFormUiState.Success(
                 deadlineInput = null,
                 scheduledAtInput = null,
+                recurringInput = false,
                 hasSaveError = false,
             )
         )
@@ -326,10 +339,12 @@ private fun TaskFormScreenPreview_Edit() {
             onNameChange = {},
             onDeadlineChange = {},
             onScheduleAtChange = {},
+            onRecurringChange = {},
             onSave = {},
             uiState = TaskFormUiState.Success(
                 deadlineInput = ZonedDateTime.now(),
                 scheduledAtInput = null,
+                recurringInput = true,
                 hasSaveError = true,
             )
         )

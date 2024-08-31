@@ -10,6 +10,7 @@ sealed interface TaskFormUiState {
     data class Success(
         val deadlineInput: ZonedDateTime?,
         val scheduledAtInput: ZonedDateTime?,
+        val recurringInput: Boolean,
         val hasSaveError: Boolean,
     ) : TaskFormUiState
 

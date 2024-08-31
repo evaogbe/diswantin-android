@@ -7,6 +7,7 @@ data class NewTaskForm(
     private val name: String,
     private val deadline: Instant?,
     private val scheduledAt: Instant?,
+    private val recurring: Boolean,
     private val clock: Clock,
 ) {
     init {
@@ -22,5 +23,6 @@ data class NewTaskForm(
             name = name,
             deadline = deadline,
             scheduledAt = scheduledAt,
+            recurring = recurring,
         )
 }

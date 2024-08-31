@@ -4,7 +4,7 @@ import kotlinx.coroutines.flow.Flow
 import java.time.Instant
 
 interface TaskRepository {
-    fun getCurrentTask(scheduledBefore: Instant): Flow<Task?>
+    fun getCurrentTask(scheduledBefore: Instant, doneBefore: Instant): Flow<Task?>
 
     fun getById(id: Long): Flow<Task?>
 

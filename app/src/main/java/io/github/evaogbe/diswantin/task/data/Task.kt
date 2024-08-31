@@ -23,5 +23,6 @@ data class Task(
     val deadline: Instant? = null,
     @ColumnInfo("scheduled_at") val scheduledAt: Instant? = null,
     @ColumnInfo("done_at") val doneAt: Instant? = null,
+    @ColumnInfo(defaultValue = "0") val recurring: Boolean = false,
     @ColumnInfo("list_id", index = true) val listId: Long? = null,
 )

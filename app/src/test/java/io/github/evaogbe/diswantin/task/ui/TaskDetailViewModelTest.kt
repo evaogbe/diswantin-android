@@ -46,15 +46,7 @@ class TaskDetailViewModelTest {
 
         assertThat(viewModel.uiState.value).isEqualTo(
             TaskDetailUiState.Success(
-                task = TaskWithTaskList(
-                    id = task.id,
-                    name = task.name,
-                    deadline = task.deadline,
-                    scheduledAt = task.scheduledAt,
-                    doneAt = task.doneAt,
-                    listId = null,
-                    listName = null,
-                ),
+                task = task.toTaskWithTaskList(),
                 userMessage = null,
                 clock = clock,
             )
@@ -116,15 +108,7 @@ class TaskDetailViewModelTest {
 
         assertThat(viewModel.uiState.value).isEqualTo(
             TaskDetailUiState.Success(
-                task = TaskWithTaskList(
-                    id = task.id,
-                    name = task.name,
-                    deadline = task.deadline,
-                    scheduledAt = task.scheduledAt,
-                    doneAt = task.doneAt,
-                    listId = null,
-                    listName = null,
-                ),
+                task = task.toTaskWithTaskList(),
                 userMessage = null,
                 clock = clock,
             )
@@ -156,15 +140,7 @@ class TaskDetailViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskDetailUiState.Success(
-                    task = TaskWithTaskList(
-                        id = task.id,
-                        name = task.name,
-                        deadline = task.deadline,
-                        scheduledAt = task.scheduledAt,
-                        doneAt = task.doneAt,
-                        listId = null,
-                        listName = null,
-                    ),
+                    task = task.toTaskWithTaskList(),
                     userMessage = R.string.task_detail_delete_error,
                     clock = clock,
                 )
@@ -175,5 +151,16 @@ class TaskDetailViewModelTest {
         id = 1L,
         createdAt = faker.random.randomPastDate().toInstant(),
         name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
+    )
+
+    private fun Task.toTaskWithTaskList() = TaskWithTaskList(
+        id = id,
+        name = name,
+        deadline = deadline,
+        scheduledAt = scheduledAt,
+        doneAt = doneAt,
+        recurring = recurring,
+        listId = null,
+        listName = null,
     )
 }

@@ -22,7 +22,7 @@ import io.github.evaogbe.diswantin.task.data.TaskListDao
 import io.github.evaogbe.diswantin.task.data.TaskPath
 
 @Database(
-    version = 13,
+    version = 14,
     entities = [Task::class, TaskFts::class, TaskPath::class, TaskList::class],
     autoMigrations = [
         AutoMigration(from = 2, to = 3),
@@ -33,6 +33,7 @@ import io.github.evaogbe.diswantin.task.data.TaskPath
         AutoMigration(from = 9, to = 10, spec = DiswantinDatabase.Migration9to10::class),
         AutoMigration(from = 10, to = 11),
         AutoMigration(from = 12, to = 13),
+        AutoMigration(from = 13, to = 14),
     ]
 )
 @TypeConverters(Converters::class)

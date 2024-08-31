@@ -28,6 +28,7 @@ import org.junit.Rule
 import org.junit.Test
 import java.time.Clock
 import java.time.Instant
+import java.time.ZoneId
 import java.time.ZonedDateTime
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -54,6 +55,7 @@ class TaskFormViewModelTest {
                 TaskFormUiState.Success(
                     deadlineInput = null,
                     scheduledAtInput = null,
+                    recurringInput = false,
                     hasSaveError = false,
                 )
             )
@@ -64,7 +66,7 @@ class TaskFormViewModelTest {
     fun `initializes for edit with taskId`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val deadline = Instant.parse("2024-08-22T21:00:00Z")
-            val task = genTask().copy(deadline = deadline)
+            val task = genTask().copy(deadline = deadline, recurring = true)
             val taskRepository = FakeTaskRepository.withTasks(task)
             val viewModel = createTaskFormViewModelForEdit(taskRepository)
 
@@ -78,6 +80,7 @@ class TaskFormViewModelTest {
                     TaskFormUiState.Success(
                         deadlineInput = null,
                         scheduledAtInput = null,
+                        recurringInput = true,
                         hasSaveError = false,
                     ),
                     TaskFormUiState.Success::deadlineInput
@@ -112,7 +115,11 @@ class TaskFormViewModelTest {
         runTest(mainDispatcherRule.testDispatcher) {
             val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
             val taskRepository = FakeTaskRepository()
-            val viewModel = createTaskFormViewModelForNew(taskRepository)
+            val viewModel = TaskFormViewModel(
+                SavedStateHandle(),
+                taskRepository,
+                Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York")),
+            )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -122,18 +129,7 @@ class TaskFormViewModelTest {
                 TaskFormUiState.Success(
                     deadlineInput = null,
                     scheduledAtInput = null,
-                    hasSaveError = false,
-                )
-            )
-
-            viewModel.updateNameInput(" ")
-            viewModel.saveTask()
-
-            assertThat(taskRepository.tasks).isEmpty()
-            assertThat(viewModel.uiState.value).isEqualTo(
-                TaskFormUiState.Success(
-                    deadlineInput = null,
-                    scheduledAtInput = null,
+                    recurringInput = false,
                     hasSaveError = false,
                 )
             )
@@ -142,11 +138,22 @@ class TaskFormViewModelTest {
             viewModel.updateDeadlineInput(
                 ZonedDateTime.parse("2024-08-22T17:00-04:00[America/New_York]")
             )
+            viewModel.updateRecurringInput(true)
             viewModel.saveTask()
 
             val task = taskRepository.tasks.single()
-            assertThat(task.name).isEqualTo(name)
-            assertThat(task.deadline).isEqualTo(Instant.parse("2024-08-22T21:00:00Z"))
+            assertThat(task).isEqualToIgnoringGivenProperties(
+                Task(
+                    createdAt = Instant.parse("2024-08-22T08:00:00Z"),
+                    name = name,
+                    deadline = Instant.parse("2024-08-22T21:00:00Z"),
+                    scheduledAt = null,
+                    doneAt = null,
+                    recurring = true,
+                    listId = null,
+                ),
+                Task::id,
+            )
             assertThat(viewModel.uiState.value).isEqualTo(TaskFormUiState.Saved)
         }
 
@@ -169,6 +176,7 @@ class TaskFormViewModelTest {
                 TaskFormUiState.Success(
                     deadlineInput = null,
                     scheduledAtInput = null,
+                    recurringInput = false,
                     hasSaveError = true,
                 )
             )
@@ -178,9 +186,13 @@ class TaskFormViewModelTest {
     fun `saveTask updates task with taskId`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
-            val task = genTask()
+            val task = genTask().copy(deadline = Instant.parse("2024-08-22T21:00:00Z"))
             val taskRepository = FakeTaskRepository.withTasks(task)
-            val viewModel = createTaskFormViewModelForEdit(taskRepository)
+            val viewModel = TaskFormViewModel(
+                SavedStateHandle(mapOf(Destination.EditTaskForm.ID_KEY to 1L)),
+                taskRepository,
+                Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York")),
+            )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -188,26 +200,18 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    deadlineInput = null,
+                    deadlineInput = ZonedDateTime.parse(
+                        "2024-08-22T17:00:00-04:00[America/New_York]"
+                    ),
                     scheduledAtInput = null,
-                    hasSaveError = false,
-                )
-            )
-
-            viewModel.updateNameInput(" ")
-            viewModel.saveTask()
-
-            assertThat(taskRepository.tasks).containsExactlyInAnyOrder(task)
-            assertThat(viewModel.uiState.value).isEqualTo(
-                TaskFormUiState.Success(
-                    deadlineInput = null,
-                    scheduledAtInput = null,
+                    recurringInput = false,
                     hasSaveError = false,
                 )
             )
 
             viewModel.updateNameInput(name)
-            viewModel.updateDeadlineInput(
+            viewModel.updateDeadlineInput(null)
+            viewModel.updateScheduledAtInput(
                 ZonedDateTime.parse("2024-08-22T17:00:00-04:00[America/New_York]")
             )
             viewModel.saveTask()
@@ -215,7 +219,8 @@ class TaskFormViewModelTest {
             assertThat(taskRepository.tasks).containsExactlyInAnyOrder(
                 task.copy(
                     name = name,
-                    deadline = Instant.parse("2024-08-22T21:00:00Z")
+                    deadline = null,
+                    scheduledAt = Instant.parse("2024-08-22T21:00:00Z"),
                 )
             )
             assertThat(viewModel.uiState.value).isEqualTo(TaskFormUiState.Saved)
@@ -241,6 +246,7 @@ class TaskFormViewModelTest {
                 TaskFormUiState.Success(
                     deadlineInput = null,
                     scheduledAtInput = null,
+                    recurringInput = false,
                     hasSaveError = true,
                 )
             )

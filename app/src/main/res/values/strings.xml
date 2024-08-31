@@ -6,6 +6,7 @@
     <string name="advice_title">Advice</string>
     <string name="app_name">Diswantin</string>
     <string name="back_button">Back</string>
+    <string name="boolean_yes">Yes</string>
     <string name="cancel_button">Cancel</string>
     <string name="clear_button">Clear</string>
     <string name="close_button">Close</string>
@@ -16,10 +17,12 @@
     <string name="edit_button">Edit</string>
     <string name="delete_button">Delete</string>
     <string name="deadline_label">Deadline</string>
+    <string name="go_to_task_list">Go to list</string>
     <string name="mark_done_button">Done</string>
     <string name="more_actions_button">More actions</string>
     <string name="name_label">Name</string>
     <string name="ok_button">OK</string>
+    <string name="recurring_label">Recurring</string>
     <string name="save_button">Save</string>
     <string name="scheduled_at_label">Scheduled at</string>
     <string name="search_tasks_button">Search to-dos</string>

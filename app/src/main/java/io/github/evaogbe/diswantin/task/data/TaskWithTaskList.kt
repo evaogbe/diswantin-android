@@ -9,6 +9,7 @@ data class TaskWithTaskList(
     val deadline: Instant?,
     @ColumnInfo("scheduled_at") val scheduledAt: Instant?,
     @ColumnInfo("done_at") val doneAt: Instant?,
+    val recurring: Boolean,
     @ColumnInfo("list_id") val listId: Long?,
     @ColumnInfo("list_name") val listName: String?,
 )

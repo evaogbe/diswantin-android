@@ -40,7 +40,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.evaogbe.diswantin.R
@@ -208,16 +207,7 @@ fun TaskListDetailLayout(
 
                 items(uiState.tasks, key = Task::id) { task ->
                     ListItem(
-                        headlineContent = {
-                            Text(
-                                text = task.name,
-                                textDecoration = if (task.doneAt != null) {
-                                    TextDecoration.LineThrough
-                                } else {
-                                    null
-                                },
-                            )
-                        },
+                        headlineContent = { Text(text = task.name) },
                         modifier = Modifier.clickable { onSelectTask(task) },
                     )
                     HorizontalDivider()

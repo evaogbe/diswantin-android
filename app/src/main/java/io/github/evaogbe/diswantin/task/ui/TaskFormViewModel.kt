@@ -42,6 +42,8 @@ class TaskFormViewModel @Inject constructor(
 
     private val scheduledAtInput = MutableStateFlow<ZonedDateTime?>(null)
 
+    private val recurringInput = MutableStateFlow(false)
+
     private val saveResult = MutableStateFlow<Result<Unit>?>(null)
 
     private val taskStream = taskId?.let { id ->
@@ -54,15 +56,17 @@ class TaskFormViewModel @Inject constructor(
     val uiState = combine(
         deadlineInput,
         scheduledAtInput,
+        recurringInput,
         saveResult,
         taskStream,
-    ) { deadlineInput, scheduledAtInput, saveResult, task ->
+    ) { deadlineInput, scheduledAtInput, recurringInput, saveResult, task ->
         when {
             saveResult?.isSuccess == true -> TaskFormUiState.Saved
             taskId != null && task == null -> TaskFormUiState.Failure
             else -> TaskFormUiState.Success(
                 deadlineInput = deadlineInput,
                 scheduledAtInput = scheduledAtInput,
+                recurringInput = recurringInput,
                 hasSaveError = saveResult?.isFailure == true,
             )
         }
@@ -78,6 +82,7 @@ class TaskFormViewModel @Inject constructor(
             nameInput = task.name
             deadlineInput.value = task.deadline?.atZone(clock.zone)
             scheduledAtInput.value = task.scheduledAt?.atZone(clock.zone)
+            recurringInput.value = task.recurring
         }
     }
 
@@ -93,6 +98,10 @@ class TaskFormViewModel @Inject constructor(
         scheduledAtInput.value = value
     }
 
+    fun updateRecurringInput(value: Boolean) {
+        recurringInput.value = value
+    }
+
     fun saveTask() {
         if (nameInput.isBlank()) return
         val state = (uiState.value as? TaskFormUiState.Success) ?: return
@@ -101,6 +110,7 @@ class TaskFormViewModel @Inject constructor(
                 name = nameInput,
                 deadline = state.deadlineInput?.toInstant(),
                 scheduledAt = state.scheduledAtInput?.toInstant(),
+                recurring = state.recurringInput,
                 clock = clock,
             )
             viewModelScope.launch {
@@ -123,6 +133,7 @@ class TaskFormViewModel @Inject constructor(
                             name = nameInput,
                             deadline = state.deadlineInput?.toInstant(),
                             scheduledAt = state.scheduledAtInput?.toInstant(),
+                            recurring = state.recurringInput,
                             task = task,
                         )
                     )
