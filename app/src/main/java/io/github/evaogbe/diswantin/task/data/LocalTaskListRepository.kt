@@ -15,7 +15,9 @@ class LocalTaskListRepository @Inject constructor(
     override val taskListsStream = taskListDao.getTaskLists().flowOn(ioDispatcher)
 
     override fun getById(id: Long) =
-        combine(taskListDao.getById(id), taskDao.getTasksByListId(id), ::TaskListWithTasks)
+        combine(taskListDao.getById(id), taskDao.getTasksByListId(id)) { taskList, tasks ->
+            taskList?.let { TaskListWithTasks(it, tasks) }
+        }
             .flowOn(ioDispatcher)
 
     override suspend fun create(form: NewTaskListForm) = withContext(ioDispatcher) {
@@ -39,5 +41,11 @@ class LocalTaskListRepository @Inject constructor(
             taskPathTaskIdsToRemove = form.taskPathTaskIdsToRemove,
         )
         form.updatedTaskListWithTasks
+    }
+
+    override suspend fun delete(taskList: TaskList) {
+        withContext(ioDispatcher) {
+            taskListDao.deleteWithPaths(taskList)
+        }
     }
 }

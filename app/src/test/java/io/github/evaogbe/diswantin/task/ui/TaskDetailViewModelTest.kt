@@ -61,7 +61,7 @@ class TaskDetailViewModelTest {
     }
 
     @Test
-    fun `uiState emits failure when no initial task`() =
+    fun `uiState emits failure when task not found`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val clock = Clock.systemDefaultZone()
             val taskRepository = FakeTaskRepository()
@@ -81,13 +81,12 @@ class TaskDetailViewModelTest {
     @Test
     fun `uiState emits failure when repository throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
-            val task = genTask()
             val clock = Clock.systemDefaultZone()
-            val taskRepository = FakeTaskRepository.withTasks(task)
+            val taskRepository = FakeTaskRepository()
             taskRepository.setThrows(taskRepository::getTaskWithTaskListById, true)
 
             val viewModel = TaskDetailViewModel(
-                SavedStateHandle(mapOf(Destination.TaskDetail.ID_KEY to task.id)),
+                SavedStateHandle(mapOf(Destination.TaskDetail.ID_KEY to 1L)),
                 taskRepository,
                 clock,
             )
@@ -100,7 +99,7 @@ class TaskDetailViewModelTest {
         }
 
     @Test
-    fun `removeTask sets uiState to removed`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `deleteTask sets uiState to deleted`() = runTest(mainDispatcherRule.testDispatcher) {
         val task = genTask()
         val clock = Clock.systemDefaultZone()
         val taskRepository = FakeTaskRepository.withTasks(task)
@@ -129,13 +128,13 @@ class TaskDetailViewModelTest {
             )
         )
 
-        viewModel.removeTask()
+        viewModel.deleteTask()
 
-        assertThat(viewModel.uiState.value).isEqualTo(TaskDetailUiState.Removed)
+        assertThat(viewModel.uiState.value).isEqualTo(TaskDetailUiState.Deleted)
     }
 
     @Test
-    fun `removeTask shows error message when repository throws`() =
+    fun `deleteTask shows error message when repository throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val task = genTask()
             val clock = Clock.systemDefaultZone()
@@ -150,8 +149,8 @@ class TaskDetailViewModelTest {
                 viewModel.uiState.collect()
             }
 
-            taskRepository.setThrows(taskRepository::remove, true)
-            viewModel.removeTask()
+            taskRepository.setThrows(taskRepository::delete, true)
+            viewModel.deleteTask()
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskDetailUiState.Success(

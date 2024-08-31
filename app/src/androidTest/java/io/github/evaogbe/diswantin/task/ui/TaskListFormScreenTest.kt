@@ -45,7 +45,7 @@ class TaskListFormScreenTest {
             )
         }
         val db = FakeDatabase().also { db ->
-            tasks.forEach(db::addTask)
+            tasks.forEach(db::insertTask)
         }
         val taskRepository = FakeTaskRepository(db)
         val taskListRepository = FakeTaskListRepository(db)

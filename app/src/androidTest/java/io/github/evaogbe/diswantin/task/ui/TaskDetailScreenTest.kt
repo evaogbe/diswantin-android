@@ -86,7 +86,7 @@ class TaskDetailScreenTest {
     }
 
     @Test
-    fun popsBackStack_whenTaskRemoved() {
+    fun popsBackStack_whenTaskDeleted() {
         val task = genTask()
         var onPopBackStackCalled = false
         val taskRepository = FakeTaskRepository.withTasks(task)
@@ -116,7 +116,7 @@ class TaskDetailScreenTest {
     }
 
     @Test
-    fun displaysErrorMessage_whenRemoveTaskFailed() {
+    fun displaysErrorMessage_whenDeleteTaskFailed() {
         val task = genTask()
         val taskRepository = FakeTaskRepository.withTasks(task)
         val viewModel = TaskDetailViewModel(
@@ -136,7 +136,7 @@ class TaskDetailScreenTest {
             }
         }
 
-        taskRepository.setThrows(taskRepository::remove, true)
+        taskRepository.setThrows(taskRepository::delete, true)
         composeTestRule.onNodeWithContentDescription(stringResource(R.string.more_actions_button))
             .performClick()
         composeTestRule.onNodeWithText(stringResource(R.string.delete_button)).performClick()

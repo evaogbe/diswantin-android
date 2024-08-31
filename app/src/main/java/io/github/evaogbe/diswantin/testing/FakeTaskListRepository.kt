@@ -28,7 +28,7 @@ class FakeTaskListRepository(private val db: FakeDatabase = FakeDatabase()) : Ta
             taskLists.values.sortedBy { it.name }
         }
 
-    override fun getById(id: Long): Flow<TaskListWithTasks> =
+    override fun getById(id: Long): Flow<TaskListWithTasks?> =
         combine(
             throwingMethods,
             db.taskListTable,
@@ -38,10 +38,12 @@ class FakeTaskListRepository(private val db: FakeDatabase = FakeDatabase()) : Ta
                 throw RuntimeException("Test")
             }
 
-            TaskListWithTasks(
-                requireNotNull(taskLists[id]),
-                tasks.values.filter { it.listId == id },
-            )
+            taskLists[id]?.let { taskList ->
+                TaskListWithTasks(
+                    taskList,
+                    tasks.values.filter { it.listId == id },
+                )
+            }
         }
 
     override suspend fun create(form: NewTaskListForm): TaskListWithTasks {
@@ -49,7 +51,7 @@ class FakeTaskListRepository(private val db: FakeDatabase = FakeDatabase()) : Ta
             throw RuntimeException("Test")
         }
 
-        return db.addTaskList(form.newTaskListWithTasks, form.taskPaths)
+        return db.insertTaskList(form.newTaskListWithTasks, form.taskPaths)
     }
 
     override suspend fun update(form: EditTaskListForm): TaskListWithTasks {
@@ -65,6 +67,14 @@ class FakeTaskListRepository(private val db: FakeDatabase = FakeDatabase()) : Ta
             taskPathTaskIdsToRemove = form.taskPathTaskIdsToRemove.toSet(),
         )
         return form.updatedTaskListWithTasks
+    }
+
+    override suspend fun delete(taskList: TaskList) {
+        if (this::delete in throwingMethods.value) {
+            throw RuntimeException("Test")
+        }
+
+        db.deleteTaskList(taskList.id)
     }
 
     fun setThrows(property: KProperty0<*>, shouldThrow: Boolean) {
@@ -85,7 +95,7 @@ class FakeTaskListRepository(private val db: FakeDatabase = FakeDatabase()) : Ta
 
         fun withTaskLists(taskListsWithTasks: Iterable<TaskListWithTasks>): FakeTaskListRepository {
             val db = FakeDatabase()
-            taskListsWithTasks.forEach(db::addTaskList)
+            taskListsWithTasks.forEach(db::insertTaskList)
             return FakeTaskListRepository(db)
         }
     }

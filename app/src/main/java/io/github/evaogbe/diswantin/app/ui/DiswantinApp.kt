@@ -93,7 +93,7 @@ fun DiswantinApp() {
             })
         ) {
             TaskListDetailScreen(
-                onBackClick = navController::popBackStack,
+                onPopBackStack = navController::popBackStack,
                 onSelectTask = { navController.navigate(route = Destination.TaskDetail(it).route) },
             )
         }

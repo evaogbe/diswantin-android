@@ -99,7 +99,7 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
             throw RuntimeException("Test")
         }
 
-        return db.addTask(form.newTask)
+        return db.insertTask(form.newTask)
     }
 
     override suspend fun update(form: EditTaskForm): Task {
@@ -111,12 +111,12 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
         return form.updatedTask
     }
 
-    override suspend fun remove(id: Long) {
-        if (::remove in throwingMethods.value) {
+    override suspend fun delete(id: Long) {
+        if (::delete in throwingMethods.value) {
             throw RuntimeException("Test")
         }
 
-        db.removeTask(id)
+        db.deleteTask(id)
     }
 
     fun setThrows(method: KFunction<*>, shouldThrow: Boolean) {
@@ -132,7 +132,7 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
 
         fun withTasks(initialTasks: Iterable<Task>): FakeTaskRepository {
             val db = FakeDatabase()
-            initialTasks.forEach(db::addTask)
+            initialTasks.forEach(db::insertTask)
             return FakeTaskRepository(db)
         }
     }

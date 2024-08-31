@@ -2,7 +2,10 @@ package io.github.evaogbe.diswantin.task.ui
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
+import assertk.assertions.isNotNull
+import assertk.assertions.prop
 import io.github.evaogbe.diswantin.task.data.Task
+import io.github.evaogbe.diswantin.task.data.TaskListWithTasks
 import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTaskListRepository
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
@@ -40,7 +43,7 @@ class TaskListFormViewModelTest {
             )
         }
         val db = FakeDatabase().also { db ->
-            tasks.forEach(db::addTask)
+            tasks.forEach(db::insertTask)
         }
         val taskRepository = FakeTaskRepository(db)
         val taskListRepository = FakeTaskListRepository(db)
@@ -99,7 +102,7 @@ class TaskListFormViewModelTest {
             )
         }
         val db = FakeDatabase().also { db ->
-            tasks.forEach(db::addTask)
+            tasks.forEach(db::insertTask)
         }
         val taskRepository = FakeTaskRepository(db)
         val taskListRepository = FakeTaskListRepository(db)
@@ -126,7 +129,9 @@ class TaskListFormViewModelTest {
 
         val taskList = taskListRepository.taskLists.single()
         assertThat(taskList.name).isEqualTo(name)
-        assertThat(taskListRepository.getById(taskList.id).first().tasks)
+        assertThat(taskListRepository.getById(taskList.id).first())
+            .isNotNull()
+            .prop(TaskListWithTasks::tasks)
             .isEqualTo(tasks.map { it.copy(listId = taskList.id) })
         assertThat(viewModel.uiState.value).isEqualTo(TaskListFormUiState.Saved)
     }

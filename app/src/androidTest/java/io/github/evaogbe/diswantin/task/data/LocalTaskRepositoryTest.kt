@@ -10,6 +10,7 @@ import assertk.assertions.isDataClassEqualTo
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
+import assertk.assertions.prop
 import io.github.evaogbe.diswantin.app.data.DiswantinDatabase
 import io.github.serpro69.kfaker.lorem.LoremFaker
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -197,10 +198,12 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-        taskRepository.remove(taskListWithTasks.tasks[1].id)
+        taskRepository.delete(taskListWithTasks.tasks[1].id)
 
         assertThat(taskRepository.getById(taskListWithTasks.tasks[1].id).first()).isNull()
-        assertThat(taskListRepository.getById(taskListWithTasks.taskList.id).first().tasks)
+        assertThat(taskListRepository.getById(taskListWithTasks.taskList.id).first())
+            .isNotNull()
+            .prop(TaskListWithTasks::tasks)
             .containsExactly(taskListWithTasks.tasks[0], taskListWithTasks.tasks[2])
     }
 }

@@ -39,10 +39,10 @@ class TaskDetailViewModel @Inject constructor(
         ) { initialized, task, userMessage ->
             if (task != null) {
                 TaskDetailUiState.Success(task = task, userMessage = userMessage, clock = clock)
-            } else if (!initialized) {
-                TaskDetailUiState.Failure
+            } else if (initialized) {
+                TaskDetailUiState.Deleted
             } else {
-                TaskDetailUiState.Removed
+                TaskDetailUiState.Failure
             }
         }.onEach {
             if (it is TaskDetailUiState.Success) {
@@ -57,15 +57,16 @@ class TaskDetailViewModel @Inject constructor(
             initialValue = TaskDetailUiState.Pending
         )
 
-    fun removeTask() {
+    fun deleteTask() {
         val task = (uiState.value as? TaskDetailUiState.Success)?.task ?: return
+
         viewModelScope.launch {
             try {
-                taskRepository.remove(task.id)
+                taskRepository.delete(task.id)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Timber.e(e, "Failed to remove task: %s", task)
+                Timber.e(e, "Failed to delete task: %s", task)
                 userMessage.value = R.string.task_detail_delete_error
             }
         }

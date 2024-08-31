@@ -26,5 +26,5 @@ sealed interface TaskDetailUiState {
                 .format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL, FormatStyle.SHORT))
     }
 
-    data object Removed : TaskDetailUiState
+    data object Deleted : TaskDetailUiState
 }

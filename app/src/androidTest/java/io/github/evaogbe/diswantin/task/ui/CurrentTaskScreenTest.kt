@@ -163,7 +163,7 @@ class CurrentTaskScreenTest {
             }
         }
 
-        taskRepository.setThrows(taskRepository::remove, true)
+        taskRepository.setThrows(taskRepository::delete, true)
         composeTestRule.onNodeWithText(stringResource(R.string.remove_button)).performClick()
         composeTestRule.waitForIdle()
 

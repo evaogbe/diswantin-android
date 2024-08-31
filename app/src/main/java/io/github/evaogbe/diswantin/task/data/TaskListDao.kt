@@ -1,6 +1,7 @@
 package io.github.evaogbe.diswantin.task.data
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Transaction
@@ -13,7 +14,7 @@ interface TaskListDao {
     fun getTaskLists(): Flow<List<TaskList>>
 
     @Query("SELECT * FROM task_list WHERE id = :id LIMIT 1")
-    fun getById(id: Long): Flow<TaskList>
+    fun getById(id: Long): Flow<TaskList?>
 
     @Insert
     suspend fun insert(taskList: TaskList): Long
@@ -61,5 +62,23 @@ interface TaskListDao {
         deleteTaskPathsByTaskIds(taskPathTaskIdsToRemove)
         addListToTasks(taskList.id, taskIdsToInsert)
         insertTaskPaths(taskPathsToInsert)
+    }
+
+    @Delete
+    suspend fun delete(taskList: TaskList)
+
+    @Query(
+        """DELETE FROM task_path
+        WHERE (
+            ancestor IN (SELECT id FROM task WHERE list_id = :taskListId)
+            OR descendant IN (SELECT id FROM task WHERE list_id = :taskListId)
+            ) AND depth > 0"""
+    )
+    suspend fun deleteTaskPathsByTaskListId(taskListId: Long)
+
+    @Transaction
+    suspend fun deleteWithPaths(taskList: TaskList) {
+        deleteTaskPathsByTaskListId(taskList.id)
+        delete(taskList)
     }
 }

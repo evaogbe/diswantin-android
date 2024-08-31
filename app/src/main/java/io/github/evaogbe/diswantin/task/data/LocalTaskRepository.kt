@@ -45,7 +45,7 @@ class LocalTaskRepository @Inject constructor(
             form.updatedTask
         }
 
-    override suspend fun remove(id: Long) {
+    override suspend fun delete(id: Long) {
         withContext(ioDispatcher) {
             taskDao.deleteWithPath(id)
         }

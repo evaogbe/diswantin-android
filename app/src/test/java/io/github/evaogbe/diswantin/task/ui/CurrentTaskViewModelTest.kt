@@ -133,7 +133,7 @@ class CurrentTaskViewModelTest {
             assertThat(viewModel.uiState.value)
                 .isEqualTo(CurrentTaskUiState.Present(currentTask = task, userMessage = null))
 
-            taskRepository.setThrows(taskRepository::remove, true)
+            taskRepository.setThrows(taskRepository::delete, true)
             viewModel.removeCurrentTask()
 
             assertThat(viewModel.uiState.value).isEqualTo(

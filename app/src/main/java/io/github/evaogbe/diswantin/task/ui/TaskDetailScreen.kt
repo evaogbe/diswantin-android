@@ -63,7 +63,7 @@ fun TaskDetailScreen(
     val resources = LocalContext.current.resources
     val snackbarHostState = remember { SnackbarHostState() }
 
-    if (uiState is TaskDetailUiState.Removed) {
+    if (uiState is TaskDetailUiState.Deleted) {
         LaunchedEffect(onPopBackStack) {
             onPopBackStack()
         }
@@ -79,7 +79,7 @@ fun TaskDetailScreen(
     TaskDetailScreen(
         onBackClick = onPopBackStack,
         onEditTask = onEditTask,
-        onRemoveTask = taskDetailViewModel::removeTask,
+        onDeleteTask = taskDetailViewModel::deleteTask,
         snackbarHostState = snackbarHostState,
         uiState = uiState,
         onSelectTaskList = onSelectTaskList,
@@ -91,7 +91,7 @@ fun TaskDetailScreen(
 fun TaskDetailScreen(
     onBackClick: () -> Unit,
     onEditTask: (Long) -> Unit,
-    onRemoveTask: () -> Unit,
+    onDeleteTask: () -> Unit,
     snackbarHostState: SnackbarHostState,
     uiState: TaskDetailUiState,
     onSelectTaskList: (Long) -> Unit,
@@ -124,7 +124,7 @@ fun TaskDetailScreen(
                         IconButton(onClick = { menuExpanded = !menuExpanded }) {
                             Icon(
                                 imageVector = Icons.Default.MoreVert,
-                                contentDescription = stringResource(R.string.more_actions_button)
+                                contentDescription = stringResource(R.string.more_actions_button),
                             )
                         }
 
@@ -134,11 +134,11 @@ fun TaskDetailScreen(
                         ) {
                             DropdownMenuItem(
                                 text = { Text(text = stringResource(R.string.delete_button)) },
-                                onClick = onRemoveTask,
+                                onClick = onDeleteTask,
                                 leadingIcon = {
                                     Icon(
                                         imageVector = Icons.Default.Delete,
-                                        contentDescription = null
+                                        contentDescription = null,
                                     )
                                 },
                             )
@@ -147,11 +147,11 @@ fun TaskDetailScreen(
                 },
             )
         },
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
     ) { innerPadding ->
         when (uiState) {
             is TaskDetailUiState.Pending,
-            is TaskDetailUiState.Removed -> {
+            is TaskDetailUiState.Deleted -> {
                 PendingLayout(modifier = Modifier.padding(innerPadding))
             }
 
@@ -248,7 +248,7 @@ private fun TaskDetailScreenPreview() {
         TaskDetailScreen(
             onBackClick = {},
             onEditTask = {},
-            onRemoveTask = {},
+            onDeleteTask = {},
             snackbarHostState = SnackbarHostState(),
             uiState = TaskDetailUiState.Success(
                 task = TaskWithTaskList(

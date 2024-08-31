@@ -53,7 +53,7 @@ class CurrentTaskViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
-                taskRepository.remove(task.id)
+                taskRepository.delete(task.id)
                 scheduledBefore.value = ZonedDateTime.now(clock).plusHours(1).toInstant()
             } catch (e: CancellationException) {
                 throw e

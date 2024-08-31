@@ -27,14 +27,14 @@ class FakeDatabase {
 
     val taskPathTable = _taskPathTable.asStateFlow()
 
-    fun addTaskList(taskListWithTasks: TaskListWithTasks) =
-        addTaskList(taskListWithTasks, taskListWithTasks.tasks.flatMapIndexed { i, ancestor ->
+    fun insertTaskList(taskListWithTasks: TaskListWithTasks) =
+        insertTaskList(taskListWithTasks, taskListWithTasks.tasks.flatMapIndexed { i, ancestor ->
             taskListWithTasks.tasks.drop(i + 1).mapIndexed { j, descendant ->
                 TaskPath(ancestor = ancestor.id, descendant = descendant.id, depth = j + 1)
             }
         })
 
-    fun addTaskList(
+    fun insertTaskList(
         taskListWithTasks: TaskListWithTasks,
         taskPaths: List<TaskPath>
     ): TaskListWithTasks {
@@ -74,7 +74,21 @@ class FakeDatabase {
         }
     }
 
-    fun addTask(task: Task): Task {
+    fun deleteTaskList(id: Long) {
+        val tasksToUpdate = taskTable.value.values.filter { it.listId == id }
+        _taskPathTable.update { taskPathTable ->
+            val taskIds = tasksToUpdate.map { it.id }.toSet()
+            taskPathTable.filterValues {
+                (it.ancestor in taskIds || it.descendant in taskIds) && it.depth > 0
+            }
+        }
+        _taskTable.update { taskTable ->
+            taskTable + tasksToUpdate.map { it.copy(listId = null) }.associateBy { it.id }
+        }
+        _taskListTable.update { it - id }
+    }
+
+    fun insertTask(task: Task): Task {
         val newTask = task.copy(id = ++taskIdGen)
         val path = TaskPath(
             id = ++taskPathIdGen,
@@ -91,7 +105,7 @@ class FakeDatabase {
         _taskTable.update { it + (task.id to task) }
     }
 
-    fun removeTask(id: Long) {
+    fun deleteTask(id: Long) {
         val parentId = taskPathTable.value.values.firstOrNull {
             it.descendant == id && it.depth == 1
         }?.ancestor
