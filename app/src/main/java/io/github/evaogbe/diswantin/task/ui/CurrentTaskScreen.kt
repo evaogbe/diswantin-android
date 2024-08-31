@@ -57,6 +57,10 @@ fun CurrentTaskScreen(
     val uiState by currentTaskViewModel.uiState.collectAsStateWithLifecycle()
     val resources = LocalContext.current.resources
 
+    LaunchedEffect(currentTaskViewModel) {
+        currentTaskViewModel.initialize()
+    }
+
     LaunchedEffect(uiState) {
         setCurrentTaskId((uiState as? CurrentTaskUiState.Present)?.currentTask?.id)
     }
@@ -67,7 +71,6 @@ fun CurrentTaskScreen(
             currentTaskViewModel.userMessageShown()
         }
     }
-
 
     when (val state = uiState) {
         is CurrentTaskUiState.Pending -> PendingLayout()

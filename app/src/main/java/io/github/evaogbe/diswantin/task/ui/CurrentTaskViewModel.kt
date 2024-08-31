@@ -48,6 +48,10 @@ class CurrentTaskViewModel @Inject constructor(
         initialValue = CurrentTaskUiState.Pending
     )
 
+    fun initialize() {
+        scheduledBefore.value = ZonedDateTime.now(clock).plusHours(1).toInstant()
+    }
+
     fun removeCurrentTask() {
         val task = (uiState.value as? CurrentTaskUiState.Present)?.currentTask ?: return
 
