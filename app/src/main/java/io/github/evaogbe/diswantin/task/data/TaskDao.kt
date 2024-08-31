@@ -36,9 +36,9 @@ interface TaskDao {
     fun getById(id: Long): Flow<Task?>
 
     @Query(
-        """SELECT t.id, t.name, t.deadline, t.scheduled_at, t.list_id, tl.name AS list_name
+        """SELECT t.id, t.name, t.deadline, t.scheduled_at, t.list_id, l.name AS list_name
         FROM task t
-        LEFT JOIN task_list tl ON tl.id = t.list_id
+        LEFT JOIN task_list l ON l.id = t.list_id
         WHERE t.id = :id 
         LIMIT 1"""
     )
