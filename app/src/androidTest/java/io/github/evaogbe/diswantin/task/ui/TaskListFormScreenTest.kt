@@ -27,6 +27,7 @@ import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
 import org.junit.Rule
 import org.junit.Test
+import timber.log.Timber
 
 class TaskListFormScreenTest {
     @get:Rule
@@ -70,6 +71,7 @@ class TaskListFormScreenTest {
                 name = "${loremFaker.verbs.unique.base()} ${loremFaker.lorem.words()}"
             )
         }
+        Timber.d("tasks: %s", tasks)
         val db = FakeDatabase().apply {
             tasks.forEach(::insertTask)
         }
@@ -91,34 +93,18 @@ class TaskListFormScreenTest {
             .onParent()
             .performTextInput(name)
 
-        composeTestRule.onNodeWithText(
-            stringResource(R.string.task_name_label),
-            useUnmergedTree = true
-        )
-            .onParent()
-            .performTextInput(tasks[0].name.substring(0, 1))
-        composeTestRule.waitUntilExactlyOneExists(hasText(tasks[0].name))
-        composeTestRule.onNodeWithText(tasks[0].name).performClick()
+        tasks.forEach { task ->
+            composeTestRule.onNodeWithText(
+                stringResource(R.string.task_name_label),
+                useUnmergedTree = true
+            )
+                .onParent()
+                .performTextInput(task.name.substring(0, 1))
+            composeTestRule.waitUntilExactlyOneExists(hasText(task.name))
+            composeTestRule.onNodeWithText(task.name).performClick()
 
-        composeTestRule.onNodeWithText(stringResource(R.string.add_task_button)).performClick()
-        composeTestRule.onNodeWithText(
-            stringResource(R.string.task_name_label),
-            useUnmergedTree = true
-        )
-            .onParent()
-            .performTextInput(tasks[1].name.substring(0, 1))
-        composeTestRule.waitUntilExactlyOneExists(hasText(tasks[1].name))
-        composeTestRule.onNodeWithText(tasks[1].name).performClick()
-
-        composeTestRule.onNodeWithText(stringResource(R.string.add_task_button)).performClick()
-        composeTestRule.onNodeWithText(
-            stringResource(R.string.task_name_label),
-            useUnmergedTree = true
-        )
-            .onParent()
-            .performTextInput(tasks[2].name.substring(0, 1))
-        composeTestRule.waitUntilExactlyOneExists(hasText(tasks[2].name))
-        composeTestRule.onNodeWithText(tasks[2].name).performClick()
+            composeTestRule.onNodeWithText(stringResource(R.string.add_task_button)).performClick()
+        }
 
         composeTestRule.onNodeWithText(stringResource(R.string.save_button)).performClick()
 

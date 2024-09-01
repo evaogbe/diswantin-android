@@ -88,23 +88,14 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
             }
         }
 
-    override fun search(
-        query: String,
-        singletonsOnly: Boolean
-    ): Flow<List<Task>> =
+    override fun search(query: String): Flow<List<Task>> =
         combine(throwingMethods, db.taskTable) { throwingMethods, tasks ->
             if (::search in throwingMethods) {
                 throw RuntimeException("Test")
             }
 
-            if (singletonsOnly) {
-                tasks.values.filter {
-                    it.name.contains(query, ignoreCase = true) && it.listId == null
-                }
-            } else {
-                tasks.values.filter {
-                    it.name.contains(query, ignoreCase = true)
-                }
+            tasks.values.filter {
+                it.name.contains(query, ignoreCase = true)
             }
         }
 

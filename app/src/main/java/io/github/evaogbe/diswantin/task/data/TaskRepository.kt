@@ -10,7 +10,7 @@ interface TaskRepository {
 
     fun getTaskDetailById(id: Long): Flow<TaskDetail?>
 
-    fun search(query: String, singletonsOnly: Boolean = false): Flow<List<Task>>
+    fun search(query: String): Flow<List<Task>>
 
     suspend fun create(form: NewTaskForm): Task
 

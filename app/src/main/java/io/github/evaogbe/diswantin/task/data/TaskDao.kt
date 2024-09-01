@@ -107,16 +107,6 @@ interface TaskDao {
     )
     fun search(query: String): Flow<List<Task>>
 
-    @Query(
-        """SELECT DISTINCT task.*
-        FROM task
-        JOIN task_fts ON task_fts.name = task.name
-        WHERE task_fts MATCH :query || '*'
-            AND task.list_id IS NULL
-        LIMIT 20"""
-    )
-    fun searchSingletons(query: String): Flow<List<Task>>
-
     @Insert
     suspend fun insert(task: Task): Long
 

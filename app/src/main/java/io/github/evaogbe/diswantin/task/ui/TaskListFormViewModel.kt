@@ -73,7 +73,7 @@ class TaskListFormViewModel @Inject constructor(
             if (query.isBlank()) {
                 flowOf(emptyList())
             } else {
-                taskRepository.search(query = query, singletonsOnly = true).catch { e ->
+                taskRepository.search(query.trim()).catch { e ->
                     Timber.e(e, "Failed to search for tasks by query: %s", query)
                     emit(emptyList())
                 }
@@ -87,27 +87,33 @@ class TaskListFormViewModel @Inject constructor(
         val taskQuery = args[3] as String
         val taskSearchResults = args[4] as List<Task>
         val saveResult = args[5] as Result<Unit>?
-        when {
-            saveResult?.isSuccess == true -> TaskListFormUiState.Saved
-            existingTaskListWithTasks.isFailure -> TaskListFormUiState.Failure
-            else -> {
-                val editingTask = editingTaskIndex?.let(tasks::getOrNull)
-                val taskOptions = taskSearchResults.filter { option ->
-                    option !in tasks || editingTask == option
-                }
-                TaskListFormUiState.Success(
-                    tasks = tasks,
-                    editingTaskIndex = editingTaskIndex,
-                    taskOptions = if (
-                        taskOptions == listOf(editingTask) && taskQuery == editingTask?.name
-                    ) {
-                        persistentListOf()
-                    } else {
-                        taskOptions.toImmutableList()
-                    },
-                    hasSaveError = saveResult?.isFailure == true,
-                )
-            }
+
+        if (saveResult?.isSuccess == true) {
+            TaskListFormUiState.Saved
+        } else {
+            existingTaskListWithTasks.fold(
+                onSuccess = { taskListWithTasks ->
+                    val editingTask = editingTaskIndex?.let(tasks::getOrNull)
+                    val taskOptions = taskSearchResults.filter { option ->
+                        (option.listId == null ||
+                                option.listId == taskListWithTasks?.taskList?.id) &&
+                                option !in tasks
+                    }
+                    TaskListFormUiState.Success(
+                        tasks = tasks,
+                        editingTaskIndex = editingTaskIndex,
+                        taskOptions = if (
+                            taskOptions == listOf(editingTask) && taskQuery == editingTask?.name
+                        ) {
+                            persistentListOf()
+                        } else {
+                            taskOptions.toImmutableList()
+                        },
+                        hasSaveError = saveResult?.isFailure == true,
+                    )
+                },
+                onFailure = { TaskListFormUiState.Failure },
+            )
         }
     }.stateIn(
         scope = viewModelScope,

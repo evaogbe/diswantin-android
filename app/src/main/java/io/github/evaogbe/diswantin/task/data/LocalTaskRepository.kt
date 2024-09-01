@@ -2,7 +2,6 @@ package io.github.evaogbe.diswantin.task.data
 
 import io.github.evaogbe.diswantin.data.IoDispatcher
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
 import java.time.Clock
@@ -23,14 +22,7 @@ class LocalTaskRepository @Inject constructor(
     override fun getTaskDetailById(id: Long) =
         taskDao.getTaskDetailById(id).flowOn(ioDispatcher)
 
-    override fun search(
-        query: String,
-        singletonsOnly: Boolean
-    ): Flow<List<Task>> = (if (singletonsOnly) {
-        taskDao.searchSingletons(escapeSql(query))
-    } else {
-        taskDao.search(escapeSql(query))
-    }).flowOn(ioDispatcher)
+    override fun search(query: String) = taskDao.search(escapeSql(query)).flowOn(ioDispatcher)
 
     private fun escapeSql(str: String) =
         str.replace("'", "''").replace("\"", "\"\"")
