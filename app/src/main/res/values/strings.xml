@@ -58,6 +58,7 @@
     <string name="suggestion_item_stop"><![CDATA[<b>STOP</b>. Take a deep breath. Observe your SUDS, body sensations, thoughts, and feelings. Ask your Wise Mind how to proceed]]></string>
     <string name="task_detail_delete_error">Something went wrong deleting the to-do</string>
     <string name="task_detail_fetch_error">Something went wrong loading the to-do</string>
+    <string name="task_name_done">%1$s, done</string>
     <string name="task_form_fetch_error">Something went wrong loading the to-do</string>
     <string name="task_form_save_error_edit">Something went wrong editing the to-do</string>
     <string name="task_form_save_error_new">Something went wrong adding the to-do</string>

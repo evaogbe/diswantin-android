@@ -52,6 +52,7 @@ class LocalTaskRepositoryTest {
         val taskRepository = LocalTaskRepository(
             db.taskDao(),
             UnconfinedTestDispatcher(testScheduler),
+            clock,
         )
         val taskListRepository = LocalTaskListRepository(
             db.taskListDao(),
@@ -100,7 +101,7 @@ class LocalTaskRepositoryTest {
                         deadline = Instant.parse("2024-08-23T17:50:00Z"),
                         scheduledAt = task2.scheduledAt,
                         recurring = false,
-                        task = task2,
+                        existingTask = task2,
                     )
                 )
 
@@ -114,7 +115,7 @@ class LocalTaskRepositoryTest {
                         deadline = task1.deadline,
                         scheduledAt = Instant.parse("2024-08-23T18:00:00Z"),
                         recurring = false,
-                        task = task1,
+                        existingTask = task1,
                     )
                 )
 
@@ -128,7 +129,7 @@ class LocalTaskRepositoryTest {
                         deadline = updatedTask1.deadline,
                         scheduledAt = Instant.parse("2024-08-23T19:00:00Z"),
                         recurring = false,
-                        task = updatedTask1,
+                        existingTask = updatedTask1,
                     )
                 )
 
@@ -160,35 +161,25 @@ class LocalTaskRepositoryTest {
 
                 assertThat(awaitItem())
                     .isNotNull()
-                    .isDataClassEqualTo(taskListWithTasks.tasks[0])
+                    .isDataClassEqualTo(task3.copy(listId = taskListWithTasks.taskList.id))
 
                 taskListRepository.update(
                     EditTaskListForm(
                         name = taskListWithTasks.taskList.name,
                         tasks = listOf(updatedTask1) + taskListWithTasks.tasks,
-                        taskListWithTasks = taskListWithTasks
+                        existingTaskListWithTasks = taskListWithTasks,
                     )
                 )
 
                 assertThat(awaitItem()).isNull()
 
-                updatedTask1 = updatedTask1.copy(
-                    scheduledAt = null,
-                    doneAt = Instant.parse("2024-08-22T11:59:59Z"),
-                )
-                taskRepository.update(updatedTask1)
-
-                assertThat(awaitItem())
-                    .isNotNull()
-                    .isDataClassEqualTo(taskListWithTasks.tasks[0])
-
                 updatedTask1 = taskRepository.update(
                     EditTaskForm(
                         name = updatedTask1.name,
-                        deadline = updatedTask1.deadline,
-                        scheduledAt = updatedTask1.scheduledAt,
-                        recurring = true,
-                        task = updatedTask1,
+                        deadline = null,
+                        scheduledAt = null,
+                        recurring = false,
+                        existingTask = updatedTask1,
                     )
                 )
 
@@ -208,13 +199,74 @@ class LocalTaskRepositoryTest {
 
                 assertThat(awaitItem())
                     .isNotNull()
-                    .isDataClassEqualTo(updatedTask1)
+                    .isDataClassEqualTo(task4)
+            }
+    }
 
-                taskRepository.update(updatedTask1.copy(doneAt = null, recurring = false))
+    @Test
+    fun currentTaskStream_emitsFirstUndoneTask() = runTest {
+        val clock =
+            Clock.fixed(Instant.parse("2024-08-23T17:00:00Z"), ZoneId.of("America/New_York"))
+        val taskRepository = LocalTaskRepository(
+            db.taskDao(),
+            UnconfinedTestDispatcher(testScheduler),
+            clock,
+        )
+
+        taskRepository.getCurrentTask(
+            scheduledBefore = Instant.parse("2024-08-23T18:00:00Z"),
+            doneBefore = Instant.parse("2024-08-24T04:00:00Z"),
+        )
+            .test {
+                assertThat(awaitItem()).isNull()
+
+                val task1 = taskRepository.create(
+                    NewTaskForm(
+                        name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                        deadline = null,
+                        scheduledAt = null,
+                        recurring = false,
+                        clock = clock,
+                    )
+                )
 
                 assertThat(awaitItem())
                     .isNotNull()
-                    .isDataClassEqualTo(task4)
+                    .isDataClassEqualTo(task1)
+
+                val task2 = taskRepository.create(
+                    NewTaskForm(
+                        name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                        deadline = null,
+                        scheduledAt = null,
+                        recurring = false,
+                        clock = clock,
+                    )
+                )
+
+                assertThat(awaitItem())
+                    .isNotNull()
+                    .isDataClassEqualTo(task1)
+
+                taskRepository.markDone(task1.id)
+
+                assertThat(awaitItem())
+                    .isNotNull()
+                    .isDataClassEqualTo(task2)
+
+                val updatedTask1 = taskRepository.update(
+                    EditTaskForm(
+                        name = task1.name,
+                        deadline = task1.deadline,
+                        scheduledAt = task1.scheduledAt,
+                        recurring = true,
+                        existingTask = task1,
+                    )
+                )
+
+                assertThat(awaitItem())
+                    .isNotNull()
+                    .isDataClassEqualTo(updatedTask1)
             }
     }
 
@@ -225,6 +277,7 @@ class LocalTaskRepositoryTest {
         val taskRepository = LocalTaskRepository(
             db.taskDao(),
             UnconfinedTestDispatcher(testScheduler),
+            clock,
         )
         val taskListRepository = LocalTaskListRepository(
             db.taskListDao(),
@@ -252,10 +305,12 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-        taskRepository.delete(taskListWithTasks.tasks[1].id)
+        taskRepository.delete(tasks[1].id)
 
-        assertThat(taskRepository.getById(taskListWithTasks.tasks[1].id).first()).isNull()
-        assertThat(taskListRepository.getById(taskListWithTasks.taskList.id).first())
+        assertThat(taskRepository.getById(tasks[1].id).first()).isNull()
+        assertThat(
+            taskListRepository.getTaskListWithTasksById(taskListWithTasks.taskList.id).first()
+        )
             .isNotNull()
             .prop(TaskListWithTasks::tasks)
             .containsExactly(taskListWithTasks.tasks[0], taskListWithTasks.tasks[2])

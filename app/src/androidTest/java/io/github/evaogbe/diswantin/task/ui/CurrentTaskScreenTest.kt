@@ -164,7 +164,7 @@ class CurrentTaskScreenTest {
             }
         }
 
-        taskRepository.setThrows("update", true)
+        taskRepository.setThrows(taskRepository::markDone, true)
         composeTestRule.onNodeWithText(stringResource(R.string.mark_done_button)).performClick()
         composeTestRule.waitForIdle()
 

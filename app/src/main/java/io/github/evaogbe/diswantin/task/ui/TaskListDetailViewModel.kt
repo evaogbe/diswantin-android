@@ -17,12 +17,16 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.time.Clock
+import java.time.ZonedDateTime
+import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 
 @HiltViewModel
 class TaskListDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    private val taskListRepository: TaskListRepository
+    private val taskListRepository: TaskListRepository,
+    clock: Clock,
 ) : ViewModel() {
     private val taskListId: Long = checkNotNull(savedStateHandle[Destination.TaskListDetail.ID_KEY])
 
@@ -33,15 +37,29 @@ class TaskListDetailViewModel @Inject constructor(
     val uiState =
         combine(
             initialized,
-            taskListRepository.getById(taskListId),
+            taskListRepository.getTaskListWithTaskItemsById(taskListId),
             userMessage,
         ) { initialized, taskListWithTasks, userMessage ->
             when {
-                taskListWithTasks != null -> TaskListDetailUiState.Success(
-                    taskList = taskListWithTasks.taskList,
-                    tasks = taskListWithTasks.tasks.toImmutableList(),
-                    userMessage = userMessage,
-                )
+                taskListWithTasks != null -> {
+                    val midnight = ZonedDateTime.now(clock).truncatedTo(ChronoUnit.DAYS).toInstant()
+                    TaskListDetailUiState.Success(
+                        taskList = taskListWithTasks.taskList,
+                        tasks = taskListWithTasks.tasks.map { task ->
+                            TaskItemState(
+                                id = task.id,
+                                name = task.name,
+                                recurring = task.recurring,
+                                isDone = if (task.recurring) {
+                                    task.doneAt?.let { it < midnight } == false
+                                } else {
+                                    task.doneAt != null
+                                },
+                            )
+                        }.toImmutableList(),
+                        userMessage = userMessage,
+                    )
+                }
 
                 initialized -> TaskListDetailUiState.Deleted
                 else -> TaskListDetailUiState.Failure

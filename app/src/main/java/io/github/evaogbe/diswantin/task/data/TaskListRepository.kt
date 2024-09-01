@@ -5,7 +5,9 @@ import kotlinx.coroutines.flow.Flow
 interface TaskListRepository {
     val taskListsStream: Flow<List<TaskList>>
 
-    fun getById(id: Long): Flow<TaskListWithTasks?>
+    fun getTaskListWithTasksById(id: Long): Flow<TaskListWithTasks>
+
+    fun getTaskListWithTaskItemsById(id: Long): Flow<TaskListWithTaskItems?>
 
     suspend fun create(form: NewTaskListForm): TaskListWithTasks
 

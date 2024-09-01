@@ -7,7 +7,7 @@ data class EditTaskForm(
     private val deadline: Instant?,
     private val scheduledAt: Instant?,
     private val recurring: Boolean,
-    private val task: Task,
+    private val existingTask: Task,
 ) {
     init {
         require(name.isNotBlank()) { "Name must be present" }
@@ -16,7 +16,7 @@ data class EditTaskForm(
         }
     }
 
-    val updatedTask = task.copy(
+    val updatedTask = existingTask.copy(
         name = name.trim(),
         deadline = deadline,
         scheduledAt = scheduledAt,

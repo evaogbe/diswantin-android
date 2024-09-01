@@ -18,7 +18,12 @@ interface TaskDao {
                 SELECT p2.descendant, MAX(p2.depth) AS depth
                 FROM task_path p2
                 JOIN task t3 ON p2.ancestor = t3.id
-                WHERE t3.done_at IS NULL OR (t3.recurring AND t3.done_at < :doneBefore)
+                LEFT JOIN (
+                    SELECT task_id, MAX(done_at) AS done_at
+                    FROM task_completion
+                    GROUP BY task_id
+                ) c ON c.task_id = t3.id
+                WHERE c.done_at IS NULL OR (t3.recurring AND c.done_at < :doneBefore)
                 GROUP BY p2.descendant
             ) leaf ON leaf.descendant = p.descendant AND leaf.depth = p.depth
         JOIN task t2 ON p.descendant = t2.id
@@ -36,7 +41,7 @@ interface TaskDao {
     fun getCurrentTask(scheduledBefore: Instant, doneBefore: Instant): Flow<Task?>
 
     @Query("SELECT * FROM task WHERE id = :id LIMIT 1")
-    fun getById(id: Long): Flow<Task?>
+    fun getById(id: Long): Flow<Task>
 
     @Query(
         """SELECT
@@ -44,16 +49,21 @@ interface TaskDao {
             t.name,
             t.deadline,
             t.scheduled_at,
-            t.done_at,
             t.recurring,
+            c.done_at,
             t.list_id,
             l.name AS list_name
         FROM task t
+        LEFT JOIN (
+            SELECT task_id, MAX(done_at) AS done_at
+            FROM task_completion
+            GROUP BY task_id
+        ) c ON c.task_id = t.id
         LEFT JOIN task_list l ON l.id = t.list_id
         WHERE t.id = :id 
         LIMIT 1"""
     )
-    fun getTaskWithTaskListById(id: Long): Flow<TaskWithTaskList?>
+    fun getTaskDetailById(id: Long): Flow<TaskDetail?>
 
     @Query(
         """SELECT t.*
@@ -68,6 +78,25 @@ interface TaskDao {
         LIMIT 20"""
     )
     fun getTasksByListId(listId: Long): Flow<List<Task>>
+
+    @Query(
+        """SELECT t.id, t.name, t.recurring, c.done_at
+        FROM task t
+        JOIN (
+            SELECT ancestor, MAX(depth) AS depth
+            FROM task_path
+            GROUP BY ancestor
+        ) p ON p.ancestor = t.id
+        LEFT JOIN (
+            SELECT task_id, MAX(done_at) AS done_at
+            FROM task_completion
+            GROUP BY task_id
+        ) c ON c.task_id = t.id
+        WHERE t.list_id = :listId
+        ORDER BY p.depth DESC
+        LIMIT 20"""
+    )
+    fun getTaskItemsByListId(listId: Long): Flow<List<TaskItem>>
 
     @Query(
         """SELECT DISTINCT task.*
@@ -93,6 +122,9 @@ interface TaskDao {
 
     @Insert
     suspend fun insertPath(path: TaskPath)
+
+    @Insert
+    suspend fun insertCompletion(completion: TaskCompletion)
 
     @Transaction
     suspend fun insertWithPath(task: Task): Long {

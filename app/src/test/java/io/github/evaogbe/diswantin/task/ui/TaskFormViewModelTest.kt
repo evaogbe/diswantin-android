@@ -148,7 +148,6 @@ class TaskFormViewModelTest {
                     name = name,
                     deadline = Instant.parse("2024-08-22T21:00:00Z"),
                     scheduledAt = null,
-                    doneAt = null,
                     recurring = true,
                     listId = null,
                 ),
@@ -238,7 +237,7 @@ class TaskFormViewModelTest {
                 viewModel.uiState.collect()
             }
 
-            taskRepository.setThrows("update", true)
+            taskRepository.setThrows(taskRepository::update, true)
             viewModel.updateNameInput(name)
             viewModel.saveTask()
 

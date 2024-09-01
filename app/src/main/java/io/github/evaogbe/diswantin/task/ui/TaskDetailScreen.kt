@@ -46,7 +46,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.evaogbe.diswantin.R
-import io.github.evaogbe.diswantin.task.data.TaskWithTaskList
+import io.github.evaogbe.diswantin.task.data.TaskDetail
 import io.github.evaogbe.diswantin.ui.components.LoadFailureLayout
 import io.github.evaogbe.diswantin.ui.components.PendingLayout
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
@@ -183,6 +183,8 @@ fun TaskDetailLayout(
     onSelectTaskList: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val resources = LocalContext.current.resources
+
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         Column(
             modifier = Modifier
@@ -196,7 +198,8 @@ fun TaskDetailLayout(
                     Text(
                         text = uiState.task.name,
                         modifier = Modifier.semantics {
-                            contentDescription = "${uiState.task.name}, done"
+                            contentDescription =
+                                resources.getString(R.string.task_name_done, uiState.task.name)
                         },
                         textDecoration = TextDecoration.LineThrough,
                         style = typography.displaySmall,
@@ -265,13 +268,13 @@ private fun TaskDetailScreenPreview() {
             onDeleteTask = {},
             snackbarHostState = SnackbarHostState(),
             uiState = TaskDetailUiState.Success(
-                task = TaskWithTaskList(
+                task = TaskDetail(
                     id = 1L,
                     name = "Brush teeth",
                     deadline = null,
                     scheduledAt = null,
-                    doneAt = null,
                     recurring = false,
+                    doneAt = null,
                     listId = null,
                     listName = null,
                 ),
@@ -290,13 +293,13 @@ private fun TaskDetailLayoutPreview() {
         Surface {
             TaskDetailLayout(
                 uiState = TaskDetailUiState.Success(
-                    task = TaskWithTaskList(
+                    task = TaskDetail(
                         id = 1L,
                         name = "Brush teeth",
                         deadline = Instant.now(),
                         scheduledAt = null,
-                        doneAt = Instant.now(),
                         recurring = true,
+                        doneAt = Instant.now(),
                         listId = 1L,
                         listName = "Morning Routine",
                     ),

@@ -16,7 +16,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.time.Clock
-import java.time.Instant
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 import javax.inject.Inject
@@ -63,7 +62,7 @@ class CurrentTaskViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
-                taskRepository.update(task.copy(doneAt = Instant.now(clock)))
+                taskRepository.markDone(task.id)
                 now.value = ZonedDateTime.now(clock)
             } catch (e: CancellationException) {
                 throw e

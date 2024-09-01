@@ -40,10 +40,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.evaogbe.diswantin.R
-import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskList
 import io.github.evaogbe.diswantin.ui.components.LoadFailureLayout
 import io.github.evaogbe.diswantin.ui.components.PendingLayout
@@ -52,7 +54,6 @@ import io.github.evaogbe.diswantin.ui.theme.ScreenLg
 import io.github.evaogbe.diswantin.ui.theme.SpaceMd
 import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
 import kotlinx.collections.immutable.persistentListOf
-import java.time.Instant
 
 @Composable
 fun TaskListDetailScreen(
@@ -84,7 +85,7 @@ fun TaskListDetailScreen(
         onEditTaskList = { onEditTaskList(it.id) },
         onDeleteTaskList = taskListDetailViewModel::deleteTaskList,
         snackbarHostState = snackbarHostState,
-        onSelectTask = { onSelectTask(it.id) },
+        onSelectTask = { onSelectTask(it) },
     )
 }
 
@@ -96,7 +97,7 @@ fun TaskListDetailScreen(
     onEditTaskList: (TaskList) -> Unit,
     onDeleteTaskList: () -> Unit,
     snackbarHostState: SnackbarHostState,
-    onSelectTask: (Task) -> Unit,
+    onSelectTask: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -178,9 +179,11 @@ fun TaskListDetailScreen(
 @Composable
 fun TaskListDetailLayout(
     uiState: TaskListDetailUiState.Success,
-    onSelectTask: (Task) -> Unit,
+    onSelectTask: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val resources = LocalContext.current.resources
+
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         LazyColumn(
             modifier = Modifier
@@ -205,10 +208,23 @@ fun TaskListDetailLayout(
                     )
                 }
 
-                items(uiState.tasks, key = Task::id) { task ->
+                items(uiState.tasks, key = TaskItemState::id) { task ->
                     ListItem(
-                        headlineContent = { Text(text = task.name) },
-                        modifier = Modifier.clickable { onSelectTask(task) },
+                        headlineContent = {
+                            if (task.isDone) {
+                                Text(
+                                    text = task.name,
+                                    modifier = Modifier.semantics {
+                                        contentDescription =
+                                            resources.getString(R.string.task_name_done, task.name)
+                                    },
+                                    textDecoration = TextDecoration.LineThrough,
+                                )
+                            } else {
+                                Text(text = task.name)
+                            }
+                        },
+                        modifier = Modifier.clickable { onSelectTask(task.id) },
                     )
                     HorizontalDivider()
                 }
@@ -226,14 +242,14 @@ private fun TaskListDetailScreenPreview() {
             uiState = TaskListDetailUiState.Success(
                 taskList = TaskList(name = "Morning Routine"),
                 tasks = persistentListOf(
-                    Task(
-                        id = 1L,
-                        createdAt = Instant.now(),
-                        name = "Brush teeth",
-                        doneAt = Instant.now(),
+                    TaskItemState(id = 1L, name = "Brush teeth", recurring = false, isDone = true),
+                    TaskItemState(id = 2L, name = "Shower", recurring = false, isDone = false),
+                    TaskItemState(
+                        id = 3L,
+                        name = "Eat breakfast",
+                        recurring = false,
+                        isDone = false,
                     ),
-                    Task(id = 2L, createdAt = Instant.now(), name = "Shower"),
-                    Task(id = 3L, createdAt = Instant.now(), name = "Eat breakfast"),
                 ),
                 userMessage = null,
             ),

@@ -3,8 +3,9 @@ package io.github.evaogbe.diswantin.testing
 import io.github.evaogbe.diswantin.task.data.EditTaskForm
 import io.github.evaogbe.diswantin.task.data.NewTaskForm
 import io.github.evaogbe.diswantin.task.data.Task
+import io.github.evaogbe.diswantin.task.data.TaskCompletion
+import io.github.evaogbe.diswantin.task.data.TaskDetail
 import io.github.evaogbe.diswantin.task.data.TaskRepository
-import io.github.evaogbe.diswantin.task.data.TaskWithTaskList
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
@@ -13,7 +14,7 @@ import java.time.Instant
 import kotlin.reflect.KFunction
 
 class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRepository {
-    private val throwingMethods = MutableStateFlow(setOf<String>())
+    private val throwingMethods = MutableStateFlow(setOf<KFunction<*>>())
 
     val tasks
         get() = db.taskTable.value.values
@@ -22,9 +23,10 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
         combine(
             throwingMethods,
             db.taskTable,
-            db.taskPathTable
-        ) { throwingMethods, tasks, taskPaths ->
-            if (::getCurrentTask.name in throwingMethods) {
+            db.taskPathTable,
+            db.taskCompletionTable,
+        ) { throwingMethods, tasks, taskPaths, taskCompletions ->
+            if (::getCurrentTask in throwingMethods) {
                 throw RuntimeException("Test")
             }
 
@@ -36,8 +38,11 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
             ).mapNotNull { task ->
                 taskPaths.values
                     .filter { path ->
+                        val doneAt = taskCompletions.values
+                            .filter { it.taskId == path.ancestor }
+                            .maxOfOrNull { it.doneAt }
                         path.descendant == task.id && tasks[path.ancestor]?.let {
-                            it.doneAt == null || it.recurring && it.doneAt < doneBefore
+                            doneAt == null || it.recurring && doneAt < doneBefore
                         } == true
                     }
                     .maxByOrNull { it.depth }
@@ -47,33 +52,36 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
             }
         }
 
-    override fun getById(id: Long): Flow<Task?> =
+    override fun getById(id: Long): Flow<Task> =
         combine(throwingMethods, db.taskTable) { throwingMethods, tasks ->
-            if (::getById.name in throwingMethods) {
+            if (::getById in throwingMethods) {
                 throw RuntimeException("Test")
             }
 
-            tasks[id]
+            checkNotNull(tasks[id])
         }
 
-    override fun getTaskWithTaskListById(id: Long): Flow<TaskWithTaskList?> =
+    override fun getTaskDetailById(id: Long): Flow<TaskDetail?> =
         combine(
             throwingMethods,
             db.taskListTable,
             db.taskTable,
-        ) { throwingMethods, taskLists, tasks ->
-            if (::getTaskWithTaskListById.name in throwingMethods) {
+            db.taskCompletionTable,
+        ) { throwingMethods, taskLists, tasks, taskCompletions ->
+            if (::getTaskDetailById in throwingMethods) {
                 throw RuntimeException("Test")
             }
 
             tasks[id]?.let { task ->
-                TaskWithTaskList(
+                TaskDetail(
                     id = task.id,
                     name = task.name,
                     deadline = task.deadline,
                     scheduledAt = task.scheduledAt,
-                    doneAt = task.doneAt,
                     recurring = task.recurring,
+                    doneAt = taskCompletions.values
+                        .filter { it.taskId == task.id }
+                        .maxOfOrNull { it.doneAt },
                     listId = task.listId,
                     listName = task.listId?.let { taskLists[it] }?.name,
                 )
@@ -85,7 +93,7 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
         singletonsOnly: Boolean
     ): Flow<List<Task>> =
         combine(throwingMethods, db.taskTable) { throwingMethods, tasks ->
-            if (::search.name in throwingMethods) {
+            if (::search in throwingMethods) {
                 throw RuntimeException("Test")
             }
 
@@ -101,7 +109,7 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
         }
 
     override suspend fun create(form: NewTaskForm): Task {
-        if (::create.name in throwingMethods.value) {
+        if (::create in throwingMethods.value) {
             throw RuntimeException("Test")
         }
 
@@ -109,7 +117,7 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
     }
 
     override suspend fun update(form: EditTaskForm): Task {
-        if (object {}.javaClass.enclosingMethod?.name in throwingMethods.value) {
+        if (::update in throwingMethods.value) {
             throw RuntimeException("Test")
         }
 
@@ -117,31 +125,27 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
         return form.updatedTask
     }
 
-    override suspend fun update(task: Task) {
-        if (object {}.javaClass.enclosingMethod?.name in throwingMethods.value) {
-            throw RuntimeException("Test")
-        }
-
-        db.updateTask(task)
-    }
-
     override suspend fun delete(id: Long) {
-        if (::delete.name in throwingMethods.value) {
+        if (::delete in throwingMethods.value) {
             throw RuntimeException("Test")
         }
 
         db.deleteTask(id)
     }
 
-    fun setThrows(method: KFunction<*>, shouldThrow: Boolean) {
-        setThrows(method.name, shouldThrow)
+    override suspend fun markDone(id: Long) {
+        if (::markDone in throwingMethods.value) {
+            throw RuntimeException("Test")
+        }
+
+        db.insertTaskCompletion(TaskCompletion(taskId = id, doneAt = Instant.now()))
     }
 
-    fun setThrows(methodName: String, shouldThrow: Boolean) {
+    fun setThrows(method: KFunction<*>, shouldThrow: Boolean) {
         if (shouldThrow) {
-            throwingMethods.update { it + methodName }
+            throwingMethods.update { it + method }
         } else {
-            throwingMethods.update { it - methodName }
+            throwingMethods.update { it - method }
         }
     }
 

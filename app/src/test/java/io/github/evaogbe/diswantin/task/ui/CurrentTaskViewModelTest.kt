@@ -1,18 +1,20 @@
 package io.github.evaogbe.diswantin.task.ui
 
 import assertk.assertThat
-import assertk.assertions.contains
-import assertk.assertions.doesNotContain
 import assertk.assertions.isEqualTo
+import assertk.assertions.isNotNull
+import assertk.assertions.prop
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.EditTaskForm
 import io.github.evaogbe.diswantin.task.data.Task
+import io.github.evaogbe.diswantin.task.data.TaskDetail
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.MainDispatcherRule
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
@@ -50,7 +52,7 @@ class CurrentTaskViewModelTest {
                     deadline = task1.deadline,
                     scheduledAt = task1.scheduledAt,
                     recurring = task1.recurring,
-                    task = task1,
+                    existingTask = task1,
                 )
             )
 
@@ -98,7 +100,10 @@ class CurrentTaskViewModelTest {
 
             viewModel.markCurrentTaskDone()
 
-            assertThat(taskRepository.tasks).doesNotContain(task1)
+            assertThat(taskRepository.getTaskDetailById(task1.id).first())
+                .isNotNull()
+                .prop(TaskDetail::doneAt)
+                .isNotNull()
             assertThat(viewModel.uiState.value)
                 .isEqualTo(CurrentTaskUiState.Present(currentTask = task2, userMessage = null))
         }
@@ -117,7 +122,7 @@ class CurrentTaskViewModelTest {
             assertThat(viewModel.uiState.value)
                 .isEqualTo(CurrentTaskUiState.Present(currentTask = task, userMessage = null))
 
-            taskRepository.setThrows("update", true)
+            taskRepository.setThrows(taskRepository::markDone, true)
             viewModel.markCurrentTaskDone()
 
             assertThat(viewModel.uiState.value).isEqualTo(
@@ -126,7 +131,6 @@ class CurrentTaskViewModelTest {
                     userMessage = R.string.current_task_mark_done_error
                 )
             )
-            assertThat(taskRepository.tasks).contains(task)
         }
 
     private fun genTasks(count: Int) = generateSequence(

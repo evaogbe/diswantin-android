@@ -62,7 +62,7 @@ class TaskDetailScreenTest {
     @Test
     fun displaysErrorMessage_withFailureUi() {
         val taskRepository = FakeTaskRepository()
-        taskRepository.setThrows(taskRepository::getTaskWithTaskListById, true)
+        taskRepository.setThrows(taskRepository::getTaskDetailById, true)
 
         val viewModel = TaskDetailViewModel(
             SavedStateHandle(mapOf(Destination.TaskDetail.ID_KEY to 1L)),

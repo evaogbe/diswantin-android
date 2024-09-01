@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -46,23 +47,23 @@ class TaskFormViewModel @Inject constructor(
 
     private val saveResult = MutableStateFlow<Result<Unit>?>(null)
 
-    private val taskStream = taskId?.let { id ->
-        taskRepository.getById(id).catch { e ->
+    private val existingTaskStream = taskId?.let { id ->
+        taskRepository.getById(id).map { Result.success(it) }.catch { e ->
             Timber.e(e, "Failed to fetch task by id: %d", id)
-            emit(null)
+            emit(Result.failure(e))
         }
-    } ?: flowOf(null)
+    } ?: flowOf(Result.success(null))
 
     val uiState = combine(
         deadlineInput,
         scheduledAtInput,
         recurringInput,
         saveResult,
-        taskStream,
-    ) { deadlineInput, scheduledAtInput, recurringInput, saveResult, task ->
+        existingTaskStream,
+    ) { deadlineInput, scheduledAtInput, recurringInput, saveResult, existingTask ->
         when {
             saveResult?.isSuccess == true -> TaskFormUiState.Saved
-            taskId != null && task == null -> TaskFormUiState.Failure
+            existingTask.isFailure -> TaskFormUiState.Failure
             else -> TaskFormUiState.Success(
                 deadlineInput = deadlineInput,
                 scheduledAtInput = scheduledAtInput,
@@ -78,11 +79,11 @@ class TaskFormViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            val task = taskStream.first() ?: return@launch
-            nameInput = task.name
-            deadlineInput.value = task.deadline?.atZone(clock.zone)
-            scheduledAtInput.value = task.scheduledAt?.atZone(clock.zone)
-            recurringInput.value = task.recurring
+            val existingTask = existingTaskStream.first().getOrNull() ?: return@launch
+            nameInput = existingTask.name
+            deadlineInput.value = existingTask.deadline?.atZone(clock.zone)
+            scheduledAtInput.value = existingTask.scheduledAt?.atZone(clock.zone)
+            recurringInput.value = existingTask.recurring
         }
     }
 
@@ -127,14 +128,14 @@ class TaskFormViewModel @Inject constructor(
         } else {
             viewModelScope.launch {
                 try {
-                    val task = checkNotNull(taskStream.first())
+                    val existingTask = checkNotNull(existingTaskStream.first().getOrNull())
                     taskRepository.update(
                         EditTaskForm(
                             name = nameInput,
                             deadline = state.deadlineInput?.toInstant(),
                             scheduledAt = state.scheduledAtInput?.toInstant(),
                             recurring = state.recurringInput,
-                            task = task,
+                            existingTask = existingTask,
                         )
                     )
                     saveResult.value = Result.success(Unit)

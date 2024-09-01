@@ -1,8 +1,8 @@
 package io.github.evaogbe.diswantin.testing
 
 import io.github.evaogbe.diswantin.task.data.Task
+import io.github.evaogbe.diswantin.task.data.TaskCompletion
 import io.github.evaogbe.diswantin.task.data.TaskList
-import io.github.evaogbe.diswantin.task.data.TaskListWithTasks
 import io.github.evaogbe.diswantin.task.data.TaskPath
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,31 +27,40 @@ class FakeDatabase {
 
     val taskPathTable = _taskPathTable.asStateFlow()
 
-    fun insertTaskList(taskListWithTasks: TaskListWithTasks) =
-        insertTaskList(taskListWithTasks, taskListWithTasks.tasks.flatMapIndexed { i, ancestor ->
-            taskListWithTasks.tasks.drop(i + 1).mapIndexed { j, descendant ->
-                TaskPath(ancestor = ancestor.id, descendant = descendant.id, depth = j + 1)
+    private var taskCompletionIdGen = 0L
+
+    private val _taskCompletionTable = MutableStateFlow(emptyMap<Long, TaskCompletion>())
+
+    val taskCompletionTable = _taskCompletionTable.asStateFlow()
+
+    fun insertTaskList(taskList: TaskList, taskIds: List<Long>) =
+        insertTaskList(taskList, taskIds.toSet(), taskIds.flatMapIndexed { i, ancestor ->
+            taskIds.drop(i + 1).mapIndexed { j, descendant ->
+                TaskPath(ancestor = ancestor, descendant = descendant, depth = j + 1)
             }
         })
 
     fun insertTaskList(
-        taskListWithTasks: TaskListWithTasks,
-        taskPaths: List<TaskPath>
-    ): TaskListWithTasks {
-        val taskList = if (taskListWithTasks.taskList.id > 0) {
-            taskListWithTasks.taskList
+        taskList: TaskList,
+        taskIds: Set<Long>,
+        taskPaths: Collection<TaskPath>
+    ): TaskList {
+        val newTaskList = if (taskList.id > 0) {
+            taskList
         } else {
-            taskListWithTasks.taskList.copy(id = ++taskListIdGen)
+            taskList.copy(id = ++taskListIdGen)
         }
-        val tasks = taskListWithTasks.tasks.map { it.copy(listId = taskList.id) }
         _taskListTable.update { it + (taskList.id to taskList) }
         _taskTable.update { taskTable ->
-            taskTable + tasks.associateBy { it.id }
+            taskTable + taskTable.values
+                .filter { it.id in taskIds }
+                .map { it.copy(listId = taskList.id) }
+                .associateBy { it.id }
         }
         _taskPathTable.update { taskPathTable ->
-            taskPathTable + taskPaths.associateBy { it.id }
+            taskPathTable + taskPaths.map { it.copy(id = ++taskPathIdGen) }.associateBy { it.id }
         }
-        return TaskListWithTasks(taskList, tasks)
+        return newTaskList
     }
 
     fun updateTaskList(
@@ -71,10 +80,10 @@ class FakeDatabase {
         }
         _taskPathTable.update { taskPathTable ->
             taskPathTable.filterValues {
-                (it.ancestor in taskPathTaskIdsToRemove
-                        || it.descendant in taskPathTaskIdsToRemove)
-                        && it.depth > 0
-            } + taskPathsToInsert.associateBy { it.id }
+                (it.ancestor !in taskPathTaskIdsToRemove
+                        && it.descendant !in taskPathTaskIdsToRemove)
+                        || it.depth == 0
+            } + taskPathsToInsert.map { it.copy(id = ++taskPathIdGen) }.associateBy { it.id }
         }
     }
 
@@ -83,7 +92,7 @@ class FakeDatabase {
         _taskPathTable.update { taskPathTable ->
             val taskIds = tasksToUpdate.map { it.id }.toSet()
             taskPathTable.filterValues {
-                (it.ancestor in taskIds || it.descendant in taskIds) && it.depth > 0
+                (it.ancestor !in taskIds && it.descendant !in taskIds) || it.depth == 0
             }
         }
         _taskTable.update { taskTable ->
@@ -136,5 +145,13 @@ class FakeDatabase {
                         emptyMap()
                     }
         }
+        _taskCompletionTable.update { taskCompletionTable ->
+            taskCompletionTable.filterValues { it.taskId != id }
+        }
+    }
+
+    fun insertTaskCompletion(taskCompletion: TaskCompletion) {
+        val newCompletion = taskCompletion.copy(id = ++taskCompletionIdGen)
+        _taskCompletionTable.update { it + (newCompletion.id to newCompletion) }
     }
 }

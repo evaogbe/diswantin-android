@@ -74,7 +74,7 @@ class TaskListFormViewModelTest {
         }
         val db = FakeDatabase().apply {
             tasks.forEach(::insertTask)
-            insertTaskList(TaskListWithTasks(taskList, tasks))
+            insertTaskList(taskList, tasks.map(Task::id))
         }
         val taskRepository = FakeTaskRepository(db)
         val taskListRepository = FakeTaskListRepository(db)
@@ -106,7 +106,7 @@ class TaskListFormViewModelTest {
             val db = FakeDatabase()
             val taskRepository = FakeTaskRepository(db)
             val taskListRepository = FakeTaskListRepository(db)
-            taskListRepository.setThrows(taskListRepository::getById, true)
+            taskListRepository.setThrows(taskListRepository::getTaskListWithTasksById, true)
 
             val viewModel = TaskListFormViewModel(
                 SavedStateHandle(mapOf(Destination.EditTaskListForm.ID_KEY to 1L)),
@@ -223,7 +223,7 @@ class TaskListFormViewModelTest {
 
             val taskList = taskListRepository.taskLists.single()
             assertThat(taskList.name).isEqualTo(name)
-            assertThat(taskListRepository.getById(taskList.id).first())
+            assertThat(taskListRepository.getTaskListWithTasksById(taskList.id).first())
                 .isNotNull()
                 .prop(TaskListWithTasks::tasks)
                 .isEqualTo(tasks.map { it.copy(listId = taskList.id) })
@@ -273,7 +273,7 @@ class TaskListFormViewModelTest {
             }
             val db = FakeDatabase().apply {
                 tasks.forEach(::insertTask)
-                insertTaskList(TaskListWithTasks(taskList, tasks))
+                insertTaskList(taskList, tasks.map(Task::id))
             }
             val taskRepository = FakeTaskRepository(db)
             val taskListRepository = FakeTaskListRepository(db)
@@ -299,7 +299,7 @@ class TaskListFormViewModelTest {
             viewModel.updateNameInput(name)
             viewModel.saveTaskList()
 
-            assertThat(taskListRepository.getById(taskList.id).first())
+            assertThat(taskListRepository.getTaskListWithTasksById(taskList.id).first())
                 .isNotNull()
                 .isEqualTo(TaskListWithTasks(taskList.copy(name = name), tasks))
             assertThat(viewModel.uiState.value).isEqualTo(TaskListFormUiState.Saved)
@@ -320,7 +320,7 @@ class TaskListFormViewModelTest {
             }
             val db = FakeDatabase().apply {
                 tasks.forEach(::insertTask)
-                insertTaskList(TaskListWithTasks(taskList, tasks))
+                insertTaskList(taskList, tasks.map(Task::id))
             }
             val taskRepository = FakeTaskRepository(db)
             val taskListRepository = FakeTaskListRepository(db)

@@ -2,8 +2,10 @@ package io.github.evaogbe.diswantin.testing
 
 import io.github.evaogbe.diswantin.task.data.EditTaskListForm
 import io.github.evaogbe.diswantin.task.data.NewTaskListForm
+import io.github.evaogbe.diswantin.task.data.TaskItem
 import io.github.evaogbe.diswantin.task.data.TaskList
 import io.github.evaogbe.diswantin.task.data.TaskListRepository
+import io.github.evaogbe.diswantin.task.data.TaskListWithTaskItems
 import io.github.evaogbe.diswantin.task.data.TaskListWithTasks
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,7 +15,6 @@ import kotlin.reflect.KFunction
 import kotlin.reflect.KProperty0
 
 class FakeTaskListRepository(private val db: FakeDatabase = FakeDatabase()) : TaskListRepository {
-
     private val throwingMethods = MutableStateFlow(setOf<KFunction<*>>())
 
     val taskLists
@@ -28,20 +29,54 @@ class FakeTaskListRepository(private val db: FakeDatabase = FakeDatabase()) : Ta
             taskLists.values.sortedBy { it.name }
         }
 
-    override fun getById(id: Long): Flow<TaskListWithTasks?> =
+    override fun getTaskListWithTasksById(id: Long): Flow<TaskListWithTasks> =
         combine(
             throwingMethods,
             db.taskListTable,
-            db.taskTable
-        ) { throwingMethods, taskLists, tasks ->
-            if (::getById in throwingMethods) {
+            db.taskTable,
+            db.taskPathTable,
+        ) { throwingMethods, taskLists, tasks, taskPaths ->
+            if (::getTaskListWithTasksById in throwingMethods) {
+                throw RuntimeException("Test")
+            }
+
+            TaskListWithTasks(
+                checkNotNull(taskLists[id]),
+                tasks.values
+                    .filter { it.listId == id }
+                    .sortedByDescending { task ->
+                        taskPaths.values.filter { it.ancestor == task.id }.maxOf { it.depth }
+                    },
+            )
+        }
+
+    override fun getTaskListWithTaskItemsById(id: Long): Flow<TaskListWithTaskItems?> =
+        combine(
+            throwingMethods,
+            db.taskListTable,
+            db.taskTable,
+            db.taskPathTable,
+            db.taskCompletionTable,
+        ) { throwingMethods, taskLists, tasks, taskPaths, taskCompletions ->
+            if (::getTaskListWithTaskItemsById in throwingMethods) {
                 throw RuntimeException("Test")
             }
 
             taskLists[id]?.let { taskList ->
-                TaskListWithTasks(
+                TaskListWithTaskItems(
                     taskList,
-                    tasks.values.filter { it.listId == id },
+                    tasks.values.filter { it.listId == id }.map { task ->
+                        TaskItem(
+                            id = task.id,
+                            name = task.name,
+                            recurring = task.recurring,
+                            doneAt = taskCompletions.values
+                                .filter { it.taskId == task.id }
+                                .maxOfOrNull { it.doneAt },
+                        )
+                    }.sortedByDescending { task ->
+                        taskPaths.values.filter { it.ancestor == task.id }.maxOf { it.depth }
+                    }
                 )
             }
         }
@@ -51,7 +86,8 @@ class FakeTaskListRepository(private val db: FakeDatabase = FakeDatabase()) : Ta
             throw RuntimeException("Test")
         }
 
-        return db.insertTaskList(form.newTaskListWithTasks, form.taskPaths)
+        val taskList = db.insertTaskList(form.newTaskList, form.newTaskIds.toSet(), form.taskPaths)
+        return TaskListWithTasks(taskList, form.tasks.map { it.copy(listId = taskList.id) })
     }
 
     override suspend fun update(form: EditTaskListForm): TaskListWithTasks {
@@ -60,13 +96,16 @@ class FakeTaskListRepository(private val db: FakeDatabase = FakeDatabase()) : Ta
         }
 
         db.updateTaskList(
-            taskList = form.updatedTaskListWithTasks.taskList,
+            taskList = form.updatedTaskList,
             taskIdsToInsert = form.taskIdsToInsert,
             taskPathsToInsert = form.taskPathsToInsert,
             taskIdsToRemove = form.taskIdsToRemove,
             taskPathTaskIdsToRemove = form.taskPathTaskIdsToRemove.toSet(),
         )
-        return form.updatedTaskListWithTasks
+        return TaskListWithTasks(
+            form.updatedTaskList,
+            form.tasks.map { it.copy(listId = form.updatedTaskList.id) },
+        )
     }
 
     override suspend fun delete(taskList: TaskList) {
@@ -95,7 +134,10 @@ class FakeTaskListRepository(private val db: FakeDatabase = FakeDatabase()) : Ta
 
         fun withTaskLists(taskListsWithTasks: Iterable<TaskListWithTasks>): FakeTaskListRepository {
             val db = FakeDatabase()
-            taskListsWithTasks.forEach(db::insertTaskList)
+            taskListsWithTasks.forEach { taskListWithTasks ->
+                taskListWithTasks.tasks.forEach(db::insertTask)
+                db.insertTaskList(taskListWithTasks.taskList, taskListWithTasks.tasks.map { it.id })
+            }
             return FakeTaskListRepository(db)
         }
     }

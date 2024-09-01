@@ -6,6 +6,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import assertk.assertThat
 import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
 import assertk.assertions.isNull
 import assertk.assertions.isPositive
 import assertk.assertions.isTrue
@@ -195,6 +196,45 @@ class DiswantinDatabaseTest {
             assertThat(stmt.moveToNext()).isTrue()
             assertThat(stmt.getLong(0)).isEqualTo(6)
             assertThat(stmt.getLongOrNull(1)).isNull()
+        }
+        migratedDb.close()
+    }
+
+    @Test
+    fun testMigration_14_15() {
+        val taskValues1 = arrayOf(
+            1L,
+            faker.random.randomPastDate().toInstant().toEpochMilli(),
+            "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+            faker.random.randomPastDate().toInstant().toEpochMilli()
+        )
+        val taskValues2 = arrayOf(
+            2L,
+            faker.random.randomPastDate().toInstant().toEpochMilli(),
+            "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+        )
+
+        val initialDb = migrationTestHelper.createDatabase(DiswantinDatabase.DB_NAME, 14)
+        initialDb.execSQL(
+            "INSERT INTO `task` (id, created_at, name, done_at) VALUES (?, ?, ?, ?)",
+            taskValues1,
+        )
+        initialDb.execSQL("INSERT INTO `task` (id, created_at, name) VALUES (?, ?, ?)", taskValues2)
+        initialDb.close()
+
+        val migratedDb =
+            migrationTestHelper.runMigrationsAndValidate(
+                DiswantinDatabase.DB_NAME,
+                15,
+                true,
+                DiswantinDatabase.MIGRATION_14_15,
+            )
+        migratedDb.query("SELECT * FROM task_completion").use { stmt ->
+            assertThat(stmt.moveToFirst()).isTrue()
+            assertThat(stmt.getLong(0)).isPositive()
+            assertThat(stmt.getLong(1)).isEqualTo(taskValues1[0])
+            assertThat(stmt.getLong(2)).isEqualTo(taskValues1[3])
+            assertThat(stmt.moveToNext()).isFalse()
         }
         migratedDb.close()
     }

@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -54,17 +55,17 @@ class TaskListFormViewModel @Inject constructor(
 
     private val saveResult = MutableStateFlow<Result<Unit>?>(null)
 
-    private val taskListWithTasksStream = taskListId?.let { id ->
-        taskListRepository.getById(id).catch { e ->
+    private val existingTaskListWithTasksStream = taskListId?.let { id ->
+        taskListRepository.getTaskListWithTasksById(id).map { Result.success(it) }.catch { e ->
             Timber.e(e, "Failed to fetch task list by id: %d", id)
-            emit(null)
+            emit(Result.failure(e))
         }
-    } ?: flowOf(null)
+    } ?: flowOf(Result.success(null))
 
     @Suppress("UNCHECKED_CAST")
     @OptIn(ExperimentalCoroutinesApi::class)
     val uiState = combine(
-        taskListWithTasksStream,
+        existingTaskListWithTasksStream,
         tasks,
         editingTaskIndex,
         taskQuery,
@@ -80,7 +81,7 @@ class TaskListFormViewModel @Inject constructor(
         },
         saveResult,
     ) { args ->
-        val existingTaskListWithTasks = args[0] as TaskListWithTasks?
+        val existingTaskListWithTasks = args[0] as Result<TaskListWithTasks?>
         val tasks = args[1] as ImmutableList<Task>
         val editingTaskIndex = args[2] as Int?
         val taskQuery = args[3] as String
@@ -88,7 +89,7 @@ class TaskListFormViewModel @Inject constructor(
         val saveResult = args[5] as Result<Unit>?
         when {
             saveResult?.isSuccess == true -> TaskListFormUiState.Saved
-            taskListId != null && existingTaskListWithTasks == null -> TaskListFormUiState.Failure
+            existingTaskListWithTasks.isFailure -> TaskListFormUiState.Failure
             else -> {
                 val editingTask = editingTaskIndex?.let(tasks::getOrNull)
                 val taskOptions = taskSearchResults.filter { option ->
@@ -116,9 +117,10 @@ class TaskListFormViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            val taskListWithTasks = taskListWithTasksStream.first() ?: return@launch
-            nameInput = taskListWithTasks.taskList.name
-            tasks.value = taskListWithTasks.tasks.toPersistentList()
+            val existingTaskListWithTasks = existingTaskListWithTasksStream.first().getOrNull()
+                ?: return@launch
+            nameInput = existingTaskListWithTasks.taskList.name
+            tasks.value = existingTaskListWithTasks.tasks.toPersistentList()
             editingTaskIndex.value = null
         }
     }
@@ -175,12 +177,13 @@ class TaskListFormViewModel @Inject constructor(
         } else {
             viewModelScope.launch {
                 try {
-                    val taskListWithTasks = checkNotNull(taskListWithTasksStream.first())
+                    val existingTaskListWithTasks =
+                        checkNotNull(existingTaskListWithTasksStream.first().getOrNull())
                     taskListRepository.update(
                         EditTaskListForm(
                             name = nameInput,
                             tasks = state.tasks,
-                            taskListWithTasks = taskListWithTasks,
+                            existingTaskListWithTasks = existingTaskListWithTasks,
                         )
                     )
                     saveResult.value = Result.success(Unit)

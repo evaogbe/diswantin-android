@@ -5,12 +5,14 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
+import java.time.Clock
 import java.time.Instant
 import javax.inject.Inject
 
 class LocalTaskRepository @Inject constructor(
     private val taskDao: TaskDao,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
+    private val clock: Clock,
 ) : TaskRepository {
     override fun getCurrentTask(scheduledBefore: Instant, doneBefore: Instant) =
         taskDao.getCurrentTask(scheduledBefore = scheduledBefore, doneBefore = doneBefore)
@@ -18,8 +20,8 @@ class LocalTaskRepository @Inject constructor(
 
     override fun getById(id: Long) = taskDao.getById(id).flowOn(ioDispatcher)
 
-    override fun getTaskWithTaskListById(id: Long) =
-        taskDao.getTaskWithTaskListById(id).flowOn(ioDispatcher)
+    override fun getTaskDetailById(id: Long) =
+        taskDao.getTaskDetailById(id).flowOn(ioDispatcher)
 
     override fun search(
         query: String,
@@ -46,15 +48,15 @@ class LocalTaskRepository @Inject constructor(
             form.updatedTask
         }
 
-    override suspend fun update(task: Task) {
-        withContext(ioDispatcher) {
-            taskDao.update(task)
-        }
-    }
-
     override suspend fun delete(id: Long) {
         withContext(ioDispatcher) {
             taskDao.deleteWithPath(id)
+        }
+    }
+
+    override suspend fun markDone(id: Long) {
+        withContext(ioDispatcher) {
+            taskDao.insertCompletion(TaskCompletion(taskId = id, doneAt = Instant.now(clock)))
         }
     }
 }

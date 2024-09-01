@@ -5,7 +5,7 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.Task
-import io.github.evaogbe.diswantin.task.data.TaskWithTaskList
+import io.github.evaogbe.diswantin.task.data.TaskDetail
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.MainDispatcherRule
 import io.github.evaogbe.diswantin.ui.navigation.Destination
@@ -46,7 +46,7 @@ class TaskDetailViewModelTest {
 
         assertThat(viewModel.uiState.value).isEqualTo(
             TaskDetailUiState.Success(
-                task = task.toTaskWithTaskList(),
+                task = task.toTaskDetail(),
                 userMessage = null,
                 clock = clock,
             )
@@ -76,7 +76,7 @@ class TaskDetailViewModelTest {
         runTest(mainDispatcherRule.testDispatcher) {
             val clock = Clock.systemDefaultZone()
             val taskRepository = FakeTaskRepository()
-            taskRepository.setThrows(taskRepository::getTaskWithTaskListById, true)
+            taskRepository.setThrows(taskRepository::getTaskDetailById, true)
 
             val viewModel = TaskDetailViewModel(
                 SavedStateHandle(mapOf(Destination.TaskDetail.ID_KEY to 1L)),
@@ -108,7 +108,7 @@ class TaskDetailViewModelTest {
 
         assertThat(viewModel.uiState.value).isEqualTo(
             TaskDetailUiState.Success(
-                task = task.toTaskWithTaskList(),
+                task = task.toTaskDetail(),
                 userMessage = null,
                 clock = clock,
             )
@@ -140,7 +140,7 @@ class TaskDetailViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskDetailUiState.Success(
-                    task = task.toTaskWithTaskList(),
+                    task = task.toTaskDetail(),
                     userMessage = R.string.task_detail_delete_error,
                     clock = clock,
                 )
@@ -153,13 +153,13 @@ class TaskDetailViewModelTest {
         name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
     )
 
-    private fun Task.toTaskWithTaskList() = TaskWithTaskList(
+    private fun Task.toTaskDetail() = TaskDetail(
         id = id,
         name = name,
         deadline = deadline,
         scheduledAt = scheduledAt,
-        doneAt = doneAt,
         recurring = recurring,
+        doneAt = null,
         listId = null,
         listName = null,
     )

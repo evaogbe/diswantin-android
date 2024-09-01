@@ -6,9 +6,9 @@ import java.time.Instant
 interface TaskRepository {
     fun getCurrentTask(scheduledBefore: Instant, doneBefore: Instant): Flow<Task?>
 
-    fun getById(id: Long): Flow<Task?>
+    fun getById(id: Long): Flow<Task>
 
-    fun getTaskWithTaskListById(id: Long): Flow<TaskWithTaskList?>
+    fun getTaskDetailById(id: Long): Flow<TaskDetail?>
 
     fun search(query: String, singletonsOnly: Boolean = false): Flow<List<Task>>
 
@@ -16,7 +16,7 @@ interface TaskRepository {
 
     suspend fun update(form: EditTaskForm): Task
 
-    suspend fun update(task: Task)
-
     suspend fun delete(id: Long)
+
+    suspend fun markDone(id: Long)
 }

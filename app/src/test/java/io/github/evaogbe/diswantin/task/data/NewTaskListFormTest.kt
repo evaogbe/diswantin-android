@@ -17,7 +17,7 @@ class NewTaskListFormTest {
             Task(
                 id = it + 1L,
                 createdAt = faker.random.randomPastDate().toInstant(),
-                name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
+                name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
             )
         })
 

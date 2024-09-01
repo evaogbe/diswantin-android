@@ -34,7 +34,7 @@ class TaskDetailViewModel @Inject constructor(
     val uiState =
         combine(
             initialized,
-            taskRepository.getTaskWithTaskListById(taskId),
+            taskRepository.getTaskDetailById(taskId),
             userMessage
         ) { initialized, task, userMessage ->
             when {

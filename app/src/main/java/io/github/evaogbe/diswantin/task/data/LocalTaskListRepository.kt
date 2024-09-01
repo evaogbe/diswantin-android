@@ -14,33 +14,37 @@ class LocalTaskListRepository @Inject constructor(
 ) : TaskListRepository {
     override val taskListsStream = taskListDao.getTaskLists().flowOn(ioDispatcher)
 
-    override fun getById(id: Long) =
+    override fun getTaskListWithTasksById(id: Long) =
         combine(taskListDao.getById(id), taskDao.getTasksByListId(id)) { taskList, tasks ->
-            taskList?.let { TaskListWithTasks(it, tasks) }
-        }
-            .flowOn(ioDispatcher)
+            TaskListWithTasks(checkNotNull(taskList), tasks)
+        }.flowOn(ioDispatcher)
+
+    override fun getTaskListWithTaskItemsById(id: Long) =
+        combine(taskListDao.getById(id), taskDao.getTaskItemsByListId(id)) { taskList, tasks ->
+            taskList?.let { TaskListWithTaskItems(it, tasks) }
+        }.flowOn(ioDispatcher)
 
     override suspend fun create(form: NewTaskListForm) = withContext(ioDispatcher) {
         val id = taskListDao.insertWithTasks(
-            taskList = form.newTaskListWithTasks.taskList,
-            taskIds = form.newTaskListWithTasks.tasks.map { it.id },
+            taskList = form.newTaskList,
+            taskIds = form.newTaskIds,
             taskPaths = form.taskPaths,
         )
-        TaskListWithTasks(
-            form.newTaskListWithTasks.taskList.copy(id = id),
-            form.newTaskListWithTasks.tasks.map { it.copy(listId = id) },
-        )
+        TaskListWithTasks(form.newTaskList.copy(id = id), form.tasks.map { it.copy(listId = id) })
     }
 
     override suspend fun update(form: EditTaskListForm) = withContext(ioDispatcher) {
         taskListDao.updateWithTasks(
-            taskList = form.updatedTaskListWithTasks.taskList,
+            taskList = form.updatedTaskList,
             taskIdsToInsert = form.taskIdsToInsert,
             taskPathsToInsert = form.taskPathsToInsert,
             taskIdsToRemove = form.taskIdsToRemove,
             taskPathTaskIdsToRemove = form.taskPathTaskIdsToRemove,
         )
-        form.updatedTaskListWithTasks
+        TaskListWithTasks(
+            form.updatedTaskList,
+            form.tasks.map { it.copy(listId = form.updatedTaskList.id) },
+        )
     }
 
     override suspend fun delete(taskList: TaskList) {

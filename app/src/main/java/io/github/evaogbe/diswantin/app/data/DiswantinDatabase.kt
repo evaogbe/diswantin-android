@@ -15,6 +15,7 @@ import androidx.room.migration.AutoMigrationSpec
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import io.github.evaogbe.diswantin.task.data.Task
+import io.github.evaogbe.diswantin.task.data.TaskCompletion
 import io.github.evaogbe.diswantin.task.data.TaskDao
 import io.github.evaogbe.diswantin.task.data.TaskFts
 import io.github.evaogbe.diswantin.task.data.TaskList
@@ -22,8 +23,14 @@ import io.github.evaogbe.diswantin.task.data.TaskListDao
 import io.github.evaogbe.diswantin.task.data.TaskPath
 
 @Database(
-    version = 14,
-    entities = [Task::class, TaskFts::class, TaskPath::class, TaskList::class],
+    version = 16,
+    entities = [
+        Task::class,
+        TaskFts::class,
+        TaskPath::class,
+        TaskList::class,
+        TaskCompletion::class,
+    ],
     autoMigrations = [
         AutoMigration(from = 2, to = 3),
         AutoMigration(from = 3, to = 4),
@@ -34,6 +41,7 @@ import io.github.evaogbe.diswantin.task.data.TaskPath
         AutoMigration(from = 10, to = 11),
         AutoMigration(from = 12, to = 13),
         AutoMigration(from = 13, to = 14),
+        AutoMigration(from = 15, to = 16, spec = DiswantinDatabase.Migration15to16::class),
     ]
 )
 @TypeConverters(Converters::class)
@@ -52,6 +60,9 @@ abstract class DiswantinDatabase : RoomDatabase() {
 
     @RenameColumn(tableName = "task", fromColumnName = "due_at", toColumnName = "deadline")
     class Migration9to10 : AutoMigrationSpec
+
+    @DeleteColumn(tableName = "task", columnName = "done_at")
+    class Migration15to16 : AutoMigrationSpec
 
     companion object {
         const val DB_NAME = "diswantin"
@@ -158,11 +169,41 @@ abstract class DiswantinDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_14_15 = object : Migration(14, 15) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """CREATE TABLE `task_completion`
+                    (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    `task_id` INTEGER NOT NULL
+                        REFERENCES `task` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+                    `done_at` INTEGER NOT NULL
+                    )"""
+                )
+                db.execSQL(
+                    """CREATE UNIQUE INDEX IF NOT EXISTS `index_task_completion_task_id_done_at`
+                    ON `task_completion` (`task_id`, `done_at`)"""
+                )
+                db.execSQL(
+                    """INSERT INTO `task_completion`
+                    (task_id, done_at)
+                    SELECT `id`, `done_at`
+                    FROM `task`
+                    WHERE `done_at` IS NOT NULL"""
+                )
+            }
+        }
+
         fun createDatabase(context: Context) =
             Room.databaseBuilder(
                 context.applicationContext,
                 DiswantinDatabase::class.java,
                 DB_NAME,
-            ).addMigrations(MIGRATION_1_2, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_11_12).build()
+            ).addMigrations(
+                MIGRATION_1_2,
+                MIGRATION_5_6,
+                MIGRATION_6_7,
+                MIGRATION_11_12,
+                MIGRATION_14_15,
+            ).build()
     }
 }

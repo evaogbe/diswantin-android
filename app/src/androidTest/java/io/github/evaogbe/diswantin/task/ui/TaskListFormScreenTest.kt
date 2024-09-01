@@ -16,7 +16,6 @@ import assertk.assertions.isTrue
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskList
-import io.github.evaogbe.diswantin.task.data.TaskListWithTasks
 import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTaskListRepository
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
@@ -42,7 +41,7 @@ class TaskListFormScreenTest {
         val db = FakeDatabase()
         val taskRepository = FakeTaskRepository(db)
         val taskListRepository = FakeTaskListRepository(db)
-        taskListRepository.setThrows(taskListRepository::getById, true)
+        taskListRepository.setThrows(taskListRepository::getTaskListWithTasksById, true)
 
         val viewModel = TaskListFormViewModel(
             SavedStateHandle(mapOf(Destination.EditTaskListForm.ID_KEY to 1L)),
@@ -161,7 +160,7 @@ class TaskListFormScreenTest {
         val name = loremFaker.lorem.words()
         val taskList = TaskList(id = 1L, name = loremFaker.lorem.words())
         val db = FakeDatabase().apply {
-            insertTaskList(TaskListWithTasks(taskList, emptyList()))
+            insertTaskList(taskList, emptyList())
         }
         val taskRepository = FakeTaskRepository(db)
         val taskListRepository = FakeTaskListRepository(db)
@@ -194,7 +193,7 @@ class TaskListFormScreenTest {
         val name = loremFaker.lorem.words()
         val taskList = TaskList(id = 1L, name = loremFaker.lorem.words())
         val db = FakeDatabase().apply {
-            insertTaskList(TaskListWithTasks(taskList, emptyList()))
+            insertTaskList(taskList, emptyList())
         }
         val taskRepository = FakeTaskRepository(db)
         val taskListRepository = FakeTaskListRepository(db)

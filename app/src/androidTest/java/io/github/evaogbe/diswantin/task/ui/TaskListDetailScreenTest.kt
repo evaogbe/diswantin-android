@@ -22,6 +22,7 @@ import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
 import org.junit.Rule
 import org.junit.Test
+import java.time.Clock
 
 class TaskListDetailScreenTest {
     @get:Rule
@@ -33,20 +34,9 @@ class TaskListDetailScreenTest {
 
     @Test
     fun displaysTaskListNameWithTasks() {
-        val taskList = TaskList(id = 1L, name = loremFaker.lorem.words())
-        val tasks = List(3) {
-            Task(
-                id = it + 1L,
-                createdAt = faker.random.randomPastDate().toInstant(),
-                name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-            )
-        }
-        val taskListRepository =
-            FakeTaskListRepository.withTaskLists(TaskListWithTasks(taskList, tasks))
-        val viewModel = TaskListDetailViewModel(
-            SavedStateHandle(mapOf(Destination.TaskListDetail.ID_KEY to taskList.id)),
-            taskListRepository,
-        )
+        val taskListWithTasks = genTaskListWithTasks()
+        val taskListRepository = FakeTaskListRepository.withTaskLists(taskListWithTasks)
+        val viewModel = createTaskListDetailViewModel(taskListRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -59,19 +49,16 @@ class TaskListDetailScreenTest {
             }
         }
 
-        composeTestRule.onNodeWithText(taskList.name).assertIsDisplayed()
-        composeTestRule.onNodeWithText(tasks[0].name).assertIsDisplayed()
-        composeTestRule.onNodeWithText(tasks[1].name).assertIsDisplayed()
-        composeTestRule.onNodeWithText(tasks[2].name).assertIsDisplayed()
+        composeTestRule.onNodeWithText(taskListWithTasks.taskList.name).assertIsDisplayed()
+        composeTestRule.onNodeWithText(taskListWithTasks.tasks[0].name).assertIsDisplayed()
+        composeTestRule.onNodeWithText(taskListWithTasks.tasks[1].name).assertIsDisplayed()
+        composeTestRule.onNodeWithText(taskListWithTasks.tasks[2].name).assertIsDisplayed()
     }
 
     @Test
     fun displaysErrorMessage_withFailureUi() {
         val taskListRepository = FakeTaskListRepository()
-        val viewModel = TaskListDetailViewModel(
-            SavedStateHandle(mapOf(Destination.TaskListDetail.ID_KEY to 1L)),
-            taskListRepository,
-        )
+        val viewModel = createTaskListDetailViewModel(taskListRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -91,20 +78,9 @@ class TaskListDetailScreenTest {
     @Test
     fun popsBackStack_whenTaskListDeleted() {
         var onPopBackStackClicked = false
-        val taskList = TaskList(id = 1L, name = loremFaker.lorem.words())
-        val tasks = List(faker.random.nextInt(bound = 5)) {
-            Task(
-                id = it + 1L,
-                createdAt = faker.random.randomPastDate().toInstant(),
-                name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-            )
-        }
-        val taskListRepository =
-            FakeTaskListRepository.withTaskLists(TaskListWithTasks(taskList, tasks))
-        val viewModel = TaskListDetailViewModel(
-            SavedStateHandle(mapOf(Destination.TaskListDetail.ID_KEY to taskList.id)),
-            taskListRepository,
-        )
+        val taskListWithTasks = genTaskListWithTasks()
+        val taskListRepository = FakeTaskListRepository.withTaskLists(taskListWithTasks)
+        val viewModel = createTaskListDetailViewModel(taskListRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -127,20 +103,9 @@ class TaskListDetailScreenTest {
 
     @Test
     fun showsErrorMessage_whenDeleteTaskListFailed() {
-        val taskList = TaskList(id = 1L, name = loremFaker.lorem.words())
-        val tasks = List(faker.random.nextInt(bound = 5)) {
-            Task(
-                id = it + 1L,
-                createdAt = faker.random.randomPastDate().toInstant(),
-                name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-            )
-        }
-        val taskListRepository =
-            FakeTaskListRepository.withTaskLists(TaskListWithTasks(taskList, tasks))
-        val viewModel = TaskListDetailViewModel(
-            SavedStateHandle(mapOf(Destination.TaskListDetail.ID_KEY to taskList.id)),
-            taskListRepository,
-        )
+        val taskListWithTasks = genTaskListWithTasks()
+        val taskListRepository = FakeTaskListRepository.withTaskLists(taskListWithTasks)
+        val viewModel = createTaskListDetailViewModel(taskListRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -161,4 +126,23 @@ class TaskListDetailScreenTest {
         composeTestRule.onNodeWithText(stringResource(R.string.task_list_detail_delete_error))
             .assertIsDisplayed()
     }
+
+    private fun genTaskListWithTasks() = TaskListWithTasks(
+        TaskList(id = 1L, name = loremFaker.lorem.words()),
+        List(3) {
+            Task(
+                id = it + 1L,
+                createdAt = faker.random.randomPastDate().toInstant(),
+                name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                listId = 1L,
+            )
+        },
+    )
+
+    private fun createTaskListDetailViewModel(taskListRepository: FakeTaskListRepository) =
+        TaskListDetailViewModel(
+            SavedStateHandle(mapOf(Destination.TaskListDetail.ID_KEY to 1L)),
+            taskListRepository,
+            Clock.systemDefaultZone(),
+        )
 }
