@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -29,6 +30,8 @@ import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
@@ -40,10 +43,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
@@ -70,6 +75,8 @@ fun TaskListFormScreen(
     taskListFormViewModel: TaskListFormViewModel = hiltViewModel(),
 ) {
     val uiState by taskListFormViewModel.uiState.collectAsStateWithLifecycle()
+    val resources = LocalContext.current.resources
+    val snackbarHostState = remember { SnackbarHostState() }
 
     if (uiState is TaskListFormUiState.Saved) {
         LaunchedEffect(onPopBackStack) {
@@ -77,10 +84,18 @@ fun TaskListFormScreen(
         }
     }
 
+    (uiState as? TaskListFormUiState.Success)?.userMessage?.let { message ->
+        LaunchedEffect(message, snackbarHostState) {
+            snackbarHostState.showSnackbar(resources.getString(message))
+            taskListFormViewModel.userMessageShown()
+        }
+    }
+
     TaskListFormScreen(
         isNew = taskListFormViewModel.isNew,
         onClose = onPopBackStack,
         onSave = taskListFormViewModel::saveTaskList,
+        snackbarHostState = snackbarHostState,
         uiState = uiState,
         name = taskListFormViewModel.nameInput,
         onNameChange = taskListFormViewModel::updateNameInput,
@@ -98,6 +113,7 @@ fun TaskListFormScreen(
     isNew: Boolean,
     onClose: () -> Unit,
     onSave: () -> Unit,
+    snackbarHostState: SnackbarHostState,
     uiState: TaskListFormUiState,
     name: String,
     onNameChange: (String) -> Unit,
@@ -141,6 +157,9 @@ fun TaskListFormScreen(
                     }
                 },
             )
+        },
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState, modifier = Modifier.imePadding())
         },
     ) { innerPadding ->
         when (uiState) {
@@ -327,11 +346,13 @@ private fun TaskListFormScreenPreview_New() {
             isNew = true,
             onClose = {},
             onSave = {},
+            snackbarHostState = SnackbarHostState(),
             uiState = TaskListFormUiState.Success(
                 tasks = persistentListOf(),
                 editingTaskIndex = 0,
                 taskOptions = persistentListOf(),
                 hasSaveError = false,
+                userMessage = null,
             ),
             name = "",
             onNameChange = {},
@@ -353,6 +374,7 @@ private fun TaskListFormScreenPreview_Edit() {
                 isNew = false,
                 onClose = {},
                 onSave = {},
+                snackbarHostState = SnackbarHostState(),
                 uiState = TaskListFormUiState.Success(
                     tasks = persistentListOf(
                         Task(
@@ -374,6 +396,7 @@ private fun TaskListFormScreenPreview_Edit() {
                     editingTaskIndex = null,
                     taskOptions = persistentListOf(),
                     hasSaveError = true,
+                    userMessage = null,
                 ),
                 name = "Morning routine",
                 onNameChange = {},

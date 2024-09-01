@@ -35,7 +35,7 @@ class TaskDetailViewModel @Inject constructor(
         combine(
             initialized,
             taskRepository.getTaskDetailById(taskId),
-            userMessage
+            userMessage,
         ) { initialized, task, userMessage ->
             when {
                 task != null -> {

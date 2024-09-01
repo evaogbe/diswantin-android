@@ -7,6 +7,7 @@ import assertk.assertions.isFalse
 import assertk.assertions.isNotNull
 import assertk.assertions.isTrue
 import assertk.assertions.prop
+import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskList
 import io.github.evaogbe.diswantin.task.data.TaskListWithTasks
@@ -56,6 +57,7 @@ class TaskListFormViewModelTest {
                 editingTaskIndex = 0,
                 taskOptions = persistentListOf(),
                 hasSaveError = false,
+                userMessage = null,
             )
         )
         assertThat(viewModel.nameInput).isEqualTo("")
@@ -95,6 +97,7 @@ class TaskListFormViewModelTest {
                 editingTaskIndex = null,
                 taskOptions = persistentListOf(),
                 hasSaveError = false,
+                userMessage = null,
             )
         )
         assertThat(viewModel.nameInput).isEqualTo(taskList.name)
@@ -152,12 +155,13 @@ class TaskListFormViewModelTest {
                 editingTaskIndex = 0,
                 taskOptions = tasks.toImmutableList(),
                 hasSaveError = false,
+                userMessage = null,
             )
         )
     }
 
     @Test
-    fun `searchTasks sets task options to empty when repository throws`() =
+    fun `searchTasks shows error message when repository throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val query = loremFaker.verbs.base()
             val db = FakeDatabase()
@@ -179,6 +183,7 @@ class TaskListFormViewModelTest {
                     editingTaskIndex = 0,
                     taskOptions = persistentListOf(),
                     hasSaveError = false,
+                    userMessage = R.string.task_list_form_search_tasks_error,
                 )
             )
         }
@@ -212,6 +217,7 @@ class TaskListFormViewModelTest {
                     editingTaskIndex = 0,
                     taskOptions = persistentListOf(),
                     hasSaveError = false,
+                    userMessage = null,
                 )
             )
 
@@ -254,6 +260,7 @@ class TaskListFormViewModelTest {
                     editingTaskIndex = 0,
                     taskOptions = persistentListOf(),
                     hasSaveError = true,
+                    userMessage = null,
                 )
             )
         }
@@ -293,6 +300,7 @@ class TaskListFormViewModelTest {
                     editingTaskIndex = null,
                     taskOptions = persistentListOf(),
                     hasSaveError = false,
+                    userMessage = null,
                 )
             )
 
@@ -344,6 +352,7 @@ class TaskListFormViewModelTest {
                     editingTaskIndex = null,
                     taskOptions = persistentListOf(),
                     hasSaveError = true,
+                    userMessage = null,
                 )
             )
         }

@@ -16,7 +16,6 @@ import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
 import org.junit.Rule
 import org.junit.Test
-import java.time.Instant
 
 @OptIn(ExperimentalTestApi::class)
 class TaskSearchScreenTest {
@@ -31,10 +30,11 @@ class TaskSearchScreenTest {
     fun displaysSearchResults_withSearchResults() {
         val query = loremFaker.verbs.base()
         val tasks = List(3) {
-            faker.randomClass.randomClassInstance<Task> {
-                typeGenerator<Instant> { faker.random.randomPastDate().toInstant() }
-                typeGenerator<String> { "$query ${loremFaker.lorem.unique.words()}" }
-            }
+            Task(
+                id = it + 1L,
+                createdAt = faker.random.randomPastDate().toInstant(),
+                name = "$query ${loremFaker.lorem.unique.words()}",
+            )
         }
         val taskRepository = FakeTaskRepository.withTasks(tasks)
         val viewModel = TaskSearchViewModel(taskRepository)

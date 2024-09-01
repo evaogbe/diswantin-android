@@ -29,6 +29,7 @@ import org.junit.Rule
 import org.junit.Test
 import timber.log.Timber
 
+@OptIn(ExperimentalTestApi::class)
 class TaskListFormScreenTest {
     @get:Rule
     val composeTestRule = createComposeRule()
@@ -59,7 +60,72 @@ class TaskListFormScreenTest {
         composeTestRule.onNodeWithText(stringResource(R.string.task_list_form_fetch_error))
     }
 
-    @OptIn(ExperimentalTestApi::class)
+    @Test
+    fun displaysMatchingTaskOptions_whenTaskSearchedFor() {
+        val query = loremFaker.verbs.base()
+        val tasks = List(3) {
+            Task(
+                id = it + 1L,
+                createdAt = faker.random.randomPastDate().toInstant(),
+                name = "$query ${loremFaker.lorem.unique.words()}",
+            )
+        }
+        val db = FakeDatabase().apply {
+            tasks.forEach(::insertTask)
+        }
+        val taskRepository = FakeTaskRepository(db)
+        val taskListRepository = FakeTaskListRepository(db)
+        val viewModel =
+            TaskListFormViewModel(SavedStateHandle(), taskListRepository, taskRepository)
+
+        composeTestRule.setContent {
+            DiswantinTheme {
+                TaskListFormScreen(onPopBackStack = {}, taskListFormViewModel = viewModel)
+            }
+        }
+
+        composeTestRule.onNodeWithText(
+            stringResource(R.string.task_name_label),
+            useUnmergedTree = true
+        )
+            .onParent()
+            .performTextInput(query)
+
+        composeTestRule.waitUntilExactlyOneExists(hasText(tasks[0].name))
+        composeTestRule.onNodeWithText(tasks[0].name).assertIsDisplayed()
+        composeTestRule.onNodeWithText(tasks[1].name).assertIsDisplayed()
+        composeTestRule.onNodeWithText(tasks[2].name).assertIsDisplayed()
+    }
+
+    @Test
+    fun displaysErrorMessage_whenSearchTasksFailed() {
+        val query = loremFaker.verbs.base()
+        val db = FakeDatabase()
+        val taskRepository = FakeTaskRepository(db)
+        val taskListRepository = FakeTaskListRepository(db)
+        val viewModel =
+            TaskListFormViewModel(SavedStateHandle(), taskListRepository, taskRepository)
+
+        composeTestRule.setContent {
+            DiswantinTheme {
+                TaskListFormScreen(onPopBackStack = {}, taskListFormViewModel = viewModel)
+            }
+        }
+
+        taskRepository.setThrows(taskRepository::search, true)
+        composeTestRule.onNodeWithText(
+            stringResource(R.string.task_name_label),
+            useUnmergedTree = true
+        )
+            .onParent()
+            .performTextInput(query)
+
+
+        composeTestRule.waitUntilExactlyOneExists(
+            hasText(stringResource(R.string.task_list_form_search_tasks_error)),
+        )
+    }
+
     @Test
     fun popsBackStack_whenTaskListCreated() {
         var onPopBackStackCalled = false

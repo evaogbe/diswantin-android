@@ -7,6 +7,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.EditTaskListForm
 import io.github.evaogbe.diswantin.task.data.NewTaskListForm
 import io.github.evaogbe.diswantin.task.data.Task
@@ -55,11 +56,15 @@ class TaskListFormViewModel @Inject constructor(
 
     private val saveResult = MutableStateFlow<Result<Unit>?>(null)
 
+    private val userMessage = MutableStateFlow<Int?>(null)
+
     private val existingTaskListWithTasksStream = taskListId?.let { id ->
-        taskListRepository.getTaskListWithTasksById(id).map { Result.success(it) }.catch { e ->
-            Timber.e(e, "Failed to fetch task list by id: %d", id)
-            emit(Result.failure(e))
-        }
+        taskListRepository.getTaskListWithTasksById(id)
+            .map { Result.success(it) }
+            .catch { e ->
+                Timber.e(e, "Failed to fetch task list by id: %d", id)
+                emit(Result.failure(e))
+            }
     } ?: flowOf(Result.success(null))
 
     @Suppress("UNCHECKED_CAST")
@@ -76,10 +81,12 @@ class TaskListFormViewModel @Inject constructor(
                 taskRepository.search(query.trim()).catch { e ->
                     Timber.e(e, "Failed to search for tasks by query: %s", query)
                     emit(emptyList())
+                    userMessage.value = R.string.task_list_form_search_tasks_error
                 }
             }
         },
         saveResult,
+        userMessage,
     ) { args ->
         val existingTaskListWithTasks = args[0] as Result<TaskListWithTasks?>
         val tasks = args[1] as ImmutableList<Task>
@@ -87,6 +94,7 @@ class TaskListFormViewModel @Inject constructor(
         val taskQuery = args[3] as String
         val taskSearchResults = args[4] as List<Task>
         val saveResult = args[5] as Result<Unit>?
+        val userMessage = args[6] as Int?
 
         if (saveResult?.isSuccess == true) {
             TaskListFormUiState.Saved
@@ -110,6 +118,7 @@ class TaskListFormViewModel @Inject constructor(
                             taskOptions.toImmutableList()
                         },
                         hasSaveError = saveResult?.isFailure == true,
+                        userMessage = userMessage,
                     )
                 },
                 onFailure = { TaskListFormUiState.Failure },
@@ -201,5 +210,9 @@ class TaskListFormViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    fun userMessageShown() {
+        userMessage.value = null
     }
 }
