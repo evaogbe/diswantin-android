@@ -96,25 +96,16 @@ class TaskFormScreenTest {
             }
         }
 
-        composeTestRule.onNodeWithText(
-            stringResource(R.string.deadline_label),
-            useUnmergedTree = true
-        ).assertIsDisplayed()
-        composeTestRule.onNodeWithText(
-            stringResource(R.string.scheduled_at_label),
-            useUnmergedTree = true
-        ).assertIsDisplayed()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_deadline_button))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_scheduled_at_button))
+            .assertIsDisplayed()
 
         composeTestRule.onNodeWithText(stringResource(R.string.name_label), useUnmergedTree = true)
             .onParent()
             .performTextInput(name)
-        composeTestRule.onNodeWithText(
-            stringResource(R.string.deadline_label),
-            useUnmergedTree = true
-        )
-            .onParent()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_deadline_button))
             .performClick()
-        composeTestRule.onNodeWithText(stringResource(R.string.ok_button)).performClick()
         composeTestRule.onNodeWithText(stringResource(R.string.ok_button)).performClick()
         composeTestRule.onNodeWithText(stringResource(R.string.save_button)).performClick()
 
@@ -164,27 +155,17 @@ class TaskFormScreenTest {
             }
         }
 
-        composeTestRule.onNodeWithText(
-            stringResource(R.string.deadline_label),
-            useUnmergedTree = true
-        ).assertIsDisplayed()
-        composeTestRule.onNodeWithText(
-            stringResource(R.string.scheduled_at_label),
-            useUnmergedTree = true
-        ).assertDoesNotExist()
+        composeTestRule.onNodeWithText(stringResource(R.string.deadline_label)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(stringResource(R.string.scheduled_at_label))
+            .assertDoesNotExist()
 
         composeTestRule.onNodeWithText(stringResource(R.string.name_label), useUnmergedTree = true)
             .onParent()
             .performTextReplacement(name)
         composeTestRule.onNodeWithContentDescription(stringResource(R.string.clear_button))
             .performClick()
-        composeTestRule.onNodeWithText(
-            stringResource(R.string.scheduled_at_label),
-            useUnmergedTree = true
-        )
-            .onParent()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_scheduled_at_button))
             .performClick()
-        composeTestRule.onNodeWithText(stringResource(R.string.ok_button)).performClick()
         composeTestRule.onNodeWithText(stringResource(R.string.ok_button)).performClick()
         composeTestRule.onNodeWithText(stringResource(R.string.save_button)).performClick()
 

@@ -1,5 +1,7 @@
 <resources>
     <string name="add_button">Add</string>
+    <string name="add_deadline_button">Add deadline</string>
+    <string name="add_scheduled_at_button">Schedule</string>
     <string name="add_task_button">Add to-do</string>
     <string name="add_task_list_button">Add list</string>
     <string name="advice_button">Advice</string>

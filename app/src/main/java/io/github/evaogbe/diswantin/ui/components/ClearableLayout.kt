@@ -38,8 +38,8 @@ fun ClearableLayout(
                 onClick = onClear,
                 colors = IconButtonDefaults.iconButtonColors(
                     containerColor = colorScheme.surfaceVariant,
-                    contentColor = colorScheme.onSurfaceVariant
-                )
+                    contentColor = colorScheme.onSurfaceVariant,
+                ),
             ) {
                 Icon(
                     imageVector = Icons.Default.Clear,

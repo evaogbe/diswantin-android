@@ -1,57 +1,79 @@
 package io.github.evaogbe.diswantin.task.ui
 
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme.colorScheme
+import androidx.compose.material3.MaterialTheme.shapes
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimeInput
+import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.evaogbe.diswantin.R
-import io.github.evaogbe.diswantin.ui.components.ClearableLayout
-import io.github.evaogbe.diswantin.ui.components.DateTimePickerDialog
 import io.github.evaogbe.diswantin.ui.components.LoadFailureLayout
 import io.github.evaogbe.diswantin.ui.components.PendingLayout
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
+import io.github.evaogbe.diswantin.ui.theme.MinTouchTarget
 import io.github.evaogbe.diswantin.ui.theme.ScreenLg
 import io.github.evaogbe.diswantin.ui.theme.SpaceMd
+import io.github.evaogbe.diswantin.ui.theme.SpaceSm
+import io.github.evaogbe.diswantin.ui.theme.SpaceXs
 import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
+import java.time.Instant
+import java.time.LocalTime
+import java.time.ZoneId
+import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -165,7 +187,7 @@ fun TaskFormScreen(
 }
 
 enum class DateTimeConstraintField {
-    Deadline, ScheduledAt
+    DeadlineDate, DeadlineTime, ScheduledDate, ScheduledTime,
 }
 
 @Composable
@@ -196,7 +218,7 @@ fun TaskFormLayout(
                     Text(
                         text = formError,
                         color = colorScheme.error,
-                        style = typography.titleSmall
+                        style = typography.titleSmall,
                     )
                 }
             }
@@ -211,22 +233,37 @@ fun TaskFormLayout(
                 ),
             )
 
-            if (uiState.scheduledAtInput == null) {
-                DateTimeTextField(
-                    onClick = { dateTimePickerType = DateTimeConstraintField.Deadline },
-                    dateTime = uiState.deadlineInput,
-                    onDateTimeChange = onDeadlineChange,
-                    label = { Text(stringResource(R.string.deadline_label)) },
-                )
-            }
+            when {
+                uiState.deadlineInput != null -> {
+                    DateTimeFieldSet(
+                        dateTime = uiState.deadlineInput,
+                        label = stringResource(R.string.deadline_label),
+                        onEditDate = { dateTimePickerType = DateTimeConstraintField.DeadlineDate },
+                        onEditTime = { dateTimePickerType = DateTimeConstraintField.DeadlineTime },
+                        onClear = { onDeadlineChange(null) },
+                    )
+                }
 
-            if (uiState.deadlineInput == null) {
-                DateTimeTextField(
-                    onClick = { dateTimePickerType = DateTimeConstraintField.ScheduledAt },
-                    dateTime = uiState.scheduledAtInput,
-                    onDateTimeChange = onScheduleAtChange,
-                    label = { Text(stringResource(R.string.scheduled_at_label)) },
-                )
+                uiState.scheduledAtInput != null -> {
+                    DateTimeFieldSet(
+                        dateTime = uiState.scheduledAtInput,
+                        label = stringResource(R.string.scheduled_at_label),
+                        onEditDate = { dateTimePickerType = DateTimeConstraintField.ScheduledDate },
+                        onEditTime = { dateTimePickerType = DateTimeConstraintField.ScheduledTime },
+                        onClear = { onScheduleAtChange(null) },
+                    )
+                }
+
+                else -> {
+                    AddDateTimeButton(
+                        onClick = { dateTimePickerType = DateTimeConstraintField.DeadlineDate },
+                        text = stringResource(R.string.add_deadline_button),
+                    )
+                    AddDateTimeButton(
+                        onClick = { dateTimePickerType = DateTimeConstraintField.ScheduledDate },
+                        text = stringResource(R.string.add_scheduled_at_button),
+                    )
+                }
             }
 
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -238,70 +275,255 @@ fun TaskFormLayout(
 
     when (dateTimePickerType) {
         null -> {}
-        DateTimeConstraintField.Deadline -> {
-            DateTimePickerDialog(
+        DateTimeConstraintField.DeadlineDate -> {
+            TaskFormDatePickerDialog(
                 onDismissRequest = { dateTimePickerType = null },
                 dateTime = uiState.deadlineInput,
-                onSelectDateTime = { selectedDateTime ->
-                    if (selectedDateTime != null) {
-                        onDeadlineChange(selectedDateTime)
+                onSelectDateTime = {
+                    if (it != null) {
+                        onDeadlineChange(it)
                     }
                     dateTimePickerType = null
-                }
+                },
             )
         }
 
-        DateTimeConstraintField.ScheduledAt -> {
-            DateTimePickerDialog(
+        DateTimeConstraintField.DeadlineTime -> {
+            TaskFormTimePickerDialog(
                 onDismissRequest = { dateTimePickerType = null },
-                dateTime = uiState.scheduledAtInput,
-                onSelectDateTime = { selectedDateTime ->
-                    if (selectedDateTime != null) {
-                        onScheduleAtChange(selectedDateTime)
+                time = uiState.deadlineInput?.toLocalTime(),
+                onSelectTime = {
+                    if (uiState.deadlineInput != null) {
+                        onDeadlineChange(
+                            uiState.deadlineInput.withHour(it.hour).withMinute(it.minute),
+                        )
                     }
                     dateTimePickerType = null
-                }
+                },
+            )
+        }
+
+        DateTimeConstraintField.ScheduledDate -> {
+            TaskFormDatePickerDialog(
+                onDismissRequest = { dateTimePickerType = null },
+                dateTime = uiState.scheduledAtInput,
+                onSelectDateTime = {
+                    if (it != null) {
+                        onScheduleAtChange(it)
+                    }
+                    dateTimePickerType = null
+                },
+            )
+        }
+
+        DateTimeConstraintField.ScheduledTime -> {
+            TaskFormTimePickerDialog(
+                onDismissRequest = { dateTimePickerType = null },
+                time = uiState.scheduledAtInput?.toLocalTime(),
+                onSelectTime = {
+                    if (uiState.scheduledAtInput != null) {
+                        onScheduleAtChange(
+                            uiState.scheduledAtInput.withHour(it.hour).withMinute(it.minute),
+                        )
+                    }
+                    dateTimePickerType = null
+                },
             )
         }
     }
 }
 
 @Composable
-fun DateTimeTextField(
-    onClick: () -> Unit,
-    dateTime: ZonedDateTime?,
-    onDateTimeChange: (ZonedDateTime?) -> Unit,
-    label: @Composable (() -> Unit),
+fun DateTimeFieldSet(
+    dateTime: ZonedDateTime,
+    label: String,
+    onEditDate: () -> Unit,
+    onEditTime: () -> Unit,
+    onClear: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-
-    LaunchedEffect(isPressed) {
-        if (isPressed) {
-            onClick()
+    Column(modifier = modifier) {
+        Text(text = label, style = typography.bodyLarge)
+        Spacer(Modifier.size(SpaceSm))
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(SpaceSm),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Surface(onClick = onEditDate, color = colorScheme.surfaceVariant) {
+                Box(
+                    modifier = Modifier
+                        .padding(horizontal = SpaceSm, vertical = SpaceXs)
+                        .sizeIn(minWidth = MinTouchTarget, minHeight = MinTouchTarget),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = dateTime.format(
+                            DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
+                        ),
+                    )
+                }
+            }
+            Surface(onClick = onEditTime, color = colorScheme.surfaceVariant) {
+                Box(
+                    modifier = Modifier
+                        .padding(horizontal = SpaceSm, vertical = SpaceXs)
+                        .sizeIn(minWidth = MinTouchTarget, minHeight = MinTouchTarget),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = dateTime.format(
+                            DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
+                        ),
+                    )
+                }
+            }
+            IconButton(onClick = onClear) {
+                Icon(
+                    imageVector = Icons.Default.Clear,
+                    contentDescription = stringResource(R.string.clear_button),
+                    tint = colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
+}
 
-    ClearableLayout(
-        canClear = dateTime != null,
-        onClear = { onDateTimeChange(null) },
+@Composable
+fun AddDateTimeButton(onClick: () -> Unit, text: String, modifier: Modifier = Modifier) {
+    TextButton(
+        onClick = onClick,
         modifier = modifier,
+        contentPadding = ButtonDefaults.TextButtonWithIconContentPadding,
     ) {
-        OutlinedTextField(
-            value = dateTime?.format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT))
-                ?: "",
-            onValueChange = {},
-            label = label,
-            trailingIcon = {
-                Icon(
-                    imageVector = Icons.Default.DateRange,
-                    contentDescription = null
-                )
-            },
-            singleLine = true,
-            interactionSource = interactionSource,
+        Icon(
+            painter = painterResource(R.drawable.baseline_schedule_24),
+            contentDescription = null,
+            modifier = Modifier.size(ButtonDefaults.IconSize),
         )
+        Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+        Text(text = text)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TaskFormDatePickerDialog(
+    onDismissRequest: () -> Unit,
+    dateTime: ZonedDateTime?,
+    onSelectDateTime: (ZonedDateTime?) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val datePickerState = rememberDatePickerState(
+        initialSelectedDateMillis = dateTime?.toInstant()?.toEpochMilli()
+    )
+    DatePickerDialog(
+        onDismissRequest = onDismissRequest,
+        confirmButton = {
+            TextButton(onClick = {
+                onSelectDateTime(datePickerState.selectedDateMillis?.let {
+                    Instant.ofEpochMilli(it)
+                        .atZone(ZoneOffset.UTC)
+                        .withZoneSameLocal(dateTime?.zone ?: ZoneId.systemDefault())
+                        .withHour(dateTime?.hour ?: 0)
+                        .withMinute(dateTime?.minute ?: 0)
+                })
+            }) {
+                Text(stringResource(R.string.ok_button))
+            }
+        },
+        modifier = modifier.verticalScroll(rememberScrollState()),
+        dismissButton = {
+            TextButton(onClick = onDismissRequest) {
+                Text(stringResource(R.string.cancel_button))
+            }
+        }
+    ) {
+        DatePicker(state = datePickerState)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TaskFormTimePickerDialog(
+    onDismissRequest: () -> Unit,
+    time: LocalTime?,
+    onSelectTime: (LocalTime) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val timePickerState = rememberTimePickerState(
+        initialHour = time?.hour ?: 0,
+        initialMinute = time?.minute ?: 0
+    )
+    var showDial by rememberSaveable { mutableStateOf(true) }
+
+    Dialog(
+        onDismissRequest = onDismissRequest,
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+    ) {
+        Surface(
+            modifier = modifier
+                .width(IntrinsicSize.Min)
+                .height(IntrinsicSize.Min)
+                .background(shape = shapes.extraLarge, color = colorScheme.surface),
+            shape = shapes.extraLarge,
+            color = colorScheme.surface,
+            tonalElevation = 6.dp,
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 20.dp),
+                    text = stringResource(R.string.time_picker_dialog_title),
+                    style = typography.labelMedium,
+                )
+
+                if (showDial) {
+                    TimePicker(state = timePickerState)
+                } else {
+                    TimeInput(state = timePickerState)
+                }
+
+                Row(
+                    modifier = Modifier
+                        .height(40.dp)
+                        .fillMaxWidth(),
+                ) {
+                    if (showDial) {
+                        IconButton(onClick = { showDial = false }) {
+                            Icon(
+                                painter = painterResource(R.drawable.baseline_keyboard_24),
+                                contentDescription = stringResource(
+                                    R.string.time_picker_switch_to_input_mode
+                                ),
+                            )
+                        }
+                    } else {
+                        IconButton(onClick = { showDial = true }) {
+                            Icon(
+                                painter = painterResource(R.drawable.baseline_schedule_24),
+                                contentDescription = stringResource(
+                                    R.string.time_picker_switch_to_dial_mode
+                                ),
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.weight(1f))
+                    TextButton(onClick = onDismissRequest) {
+                        Text(stringResource(R.string.cancel_button))
+                    }
+                    TextButton(onClick = {
+                        onSelectTime(LocalTime.of(timePickerState.hour, timePickerState.minute))
+                    }) {
+                        Text(stringResource(R.string.ok_button))
+                    }
+                }
+            }
+        }
     }
 }
 

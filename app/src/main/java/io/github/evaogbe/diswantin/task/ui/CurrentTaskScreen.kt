@@ -152,7 +152,7 @@ fun EmptyCurrentTaskLayout(onAddTask: () -> Unit, modifier: Modifier = Modifier)
                 Icon(
                     imageVector = Icons.Default.Add,
                     contentDescription = null,
-                    modifier = Modifier.size(ButtonDefaults.IconSize)
+                    modifier = Modifier.size(ButtonDefaults.IconSize),
                 )
                 Spacer(Modifier.size(ButtonDefaults.IconSpacing))
                 Text(stringResource(R.string.add_task_button))
