@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import timber.log.Timber
 import java.util.regex.Pattern
@@ -36,7 +35,7 @@ class TaskSearchViewModel @Inject constructor(
                 }.catch { e ->
                     Timber.e(e, "Failed to search for tasks by query: %s", query)
                     emit(TaskSearchUiState.Failure)
-                }.onStart { emit(TaskSearchUiState.Pending) }
+                }
         }
     }.stateIn(
         scope = viewModelScope,

@@ -6,8 +6,6 @@ import kotlinx.collections.immutable.ImmutableList
 sealed interface TaskSearchUiState {
     data object Initial : TaskSearchUiState
 
-    data object Pending : TaskSearchUiState
-
     data object Failure : TaskSearchUiState
 
     data class Success(val searchResults: ImmutableList<Task>) : TaskSearchUiState

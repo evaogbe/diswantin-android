@@ -56,7 +56,6 @@ import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.ui.components.AutoFocusTextField
 import io.github.evaogbe.diswantin.ui.components.LoadFailureLayout
-import io.github.evaogbe.diswantin.ui.components.PendingLayout
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.evaogbe.diswantin.ui.theme.IconSizeLg
 import io.github.evaogbe.diswantin.ui.theme.ScreenLg
@@ -169,10 +168,6 @@ fun TaskSearchScreen(
                         .fillMaxSize()
                         .background(color = colorScheme.surfaceVariant),
                 )
-            }
-
-            is TaskSearchUiState.Pending -> {
-                PendingLayout(modifier = Modifier.padding(innerPadding))
             }
 
             is TaskSearchUiState.Failure -> {
