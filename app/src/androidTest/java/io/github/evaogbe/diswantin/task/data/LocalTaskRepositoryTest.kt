@@ -24,6 +24,7 @@ import org.junit.runner.RunWith
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
+import java.time.ZonedDateTime
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
@@ -61,8 +62,7 @@ class LocalTaskRepositoryTest {
         )
 
         taskRepository.getCurrentTask(
-            scheduledBefore = Instant.parse("2024-08-23T18:00:00Z"),
-            doneBefore = Instant.parse("2024-08-23T04:00:00Z"),
+            CurrentTaskParams(ZonedDateTime.parse("2024-08-23T13:00-04:00[America/New_York]"))
         )
             .test {
                 assertThat(awaitItem()).isNull()
@@ -98,9 +98,9 @@ class LocalTaskRepositoryTest {
                 val updatedTask2 = taskRepository.update(
                     EditTaskForm(
                         name = task2.name,
-                        deadline = Instant.parse("2024-08-23T17:50:00Z"),
-                        scheduledAt = task2.scheduledAt,
-                        recurring = false,
+                        deadline = Instant.parse("2024-08-24T04:00:00Z"),
+                        scheduledAt = null,
+                        recurring = task2.recurring,
                         existingTask = task2,
                     )
                 )
@@ -112,9 +112,9 @@ class LocalTaskRepositoryTest {
                 var updatedTask1 = taskRepository.update(
                     EditTaskForm(
                         name = task1.name,
-                        deadline = task1.deadline,
+                        deadline = null,
                         scheduledAt = Instant.parse("2024-08-23T18:00:00Z"),
-                        recurring = false,
+                        recurring = task1.recurring,
                         existingTask = task1,
                     )
                 )
@@ -126,9 +126,9 @@ class LocalTaskRepositoryTest {
                 updatedTask1 = taskRepository.update(
                     EditTaskForm(
                         name = updatedTask1.name,
-                        deadline = updatedTask1.deadline,
+                        deadline = null,
                         scheduledAt = Instant.parse("2024-08-23T19:00:00Z"),
-                        recurring = false,
+                        recurring = updatedTask1.recurring,
                         existingTask = updatedTask1,
                     )
                 )
@@ -190,7 +190,7 @@ class LocalTaskRepositoryTest {
                 val task4 = taskRepository.create(
                     NewTaskForm(
                         name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-                        deadline = Instant.parse("2024-08-23T17:50:00Z"),
+                        deadline = null,
                         scheduledAt = null,
                         recurring = true,
                         clock = clock,
@@ -200,6 +200,34 @@ class LocalTaskRepositoryTest {
                 assertThat(awaitItem())
                     .isNotNull()
                     .isDataClassEqualTo(task4)
+
+                taskRepository.update(
+                    EditTaskForm(
+                        name = updatedTask2.name,
+                        deadline = Instant.parse("2024-08-24T00:00:00Z"),
+                        scheduledAt = null,
+                        recurring = false,
+                        existingTask = updatedTask2,
+                    )
+                )
+
+                assertThat(awaitItem())
+                    .isNotNull()
+                    .isDataClassEqualTo(updatedTask1)
+
+                val updatedTask4 = taskRepository.update(
+                    EditTaskForm(
+                        name = task4.name,
+                        deadline = Instant.parse("2024-08-23T23:00:00Z"),
+                        scheduledAt = null,
+                        recurring = true,
+                        existingTask = task4,
+                    )
+                )
+
+                assertThat(awaitItem())
+                    .isNotNull()
+                    .isDataClassEqualTo(updatedTask4)
             }
     }
 
@@ -214,8 +242,11 @@ class LocalTaskRepositoryTest {
         )
 
         taskRepository.getCurrentTask(
-            scheduledBefore = Instant.parse("2024-08-23T18:00:00Z"),
-            doneBefore = Instant.parse("2024-08-24T04:00:00Z"),
+            CurrentTaskParams(
+                scheduledBefore = Instant.parse("2024-08-23T18:00:00Z"),
+                doneBefore = Instant.parse("2024-08-24T04:00:00Z"),
+                recurringDeadline = Instant.parse("2024-08-24T23:59:59.999Z"),
+            ),
         )
             .test {
                 assertThat(awaitItem()).isNull()

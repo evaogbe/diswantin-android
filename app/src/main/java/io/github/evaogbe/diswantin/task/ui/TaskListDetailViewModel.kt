@@ -18,8 +18,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.time.Clock
+import java.time.LocalTime
 import java.time.ZonedDateTime
-import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 
 @HiltViewModel
@@ -42,7 +42,7 @@ class TaskListDetailViewModel @Inject constructor(
         ) { initialized, taskListWithTasks, userMessage ->
             when {
                 taskListWithTasks != null -> {
-                    val midnight = ZonedDateTime.now(clock).truncatedTo(ChronoUnit.DAYS).toInstant()
+                    val midnight = ZonedDateTime.now(clock).with(LocalTime.MIN).toInstant()
                     TaskListDetailUiState.Success(
                         taskList = taskListWithTasks.taskList,
                         tasks = taskListWithTasks.tasks.map { task ->

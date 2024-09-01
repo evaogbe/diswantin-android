@@ -31,14 +31,25 @@ interface TaskDao {
         ORDER BY
             t2.scheduled_at IS NULL,
             t2.scheduled_at,
-            t2.deadline IS NULL,
-            t2.deadline,
-            t.recurring DESC,
+            CASE 
+                WHEN t2.deadline IS NOT NULL THEN 0
+                WHEN t2.recurring THEN 0
+                ELSE 1
+                END,
+            CASE
+                WHEN t2.deadline IS NOT NULL THEN t2.deadline
+                WHEN t2.recurring THEN :recurringDeadline
+                ELSE NULL
+            END,
             t2.created_at,
             t2.id
         LIMIT 1"""
     )
-    fun getCurrentTask(scheduledBefore: Instant, doneBefore: Instant): Flow<Task?>
+    fun getCurrentTask(
+        scheduledBefore: Instant,
+        doneBefore: Instant,
+        recurringDeadline: Instant
+    ): Flow<Task?>
 
     @Query("SELECT * FROM task WHERE id = :id LIMIT 1")
     fun getById(id: Long): Flow<Task>

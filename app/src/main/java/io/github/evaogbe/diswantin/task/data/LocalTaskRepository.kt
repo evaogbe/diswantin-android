@@ -13,8 +13,12 @@ class LocalTaskRepository @Inject constructor(
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     private val clock: Clock,
 ) : TaskRepository {
-    override fun getCurrentTask(scheduledBefore: Instant, doneBefore: Instant) =
-        taskDao.getCurrentTask(scheduledBefore = scheduledBefore, doneBefore = doneBefore)
+    override fun getCurrentTask(params: CurrentTaskParams) =
+        taskDao.getCurrentTask(
+            scheduledBefore = params.scheduledBefore,
+            doneBefore = params.doneBefore,
+            recurringDeadline = params.recurringDeadline,
+        )
             .flowOn(ioDispatcher)
 
     override fun getById(id: Long) = taskDao.getById(id).flowOn(ioDispatcher)

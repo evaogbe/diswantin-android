@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.evaogbe.diswantin.R
+import io.github.evaogbe.diswantin.task.data.CurrentTaskParams
 import io.github.evaogbe.diswantin.task.data.TaskRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -17,7 +18,6 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.time.Clock
 import java.time.ZonedDateTime
-import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 
 @HiltViewModel
@@ -25,18 +25,13 @@ class CurrentTaskViewModel @Inject constructor(
     private val taskRepository: TaskRepository,
     private val clock: Clock,
 ) : ViewModel() {
-    private val now = MutableStateFlow(ZonedDateTime.now(clock))
+    private val queryParams = MutableStateFlow(CurrentTaskParams(ZonedDateTime.now(clock)))
 
     private val userMessage = MutableStateFlow<Int?>(null)
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val uiState = combine(
-        now.flatMapLatest {
-            taskRepository.getCurrentTask(
-                scheduledBefore = it.plusHours(1).toInstant(),
-                doneBefore = it.truncatedTo(ChronoUnit.DAYS).toInstant(),
-            )
-        },
+        queryParams.flatMapLatest { taskRepository.getCurrentTask(it) },
         userMessage
     ) { task, userMessage ->
         if (task == null) {
@@ -54,7 +49,7 @@ class CurrentTaskViewModel @Inject constructor(
     )
 
     fun initialize() {
-        now.value = ZonedDateTime.now(clock)
+        queryParams.value = CurrentTaskParams(ZonedDateTime.now(clock))
     }
 
     fun markCurrentTaskDone() {
@@ -63,7 +58,7 @@ class CurrentTaskViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 taskRepository.markDone(task.id)
-                now.value = ZonedDateTime.now(clock)
+                queryParams.value = CurrentTaskParams(ZonedDateTime.now(clock))
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {

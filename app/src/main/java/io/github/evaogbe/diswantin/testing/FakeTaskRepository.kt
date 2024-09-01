@@ -1,5 +1,6 @@
 package io.github.evaogbe.diswantin.testing
 
+import io.github.evaogbe.diswantin.task.data.CurrentTaskParams
 import io.github.evaogbe.diswantin.task.data.EditTaskForm
 import io.github.evaogbe.diswantin.task.data.NewTaskForm
 import io.github.evaogbe.diswantin.task.data.Task
@@ -19,7 +20,7 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
     val tasks
         get() = db.taskTable.value.values
 
-    override fun getCurrentTask(scheduledBefore: Instant, doneBefore: Instant): Flow<Task?> =
+    override fun getCurrentTask(params: CurrentTaskParams): Flow<Task?> =
         combine(
             throwingMethods,
             db.taskTable,
@@ -30,26 +31,30 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
                 throw RuntimeException("Test")
             }
 
-            tasks.values.sortedWith(
-                compareBy(nullsLast(), Task::scheduledAt)
-                    .thenComparing(Task::deadline, nullsLast())
-                    .thenComparing(Task::createdAt)
-                    .thenComparing(Task::id)
-            ).mapNotNull { task ->
-                taskPaths.values
-                    .filter { path ->
-                        val doneAt = taskCompletions.values
-                            .filter { it.taskId == path.ancestor }
-                            .maxOfOrNull { it.doneAt }
-                        path.descendant == task.id && tasks[path.ancestor]?.let {
-                            doneAt == null || it.recurring && doneAt < doneBefore
-                        } == true
-                    }
-                    .maxByOrNull { it.depth }
-                    ?.let { tasks[it.ancestor] }
-            }.firstOrNull { task ->
-                task.scheduledAt?.let { it <= scheduledBefore } != false
-            }
+            tasks.values
+                .sortedWith(
+                    compareBy(nullsLast(), Task::scheduledAt)
+                        .thenComparing({
+                            it.deadline ?: if (it.recurring) params.recurringDeadline else null
+                        }, nullsLast())
+                        .thenComparing(Task::createdAt)
+                        .thenComparing(Task::id)
+                )
+                .mapNotNull { task ->
+                    taskPaths.values
+                        .filter { path ->
+                            val doneAt = taskCompletions.values
+                                .filter { it.taskId == path.ancestor }
+                                .maxOfOrNull { it.doneAt }
+                            path.descendant == task.id && tasks[path.ancestor]?.let {
+                                doneAt == null || it.recurring && doneAt < params.doneBefore
+                            } == true
+                        }
+                        .maxByOrNull { it.depth }
+                        ?.let { tasks[it.ancestor] }
+                }.firstOrNull { task ->
+                    task.scheduledAt?.let { it <= params.scheduledBefore } != false
+                }
         }
 
     override fun getById(id: Long): Flow<Task> =

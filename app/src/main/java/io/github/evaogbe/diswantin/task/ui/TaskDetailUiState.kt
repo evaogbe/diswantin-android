@@ -4,10 +4,10 @@ import androidx.annotation.StringRes
 import io.github.evaogbe.diswantin.task.data.TaskDetail
 import java.time.Clock
 import java.time.Instant
+import java.time.LocalTime
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
-import java.time.temporal.ChronoUnit
 
 sealed interface TaskDetailUiState {
     data object Pending : TaskDetailUiState
@@ -25,7 +25,7 @@ sealed interface TaskDetailUiState {
 
         val isDone = if (task.recurring) {
             task.doneAt?.let {
-                it < ZonedDateTime.now(clock).truncatedTo(ChronoUnit.DAYS).toInstant()
+                it < ZonedDateTime.now(clock).with(LocalTime.MIN).toInstant()
             } == false
         } else {
             task.doneAt != null
