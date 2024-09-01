@@ -97,7 +97,7 @@ class LocalTaskRepositoryTest {
                 val updatedTask2 = taskRepository.update(
                     EditTaskForm(
                         name = task2.name,
-                        deadline = Instant.parse("2024-08-23T17:00:00Z"),
+                        deadline = Instant.parse("2024-08-23T17:50:00Z"),
                         scheduledAt = task2.scheduledAt,
                         recurring = false,
                         task = task2,
@@ -195,6 +195,26 @@ class LocalTaskRepositoryTest {
                 assertThat(awaitItem())
                     .isNotNull()
                     .isDataClassEqualTo(updatedTask1)
+
+                val task4 = taskRepository.create(
+                    NewTaskForm(
+                        name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                        deadline = Instant.parse("2024-08-23T17:50:00Z"),
+                        scheduledAt = null,
+                        recurring = true,
+                        clock = clock,
+                    )
+                )
+
+                assertThat(awaitItem())
+                    .isNotNull()
+                    .isDataClassEqualTo(updatedTask1)
+
+                taskRepository.update(updatedTask1.copy(doneAt = null, recurring = false))
+
+                assertThat(awaitItem())
+                    .isNotNull()
+                    .isDataClassEqualTo(task4)
             }
     }
 

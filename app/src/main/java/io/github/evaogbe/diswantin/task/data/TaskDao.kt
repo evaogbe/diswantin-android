@@ -28,6 +28,7 @@ interface TaskDao {
             t2.scheduled_at,
             t2.deadline IS NULL,
             t2.deadline,
+            t.recurring DESC,
             t2.created_at,
             t2.id
         LIMIT 1"""
