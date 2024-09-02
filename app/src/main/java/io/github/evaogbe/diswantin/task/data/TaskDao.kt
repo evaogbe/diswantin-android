@@ -14,7 +14,8 @@ interface TaskDao {
         """SELECT
             t.*,
             t2.scheduled_at AS scheduled_at_priority,
-            t2.deadline AS deadline_priority,
+            t2.deadline_date AS deadline_date_priority,
+            t2.deadline_time AS deadline_time_priority,
             t2.recurring AS recurring_priority,
             t2.created_at AS created_at_priority,
             t2.id AS id_priority
@@ -38,8 +39,10 @@ interface TaskDao {
             scheduled_at_priority IS NULL,
             scheduled_at_priority,
             recurring_priority DESC,
-            deadline_priority IS NULL,
-            deadline_priority,
+            deadline_date_priority IS NULL,
+            deadline_date_priority,
+            deadline_time_priority IS NULL,
+            deadline_time_priority,
             created_at_priority,
             id_priority
         LIMIT 20"""
@@ -53,7 +56,8 @@ interface TaskDao {
         """SELECT
             t.id,
             t.name,
-            t.deadline,
+            t.deadline_date,
+            t.deadline_time,
             t.scheduled_at,
             t.recurring,
             c.done_at,

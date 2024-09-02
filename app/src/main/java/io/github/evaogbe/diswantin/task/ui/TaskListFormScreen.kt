@@ -254,7 +254,7 @@ fun TaskListFormLayout(
             itemsIndexed(tasks, key = { _, task -> task.id }) { index, task ->
                 if (index == editingTaskIndex) {
                     Spacer(Modifier.size(SpaceSm))
-                    ClearableLayout(canClear = true, onClear = stopEditTask) {
+                    ClearableLayout(onClear = stopEditTask, invert = true) {
                         AutocompleteField(
                             query = taskQuery,
                             onQueryChange = { taskQuery = it },
@@ -369,42 +369,72 @@ private fun TaskListFormScreenPreview_New() {
 @Composable
 private fun TaskListFormScreenPreview_Edit() {
     DiswantinTheme {
+        TaskListFormScreen(
+            isNew = false,
+            onClose = {},
+            onSave = {},
+            snackbarHostState = SnackbarHostState(),
+            uiState = TaskListFormUiState.Success(
+                tasks = persistentListOf(
+                    Task(
+                        id = 1L,
+                        createdAt = Instant.now(),
+                        name = "Brush teeth",
+                    ),
+                    Task(
+                        id = 2L,
+                        createdAt = Instant.now(),
+                        name = "Shower",
+                    ),
+                    Task(
+                        id = 3L,
+                        createdAt = Instant.now(),
+                        name = "Eat breakfast",
+                    ),
+                ),
+                editingTaskIndex = null,
+                taskOptions = persistentListOf(),
+                hasSaveError = true,
+                userMessage = null,
+            ),
+            name = "Morning routine",
+            onNameChange = {},
+            onRemoveTask = {},
+            onTaskSearch = {},
+            onSelectTaskOption = { _, _ -> },
+            startEditTask = {},
+            stopEditTask = {},
+        )
+    }
+}
+
+@DevicePreviews
+@Composable
+private fun TaskListFormLayoutPreview() {
+    DiswantinTheme {
         Surface {
-            TaskListFormScreen(
-                isNew = false,
-                onClose = {},
-                onSave = {},
-                snackbarHostState = SnackbarHostState(),
+            TaskListFormLayout(
                 uiState = TaskListFormUiState.Success(
                     tasks = persistentListOf(
                         Task(
                             id = 1L,
                             createdAt = Instant.now(),
                             name = "Brush teeth",
-                        ),
-                        Task(
-                            id = 2L,
-                            createdAt = Instant.now(),
-                            name = "Shower",
-                        ),
-                        Task(
-                            id = 3L,
-                            createdAt = Instant.now(),
-                            name = "Eat breakfast",
-                        ),
+                        )
                     ),
-                    editingTaskIndex = null,
+                    editingTaskIndex = 0,
                     taskOptions = persistentListOf(),
-                    hasSaveError = true,
+                    hasSaveError = false,
                     userMessage = null,
                 ),
-                name = "Morning routine",
+                name = "",
                 onNameChange = {},
                 onRemoveTask = {},
                 onTaskSearch = {},
                 onSelectTaskOption = { _, _ -> },
                 startEditTask = {},
                 stopEditTask = {},
+                formError = null,
             )
         }
     }

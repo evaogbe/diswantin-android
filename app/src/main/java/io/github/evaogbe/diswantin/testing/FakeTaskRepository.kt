@@ -12,6 +12,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import java.time.Instant
+import java.time.LocalTime
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import kotlin.reflect.KFunction
 
 class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRepository {
@@ -35,7 +38,23 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
                 .sortedWith(
                     compareBy(nullsLast(), Task::scheduledAt)
                         .thenComparing({
-                            it.deadline ?: if (it.recurring) params.recurringDeadline else null
+                            when {
+                                it.deadlineDate != null && it.deadlineTime != null -> {
+                                    it.deadlineDate
+                                        .atTime(it.deadlineTime)
+                                        .atZone(ZoneId.systemDefault())
+                                }
+
+                                it.deadlineDate != null -> {
+                                    it.deadlineDate
+                                        .atTime(LocalTime.MAX)
+                                        .atZone(ZoneId.systemDefault())
+                                }
+
+                                it.deadlineTime != null -> ZonedDateTime.now().with(it.deadlineTime)
+                                it.recurring -> params.recurringDeadline
+                                else -> null
+                            }
                         }, nullsLast())
                         .thenComparing(Task::recurring, reverseOrder())
                         .thenComparing(Task::createdAt)
@@ -82,7 +101,8 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
                 TaskDetail(
                     id = task.id,
                     name = task.name,
-                    deadline = task.deadline,
+                    deadlineDate = task.deadlineDate,
+                    deadlineTime = task.deadlineTime,
                     scheduledAt = task.scheduledAt,
                     recurring = task.recurring,
                     doneAt = taskCompletions.values

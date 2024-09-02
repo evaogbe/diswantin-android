@@ -7,6 +7,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import java.time.Clock
 import java.time.Instant
+import java.time.LocalTime
+import java.time.ZonedDateTime
 import javax.inject.Inject
 
 class LocalTaskRepository @Inject constructor(
@@ -23,7 +25,7 @@ class LocalTaskRepository @Inject constructor(
                 priorities.sortedWith(
                     compareBy(nullsLast(), TaskPriority::scheduledAtPriority)
                         .thenComparing({
-                            it.deadlinePriority
+                            it.deadline
                                 ?: if (it.recurringPriority) params.recurringDeadline else null
                         }, nullsLast())
                         .thenComparing(TaskPriority::recurringPriority, reverseOrder())
@@ -34,6 +36,20 @@ class LocalTaskRepository @Inject constructor(
                     ?.task
             }
             .flowOn(ioDispatcher)
+
+    private val TaskPriority.deadline
+        get() = when {
+            deadlineDatePriority != null && deadlineTimePriority != null -> {
+                deadlineDatePriority.atTime(deadlineTimePriority).atZone(clock.zone)
+            }
+
+            deadlineDatePriority != null -> {
+                deadlineDatePriority.atTime(LocalTime.MAX).atZone(clock.zone)
+            }
+
+            deadlineTimePriority != null -> ZonedDateTime.now(clock).with(deadlineTimePriority)
+            else -> null
+        }
 
     override fun getById(id: Long) = taskDao.getById(id).flowOn(ioDispatcher)
 

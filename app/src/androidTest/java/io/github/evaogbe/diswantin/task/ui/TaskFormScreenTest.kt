@@ -96,7 +96,9 @@ class TaskFormScreenTest {
             }
         }
 
-        composeTestRule.onNodeWithText(stringResource(R.string.add_deadline_button))
+        composeTestRule.onNodeWithText(stringResource(R.string.add_deadline_date_button))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_deadline_time_button))
             .assertIsDisplayed()
         composeTestRule.onNodeWithText(stringResource(R.string.add_scheduled_at_button))
             .assertIsDisplayed()
@@ -104,7 +106,7 @@ class TaskFormScreenTest {
         composeTestRule.onNodeWithText(stringResource(R.string.name_label), useUnmergedTree = true)
             .onParent()
             .performTextInput(name)
-        composeTestRule.onNodeWithText(stringResource(R.string.add_deadline_button))
+        composeTestRule.onNodeWithText(stringResource(R.string.add_deadline_date_button))
             .performClick()
         composeTestRule.onNodeWithText(stringResource(R.string.ok_button)).performClick()
         composeTestRule.onNodeWithText(stringResource(R.string.save_button)).performClick()
@@ -142,7 +144,7 @@ class TaskFormScreenTest {
     fun popsBackStack_whenTaskUpdated() {
         val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
         var onPopBackStackCalled = false
-        val task = genTask().copy(deadline = faker.random.randomFutureDate().toInstant())
+        val task = genTask().copy(deadlineDate = faker.random.randomFutureDate().toLocalDate())
         val taskRepository = FakeTaskRepository.withTasks(task)
         val viewModel = createTaskFormViewModelForEdit(taskRepository)
 
@@ -155,8 +157,13 @@ class TaskFormScreenTest {
             }
         }
 
-        composeTestRule.onNodeWithText(stringResource(R.string.deadline_label)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(stringResource(R.string.deadline_date_label))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_deadline_time_button))
+            .assertIsDisplayed()
         composeTestRule.onNodeWithText(stringResource(R.string.scheduled_at_label))
+            .assertDoesNotExist()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_scheduled_at_button))
             .assertDoesNotExist()
 
         composeTestRule.onNodeWithText(stringResource(R.string.name_label), useUnmergedTree = true)

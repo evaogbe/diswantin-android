@@ -23,6 +23,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import java.time.Clock
 import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
 
@@ -71,7 +73,8 @@ class LocalTaskRepositoryTest {
                     taskRepository.create(
                         NewTaskForm(
                             name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-                            deadline = null,
+                            deadlineDate = null,
+                            deadlineTime = null,
                             scheduledAt = null,
                             recurring = false,
                             clock = clock,
@@ -86,7 +89,8 @@ class LocalTaskRepositoryTest {
                     taskRepository.create(
                         NewTaskForm(
                             name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-                            deadline = null,
+                            deadlineDate = null,
+                            deadlineTime = null,
                             scheduledAt = null,
                             recurring = false,
                             clock = clock,
@@ -98,7 +102,8 @@ class LocalTaskRepositoryTest {
                 val updatedTask2 = taskRepository.update(
                     EditTaskForm(
                         name = task2.name,
-                        deadline = Instant.parse("2024-08-24T04:00:00Z"),
+                        deadlineDate = LocalDate.parse("2024-08-24"),
+                        deadlineTime = LocalTime.parse("00:00"),
                         scheduledAt = null,
                         recurring = task2.recurring,
                         existingTask = task2,
@@ -112,7 +117,8 @@ class LocalTaskRepositoryTest {
                 var updatedTask1 = taskRepository.update(
                     EditTaskForm(
                         name = task1.name,
-                        deadline = null,
+                        deadlineDate = null,
+                        deadlineTime = null,
                         scheduledAt = Instant.parse("2024-08-23T18:00:00Z"),
                         recurring = task1.recurring,
                         existingTask = task1,
@@ -126,7 +132,8 @@ class LocalTaskRepositoryTest {
                 updatedTask1 = taskRepository.update(
                     EditTaskForm(
                         name = updatedTask1.name,
-                        deadline = null,
+                        deadlineDate = null,
+                        deadlineTime = null,
                         scheduledAt = Instant.parse("2024-08-23T19:00:00Z"),
                         recurring = updatedTask1.recurring,
                         existingTask = updatedTask1,
@@ -141,7 +148,8 @@ class LocalTaskRepositoryTest {
                     taskRepository.create(
                         NewTaskForm(
                             name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-                            deadline = null,
+                            deadlineDate = null,
+                            deadlineTime = null,
                             scheduledAt = null,
                             recurring = false,
                             clock = clock,
@@ -176,7 +184,8 @@ class LocalTaskRepositoryTest {
                 updatedTask1 = taskRepository.update(
                     EditTaskForm(
                         name = updatedTask1.name,
-                        deadline = null,
+                        deadlineDate = null,
+                        deadlineTime = null,
                         scheduledAt = null,
                         recurring = false,
                         existingTask = updatedTask1,
@@ -190,7 +199,8 @@ class LocalTaskRepositoryTest {
                 val task4 = taskRepository.create(
                     NewTaskForm(
                         name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-                        deadline = null,
+                        deadlineDate = null,
+                        deadlineTime = null,
                         scheduledAt = null,
                         recurring = true,
                         clock = clock,
@@ -204,7 +214,8 @@ class LocalTaskRepositoryTest {
                 taskRepository.update(
                     EditTaskForm(
                         name = updatedTask2.name,
-                        deadline = Instant.parse("2024-08-24T00:00:00Z"),
+                        deadlineDate = LocalDate.parse("2024-08-23"),
+                        deadlineTime = LocalTime.parse("23:00"),
                         scheduledAt = null,
                         recurring = false,
                         existingTask = updatedTask2,
@@ -218,7 +229,8 @@ class LocalTaskRepositoryTest {
                 val updatedTask4 = taskRepository.update(
                     EditTaskForm(
                         name = task4.name,
-                        deadline = Instant.parse("2024-08-23T23:00:00Z"),
+                        deadlineDate = LocalDate.parse("2024-08-23"),
+                        deadlineTime = LocalTime.parse("23:00"),
                         scheduledAt = null,
                         recurring = true,
                         existingTask = task4,
@@ -245,7 +257,7 @@ class LocalTaskRepositoryTest {
             CurrentTaskParams(
                 scheduledBefore = Instant.parse("2024-08-23T18:00:00Z"),
                 doneBefore = Instant.parse("2024-08-24T04:00:00Z"),
-                recurringDeadline = Instant.parse("2024-08-24T23:59:59.999Z"),
+                recurringDeadline = ZonedDateTime.parse("2024-08-24T23:59:59.999-04:00[America/New_York]"),
             ),
         )
             .test {
@@ -254,7 +266,8 @@ class LocalTaskRepositoryTest {
                 val task1 = taskRepository.create(
                     NewTaskForm(
                         name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-                        deadline = null,
+                        deadlineDate = null,
+                        deadlineTime = null,
                         scheduledAt = null,
                         recurring = false,
                         clock = clock,
@@ -268,7 +281,8 @@ class LocalTaskRepositoryTest {
                 val task2 = taskRepository.create(
                     NewTaskForm(
                         name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-                        deadline = null,
+                        deadlineDate = null,
+                        deadlineTime = null,
                         scheduledAt = null,
                         recurring = false,
                         clock = clock,
@@ -288,8 +302,9 @@ class LocalTaskRepositoryTest {
                 val updatedTask1 = taskRepository.update(
                     EditTaskForm(
                         name = task1.name,
-                        deadline = task1.deadline,
-                        scheduledAt = task1.scheduledAt,
+                        deadlineDate = null,
+                        deadlineTime = null,
+                        scheduledAt = null,
                         recurring = true,
                         existingTask = task1,
                     )
@@ -320,7 +335,8 @@ class LocalTaskRepositoryTest {
             taskRepository.create(
                 NewTaskForm(
                     name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-                    deadline = null,
+                    deadlineDate = null,
+                    deadlineTime = null,
                     scheduledAt = null,
                     recurring = false,
                     clock = clock,

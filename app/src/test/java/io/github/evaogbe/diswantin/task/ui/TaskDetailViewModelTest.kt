@@ -156,7 +156,8 @@ class TaskDetailViewModelTest {
     private fun Task.toTaskDetail() = TaskDetail(
         id = id,
         name = name,
-        deadline = deadline,
+        deadlineDate = deadlineDate,
+        deadlineTime = deadlineTime,
         scheduledAt = scheduledAt,
         recurring = recurring,
         doneAt = null,

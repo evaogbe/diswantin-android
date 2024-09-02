@@ -2,6 +2,9 @@ package io.github.evaogbe.diswantin.app.data
 
 import androidx.room.TypeConverter
 import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 
 object Converters {
     @TypeConverter
@@ -9,4 +12,16 @@ object Converters {
 
     @TypeConverter
     fun fromInstant(value: Instant?) = value?.toEpochMilli()
+
+    @TypeConverter
+    fun toLocalDate(value: String?) = value?.let(LocalDate::parse)
+
+    @TypeConverter
+    fun fromLocalDate(value: LocalDate?) = value?.toString()
+
+    @TypeConverter
+    fun toLocalTime(value: String?) = value?.let(LocalTime::parse)
+
+    @TypeConverter
+    fun fromLocalTime(value: LocalTime?) = value?.format(DateTimeFormatter.ofPattern("HH:mm"))
 }

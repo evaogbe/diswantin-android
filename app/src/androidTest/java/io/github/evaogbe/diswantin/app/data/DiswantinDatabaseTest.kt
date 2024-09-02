@@ -15,6 +15,8 @@ import io.github.serpro69.kfaker.lorem.LoremFaker
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.time.Instant
+import java.time.ZoneId
 
 @RunWith(AndroidJUnit4::class)
 class DiswantinDatabaseTest {
@@ -234,6 +236,59 @@ class DiswantinDatabaseTest {
             assertThat(stmt.getLong(0)).isPositive()
             assertThat(stmt.getLong(1)).isEqualTo(taskValues1[0])
             assertThat(stmt.getLong(2)).isEqualTo(taskValues1[3])
+            assertThat(stmt.moveToNext()).isFalse()
+        }
+        migratedDb.close()
+    }
+
+    @Test
+    fun testMigration_17_18() {
+        val taskValues1 = arrayOf(
+            1L,
+            faker.random.randomPastDate().toInstant().toEpochMilli(),
+            "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+            Instant.parse("2024-08-23T17:00:00Z").toEpochMilli(),
+        )
+        val taskValues2 = arrayOf(
+            2L,
+            faker.random.randomPastDate().toInstant().toEpochMilli(),
+            "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+            Instant.parse("2024-08-24T12:00:00Z").toEpochMilli(),
+        )
+
+        val initialDb = migrationTestHelper.createDatabase(DiswantinDatabase.DB_NAME, 17)
+        initialDb.execSQL(
+            "INSERT INTO `task` (`id`, `created_at`, `name`, `deadline`) VALUES (?, ?, ?, ?)",
+            taskValues1,
+        )
+        initialDb.execSQL(
+            "INSERT INTO `task` (`id`, `created_at`, `name`, `deadline`) VALUES (?, ?, ?, ?)",
+            taskValues2,
+        )
+        initialDb.close()
+
+        val migratedDb =
+            migrationTestHelper.runMigrationsAndValidate(
+                DiswantinDatabase.DB_NAME,
+                18,
+                true,
+                DiswantinDatabase.getMigration17to18(ZoneId.of("America/New_York")),
+            )
+        migratedDb.query(
+            "SELECT `id`, `created_at`, `name`, `deadline_date`, `deadline_time` FROM `task`",
+        ).use { stmt ->
+            assertThat(stmt.moveToFirst()).isTrue()
+            assertThat(stmt.getLong(0)).isEqualTo(taskValues1[0])
+            assertThat(stmt.getLong(1)).isEqualTo(taskValues1[1])
+            assertThat(stmt.getString(2)).isEqualTo(taskValues1[2])
+            assertThat(stmt.getString(3)).isEqualTo("2024-08-23")
+            assertThat(stmt.getString(4)).isEqualTo("13:00")
+            assertThat(stmt.moveToNext()).isTrue()
+            assertThat(stmt.getLong(0)).isEqualTo(taskValues2[0])
+            assertThat(stmt.getLong(1)).isEqualTo(taskValues2[1])
+            assertThat(stmt.getString(2)).isEqualTo(taskValues2[2])
+            assertThat(stmt.getString(3)).isEqualTo("2024-08-24")
+            assertThat(stmt.getString(4)).isEqualTo("08:00")
             assertThat(stmt.moveToNext()).isFalse()
         }
         migratedDb.close()

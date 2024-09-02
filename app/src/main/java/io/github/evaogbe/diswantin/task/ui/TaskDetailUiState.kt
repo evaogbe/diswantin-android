@@ -3,7 +3,6 @@ package io.github.evaogbe.diswantin.task.ui
 import androidx.annotation.StringRes
 import io.github.evaogbe.diswantin.task.data.TaskDetail
 import java.time.Clock
-import java.time.Instant
 import java.time.LocalTime
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
@@ -19,9 +18,33 @@ sealed interface TaskDetailUiState {
         @StringRes val userMessage: Int?,
         private val clock: Clock,
     ) : TaskDetailUiState {
-        val formattedDeadline = task.deadline?.let(::formatDateTime)
+        val formattedDeadline = when {
+            task.deadlineDate != null && task.deadlineTime != null -> {
+                task.deadlineDate
+                    .atTime(task.deadlineTime)
+                    .format(
+                        DateTimeFormatter.ofLocalizedDateTime(
+                            FormatStyle.FULL,
+                            FormatStyle.SHORT
+                        )
+                    )
+            }
 
-        val formattedScheduledAt = task.scheduledAt?.let(::formatDateTime)
+            task.deadlineDate != null -> {
+                task.deadlineDate.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL))
+            }
+
+            task.deadlineTime != null -> {
+                task.deadlineTime.format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT))
+            }
+
+            else -> null
+        }
+
+        val formattedScheduledAt =
+            task.scheduledAt
+                ?.atZone(clock.zone)
+                ?.format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL, FormatStyle.SHORT))
 
         val isDone = if (task.recurring) {
             task.doneAt?.let {
@@ -30,10 +53,6 @@ sealed interface TaskDetailUiState {
         } else {
             task.doneAt != null
         }
-
-        private fun formatDateTime(dateTime: Instant) =
-            dateTime.atZone(clock.zone)
-                .format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL, FormatStyle.SHORT))
     }
 
     data object Deleted : TaskDetailUiState

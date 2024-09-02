@@ -22,6 +22,8 @@ import org.junit.Rule
 import org.junit.Test
 import java.time.Clock
 import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalTime
 import java.time.ZoneId
 
 class TaskDetailScreenTest {
@@ -34,14 +36,17 @@ class TaskDetailScreenTest {
 
     @Test
     fun displaysTask() {
-        val task = genTask().copy(deadline = Instant.parse("2024-08-23T21:00:00Z"))
+        val task = genTask().copy(
+            deadlineDate = LocalDate.parse("2024-08-23"),
+            deadlineTime = LocalTime.parse("17:00"),
+        )
         val clock =
             Clock.fixed(Instant.parse("2024-08-23T21:00:00Z"), ZoneId.of("America/New_York"))
         val taskRepository = FakeTaskRepository.withTasks(task)
         val viewModel = TaskDetailViewModel(
             SavedStateHandle(mapOf(Destination.TaskDetail.ID_KEY to task.id)),
             taskRepository,
-            clock
+            clock,
         )
 
         composeTestRule.setContent {
@@ -67,7 +72,7 @@ class TaskDetailScreenTest {
         val viewModel = TaskDetailViewModel(
             SavedStateHandle(mapOf(Destination.TaskDetail.ID_KEY to 1L)),
             taskRepository,
-            Clock.systemDefaultZone()
+            Clock.systemDefaultZone(),
         )
 
         composeTestRule.setContent {
@@ -93,7 +98,7 @@ class TaskDetailScreenTest {
         val viewModel = TaskDetailViewModel(
             SavedStateHandle(mapOf(Destination.TaskDetail.ID_KEY to task.id)),
             taskRepository,
-            Clock.systemDefaultZone()
+            Clock.systemDefaultZone(),
         )
 
         composeTestRule.setContent {
@@ -122,7 +127,7 @@ class TaskDetailScreenTest {
         val viewModel = TaskDetailViewModel(
             SavedStateHandle(mapOf(Destination.TaskDetail.ID_KEY to task.id)),
             taskRepository,
-            Clock.systemDefaultZone()
+            Clock.systemDefaultZone(),
         )
 
         composeTestRule.setContent {

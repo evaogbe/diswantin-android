@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.evaogbe.diswantin.task.data.EditTaskForm
 import io.github.evaogbe.diswantin.task.data.NewTaskForm
+import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskRepository
 import io.github.evaogbe.diswantin.ui.navigation.Destination
 import kotlinx.coroutines.CancellationException
@@ -23,6 +24,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.time.Clock
+import java.time.LocalDate
+import java.time.LocalTime
 import java.time.ZonedDateTime
 import javax.inject.Inject
 
@@ -39,7 +42,9 @@ class TaskFormViewModel @Inject constructor(
     var nameInput by mutableStateOf(savedStateHandle[Destination.NewTaskForm.NAME_KEY] ?: "")
         private set
 
-    private val deadlineInput = MutableStateFlow<ZonedDateTime?>(null)
+    private val deadlineDateInput = MutableStateFlow<LocalDate?>(null)
+
+    private val deadlineTimeInput = MutableStateFlow<LocalTime?>(null)
 
     private val scheduledAtInput = MutableStateFlow<ZonedDateTime?>(null)
 
@@ -54,21 +59,31 @@ class TaskFormViewModel @Inject constructor(
         }
     } ?: flowOf(Result.success(null))
 
+    @Suppress("UNCHECKED_CAST")
     val uiState = combine(
-        deadlineInput,
+        deadlineDateInput,
+        deadlineTimeInput,
         scheduledAtInput,
         recurringInput,
         saveResult,
         existingTaskStream,
-    ) { deadlineInput, scheduledAtInput, recurringInput, saveResult, existingTask ->
+    ) { args ->
+        val deadlineDateInput = args[0] as LocalDate?
+        val deadlineTimeInput = args[1] as LocalTime?
+        val scheduledAtInput = args[2] as ZonedDateTime?
+        val recurringInput = args[3] as Boolean
+        val saveResult = args[4] as Result<Unit>?
+        val existingTask = args[5] as Result<Task?>
         when {
             saveResult?.isSuccess == true -> TaskFormUiState.Saved
             existingTask.isFailure -> TaskFormUiState.Failure
             else -> TaskFormUiState.Success(
-                deadlineInput = deadlineInput,
+                deadlineDateInput = deadlineDateInput,
+                deadlineTimeInput = deadlineTimeInput,
                 scheduledAtInput = scheduledAtInput,
                 recurringInput = recurringInput,
                 hasSaveError = saveResult?.isFailure == true,
+                clock = clock,
             )
         }
     }.stateIn(
@@ -81,7 +96,8 @@ class TaskFormViewModel @Inject constructor(
         viewModelScope.launch {
             val existingTask = existingTaskStream.first().getOrNull() ?: return@launch
             nameInput = existingTask.name
-            deadlineInput.value = existingTask.deadline?.atZone(clock.zone)
+            deadlineDateInput.value = existingTask.deadlineDate
+            deadlineTimeInput.value = existingTask.deadlineTime
             scheduledAtInput.value = existingTask.scheduledAt?.atZone(clock.zone)
             recurringInput.value = existingTask.recurring
         }
@@ -91,8 +107,12 @@ class TaskFormViewModel @Inject constructor(
         nameInput = value
     }
 
-    fun updateDeadlineInput(value: ZonedDateTime?) {
-        deadlineInput.value = value
+    fun updateDeadlineDateInput(value: LocalDate?) {
+        deadlineDateInput.value = value
+    }
+
+    fun updateDeadlineTimeInput(value: LocalTime?) {
+        deadlineTimeInput.value = value
     }
 
     fun updateScheduledAtInput(value: ZonedDateTime?) {
@@ -106,10 +126,20 @@ class TaskFormViewModel @Inject constructor(
     fun saveTask() {
         if (nameInput.isBlank()) return
         val state = (uiState.value as? TaskFormUiState.Success) ?: return
+        val deadlineDate = if (
+            state.deadlineDateInput == null &&
+            state.deadlineTimeInput != null &&
+            !state.recurringInput
+        ) {
+            LocalDate.now()
+        } else {
+            state.deadlineDateInput
+        }
         if (taskId == null) {
             val form = NewTaskForm(
                 name = nameInput,
-                deadline = state.deadlineInput?.toInstant(),
+                deadlineDate = deadlineDate,
+                deadlineTime = state.deadlineTimeInput,
                 scheduledAt = state.scheduledAtInput?.toInstant(),
                 recurring = state.recurringInput,
                 clock = clock,
@@ -132,7 +162,8 @@ class TaskFormViewModel @Inject constructor(
                     taskRepository.update(
                         EditTaskForm(
                             name = nameInput,
-                            deadline = state.deadlineInput?.toInstant(),
+                            deadlineDate = deadlineDate,
+                            deadlineTime = state.deadlineTimeInput,
                             scheduledAt = state.scheduledAtInput?.toInstant(),
                             recurring = state.recurringInput,
                             existingTask = existingTask,

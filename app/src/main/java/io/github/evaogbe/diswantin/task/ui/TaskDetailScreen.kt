@@ -55,6 +55,7 @@ import io.github.evaogbe.diswantin.ui.theme.SpaceMd
 import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
 import java.time.Clock
 import java.time.Instant
+import java.time.LocalDate
 
 @Composable
 fun TaskDetailScreen(
@@ -271,7 +272,8 @@ private fun TaskDetailScreenPreview() {
                 task = TaskDetail(
                     id = 1L,
                     name = "Brush teeth",
-                    deadline = null,
+                    deadlineDate = null,
+                    deadlineTime = null,
                     scheduledAt = null,
                     recurring = false,
                     doneAt = null,
@@ -296,7 +298,8 @@ private fun TaskDetailLayoutPreview() {
                     task = TaskDetail(
                         id = 1L,
                         name = "Brush teeth",
-                        deadline = Instant.now(),
+                        deadlineDate = LocalDate.now(),
+                        deadlineTime = null,
                         scheduledAt = null,
                         recurring = true,
                         doneAt = Instant.now(),

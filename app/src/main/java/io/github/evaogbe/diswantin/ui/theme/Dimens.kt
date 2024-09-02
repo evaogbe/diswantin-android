@@ -11,5 +11,3 @@ val SpaceXl = 40.dp
 val IconSizeLg = 96.dp
 
 val ScreenLg = 1024.dp
-
-val MinTouchTarget = 48.dp

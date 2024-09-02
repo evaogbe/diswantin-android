@@ -1,5 +1,8 @@
 package io.github.evaogbe.diswantin.task.ui
 
+import java.time.Clock
+import java.time.LocalDate
+import java.time.LocalTime
 import java.time.ZonedDateTime
 
 sealed interface TaskFormUiState {
@@ -8,11 +11,15 @@ sealed interface TaskFormUiState {
     data object Failure : TaskFormUiState
 
     data class Success(
-        val deadlineInput: ZonedDateTime?,
+        val deadlineDateInput: LocalDate?,
+        val deadlineTimeInput: LocalTime?,
         val scheduledAtInput: ZonedDateTime?,
         val recurringInput: Boolean,
         val hasSaveError: Boolean,
-    ) : TaskFormUiState
+        private val clock: Clock
+    ) : TaskFormUiState {
+        val deadlineDateAsZonedDateTime = deadlineDateInput?.atStartOfDay(clock.zone)
+    }
 
     data object Saved : TaskFormUiState
 }

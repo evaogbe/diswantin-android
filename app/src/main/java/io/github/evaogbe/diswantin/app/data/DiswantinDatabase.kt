@@ -21,9 +21,12 @@ import io.github.evaogbe.diswantin.task.data.TaskFts
 import io.github.evaogbe.diswantin.task.data.TaskList
 import io.github.evaogbe.diswantin.task.data.TaskListDao
 import io.github.evaogbe.diswantin.task.data.TaskPath
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 @Database(
-    version = 16,
+    version = 19,
     entities = [
         Task::class,
         TaskFts::class,
@@ -42,6 +45,8 @@ import io.github.evaogbe.diswantin.task.data.TaskPath
         AutoMigration(from = 12, to = 13),
         AutoMigration(from = 13, to = 14),
         AutoMigration(from = 15, to = 16, spec = DiswantinDatabase.Migration15to16::class),
+        AutoMigration(from = 16, to = 17),
+        AutoMigration(from = 18, to = 19, spec = DiswantinDatabase.Migration18to19::class),
     ]
 )
 @TypeConverters(Converters::class)
@@ -63,6 +68,9 @@ abstract class DiswantinDatabase : RoomDatabase() {
 
     @DeleteColumn(tableName = "task", columnName = "done_at")
     class Migration15to16 : AutoMigrationSpec
+
+    @DeleteColumn(tableName = "task", columnName = "deadline")
+    class Migration18to19 : AutoMigrationSpec
 
     companion object {
         const val DB_NAME = "diswantin"
@@ -193,6 +201,36 @@ abstract class DiswantinDatabase : RoomDatabase() {
             }
         }
 
+        fun getMigration17to18(zoneId: ZoneId = ZoneId.systemDefault()) =
+            object : Migration(17, 18) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    val taskValues = mutableListOf<String>()
+                    db.query("SELECT `id`, `created_at`, `name`, `deadline` FROM `task` WHERE `deadline` IS NOT NULL")
+                        .use { stmt ->
+                            while (stmt.moveToNext()) {
+                                val deadline =
+                                    Instant.ofEpochMilli(stmt.getLong(3)).atZone(zoneId)
+                                taskValues += "(%d, %d, \"%s\", \"%s\", \"%s\")".format(
+                                    stmt.getLong(0),
+                                    stmt.getLong(1),
+                                    stmt.getString(2),
+                                    deadline.toLocalDate(),
+                                    deadline.toLocalTime()
+                                        .format(DateTimeFormatter.ofPattern("HH:mm")),
+                                )
+                            }
+                        }
+                    db.execSQL(
+                        """INSERT INTO `task`
+                            (`id`, `created_at`, `name`, `deadline_date`, `deadline_time`)
+                            VALUES ${taskValues.joinToString()}
+                            ON CONFLICT (`id`) DO UPDATE SET
+                                `deadline_date` = excluded.`deadline_date`,
+                                `deadline_time` = excluded.`deadline_time`"""
+                    )
+                }
+            }
+
         fun createDatabase(context: Context) =
             Room.databaseBuilder(
                 context.applicationContext,
@@ -204,6 +242,7 @@ abstract class DiswantinDatabase : RoomDatabase() {
                 MIGRATION_6_7,
                 MIGRATION_11_12,
                 MIGRATION_14_15,
+                getMigration17to18(),
             ).build()
     }
 }
