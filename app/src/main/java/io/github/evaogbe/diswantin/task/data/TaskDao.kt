@@ -11,7 +11,13 @@ import java.time.Instant
 @Dao
 interface TaskDao {
     @Query(
-        """SELECT t.*
+        """SELECT
+            t.*,
+            t2.scheduled_at AS scheduled_at_priority,
+            t2.deadline AS deadline_priority,
+            t2.recurring AS recurring_priority,
+            t2.created_at AS created_at_priority,
+            t2.id AS id_priority
         FROM task t
         JOIN task_path p ON p.ancestor = t.id
         JOIN (
@@ -29,27 +35,16 @@ interface TaskDao {
         JOIN task t2 ON p.descendant = t2.id
         WHERE t.scheduled_at IS NULL OR t.scheduled_at <= :scheduledBefore
         ORDER BY
-            t2.scheduled_at IS NULL,
-            t2.scheduled_at,
-            CASE 
-                WHEN t2.deadline IS NOT NULL THEN 0
-                WHEN t2.recurring THEN 0
-                ELSE 1
-                END,
-            CASE
-                WHEN t2.deadline IS NOT NULL THEN t2.deadline
-                WHEN t2.recurring THEN :recurringDeadline
-                ELSE NULL
-            END,
-            t2.created_at,
-            t2.id
-        LIMIT 1"""
+            scheduled_at_priority IS NULL,
+            scheduled_at_priority,
+            recurring_priority DESC,
+            deadline_priority IS NULL,
+            deadline_priority,
+            created_at_priority,
+            id_priority
+        LIMIT 20"""
     )
-    fun getCurrentTask(
-        scheduledBefore: Instant,
-        doneBefore: Instant,
-        recurringDeadline: Instant
-    ): Flow<Task?>
+    fun getTaskPriorities(scheduledBefore: Instant, doneBefore: Instant): Flow<List<TaskPriority>>
 
     @Query("SELECT * FROM task WHERE id = :id LIMIT 1")
     fun getById(id: Long): Flow<Task>

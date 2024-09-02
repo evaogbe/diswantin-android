@@ -3,6 +3,7 @@ package io.github.evaogbe.diswantin.task.data
 import io.github.evaogbe.diswantin.data.IoDispatcher
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import java.time.Clock
 import java.time.Instant
@@ -14,11 +15,24 @@ class LocalTaskRepository @Inject constructor(
     private val clock: Clock,
 ) : TaskRepository {
     override fun getCurrentTask(params: CurrentTaskParams) =
-        taskDao.getCurrentTask(
+        taskDao.getTaskPriorities(
             scheduledBefore = params.scheduledBefore,
             doneBefore = params.doneBefore,
-            recurringDeadline = params.recurringDeadline,
         )
+            .map { priorities ->
+                priorities.sortedWith(
+                    compareBy(nullsLast(), TaskPriority::scheduledAtPriority)
+                        .thenComparing({
+                            it.deadlinePriority
+                                ?: if (it.recurringPriority) params.recurringDeadline else null
+                        }, nullsLast())
+                        .thenComparing(TaskPriority::recurringPriority, reverseOrder())
+                        .thenComparing(TaskPriority::createdAtPriority)
+                        .thenComparing(TaskPriority::idPriority)
+                )
+                    .firstOrNull()
+                    ?.task
+            }
             .flowOn(ioDispatcher)
 
     override fun getById(id: Long) = taskDao.getById(id).flowOn(ioDispatcher)

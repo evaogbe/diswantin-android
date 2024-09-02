@@ -37,6 +37,7 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
                         .thenComparing({
                             it.deadline ?: if (it.recurring) params.recurringDeadline else null
                         }, nullsLast())
+                        .thenComparing(Task::recurring, reverseOrder())
                         .thenComparing(Task::createdAt)
                         .thenComparing(Task::id)
                 )
