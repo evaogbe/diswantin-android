@@ -25,7 +25,7 @@ class TaskDetailViewModel @Inject constructor(
     private val taskRepository: TaskRepository,
     private val clock: Clock,
 ) : ViewModel() {
-    private val taskId: Long = checkNotNull(savedStateHandle[Destination.TaskDetail.ID_KEY])
+    private val taskId: Long = checkNotNull(savedStateHandle[Destination.ID_KEY])
 
     private val initialized = MutableStateFlow(false)
 

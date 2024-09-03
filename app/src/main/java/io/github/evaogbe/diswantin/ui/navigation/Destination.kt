@@ -15,8 +15,6 @@ sealed interface Destination {
         override val route = name?.let { "taskForm?$NAME_KEY=$it" } ?: "taskForm"
 
         companion object : Destination {
-            const val NAME_KEY = "name"
-
             override val route = "taskForm?$NAME_KEY={$NAME_KEY}"
         }
     }
@@ -25,8 +23,6 @@ sealed interface Destination {
         override val route = "taskForm/$id"
 
         companion object : Destination {
-            const val ID_KEY = "id"
-
             override val route = "taskForm/{$ID_KEY}"
         }
     }
@@ -39,8 +35,6 @@ sealed interface Destination {
         override val route = "task/$id"
 
         companion object : Destination {
-            const val ID_KEY = "id"
-
             override val route = "task/{$ID_KEY}"
         }
     }
@@ -53,8 +47,6 @@ sealed interface Destination {
         override val route = "taskListForm/$id"
 
         companion object : Destination {
-            const val ID_KEY = "id"
-
             override val route = "taskListForm/{$ID_KEY}"
         }
     }
@@ -63,9 +55,13 @@ sealed interface Destination {
         override val route = "taskList/$id"
 
         companion object : Destination {
-            const val ID_KEY = "id"
-
             override val route = "taskList/{$ID_KEY}"
         }
+    }
+
+    companion object {
+        const val ID_KEY = "id"
+
+        const val NAME_KEY = "name"
     }
 }

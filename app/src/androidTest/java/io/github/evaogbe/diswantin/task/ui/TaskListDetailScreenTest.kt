@@ -141,7 +141,7 @@ class TaskListDetailScreenTest {
 
     private fun createTaskListDetailViewModel(taskListRepository: FakeTaskListRepository) =
         TaskListDetailViewModel(
-            SavedStateHandle(mapOf(Destination.TaskListDetail.ID_KEY to 1L)),
+            SavedStateHandle(mapOf(Destination.ID_KEY to 1L)),
             taskListRepository,
             Clock.systemDefaultZone(),
         )

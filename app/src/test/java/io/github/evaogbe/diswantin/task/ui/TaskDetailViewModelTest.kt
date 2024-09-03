@@ -32,13 +32,9 @@ class TaskDetailViewModelTest {
     @Test
     fun `uiState fetches task by id`() = runTest(mainDispatcherRule.testDispatcher) {
         val task = genTask()
-        val clock = Clock.systemDefaultZone()
+        val clock = createClock()
         val taskRepository = FakeTaskRepository.withTasks(task)
-        val viewModel = TaskDetailViewModel(
-            SavedStateHandle(mapOf(Destination.TaskDetail.ID_KEY to task.id)),
-            taskRepository,
-            clock,
-        )
+        val viewModel = TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock)
 
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect()
@@ -56,13 +52,9 @@ class TaskDetailViewModelTest {
     @Test
     fun `uiState emits failure when task not found`() =
         runTest(mainDispatcherRule.testDispatcher) {
-            val clock = Clock.systemDefaultZone()
+            val clock = createClock()
             val taskRepository = FakeTaskRepository()
-            val viewModel = TaskDetailViewModel(
-                SavedStateHandle(mapOf(Destination.TaskDetail.ID_KEY to 1L)),
-                taskRepository,
-                clock,
-            )
+            val viewModel = TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -74,15 +66,11 @@ class TaskDetailViewModelTest {
     @Test
     fun `uiState emits failure when repository throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
-            val clock = Clock.systemDefaultZone()
+            val clock = createClock()
             val taskRepository = FakeTaskRepository()
             taskRepository.setThrows(taskRepository::getTaskDetailById, true)
 
-            val viewModel = TaskDetailViewModel(
-                SavedStateHandle(mapOf(Destination.TaskDetail.ID_KEY to 1L)),
-                taskRepository,
-                clock,
-            )
+            val viewModel = TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -94,13 +82,9 @@ class TaskDetailViewModelTest {
     @Test
     fun `deleteTask sets uiState to deleted`() = runTest(mainDispatcherRule.testDispatcher) {
         val task = genTask()
-        val clock = Clock.systemDefaultZone()
+        val clock = createClock()
         val taskRepository = FakeTaskRepository.withTasks(task)
-        val viewModel = TaskDetailViewModel(
-            SavedStateHandle(mapOf(Destination.TaskDetail.ID_KEY to task.id)),
-            taskRepository,
-            clock,
-        )
+        val viewModel = TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock)
 
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect()
@@ -123,13 +107,9 @@ class TaskDetailViewModelTest {
     fun `deleteTask shows error message when repository throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val task = genTask()
-            val clock = Clock.systemDefaultZone()
+            val clock = createClock()
             val taskRepository = FakeTaskRepository.withTasks(task)
-            val viewModel = TaskDetailViewModel(
-                SavedStateHandle(mapOf(Destination.TaskDetail.ID_KEY to task.id)),
-                taskRepository,
-                clock,
-            )
+            val viewModel = TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -152,6 +132,10 @@ class TaskDetailViewModelTest {
         createdAt = faker.random.randomPastDate().toInstant(),
         name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
     )
+
+    private fun createSavedStateHandle() = SavedStateHandle(mapOf(Destination.ID_KEY to 1L))
+
+    private fun createClock() = Clock.systemDefaultZone()
 
     private fun Task.toTaskDetail() = TaskDetail(
         id = id,

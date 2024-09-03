@@ -65,15 +65,8 @@ class TaskListFormViewModelTest {
 
     @Test
     fun `initializes for edit with taskListId`() = runTest(mainDispatcherRule.testDispatcher) {
-        val taskList = TaskList(id = 1L, name = loremFaker.lorem.words())
-        val tasks = List(3) {
-            Task(
-                id = it + 1L,
-                createdAt = faker.random.randomPastDate().toInstant(),
-                name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-                listId = taskList.id,
-            )
-        }
+        val taskList = genTaskList()
+        val tasks = genTasks(listId = taskList.id)
         val db = FakeDatabase().apply {
             tasks.forEach(::insertTask)
             insertTaskList(taskList, tasks.map(Task::id))
@@ -81,7 +74,7 @@ class TaskListFormViewModelTest {
         val taskRepository = FakeTaskRepository(db)
         val taskListRepository = FakeTaskListRepository(db)
         val viewModel = TaskListFormViewModel(
-            SavedStateHandle(mapOf(Destination.EditTaskListForm.ID_KEY to taskList.id)),
+            createSavedStateHandleForEdit(),
             taskListRepository,
             taskRepository,
         )
@@ -112,7 +105,7 @@ class TaskListFormViewModelTest {
             taskListRepository.setThrows(taskListRepository::getTaskListWithTasksById, true)
 
             val viewModel = TaskListFormViewModel(
-                SavedStateHandle(mapOf(Destination.EditTaskListForm.ID_KEY to 1L)),
+                createSavedStateHandleForEdit(),
                 taskListRepository,
                 taskRepository
             )
@@ -192,13 +185,7 @@ class TaskListFormViewModelTest {
     fun `saveTaskList creates task list without taskListId`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val name = loremFaker.lorem.words()
-            val tasks = List(3) {
-                Task(
-                    id = it + 1L,
-                    createdAt = faker.random.randomPastDate().toInstant(),
-                    name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
-                )
-            }
+            val tasks = genTasks()
             val db = FakeDatabase().apply {
                 tasks.forEach(::insertTask)
             }
@@ -222,9 +209,9 @@ class TaskListFormViewModelTest {
             )
 
             viewModel.updateNameInput(name)
-            viewModel.setTask(0, tasks[0])
-            viewModel.setTask(1, tasks[1])
-            viewModel.setTask(2, tasks[2])
+            tasks.forEachIndexed { index, task ->
+                viewModel.setTask(index, task)
+            }
             viewModel.saveTaskList()
 
             val taskList = taskListRepository.taskLists.single()
@@ -269,15 +256,8 @@ class TaskListFormViewModelTest {
     fun `saveTaskList updates task list with taskListId`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val name = loremFaker.lorem.words()
-            val taskList = TaskList(id = 1L, name = loremFaker.lorem.words())
-            val tasks = List(3) {
-                Task(
-                    id = it + 1L,
-                    createdAt = faker.random.randomPastDate().toInstant(),
-                    name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-                    listId = taskList.id,
-                )
-            }
+            val taskList = genTaskList()
+            val tasks = genTasks(listId = taskList.id)
             val db = FakeDatabase().apply {
                 tasks.forEach(::insertTask)
                 insertTaskList(taskList, tasks.map(Task::id))
@@ -285,7 +265,7 @@ class TaskListFormViewModelTest {
             val taskRepository = FakeTaskRepository(db)
             val taskListRepository = FakeTaskListRepository(db)
             val viewModel = TaskListFormViewModel(
-                SavedStateHandle(mapOf(Destination.EditTaskListForm.ID_KEY to taskList.id)),
+                createSavedStateHandleForEdit(),
                 taskListRepository,
                 taskRepository,
             )
@@ -317,15 +297,8 @@ class TaskListFormViewModelTest {
     fun `saveTaskList shows error message with update throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val name = loremFaker.lorem.words()
-            val taskList = TaskList(id = 1L, name = loremFaker.lorem.words())
-            val tasks = List(3) {
-                Task(
-                    id = it + 1L,
-                    createdAt = faker.random.randomPastDate().toInstant(),
-                    name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-                    listId = taskList.id,
-                )
-            }
+            val taskList = genTaskList()
+            val tasks = genTasks(listId = taskList.id)
             val db = FakeDatabase().apply {
                 tasks.forEach(::insertTask)
                 insertTaskList(taskList, tasks.map(Task::id))
@@ -333,7 +306,7 @@ class TaskListFormViewModelTest {
             val taskRepository = FakeTaskRepository(db)
             val taskListRepository = FakeTaskListRepository(db)
             val viewModel = TaskListFormViewModel(
-                SavedStateHandle(mapOf(Destination.EditTaskListForm.ID_KEY to taskList.id)),
+                createSavedStateHandleForEdit(),
                 taskListRepository,
                 taskRepository,
             )
@@ -356,4 +329,18 @@ class TaskListFormViewModelTest {
                 )
             )
         }
+
+    private fun genTaskList() = TaskList(id = 1L, name = loremFaker.lorem.words())
+
+    private fun genTasks(listId: Long? = null) =
+        List(3) {
+            Task(
+                id = it + 1L,
+                createdAt = faker.random.randomPastDate().toInstant(),
+                name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                listId = listId,
+            )
+        }
+
+    private fun createSavedStateHandleForEdit() = SavedStateHandle(mapOf(Destination.ID_KEY to 1L))
 }

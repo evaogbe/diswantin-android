@@ -273,6 +273,6 @@ class TaskFormViewModelTest {
     )
 
     private fun createSavedStateHandleForEdit() =
-        SavedStateHandle(mapOf(Destination.EditTaskForm.ID_KEY to 1L))
+        SavedStateHandle(mapOf(Destination.ID_KEY to 1L))
 
 }

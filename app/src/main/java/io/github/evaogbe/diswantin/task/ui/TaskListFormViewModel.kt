@@ -41,7 +41,7 @@ class TaskListFormViewModel @Inject constructor(
     private val taskListRepository: TaskListRepository,
     taskRepository: TaskRepository
 ) : ViewModel() {
-    private val taskListId: Long? = savedStateHandle[Destination.EditTaskForm.ID_KEY]
+    private val taskListId: Long? = savedStateHandle[Destination.ID_KEY]
 
     val isNew = taskListId == null
 

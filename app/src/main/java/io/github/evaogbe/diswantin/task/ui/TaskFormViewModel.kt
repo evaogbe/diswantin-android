@@ -35,11 +35,11 @@ class TaskFormViewModel @Inject constructor(
     private val taskRepository: TaskRepository,
     private val clock: Clock,
 ) : ViewModel() {
-    private val taskId: Long? = savedStateHandle[Destination.EditTaskForm.ID_KEY]
+    private val taskId: Long? = savedStateHandle[Destination.ID_KEY]
 
     val isNew = taskId == null
 
-    var nameInput by mutableStateOf(savedStateHandle[Destination.NewTaskForm.NAME_KEY] ?: "")
+    var nameInput by mutableStateOf(savedStateHandle[Destination.NAME_KEY] ?: "")
         private set
 
     private val deadlineDateInput = MutableStateFlow<LocalDate?>(null)

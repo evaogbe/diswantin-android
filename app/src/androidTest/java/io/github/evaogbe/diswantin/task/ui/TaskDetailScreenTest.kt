@@ -43,11 +43,7 @@ class TaskDetailScreenTest {
         val clock =
             Clock.fixed(Instant.parse("2024-08-23T21:00:00Z"), ZoneId.of("America/New_York"))
         val taskRepository = FakeTaskRepository.withTasks(task)
-        val viewModel = TaskDetailViewModel(
-            SavedStateHandle(mapOf(Destination.TaskDetail.ID_KEY to task.id)),
-            taskRepository,
-            clock,
-        )
+        val viewModel = TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -69,11 +65,7 @@ class TaskDetailScreenTest {
         val taskRepository = FakeTaskRepository()
         taskRepository.setThrows(taskRepository::getTaskDetailById, true)
 
-        val viewModel = TaskDetailViewModel(
-            SavedStateHandle(mapOf(Destination.TaskDetail.ID_KEY to 1L)),
-            taskRepository,
-            Clock.systemDefaultZone(),
-        )
+        val viewModel = TaskDetailViewModel(createSavedStateHandle(), taskRepository, createClock())
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -95,11 +87,7 @@ class TaskDetailScreenTest {
         val task = genTask()
         var onPopBackStackCalled = false
         val taskRepository = FakeTaskRepository.withTasks(task)
-        val viewModel = TaskDetailViewModel(
-            SavedStateHandle(mapOf(Destination.TaskDetail.ID_KEY to task.id)),
-            taskRepository,
-            Clock.systemDefaultZone(),
-        )
+        val viewModel = TaskDetailViewModel(createSavedStateHandle(), taskRepository, createClock())
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -124,11 +112,7 @@ class TaskDetailScreenTest {
     fun displaysErrorMessage_whenDeleteTaskFailed() {
         val task = genTask()
         val taskRepository = FakeTaskRepository.withTasks(task)
-        val viewModel = TaskDetailViewModel(
-            SavedStateHandle(mapOf(Destination.TaskDetail.ID_KEY to task.id)),
-            taskRepository,
-            Clock.systemDefaultZone(),
-        )
+        val viewModel = TaskDetailViewModel(createSavedStateHandle(), taskRepository, createClock())
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -155,4 +139,9 @@ class TaskDetailScreenTest {
         createdAt = faker.random.randomPastDate().toInstant(),
         name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
     )
+
+    private fun createSavedStateHandle() = SavedStateHandle(mapOf(Destination.ID_KEY to 1L))
+
+    private fun createClock() =
+        Clock.fixed(Instant.parse("2024-08-23T21:00:00Z"), ZoneId.of("America/New_York"))
 }

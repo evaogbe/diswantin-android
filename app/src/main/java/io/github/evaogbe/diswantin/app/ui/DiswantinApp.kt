@@ -50,7 +50,7 @@ fun DiswantinApp() {
         }
         composable(
             Destination.NewTaskForm.route,
-            arguments = listOf(navArgument(Destination.NewTaskForm.NAME_KEY) {
+            arguments = listOf(navArgument(Destination.NAME_KEY) {
                 type = NavType.StringType
                 nullable = true
             }),
@@ -59,7 +59,7 @@ fun DiswantinApp() {
         }
         composable(
             Destination.EditTaskForm.route,
-            arguments = listOf(navArgument(Destination.EditTaskForm.ID_KEY) {
+            arguments = listOf(navArgument(Destination.ID_KEY) {
                 type = NavType.LongType
             }),
         ) {
@@ -70,7 +70,7 @@ fun DiswantinApp() {
         }
         composable(
             Destination.TaskDetail.route,
-            arguments = listOf(navArgument(Destination.TaskDetail.ID_KEY) {
+            arguments = listOf(navArgument(Destination.ID_KEY) {
                 type = NavType.LongType
             }),
         ) {
@@ -87,7 +87,7 @@ fun DiswantinApp() {
         }
         composable(
             Destination.EditTaskListForm.route,
-            arguments = listOf(navArgument(Destination.EditTaskListForm.ID_KEY) {
+            arguments = listOf(navArgument(Destination.ID_KEY) {
                 type = NavType.LongType
             }),
         ) {
@@ -95,7 +95,7 @@ fun DiswantinApp() {
         }
         composable(
             Destination.TaskListDetail.route,
-            arguments = listOf(navArgument(Destination.TaskListDetail.ID_KEY) {
+            arguments = listOf(navArgument(Destination.ID_KEY) {
                 type = NavType.LongType
             }),
         ) {

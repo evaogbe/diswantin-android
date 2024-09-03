@@ -217,7 +217,7 @@ class TaskFormScreenTest {
 
     private fun createTaskFormViewModelForEdit(taskRepository: TaskRepository) =
         TaskFormViewModel(
-            SavedStateHandle(mapOf(Destination.EditTaskForm.ID_KEY to 1L)),
+            SavedStateHandle(mapOf(Destination.ID_KEY to 1L)),
             taskRepository,
             Clock.systemDefaultZone()
         )

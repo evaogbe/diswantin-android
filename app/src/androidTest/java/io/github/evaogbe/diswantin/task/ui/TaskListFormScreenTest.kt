@@ -46,7 +46,7 @@ class TaskListFormScreenTest {
         taskListRepository.setThrows(taskListRepository::getTaskListWithTasksById, true)
 
         val viewModel = TaskListFormViewModel(
-            SavedStateHandle(mapOf(Destination.EditTaskListForm.ID_KEY to 1L)),
+            createSavedStateHandleForEdit(),
             taskListRepository,
             taskRepository
         )
@@ -210,14 +210,14 @@ class TaskListFormScreenTest {
     fun popsBackStack_whenTaskListUpdated() {
         var onPopBackStackCalled = false
         val name = loremFaker.lorem.words()
-        val taskList = TaskList(id = 1L, name = loremFaker.lorem.words())
+        val taskList = genTaskList()
         val db = FakeDatabase().apply {
             insertTaskList(taskList, emptyList())
         }
         val taskRepository = FakeTaskRepository(db)
         val taskListRepository = FakeTaskListRepository(db)
         val viewModel = TaskListFormViewModel(
-            SavedStateHandle(mapOf(Destination.EditTaskListForm.ID_KEY to taskList.id)),
+            createSavedStateHandleForEdit(),
             taskListRepository,
             taskRepository,
         )
@@ -243,14 +243,14 @@ class TaskListFormScreenTest {
     @Test
     fun displaysErrorMessage_withSaveErrorForEdit() {
         val name = loremFaker.lorem.words()
-        val taskList = TaskList(id = 1L, name = loremFaker.lorem.words())
+        val taskList = genTaskList()
         val db = FakeDatabase().apply {
             insertTaskList(taskList, emptyList())
         }
         val taskRepository = FakeTaskRepository(db)
         val taskListRepository = FakeTaskListRepository(db)
         val viewModel = TaskListFormViewModel(
-            SavedStateHandle(mapOf(Destination.EditTaskListForm.ID_KEY to taskList.id)),
+            createSavedStateHandleForEdit(),
             taskListRepository,
             taskRepository,
         )
@@ -273,4 +273,8 @@ class TaskListFormScreenTest {
         composeTestRule.onNodeWithText(stringResource(R.string.task_list_form_save_error_edit))
             .assertIsDisplayed()
     }
+
+    private fun genTaskList() = TaskList(id = 1L, name = loremFaker.lorem.words())
+
+    private fun createSavedStateHandleForEdit() = SavedStateHandle(mapOf(Destination.ID_KEY to 1L))
 }
