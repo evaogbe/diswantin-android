@@ -72,6 +72,7 @@ import java.time.Instant
 @Composable
 fun TaskListFormScreen(
     onPopBackStack: () -> Unit,
+    onSelectTaskType: (String) -> Unit,
     taskListFormViewModel: TaskListFormViewModel = hiltViewModel(),
 ) {
     val uiState by taskListFormViewModel.uiState.collectAsStateWithLifecycle()
@@ -99,6 +100,7 @@ fun TaskListFormScreen(
         uiState = uiState,
         name = taskListFormViewModel.nameInput,
         onNameChange = taskListFormViewModel::updateNameInput,
+        onSelectTaskType = onSelectTaskType,
         onRemoveTask = taskListFormViewModel::removeTask,
         onTaskSearch = taskListFormViewModel::searchTasks,
         onSelectTaskOption = taskListFormViewModel::setTask,
@@ -117,6 +119,7 @@ fun TaskListFormScreen(
     uiState: TaskListFormUiState,
     name: String,
     onNameChange: (String) -> Unit,
+    onSelectTaskType: (String) -> Unit,
     onRemoveTask: (Task) -> Unit,
     onTaskSearch: (String) -> Unit,
     onSelectTaskOption: (Int, Task) -> Unit,
@@ -175,19 +178,16 @@ fun TaskListFormScreen(
 
             is TaskListFormUiState.Success -> {
                 TaskListFormLayout(
+                    isNew = isNew,
                     uiState = uiState,
                     name = name,
                     onNameChange = onNameChange,
+                    onSelectTaskType = onSelectTaskType,
                     onRemoveTask = onRemoveTask,
                     onTaskSearch = onTaskSearch,
                     onSelectTaskOption = onSelectTaskOption,
                     startEditTask = startEditTask,
                     stopEditTask = stopEditTask,
-                    formError = when {
-                        !uiState.hasSaveError -> null
-                        isNew -> stringResource(R.string.task_list_form_save_error_new)
-                        else -> stringResource(R.string.task_list_form_save_error_edit)
-                    },
                     modifier = Modifier.padding(innerPadding),
                 )
             }
@@ -198,15 +198,16 @@ fun TaskListFormScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskListFormLayout(
+    isNew: Boolean,
     uiState: TaskListFormUiState.Success,
     name: String,
     onNameChange: (String) -> Unit,
+    onSelectTaskType: (String) -> Unit,
     onRemoveTask: (Task) -> Unit,
     onTaskSearch: (String) -> Unit,
     onSelectTaskOption: (Int, Task) -> Unit,
     startEditTask: (Int) -> Unit,
     stopEditTask: () -> Unit,
-    formError: String?,
     modifier: Modifier = Modifier,
 ) {
     val tasks = uiState.tasks
@@ -221,11 +222,15 @@ fun TaskListFormLayout(
                 .widthIn(max = ScreenLg)
                 .padding(SpaceMd),
         ) {
-            if (formError != null) {
+            if (uiState.hasSaveError) {
                 item {
                     SelectionContainer {
                         Text(
-                            text = formError,
+                            text = if (isNew) {
+                                stringResource(R.string.task_list_form_save_error_new)
+                            } else {
+                                stringResource(R.string.task_list_form_save_error_edit)
+                            },
                             color = colorScheme.error,
                             style = typography.titleSmall
                         )
@@ -244,6 +249,20 @@ fun TaskListFormLayout(
                         capitalization = KeyboardCapitalization.Sentences,
                     ),
                 )
+            }
+
+            if (isNew) {
+                item {
+                    Spacer(Modifier.size(SpaceMd))
+                    FormTypeButtonGroup(
+                        selectedIndex = 1,
+                        onSelect = {
+                            if (it == 0) {
+                                onSelectTaskType(name)
+                            }
+                        },
+                    )
+                }
             }
 
             item {
@@ -356,6 +375,7 @@ private fun TaskListFormScreenPreview_New() {
             ),
             name = "",
             onNameChange = {},
+            onSelectTaskType = {},
             onRemoveTask = {},
             onTaskSearch = {},
             onSelectTaskOption = { _, _ -> },
@@ -399,6 +419,7 @@ private fun TaskListFormScreenPreview_Edit() {
             ),
             name = "Morning routine",
             onNameChange = {},
+            onSelectTaskType = {},
             onRemoveTask = {},
             onTaskSearch = {},
             onSelectTaskOption = { _, _ -> },
@@ -414,6 +435,7 @@ private fun TaskListFormLayoutPreview() {
     DiswantinTheme {
         Surface {
             TaskListFormLayout(
+                isNew = true,
                 uiState = TaskListFormUiState.Success(
                     tasks = persistentListOf(
                         Task(
@@ -429,12 +451,12 @@ private fun TaskListFormLayoutPreview() {
                 ),
                 name = "",
                 onNameChange = {},
+                onSelectTaskType = {},
                 onRemoveTask = {},
                 onTaskSearch = {},
                 onSelectTaskOption = { _, _ -> },
                 startEditTask = {},
                 stopEditTask = {},
-                formError = null,
             )
         }
     }

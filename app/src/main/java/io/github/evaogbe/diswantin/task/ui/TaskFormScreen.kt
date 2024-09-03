@@ -80,6 +80,7 @@ import java.time.format.FormatStyle
 @Composable
 fun TaskFormScreen(
     onPopBackStack: () -> Unit,
+    onSelectListType: (String) -> Unit,
     taskFormViewModel: TaskFormViewModel = hiltViewModel(),
 ) {
     val uiState by taskFormViewModel.uiState.collectAsStateWithLifecycle()
@@ -93,14 +94,15 @@ fun TaskFormScreen(
     TaskFormScreen(
         isNew = taskFormViewModel.isNew,
         onClose = onPopBackStack,
+        uiState = uiState,
         name = taskFormViewModel.nameInput,
         onNameChange = taskFormViewModel::updateNameInput,
+        onSelectListType = onSelectListType,
         onDeadlineDateChange = taskFormViewModel::updateDeadlineDateInput,
         onDeadlineTimeChange = taskFormViewModel::updateDeadlineTimeInput,
         onScheduleAtChange = taskFormViewModel::updateScheduledAtInput,
         onRecurringChange = taskFormViewModel::updateRecurringInput,
         onSave = taskFormViewModel::saveTask,
-        uiState = uiState,
     )
 }
 
@@ -109,14 +111,15 @@ fun TaskFormScreen(
 fun TaskFormScreen(
     isNew: Boolean,
     onClose: () -> Unit,
+    uiState: TaskFormUiState,
     name: String,
     onNameChange: (String) -> Unit,
+    onSelectListType: (String) -> Unit,
     onDeadlineDateChange: (LocalDate?) -> Unit,
     onDeadlineTimeChange: (LocalTime?) -> Unit,
     onScheduleAtChange: (ZonedDateTime?) -> Unit,
     onRecurringChange: (Boolean) -> Unit,
     onSave: () -> Unit,
-    uiState: TaskFormUiState,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -169,18 +172,15 @@ fun TaskFormScreen(
 
             is TaskFormUiState.Success -> {
                 TaskFormLayout(
+                    isNew = isNew,
+                    uiState = uiState,
                     name = name,
                     onNameChange = onNameChange,
+                    onSelectListType = onSelectListType,
                     onDeadlineDateChange = onDeadlineDateChange,
                     onDeadlineTimeChange = onDeadlineTimeChange,
                     onScheduleAtChange = onScheduleAtChange,
                     onRecurringChange = onRecurringChange,
-                    uiState = uiState,
-                    formError = when {
-                        !uiState.hasSaveError -> null
-                        isNew -> stringResource(R.string.task_form_save_error_new)
-                        else -> stringResource(R.string.task_form_save_error_edit)
-                    },
                     modifier = Modifier.padding(innerPadding),
                 )
             }
@@ -194,14 +194,15 @@ enum class DateTimeConstraintField {
 
 @Composable
 fun TaskFormLayout(
+    isNew: Boolean,
+    uiState: TaskFormUiState.Success,
     name: String,
     onNameChange: (String) -> Unit,
+    onSelectListType: (String) -> Unit,
     onDeadlineDateChange: (LocalDate?) -> Unit,
     onDeadlineTimeChange: (LocalTime?) -> Unit,
     onScheduleAtChange: (ZonedDateTime?) -> Unit,
     onRecurringChange: (Boolean) -> Unit,
-    uiState: TaskFormUiState.Success,
-    formError: String?,
     modifier: Modifier = Modifier,
 ) {
     var dateTimePickerType by rememberSaveable {
@@ -216,10 +217,14 @@ fun TaskFormLayout(
                 .padding(SpaceMd),
             verticalArrangement = Arrangement.spacedBy(SpaceMd)
         ) {
-            if (formError != null) {
+            if (uiState.hasSaveError) {
                 SelectionContainer {
                     Text(
-                        text = formError,
+                        text = if (isNew) {
+                            stringResource(R.string.task_form_save_error_new)
+                        } else {
+                            stringResource(R.string.task_form_save_error_edit)
+                        },
                         color = colorScheme.error,
                         style = typography.titleSmall,
                     )
@@ -235,6 +240,17 @@ fun TaskFormLayout(
                     capitalization = KeyboardCapitalization.Sentences,
                 ),
             )
+
+            if (isNew) {
+                FormTypeButtonGroup(
+                    selectedIndex = 0,
+                    onSelect = {
+                        if (it == 1) {
+                            onSelectListType(name)
+                        }
+                    },
+                )
+            }
 
             when {
                 uiState.deadlineDateInput != null || uiState.deadlineTimeInput != null -> {
@@ -563,13 +579,6 @@ private fun TaskFormScreenPreview_New() {
         TaskFormScreen(
             isNew = true,
             onClose = {},
-            name = "",
-            onNameChange = {},
-            onDeadlineDateChange = {},
-            onDeadlineTimeChange = {},
-            onScheduleAtChange = {},
-            onRecurringChange = {},
-            onSave = {},
             uiState = TaskFormUiState.Success(
                 deadlineDateInput = null,
                 deadlineTimeInput = null,
@@ -577,7 +586,15 @@ private fun TaskFormScreenPreview_New() {
                 recurringInput = false,
                 hasSaveError = false,
                 clock = Clock.systemDefaultZone(),
-            )
+            ),
+            name = "",
+            onNameChange = {},
+            onSelectListType = {},
+            onDeadlineDateChange = {},
+            onDeadlineTimeChange = {},
+            onScheduleAtChange = {},
+            onRecurringChange = {},
+            onSave = {}
         )
     }
 }
@@ -589,13 +606,6 @@ private fun TaskFormScreenPreview_Edit() {
         TaskFormScreen(
             isNew = false,
             onClose = {},
-            name = "Shower",
-            onNameChange = {},
-            onDeadlineDateChange = {},
-            onDeadlineTimeChange = {},
-            onScheduleAtChange = {},
-            onRecurringChange = {},
-            onSave = {},
             uiState = TaskFormUiState.Success(
                 deadlineDateInput = null,
                 deadlineTimeInput = null,
@@ -603,7 +613,15 @@ private fun TaskFormScreenPreview_Edit() {
                 recurringInput = true,
                 hasSaveError = true,
                 clock = Clock.systemDefaultZone(),
-            )
+            ),
+            name = "Shower",
+            onNameChange = {},
+            onSelectListType = {},
+            onDeadlineDateChange = {},
+            onDeadlineTimeChange = {},
+            onScheduleAtChange = {},
+            onRecurringChange = {},
+            onSave = {}
         )
     }
 }
@@ -614,12 +632,7 @@ private fun TaskFormLayoutPreview_Deadline() {
     DiswantinTheme {
         Surface {
             TaskFormLayout(
-                name = "",
-                onNameChange = {},
-                onDeadlineDateChange = {},
-                onDeadlineTimeChange = {},
-                onScheduleAtChange = {},
-                onRecurringChange = {},
+                isNew = true,
                 uiState = TaskFormUiState.Success(
                     deadlineDateInput = LocalDate.now(),
                     deadlineTimeInput = LocalTime.now(),
@@ -628,7 +641,13 @@ private fun TaskFormLayoutPreview_Deadline() {
                     hasSaveError = false,
                     clock = Clock.systemDefaultZone()
                 ),
-                formError = null,
+                name = "",
+                onNameChange = {},
+                onSelectListType = {},
+                onDeadlineDateChange = {},
+                onDeadlineTimeChange = {},
+                onScheduleAtChange = {},
+                onRecurringChange = {},
             )
         }
     }
@@ -640,12 +659,7 @@ private fun TaskFormLayoutPreview_DeadlineDate() {
     DiswantinTheme {
         Surface {
             TaskFormLayout(
-                name = "",
-                onNameChange = {},
-                onDeadlineDateChange = {},
-                onDeadlineTimeChange = {},
-                onScheduleAtChange = {},
-                onRecurringChange = {},
+                isNew = false,
                 uiState = TaskFormUiState.Success(
                     deadlineDateInput = LocalDate.now(),
                     deadlineTimeInput = null,
@@ -654,7 +668,13 @@ private fun TaskFormLayoutPreview_DeadlineDate() {
                     hasSaveError = false,
                     clock = Clock.systemDefaultZone()
                 ),
-                formError = null,
+                name = "",
+                onNameChange = {},
+                onSelectListType = {},
+                onDeadlineDateChange = {},
+                onDeadlineTimeChange = {},
+                onScheduleAtChange = {},
+                onRecurringChange = {},
             )
         }
     }

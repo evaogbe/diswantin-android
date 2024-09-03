@@ -35,34 +35,46 @@ class TaskFormScreenTest {
     private val faker = Faker()
 
     @Test
-    fun displaysNewTaskTopBar_whenNew() {
+    fun displaysContentForNew_whenNew() {
         val taskRepository = FakeTaskRepository()
         val viewModel = createTaskFormViewModelForNew(taskRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
-                TaskFormScreen(onPopBackStack = {}, taskFormViewModel = viewModel)
+                TaskFormScreen(
+                    onPopBackStack = {},
+                    onSelectListType = {},
+                    taskFormViewModel = viewModel,
+                )
             }
         }
 
         composeTestRule.onNodeWithText(stringResource(R.string.task_form_title_new))
             .assertIsDisplayed()
+        composeTestRule.onNodeWithText(stringResource(R.string.form_type_button_list))
+            .assertIsDisplayed()
     }
 
     @Test
-    fun displaysEditTaskTopBar_whenEdit() {
+    fun displaysContentForEdit_whenEdit() {
         val task = genTask()
         val taskRepository = FakeTaskRepository.withTasks(task)
         val viewModel = createTaskFormViewModelForEdit(taskRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
-                TaskFormScreen(onPopBackStack = {}, taskFormViewModel = viewModel)
+                TaskFormScreen(
+                    onPopBackStack = {},
+                    onSelectListType = {},
+                    taskFormViewModel = viewModel,
+                )
             }
         }
 
         composeTestRule.onNodeWithText(stringResource(R.string.task_form_title_edit))
             .assertIsDisplayed()
+        composeTestRule.onNodeWithText(stringResource(R.string.form_type_button_list))
+            .assertDoesNotExist()
     }
 
     @Test
@@ -72,7 +84,11 @@ class TaskFormScreenTest {
 
         composeTestRule.setContent {
             DiswantinTheme {
-                TaskFormScreen(onPopBackStack = {}, taskFormViewModel = viewModel)
+                TaskFormScreen(
+                    onPopBackStack = {},
+                    onSelectListType = {},
+                    taskFormViewModel = viewModel,
+                )
             }
         }
 
@@ -91,7 +107,8 @@ class TaskFormScreenTest {
             DiswantinTheme {
                 TaskFormScreen(
                     onPopBackStack = { onPopBackStackCalled = true },
-                    taskFormViewModel = viewModel
+                    onSelectListType = {},
+                    taskFormViewModel = viewModel,
                 )
             }
         }
@@ -123,7 +140,11 @@ class TaskFormScreenTest {
 
         composeTestRule.setContent {
             DiswantinTheme {
-                TaskFormScreen(onPopBackStack = {}, taskFormViewModel = viewModel)
+                TaskFormScreen(
+                    onPopBackStack = {},
+                    onSelectListType = {},
+                    taskFormViewModel = viewModel,
+                )
             }
         }
 
@@ -152,7 +173,8 @@ class TaskFormScreenTest {
             DiswantinTheme {
                 TaskFormScreen(
                     onPopBackStack = { onPopBackStackCalled = true },
-                    taskFormViewModel = viewModel
+                    onSelectListType = {},
+                    taskFormViewModel = viewModel,
                 )
             }
         }
@@ -189,7 +211,11 @@ class TaskFormScreenTest {
 
         composeTestRule.setContent {
             DiswantinTheme {
-                TaskFormScreen(onPopBackStack = {}, taskFormViewModel = viewModel)
+                TaskFormScreen(
+                    onPopBackStack = {},
+                    onSelectListType = {},
+                    taskFormViewModel = viewModel,
+                )
             }
         }
 

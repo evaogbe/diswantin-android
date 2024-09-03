@@ -68,12 +68,7 @@ fun HomeScreen(
         onSearch = onSearch,
         onEditTask = currentTaskId?.let { { onEditTask(it) } },
         snackbarHostState = snackbarHostState,
-        onFabClick = {
-            when (pagerState.currentPage) {
-                0 -> onAddTask()
-                1 -> onAddList()
-            }
-        },
+        onFabClick = onAddTask,
         onTabClick = {
             scope.launch {
                 pagerState.animateScrollToPage(it)

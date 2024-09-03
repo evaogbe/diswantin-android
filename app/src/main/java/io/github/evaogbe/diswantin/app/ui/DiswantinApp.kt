@@ -30,7 +30,9 @@ fun DiswantinApp() {
                 onAddTask = {
                     navController.navigate(route = Destination.NewTaskForm(name = null).route)
                 },
-                onAddList = { navController.navigate(route = Destination.NewTaskListForm.route) },
+                onAddList = {
+                    navController.navigate(route = Destination.NewTaskListForm(name = null).route)
+                },
                 onAdviceClick = { navController.navigate(route = Destination.Advice.route) },
                 onSelectTaskList = {
                     navController.navigate(route = Destination.TaskListDetail(it).route)
@@ -55,7 +57,14 @@ fun DiswantinApp() {
                 nullable = true
             }),
         ) {
-            TaskFormScreen(onPopBackStack = navController::popBackStack)
+            TaskFormScreen(
+                onPopBackStack = navController::popBackStack,
+                onSelectListType = {
+                    navController.navigate(route = Destination.NewTaskListForm(name = it).route) {
+                        popUpTo(Destination.Home.route)
+                    }
+                },
+            )
         }
         composable(
             Destination.EditTaskForm.route,
@@ -63,7 +72,7 @@ fun DiswantinApp() {
                 type = NavType.LongType
             }),
         ) {
-            TaskFormScreen(onPopBackStack = navController::popBackStack)
+            TaskFormScreen(onPopBackStack = navController::popBackStack, onSelectListType = {})
         }
         composable(Destination.Advice.route) {
             AdviceScreen(onClose = navController::popBackStack)
@@ -82,8 +91,21 @@ fun DiswantinApp() {
                 },
             )
         }
-        composable(Destination.NewTaskListForm.route) {
-            TaskListFormScreen(onPopBackStack = navController::popBackStack)
+        composable(
+            Destination.NewTaskListForm.route,
+            arguments = listOf(navArgument(Destination.NAME_KEY) {
+                type = NavType.StringType
+                nullable = true
+            }),
+        ) {
+            TaskListFormScreen(
+                onPopBackStack = navController::popBackStack,
+                onSelectTaskType = {
+                    navController.navigate(route = Destination.NewTaskForm(name = it).route) {
+                        popUpTo(Destination.Home.route)
+                    }
+                },
+            )
         }
         composable(
             Destination.EditTaskListForm.route,
@@ -91,7 +113,7 @@ fun DiswantinApp() {
                 type = NavType.LongType
             }),
         ) {
-            TaskListFormScreen(onPopBackStack = navController::popBackStack)
+            TaskListFormScreen(onPopBackStack = navController::popBackStack, onSelectTaskType = {})
         }
         composable(
             Destination.TaskListDetail.route,

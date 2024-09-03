@@ -53,7 +53,11 @@ class TaskListFormScreenTest {
 
         composeTestRule.setContent {
             DiswantinTheme {
-                TaskListFormScreen(onPopBackStack = {}, taskListFormViewModel = viewModel)
+                TaskListFormScreen(
+                    onPopBackStack = {},
+                    onSelectTaskType = {},
+                    taskListFormViewModel = viewModel,
+                )
             }
         }
 
@@ -80,7 +84,11 @@ class TaskListFormScreenTest {
 
         composeTestRule.setContent {
             DiswantinTheme {
-                TaskListFormScreen(onPopBackStack = {}, taskListFormViewModel = viewModel)
+                TaskListFormScreen(
+                    onPopBackStack = {},
+                    onSelectTaskType = {},
+                    taskListFormViewModel = viewModel,
+                )
             }
         }
 
@@ -108,7 +116,11 @@ class TaskListFormScreenTest {
 
         composeTestRule.setContent {
             DiswantinTheme {
-                TaskListFormScreen(onPopBackStack = {}, taskListFormViewModel = viewModel)
+                TaskListFormScreen(
+                    onPopBackStack = {},
+                    onSelectTaskType = {},
+                    taskListFormViewModel = viewModel,
+                )
             }
         }
 
@@ -150,7 +162,8 @@ class TaskListFormScreenTest {
             DiswantinTheme {
                 TaskListFormScreen(
                     onPopBackStack = { onPopBackStackCalled = true },
-                    taskListFormViewModel = viewModel
+                    onSelectTaskType = {},
+                    taskListFormViewModel = viewModel,
                 )
             }
         }
@@ -189,7 +202,11 @@ class TaskListFormScreenTest {
 
         composeTestRule.setContent {
             DiswantinTheme {
-                TaskListFormScreen(onPopBackStack = {}, taskListFormViewModel = viewModel)
+                TaskListFormScreen(
+                    onPopBackStack = {},
+                    onSelectTaskType = {},
+                    taskListFormViewModel = viewModel,
+                )
             }
         }
 
@@ -226,7 +243,8 @@ class TaskListFormScreenTest {
             DiswantinTheme {
                 TaskListFormScreen(
                     onPopBackStack = { onPopBackStackCalled = true },
-                    taskListFormViewModel = viewModel
+                    onSelectTaskType = {},
+                    taskListFormViewModel = viewModel,
                 )
             }
         }
@@ -257,7 +275,11 @@ class TaskListFormScreenTest {
 
         composeTestRule.setContent {
             DiswantinTheme {
-                TaskListFormScreen(onPopBackStack = {}, taskListFormViewModel = viewModel)
+                TaskListFormScreen(
+                    onPopBackStack = {},
+                    onSelectTaskType = {},
+                    taskListFormViewModel = viewModel,
+                )
             }
         }
 

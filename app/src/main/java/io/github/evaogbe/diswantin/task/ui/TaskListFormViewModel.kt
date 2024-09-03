@@ -45,7 +45,7 @@ class TaskListFormViewModel @Inject constructor(
 
     val isNew = taskListId == null
 
-    var nameInput by mutableStateOf("")
+    var nameInput by mutableStateOf(savedStateHandle[Destination.NAME_KEY] ?: "")
         private set
 
     private val tasks = MutableStateFlow(persistentListOf<Task>())

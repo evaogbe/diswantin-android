@@ -39,8 +39,12 @@ sealed interface Destination {
         }
     }
 
-    data object NewTaskListForm : Destination {
-        override val route = "taskListForm"
+    data class NewTaskListForm(private val name: String?) : Destination {
+        override val route = name?.let { "taskListForm?$NAME_KEY=$name" } ?: "taskListForm"
+
+        companion object : Destination {
+            override val route = "taskListForm?$NAME_KEY={$NAME_KEY}"
+        }
     }
 
     data class EditTaskListForm(private val id: Long) : Destination {
