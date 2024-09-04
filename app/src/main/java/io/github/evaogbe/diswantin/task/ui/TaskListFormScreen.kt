@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -30,8 +29,6 @@ import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
@@ -43,7 +40,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -69,15 +65,57 @@ import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
 import kotlinx.collections.immutable.persistentListOf
 import java.time.Instant
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TaskListFormTopBar(
+    uiState: TaskListFormTopBarState,
+    onClose: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    TopAppBar(
+        title = {
+            Text(
+                text = if (uiState.isNew) {
+                    stringResource(R.string.task_list_form_title_new)
+                } else {
+                    stringResource(R.string.task_list_form_title_edit)
+                }
+            )
+        },
+        modifier = modifier,
+        navigationIcon = {
+            IconButton(onClick = onClose) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = stringResource(R.string.close_button),
+                )
+            }
+        },
+        actions = {
+            if (uiState.showSave) {
+                Button(
+                    onClick = uiState.onSave,
+                    enabled = uiState.saveEnabled,
+                    contentPadding = PaddingValues(horizontal = 20.dp, vertical = 4.dp),
+                ) {
+                    Text(stringResource(R.string.save_button))
+                }
+            }
+        },
+    )
+}
+
 @Composable
 fun TaskListFormScreen(
     onPopBackStack: () -> Unit,
+    setTopBarState: (TaskListFormTopBarState) -> Unit,
+    setUserMessage: (String) -> Unit,
     onSelectTaskType: (String) -> Unit,
     taskListFormViewModel: TaskListFormViewModel = hiltViewModel(),
 ) {
     val uiState by taskListFormViewModel.uiState.collectAsStateWithLifecycle()
+    val nameInput = taskListFormViewModel.nameInput
     val resources = LocalContext.current.resources
-    val snackbarHostState = remember { SnackbarHostState() }
 
     if (uiState is TaskListFormUiState.Saved) {
         LaunchedEffect(onPopBackStack) {
@@ -85,112 +123,45 @@ fun TaskListFormScreen(
         }
     }
 
+    LaunchedEffect(setTopBarState, uiState, nameInput, taskListFormViewModel) {
+        setTopBarState(
+            TaskListFormTopBarState(
+                isNew = taskListFormViewModel.isNew,
+                showSave = taskListFormViewModel.isNew || uiState is TaskListFormUiState.Success,
+                onSave = taskListFormViewModel::saveTaskList,
+                saveEnabled = nameInput.isNotBlank(),
+            )
+        )
+    }
+
     (uiState as? TaskListFormUiState.Success)?.userMessage?.let { message ->
-        LaunchedEffect(message, snackbarHostState) {
-            snackbarHostState.showSnackbar(resources.getString(message))
+        LaunchedEffect(message, setUserMessage) {
+            setUserMessage(resources.getString(message))
             taskListFormViewModel.userMessageShown()
         }
     }
 
-    TaskListFormScreen(
-        isNew = taskListFormViewModel.isNew,
-        onClose = onPopBackStack,
-        onSave = taskListFormViewModel::saveTaskList,
-        snackbarHostState = snackbarHostState,
-        uiState = uiState,
-        name = taskListFormViewModel.nameInput,
-        onNameChange = taskListFormViewModel::updateNameInput,
-        onSelectTaskType = onSelectTaskType,
-        onRemoveTask = taskListFormViewModel::removeTask,
-        onTaskSearch = taskListFormViewModel::searchTasks,
-        onSelectTaskOption = taskListFormViewModel::setTask,
-        startEditTask = taskListFormViewModel::startEditTask,
-        stopEditTask = taskListFormViewModel::stopEditTask,
-    )
-}
+    when (val state = uiState) {
+        is TaskListFormUiState.Pending,
+        is TaskListFormUiState.Saved -> PendingLayout()
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun TaskListFormScreen(
-    isNew: Boolean,
-    onClose: () -> Unit,
-    onSave: () -> Unit,
-    snackbarHostState: SnackbarHostState,
-    uiState: TaskListFormUiState,
-    name: String,
-    onNameChange: (String) -> Unit,
-    onSelectTaskType: (String) -> Unit,
-    onRemoveTask: (Task) -> Unit,
-    onTaskSearch: (String) -> Unit,
-    onSelectTaskOption: (Int, Task) -> Unit,
-    startEditTask: (Int) -> Unit,
-    stopEditTask: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Scaffold(
-        modifier = modifier,
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = if (isNew) {
-                            stringResource(R.string.task_list_form_title_new)
-                        } else {
-                            stringResource(R.string.task_list_form_title_edit)
-                        }
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onClose) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = stringResource(R.string.close_button)
-                        )
-                    }
-                },
-                actions = {
-                    if (uiState is TaskListFormUiState.Success) {
-                        Button(
-                            onClick = onSave,
-                            enabled = name.isNotBlank(),
-                            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 4.dp),
-                        ) {
-                            Text(stringResource(R.string.save_button))
-                        }
-                    }
-                },
+        is TaskListFormUiState.Failure -> {
+            LoadFailureLayout(message = stringResource(R.string.task_list_form_fetch_error))
+        }
+
+        is TaskListFormUiState.Success -> {
+            TaskListFormLayout(
+                isNew = taskListFormViewModel.isNew,
+                uiState = state,
+                name = nameInput,
+                onNameChange = taskListFormViewModel::updateNameInput,
+                onSelectTaskType = onSelectTaskType,
+                onRemoveTask = taskListFormViewModel::removeTask,
+                onTaskSearch = taskListFormViewModel::searchTasks,
+                onSelectTaskOption = taskListFormViewModel::setTask,
+                startEditTask = taskListFormViewModel::startEditTask,
+                stopEditTask = taskListFormViewModel::stopEditTask,
             )
-        },
-        snackbarHost = {
-            SnackbarHost(hostState = snackbarHostState, modifier = Modifier.imePadding())
-        },
-    ) { innerPadding ->
-        when (uiState) {
-            is TaskListFormUiState.Pending,
-            is TaskListFormUiState.Saved -> PendingLayout(modifier = Modifier.padding(innerPadding))
-
-            is TaskListFormUiState.Failure -> {
-                LoadFailureLayout(
-                    message = stringResource(R.string.task_list_form_fetch_error),
-                    modifier = Modifier.padding(innerPadding)
-                )
-            }
-
-            is TaskListFormUiState.Success -> {
-                TaskListFormLayout(
-                    isNew = isNew,
-                    uiState = uiState,
-                    name = name,
-                    onNameChange = onNameChange,
-                    onSelectTaskType = onSelectTaskType,
-                    onRemoveTask = onRemoveTask,
-                    onTaskSearch = onTaskSearch,
-                    onSelectTaskOption = onSelectTaskOption,
-                    startEditTask = startEditTask,
-                    stopEditTask = stopEditTask,
-                    modifier = Modifier.padding(innerPadding),
-                )
-            }
         }
     }
 }
@@ -361,27 +332,37 @@ fun TaskListFormLayout(
 @Composable
 private fun TaskListFormScreenPreview_New() {
     DiswantinTheme {
-        TaskListFormScreen(
-            isNew = true,
-            onClose = {},
-            onSave = {},
-            snackbarHostState = SnackbarHostState(),
-            uiState = TaskListFormUiState.Success(
-                tasks = persistentListOf(),
-                editingTaskIndex = 0,
-                taskOptions = persistentListOf(),
-                hasSaveError = false,
-                userMessage = null,
-            ),
-            name = "",
-            onNameChange = {},
-            onSelectTaskType = {},
-            onRemoveTask = {},
-            onTaskSearch = {},
-            onSelectTaskOption = { _, _ -> },
-            startEditTask = {},
-            stopEditTask = {},
-        )
+        Scaffold(topBar = {
+            TaskListFormTopBar(
+                uiState = TaskListFormTopBarState(
+                    isNew = true,
+                    showSave = true,
+                    onSave = {},
+                    saveEnabled = false,
+                ),
+                onClose = {},
+            )
+        }) { innerPadding ->
+            TaskListFormLayout(
+                isNew = true,
+                uiState = TaskListFormUiState.Success(
+                    tasks = persistentListOf(),
+                    editingTaskIndex = 0,
+                    taskOptions = persistentListOf(),
+                    hasSaveError = false,
+                    userMessage = null,
+                ),
+                name = "",
+                onNameChange = {},
+                onSelectTaskType = {},
+                onRemoveTask = {},
+                onTaskSearch = {},
+                onSelectTaskOption = { _, _ -> },
+                startEditTask = {},
+                stopEditTask = {},
+                modifier = Modifier.padding(innerPadding),
+            )
+        }
     }
 }
 
@@ -389,43 +370,53 @@ private fun TaskListFormScreenPreview_New() {
 @Composable
 private fun TaskListFormScreenPreview_Edit() {
     DiswantinTheme {
-        TaskListFormScreen(
-            isNew = false,
-            onClose = {},
-            onSave = {},
-            snackbarHostState = SnackbarHostState(),
-            uiState = TaskListFormUiState.Success(
-                tasks = persistentListOf(
-                    Task(
-                        id = 1L,
-                        createdAt = Instant.now(),
-                        name = "Brush teeth",
-                    ),
-                    Task(
-                        id = 2L,
-                        createdAt = Instant.now(),
-                        name = "Shower",
-                    ),
-                    Task(
-                        id = 3L,
-                        createdAt = Instant.now(),
-                        name = "Eat breakfast",
-                    ),
+        Scaffold(topBar = {
+            TaskListFormTopBar(
+                uiState = TaskListFormTopBarState(
+                    isNew = false,
+                    showSave = true,
+                    onSave = {},
+                    saveEnabled = true,
                 ),
-                editingTaskIndex = null,
-                taskOptions = persistentListOf(),
-                hasSaveError = true,
-                userMessage = null,
-            ),
-            name = "Morning routine",
-            onNameChange = {},
-            onSelectTaskType = {},
-            onRemoveTask = {},
-            onTaskSearch = {},
-            onSelectTaskOption = { _, _ -> },
-            startEditTask = {},
-            stopEditTask = {},
-        )
+                onClose = {},
+            )
+        }) { innerPadding ->
+            TaskListFormLayout(
+                isNew = false,
+                uiState = TaskListFormUiState.Success(
+                    tasks = persistentListOf(
+                        Task(
+                            id = 1L,
+                            createdAt = Instant.now(),
+                            name = "Brush teeth",
+                        ),
+                        Task(
+                            id = 2L,
+                            createdAt = Instant.now(),
+                            name = "Shower",
+                        ),
+                        Task(
+                            id = 3L,
+                            createdAt = Instant.now(),
+                            name = "Eat breakfast",
+                        ),
+                    ),
+                    editingTaskIndex = null,
+                    taskOptions = persistentListOf(),
+                    hasSaveError = true,
+                    userMessage = null,
+                ),
+                name = "Morning routine",
+                onNameChange = {},
+                onSelectTaskType = {},
+                onRemoveTask = {},
+                onTaskSearch = {},
+                onSelectTaskOption = { _, _ -> },
+                startEditTask = {},
+                stopEditTask = {},
+                modifier = Modifier.padding(innerPadding),
+            )
+        }
     }
 }
 

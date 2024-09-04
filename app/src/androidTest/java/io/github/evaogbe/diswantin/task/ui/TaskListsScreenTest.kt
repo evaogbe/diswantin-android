@@ -21,7 +21,9 @@ class TaskListsScreenTest {
 
     @Test
     fun displaysListNames_withTaskLists() {
-        val taskLists = List(3) { TaskList(id = it + 1L, name = loremFaker.lorem.words()) }
+        val taskLists = List(3) {
+            TaskList(id = it + 1L, name = loremFaker.lorem.unique.words())
+        }
         val taskListRepository = FakeTaskListRepository.withTaskLists(taskLists.map {
             TaskListWithTasks(it, emptyList())
         })

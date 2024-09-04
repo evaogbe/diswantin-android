@@ -77,13 +77,55 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TaskFormTopBar(
+    uiState: TaskFormTopBarState,
+    onClose: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    TopAppBar(
+        title = {
+            Text(
+                text = if (uiState.isNew) {
+                    stringResource(R.string.task_form_title_new)
+                } else {
+                    stringResource(R.string.task_form_title_edit)
+                }
+            )
+        },
+        modifier = modifier,
+        navigationIcon = {
+            IconButton(onClick = onClose) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = stringResource(R.string.close_button)
+                )
+            }
+        },
+        actions = {
+            if (uiState.showSave) {
+                Button(
+                    onClick = uiState.onSave,
+                    enabled = uiState.saveEnabled,
+                    contentPadding = PaddingValues(horizontal = 20.dp, vertical = 4.dp),
+                ) {
+                    Text(stringResource(R.string.save_button))
+                }
+            }
+        },
+    )
+}
+
 @Composable
 fun TaskFormScreen(
     onPopBackStack: () -> Unit,
+    setTopBarState: (TaskFormTopBarState) -> Unit,
     onSelectListType: (String) -> Unit,
     taskFormViewModel: TaskFormViewModel = hiltViewModel(),
 ) {
     val uiState by taskFormViewModel.uiState.collectAsStateWithLifecycle()
+    val nameInput = taskFormViewModel.nameInput
 
     if (uiState is TaskFormUiState.Saved) {
         LaunchedEffect(onPopBackStack) {
@@ -91,99 +133,39 @@ fun TaskFormScreen(
         }
     }
 
-    TaskFormScreen(
-        isNew = taskFormViewModel.isNew,
-        onClose = onPopBackStack,
-        uiState = uiState,
-        name = taskFormViewModel.nameInput,
-        onNameChange = taskFormViewModel::updateNameInput,
-        onSelectListType = onSelectListType,
-        onDeadlineDateChange = taskFormViewModel::updateDeadlineDateInput,
-        onDeadlineTimeChange = taskFormViewModel::updateDeadlineTimeInput,
-        onScheduleAtChange = taskFormViewModel::updateScheduledAtInput,
-        onRecurringChange = taskFormViewModel::updateRecurringInput,
-        onSave = taskFormViewModel::saveTask,
-    )
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun TaskFormScreen(
-    isNew: Boolean,
-    onClose: () -> Unit,
-    uiState: TaskFormUiState,
-    name: String,
-    onNameChange: (String) -> Unit,
-    onSelectListType: (String) -> Unit,
-    onDeadlineDateChange: (LocalDate?) -> Unit,
-    onDeadlineTimeChange: (LocalTime?) -> Unit,
-    onScheduleAtChange: (ZonedDateTime?) -> Unit,
-    onRecurringChange: (Boolean) -> Unit,
-    onSave: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Scaffold(
-        modifier = modifier,
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = if (isNew) {
-                            stringResource(R.string.task_form_title_new)
-                        } else {
-                            stringResource(R.string.task_form_title_edit)
-                        }
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onClose) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = stringResource(R.string.close_button)
-                        )
-                    }
-                },
-                actions = {
-                    if (uiState is TaskFormUiState.Success) {
-                        Button(
-                            onClick = onSave,
-                            enabled = name.isNotBlank(),
-                            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 4.dp),
-                        ) {
-                            Text(stringResource(R.string.save_button))
-                        }
-                    }
-                },
+    LaunchedEffect(setTopBarState, uiState, nameInput, taskFormViewModel) {
+        setTopBarState(
+            TaskFormTopBarState(
+                isNew = taskFormViewModel.isNew,
+                showSave = taskFormViewModel.isNew || uiState is TaskFormUiState.Success,
+                onSave = taskFormViewModel::saveTask,
+                saveEnabled = nameInput.isNotBlank(),
             )
-        },
-    ) { innerPadding ->
-        when (uiState) {
-            is TaskFormUiState.Pending,
-            is TaskFormUiState.Saved -> {
-                PendingLayout(modifier = Modifier.padding(innerPadding))
-            }
+        )
+    }
 
-            is TaskFormUiState.Failure -> {
-                LoadFailureLayout(
-                    message = stringResource(R.string.task_form_fetch_error),
-                    modifier = Modifier.padding(innerPadding),
-                )
-            }
+    when (val state = uiState) {
+        is TaskFormUiState.Pending,
+        is TaskFormUiState.Saved -> {
+            PendingLayout()
+        }
 
-            is TaskFormUiState.Success -> {
-                TaskFormLayout(
-                    isNew = isNew,
-                    uiState = uiState,
-                    name = name,
-                    onNameChange = onNameChange,
-                    onSelectListType = onSelectListType,
-                    onDeadlineDateChange = onDeadlineDateChange,
-                    onDeadlineTimeChange = onDeadlineTimeChange,
-                    onScheduleAtChange = onScheduleAtChange,
-                    onRecurringChange = onRecurringChange,
-                    modifier = Modifier.padding(innerPadding),
-                )
-            }
+        is TaskFormUiState.Failure -> {
+            LoadFailureLayout(message = stringResource(R.string.task_form_fetch_error))
+        }
+
+        is TaskFormUiState.Success -> {
+            TaskFormLayout(
+                isNew = taskFormViewModel.isNew,
+                uiState = state,
+                name = nameInput,
+                onNameChange = taskFormViewModel::updateNameInput,
+                onSelectListType = onSelectListType,
+                onDeadlineDateChange = taskFormViewModel::updateDeadlineDateInput,
+                onDeadlineTimeChange = taskFormViewModel::updateDeadlineTimeInput,
+                onScheduleAtChange = taskFormViewModel::updateScheduledAtInput,
+                onRecurringChange = taskFormViewModel::updateRecurringInput,
+            )
         }
     }
 }
@@ -576,26 +558,37 @@ fun TaskFormTimePickerDialog(
 @Composable
 private fun TaskFormScreenPreview_New() {
     DiswantinTheme {
-        TaskFormScreen(
-            isNew = true,
-            onClose = {},
-            uiState = TaskFormUiState.Success(
-                deadlineDateInput = null,
-                deadlineTimeInput = null,
-                scheduledAtInput = null,
-                recurringInput = false,
-                hasSaveError = false,
-                clock = Clock.systemDefaultZone(),
-            ),
-            name = "",
-            onNameChange = {},
-            onSelectListType = {},
-            onDeadlineDateChange = {},
-            onDeadlineTimeChange = {},
-            onScheduleAtChange = {},
-            onRecurringChange = {},
-            onSave = {}
-        )
+        Scaffold(topBar = {
+            TaskFormTopBar(
+                uiState = TaskFormTopBarState(
+                    isNew = true,
+                    showSave = true,
+                    onSave = {},
+                    saveEnabled = false
+                ),
+                onClose = {},
+            )
+        }) { innerPadding ->
+            TaskFormLayout(
+                isNew = true,
+                uiState = TaskFormUiState.Success(
+                    deadlineDateInput = null,
+                    deadlineTimeInput = null,
+                    scheduledAtInput = null,
+                    recurringInput = false,
+                    hasSaveError = false,
+                    clock = Clock.systemDefaultZone(),
+                ),
+                name = "",
+                onNameChange = {},
+                onSelectListType = {},
+                onDeadlineDateChange = {},
+                onDeadlineTimeChange = {},
+                onScheduleAtChange = {},
+                onRecurringChange = {},
+                modifier = Modifier.padding(innerPadding),
+            )
+        }
     }
 }
 
@@ -603,26 +596,37 @@ private fun TaskFormScreenPreview_New() {
 @Composable
 private fun TaskFormScreenPreview_Edit() {
     DiswantinTheme {
-        TaskFormScreen(
-            isNew = false,
-            onClose = {},
-            uiState = TaskFormUiState.Success(
-                deadlineDateInput = null,
-                deadlineTimeInput = null,
-                scheduledAtInput = ZonedDateTime.now(),
-                recurringInput = true,
-                hasSaveError = true,
-                clock = Clock.systemDefaultZone(),
-            ),
-            name = "Shower",
-            onNameChange = {},
-            onSelectListType = {},
-            onDeadlineDateChange = {},
-            onDeadlineTimeChange = {},
-            onScheduleAtChange = {},
-            onRecurringChange = {},
-            onSave = {}
-        )
+        Scaffold(topBar = {
+            TaskFormTopBar(
+                uiState = TaskFormTopBarState(
+                    isNew = false,
+                    showSave = true,
+                    onSave = {},
+                    saveEnabled = true
+                ),
+                onClose = {},
+            )
+        }) { innerPadding ->
+            TaskFormLayout(
+                isNew = false,
+                uiState = TaskFormUiState.Success(
+                    deadlineDateInput = null,
+                    deadlineTimeInput = null,
+                    scheduledAtInput = ZonedDateTime.now(),
+                    recurringInput = true,
+                    hasSaveError = true,
+                    clock = Clock.systemDefaultZone(),
+                ),
+                name = "Shower",
+                onNameChange = {},
+                onSelectListType = {},
+                onDeadlineDateChange = {},
+                onDeadlineTimeChange = {},
+                onScheduleAtChange = {},
+                onRecurringChange = {},
+                modifier = Modifier.padding(innerPadding),
+            )
+        }
     }
 }
 

@@ -15,7 +15,7 @@ import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTaskListRepository
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.MainDispatcherRule
-import io.github.evaogbe.diswantin.ui.navigation.Destination
+import io.github.evaogbe.diswantin.ui.navigation.NavArguments
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
 import kotlinx.collections.immutable.persistentListOf
@@ -342,5 +342,6 @@ class TaskListFormViewModelTest {
             )
         }
 
-    private fun createSavedStateHandleForEdit() = SavedStateHandle(mapOf(Destination.ID_KEY to 1L))
+    private fun createSavedStateHandleForEdit() =
+        SavedStateHandle(mapOf(NavArguments.ID_KEY to 1L))
 }

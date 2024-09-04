@@ -10,7 +10,7 @@ import io.github.evaogbe.diswantin.task.data.TaskList
 import io.github.evaogbe.diswantin.task.data.TaskListWithTasks
 import io.github.evaogbe.diswantin.testing.FakeTaskListRepository
 import io.github.evaogbe.diswantin.testing.MainDispatcherRule
-import io.github.evaogbe.diswantin.ui.navigation.Destination
+import io.github.evaogbe.diswantin.ui.navigation.NavArguments
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
 import kotlinx.collections.immutable.toImmutableList
@@ -147,7 +147,7 @@ class TaskListDetailViewModelTest {
 
     private fun createTaskListDetailViewModel(taskListRepository: FakeTaskListRepository) =
         TaskListDetailViewModel(
-            SavedStateHandle(mapOf(Destination.ID_KEY to 1L)),
+            SavedStateHandle(mapOf(NavArguments.ID_KEY to 1L)),
             taskListRepository,
             Clock.systemDefaultZone(),
         )

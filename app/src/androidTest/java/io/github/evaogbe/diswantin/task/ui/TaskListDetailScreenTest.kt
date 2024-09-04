@@ -2,10 +2,8 @@ package io.github.evaogbe.diswantin.task.ui
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
 import androidx.lifecycle.SavedStateHandle
 import assertk.assertThat
 import assertk.assertions.isTrue
@@ -16,7 +14,7 @@ import io.github.evaogbe.diswantin.task.data.TaskListWithTasks
 import io.github.evaogbe.diswantin.testing.FakeTaskListRepository
 import io.github.evaogbe.diswantin.testing.stringResource
 import io.github.evaogbe.diswantin.ui.components.PendingLayoutTestTag
-import io.github.evaogbe.diswantin.ui.navigation.Destination
+import io.github.evaogbe.diswantin.ui.navigation.NavArguments
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
@@ -42,7 +40,8 @@ class TaskListDetailScreenTest {
             DiswantinTheme {
                 TaskListDetailScreen(
                     onPopBackStack = {},
-                    onEditTaskList = {},
+                    setTopBarState = {},
+                    setUserMessage = {},
                     onSelectTask = {},
                     taskListDetailViewModel = viewModel,
                 )
@@ -64,7 +63,8 @@ class TaskListDetailScreenTest {
             DiswantinTheme {
                 TaskListDetailScreen(
                     onPopBackStack = {},
-                    onEditTaskList = {},
+                    setTopBarState = {},
+                    setUserMessage = {},
                     onSelectTask = {},
                     taskListDetailViewModel = viewModel,
                 )
@@ -86,23 +86,23 @@ class TaskListDetailScreenTest {
             DiswantinTheme {
                 TaskListDetailScreen(
                     onPopBackStack = { onPopBackStackClicked = true },
-                    onEditTaskList = {},
+                    setTopBarState = {},
+                    setUserMessage = {},
                     onSelectTask = {},
                     taskListDetailViewModel = viewModel,
                 )
             }
         }
 
-        composeTestRule.onNodeWithContentDescription(stringResource(R.string.more_actions_button))
-            .performClick()
-        composeTestRule.onNodeWithText(stringResource(R.string.delete_button)).performClick()
+        viewModel.deleteTaskList()
 
         composeTestRule.onNodeWithTag(PendingLayoutTestTag).assertIsDisplayed()
         assertThat(onPopBackStackClicked).isTrue()
     }
 
     @Test
-    fun showsErrorMessage_whenDeleteTaskListFailed() {
+    fun displaysErrorMessage_whenDeleteTaskListFailed() {
+        var userMessage: String? = null
         val taskListWithTasks = genTaskListWithTasks()
         val taskListRepository = FakeTaskListRepository.withTaskLists(taskListWithTasks)
         val viewModel = createTaskListDetailViewModel(taskListRepository)
@@ -111,7 +111,8 @@ class TaskListDetailScreenTest {
             DiswantinTheme {
                 TaskListDetailScreen(
                     onPopBackStack = {},
-                    onEditTaskList = {},
+                    setTopBarState = {},
+                    setUserMessage = { userMessage = it },
                     onSelectTask = {},
                     taskListDetailViewModel = viewModel,
                 )
@@ -119,12 +120,11 @@ class TaskListDetailScreenTest {
         }
 
         taskListRepository.setThrows(taskListRepository::delete, true)
-        composeTestRule.onNodeWithContentDescription(stringResource(R.string.more_actions_button))
-            .performClick()
-        composeTestRule.onNodeWithText(stringResource(R.string.delete_button)).performClick()
+        viewModel.deleteTaskList()
 
-        composeTestRule.onNodeWithText(stringResource(R.string.task_list_detail_delete_error))
-            .assertIsDisplayed()
+        composeTestRule.waitUntil {
+            userMessage == stringResource(R.string.task_list_detail_delete_error)
+        }
     }
 
     private fun genTaskListWithTasks() = TaskListWithTasks(
@@ -141,7 +141,7 @@ class TaskListDetailScreenTest {
 
     private fun createTaskListDetailViewModel(taskListRepository: FakeTaskListRepository) =
         TaskListDetailViewModel(
-            SavedStateHandle(mapOf(Destination.ID_KEY to 1L)),
+            SavedStateHandle(mapOf(NavArguments.ID_KEY to 1L)),
             taskListRepository,
             Clock.systemDefaultZone(),
         )

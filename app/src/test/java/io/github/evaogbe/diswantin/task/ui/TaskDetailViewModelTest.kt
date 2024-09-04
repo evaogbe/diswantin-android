@@ -8,7 +8,7 @@ import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskDetail
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.MainDispatcherRule
-import io.github.evaogbe.diswantin.ui.navigation.Destination
+import io.github.evaogbe.diswantin.ui.navigation.NavArguments
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -133,7 +133,7 @@ class TaskDetailViewModelTest {
         name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
     )
 
-    private fun createSavedStateHandle() = SavedStateHandle(mapOf(Destination.ID_KEY to 1L))
+    private fun createSavedStateHandle() = SavedStateHandle(mapOf(NavArguments.ID_KEY to 1L))
 
     private fun createClock() = Clock.systemDefaultZone()
 

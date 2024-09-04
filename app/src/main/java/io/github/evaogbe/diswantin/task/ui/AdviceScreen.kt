@@ -15,7 +15,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -47,62 +47,56 @@ import kotlinx.collections.immutable.toImmutableList
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AdviceScreen(onClose: () -> Unit, modifier: Modifier = Modifier) {
-    Scaffold(
+fun AdviceTopBar(onSearch: () -> Unit, modifier: Modifier = Modifier) {
+    TopAppBar(
+        title = {},
         modifier = modifier,
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.advice_title)) },
-                navigationIcon = {
-                    IconButton(onClick = onClose) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = stringResource(R.string.close_button)
-                        )
-                    }
-                },
-            )
-        },
-    ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize(),
-            contentAlignment = Alignment.TopCenter
-        ) {
-            SelectionContainer {
-                BulletedList(
-                    items = persistentListOf(
-                        BulletedItem(annotatedStringResource(R.string.suggestion_item_stop)),
-                        BulletedItem(
-                            annotatedStringResource(R.string.suggestion_item_move),
-                            stringArrayResource(R.array.suggestion_item_move_sublist).map {
-                                BulletedItem(AnnotatedString(it))
-                            }.toImmutableList()
-                        ),
-                        BulletedItem(
-                            annotatedStringResource(R.string.suggestion_item_check_the_facts),
-                            stringArrayResource(R.array.suggestion_item_check_the_facts_steps).map {
-                                BulletedItem(
-                                    AnnotatedString(it)
-                                )
-                            }.toImmutableList()
-                        ),
-                        BulletedItem(annotatedStringResource(R.string.suggestion_item_imagine)),
-                        BulletedItem(annotatedStringResource(R.string.suggestion_item_snack)),
-                        BulletedItem(annotatedStringResource(R.string.suggestion_item_meditate)),
-                        BulletedItem(annotatedStringResource(R.string.suggestion_item_journal)),
-                        BulletedItem(annotatedStringResource(R.string.suggestion_item_break_down_task)),
-                        BulletedItem(annotatedStringResource(R.string.suggestion_item_friend)),
-                        BulletedItem(annotatedStringResource(R.string.suggestion_item_meds)),
-                        BulletedItem(annotatedStringResource(R.string.suggestion_item_day_off))
-                    ),
-                    modifier = Modifier
-                        .verticalScroll(rememberScrollState())
-                        .padding(SpaceMd)
-                        .widthIn(max = ScreenLg)
+        actions = {
+            IconButton(onClick = onSearch) {
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = stringResource(R.string.search_tasks_button),
                 )
             }
+        },
+    )
+}
+
+@Composable
+fun AdviceScreen(modifier: Modifier = Modifier) {
+    Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+        SelectionContainer {
+            BulletedList(
+                items = persistentListOf(
+                    BulletedItem(annotatedStringResource(R.string.suggestion_item_stop)),
+                    BulletedItem(
+                        annotatedStringResource(R.string.suggestion_item_move),
+                        stringArrayResource(R.array.suggestion_item_move_sublist).map {
+                            BulletedItem(AnnotatedString(it))
+                        }.toImmutableList()
+                    ),
+                    BulletedItem(
+                        annotatedStringResource(R.string.suggestion_item_check_the_facts),
+                        stringArrayResource(R.array.suggestion_item_check_the_facts_steps).map {
+                            BulletedItem(
+                                AnnotatedString(it)
+                            )
+                        }.toImmutableList()
+                    ),
+                    BulletedItem(annotatedStringResource(R.string.suggestion_item_imagine)),
+                    BulletedItem(annotatedStringResource(R.string.suggestion_item_snack)),
+                    BulletedItem(annotatedStringResource(R.string.suggestion_item_meditate)),
+                    BulletedItem(annotatedStringResource(R.string.suggestion_item_journal)),
+                    BulletedItem(annotatedStringResource(R.string.suggestion_item_break_down_task)),
+                    BulletedItem(annotatedStringResource(R.string.suggestion_item_friend)),
+                    BulletedItem(annotatedStringResource(R.string.suggestion_item_meds)),
+                    BulletedItem(annotatedStringResource(R.string.suggestion_item_day_off))
+                ),
+                modifier = Modifier
+                    .verticalScroll(rememberScrollState())
+                    .padding(SpaceMd)
+                    .widthIn(max = ScreenLg)
+            )
         }
     }
 }
@@ -157,6 +151,8 @@ fun annotatedStringResource(@StringRes id: Int): AnnotatedString {
 @Composable
 private fun AdviceScreenPreview() {
     DiswantinTheme {
-        AdviceScreen(onClose = {})
+        Scaffold(topBar = { AdviceTopBar(onSearch = {}) }) { innerPadding ->
+            AdviceScreen(modifier = Modifier.padding(innerPadding))
+        }
     }
 }

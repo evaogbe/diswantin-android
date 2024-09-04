@@ -3,25 +3,30 @@ package io.github.evaogbe.diswantin.task.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.typography
-import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -46,12 +51,42 @@ import io.github.evaogbe.diswantin.ui.theme.SpaceXl
 import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
 import java.time.Instant
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CurrentTaskTopBar(
+    uiState: CurrentTaskTopBarState,
+    onSearch: () -> Unit,
+    onEditTask: (Long) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    TopAppBar(
+        title = {},
+        modifier = modifier,
+        actions = {
+            IconButton(onClick = onSearch) {
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = stringResource(R.string.search_tasks_button),
+                )
+            }
+
+            if (uiState.taskId != null) {
+                IconButton(onClick = { onEditTask(uiState.taskId) }) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = stringResource(R.string.edit_button),
+                    )
+                }
+            }
+        },
+    )
+}
+
 @Composable
 fun CurrentTaskScreen(
-    setCurrentTaskId: (Long?) -> Unit,
+    setTopBarState: (CurrentTaskTopBarState) -> Unit,
     setUserMessage: (String) -> Unit,
     onAddTask: () -> Unit,
-    onAdviceClick: () -> Unit,
     currentTaskViewModel: CurrentTaskViewModel = hiltViewModel(),
 ) {
     val uiState by currentTaskViewModel.uiState.collectAsStateWithLifecycle()
@@ -61,12 +96,16 @@ fun CurrentTaskScreen(
         currentTaskViewModel.initialize()
     }
 
-    LaunchedEffect(uiState) {
-        setCurrentTaskId((uiState as? CurrentTaskUiState.Present)?.currentTask?.id)
+    LaunchedEffect(uiState, setTopBarState) {
+        setTopBarState(
+            CurrentTaskTopBarState(
+                taskId = (uiState as? CurrentTaskUiState.Present)?.currentTask?.id,
+            )
+        )
     }
 
     (uiState as? CurrentTaskUiState.Present)?.userMessage?.let { message ->
-        LaunchedEffect(message) {
+        LaunchedEffect(message, setUserMessage) {
             setUserMessage(resources.getString(message))
             currentTaskViewModel.userMessageShown()
         }
@@ -82,7 +121,6 @@ fun CurrentTaskScreen(
         is CurrentTaskUiState.Present -> {
             CurrentTaskLayout(
                 task = state.currentTask,
-                onAdviceClick = onAdviceClick,
                 onMarkTaskDone = currentTaskViewModel::markCurrentTaskDone,
             )
         }
@@ -90,12 +128,7 @@ fun CurrentTaskScreen(
 }
 
 @Composable
-fun CurrentTaskLayout(
-    task: Task,
-    onAdviceClick: () -> Unit,
-    onMarkTaskDone: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
+fun CurrentTaskLayout(task: Task, onMarkTaskDone: () -> Unit, modifier: Modifier = Modifier) {
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         Column(
             modifier = Modifier
@@ -108,16 +141,17 @@ fun CurrentTaskLayout(
             SelectionContainer {
                 Text(text = task.name, style = typography.displaySmall)
             }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceAround
+            FilledTonalButton(
+                onClick = onMarkTaskDone,
+                contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
             ) {
-                OutlinedButton(onClick = onAdviceClick) {
-                    Text(stringResource(R.string.advice_button))
-                }
-                OutlinedButton(onClick = onMarkTaskDone) {
-                    Text(stringResource(R.string.mark_done_button))
-                }
+                Icon(
+                    imageVector = Icons.Default.Done,
+                    contentDescription = null,
+                    modifier = Modifier.size(ButtonDefaults.IconSize),
+                )
+                Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                Text(stringResource(R.string.mark_done_button))
             }
         }
     }
@@ -163,17 +197,23 @@ fun EmptyCurrentTaskLayout(onAddTask: () -> Unit, modifier: Modifier = Modifier)
 
 @DevicePreviews
 @Composable
-private fun CurrentTaskLayoutPreview() {
+private fun CurrentTaskScreenPreview_Present() {
     DiswantinTheme {
-        Surface {
+        Scaffold(topBar = {
+            CurrentTaskTopBar(
+                uiState = CurrentTaskTopBarState(taskId = 1L),
+                onSearch = {},
+                onEditTask = {},
+            )
+        }) { innerPadding ->
             CurrentTaskLayout(
                 task = Task(
                     id = 1L,
                     createdAt = Instant.now(),
                     name = "Brush teeth"
                 ),
-                onAdviceClick = {},
                 onMarkTaskDone = {},
+                modifier = Modifier.padding(innerPadding),
             )
         }
     }
@@ -181,8 +221,16 @@ private fun CurrentTaskLayoutPreview() {
 
 @DevicePreviews
 @Composable
-private fun EmptyCurrentTaskLayoutPreview() {
+private fun CurrentTaskScreenPreview_Empty() {
     DiswantinTheme {
-        EmptyCurrentTaskLayout(onAddTask = {})
+        Scaffold(topBar = {
+            CurrentTaskTopBar(
+                uiState = CurrentTaskTopBarState(taskId = null),
+                onSearch = {},
+                onEditTask = {},
+            )
+        }) { innerPadding ->
+            EmptyCurrentTaskLayout(onAddTask = {}, modifier = Modifier.padding(innerPadding))
+        }
     }
 }

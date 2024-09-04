@@ -11,7 +11,7 @@ import io.github.evaogbe.diswantin.task.data.EditTaskForm
 import io.github.evaogbe.diswantin.task.data.NewTaskForm
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskRepository
-import io.github.evaogbe.diswantin.ui.navigation.Destination
+import io.github.evaogbe.diswantin.ui.navigation.NavArguments
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -35,11 +35,11 @@ class TaskFormViewModel @Inject constructor(
     private val taskRepository: TaskRepository,
     private val clock: Clock,
 ) : ViewModel() {
-    private val taskId: Long? = savedStateHandle[Destination.ID_KEY]
+    private val taskId: Long? = savedStateHandle[NavArguments.ID_KEY]
 
     val isNew = taskId == null
 
-    var nameInput by mutableStateOf(savedStateHandle[Destination.NAME_KEY] ?: "")
+    var nameInput by mutableStateOf(savedStateHandle[NavArguments.NAME_KEY] ?: "")
         private set
 
     private val deadlineDateInput = MutableStateFlow<LocalDate?>(null)
@@ -53,10 +53,12 @@ class TaskFormViewModel @Inject constructor(
     private val saveResult = MutableStateFlow<Result<Unit>?>(null)
 
     private val existingTaskStream = taskId?.let { id ->
-        taskRepository.getById(id).map { Result.success(it) }.catch { e ->
-            Timber.e(e, "Failed to fetch task by id: %d", id)
-            emit(Result.failure(e))
-        }
+        taskRepository.getById(id)
+            .map { Result.success(it) }
+            .catch { e ->
+                Timber.e(e, "Failed to fetch task by id: %d", id)
+                emit(Result.failure(e))
+            }
     } ?: flowOf(Result.success(null))
 
     @Suppress("UNCHECKED_CAST")

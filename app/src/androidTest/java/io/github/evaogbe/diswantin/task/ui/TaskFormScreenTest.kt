@@ -18,7 +18,7 @@ import io.github.evaogbe.diswantin.task.data.TaskRepository
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.stringResource
 import io.github.evaogbe.diswantin.ui.components.PendingLayoutTestTag
-import io.github.evaogbe.diswantin.ui.navigation.Destination
+import io.github.evaogbe.diswantin.ui.navigation.NavArguments
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
@@ -35,7 +35,43 @@ class TaskFormScreenTest {
     private val faker = Faker()
 
     @Test
-    fun displaysContentForNew_whenNew() {
+    fun topBar_displaysTitleForNew_whenNew() {
+        composeTestRule.setContent {
+            TaskFormTopBar(
+                uiState = TaskFormTopBarState(
+                    isNew = true,
+                    showSave = false,
+                    onSave = {},
+                    saveEnabled = false,
+                ),
+                onClose = {},
+            )
+        }
+
+        composeTestRule.onNodeWithText(stringResource(R.string.task_form_title_new))
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun topBar_displaysTitleForEdit_whenEdit() {
+        composeTestRule.setContent {
+            TaskFormTopBar(
+                uiState = TaskFormTopBarState(
+                    isNew = false,
+                    showSave = false,
+                    onSave = {},
+                    saveEnabled = false,
+                ),
+                onClose = {},
+            )
+        }
+
+        composeTestRule.onNodeWithText(stringResource(R.string.task_form_title_edit))
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun displaysFormTypeButtonGroup_whenNew() {
         val taskRepository = FakeTaskRepository()
         val viewModel = createTaskFormViewModelForNew(taskRepository)
 
@@ -43,20 +79,19 @@ class TaskFormScreenTest {
             DiswantinTheme {
                 TaskFormScreen(
                     onPopBackStack = {},
+                    setTopBarState = {},
                     onSelectListType = {},
                     taskFormViewModel = viewModel,
                 )
             }
         }
 
-        composeTestRule.onNodeWithText(stringResource(R.string.task_form_title_new))
-            .assertIsDisplayed()
         composeTestRule.onNodeWithText(stringResource(R.string.form_type_button_list))
             .assertIsDisplayed()
     }
 
     @Test
-    fun displaysContentForEdit_whenEdit() {
+    fun doesNotDisplayFormTypeButtonGroup_whenEdit() {
         val task = genTask()
         val taskRepository = FakeTaskRepository.withTasks(task)
         val viewModel = createTaskFormViewModelForEdit(taskRepository)
@@ -65,14 +100,13 @@ class TaskFormScreenTest {
             DiswantinTheme {
                 TaskFormScreen(
                     onPopBackStack = {},
+                    setTopBarState = {},
                     onSelectListType = {},
                     taskFormViewModel = viewModel,
                 )
             }
         }
 
-        composeTestRule.onNodeWithText(stringResource(R.string.task_form_title_edit))
-            .assertIsDisplayed()
         composeTestRule.onNodeWithText(stringResource(R.string.form_type_button_list))
             .assertDoesNotExist()
     }
@@ -86,6 +120,7 @@ class TaskFormScreenTest {
             DiswantinTheme {
                 TaskFormScreen(
                     onPopBackStack = {},
+                    setTopBarState = {},
                     onSelectListType = {},
                     taskFormViewModel = viewModel,
                 )
@@ -107,6 +142,7 @@ class TaskFormScreenTest {
             DiswantinTheme {
                 TaskFormScreen(
                     onPopBackStack = { onPopBackStackCalled = true },
+                    setTopBarState = {},
                     onSelectListType = {},
                     taskFormViewModel = viewModel,
                 )
@@ -126,7 +162,7 @@ class TaskFormScreenTest {
         composeTestRule.onNodeWithText(stringResource(R.string.add_deadline_date_button))
             .performClick()
         composeTestRule.onNodeWithText(stringResource(R.string.ok_button)).performClick()
-        composeTestRule.onNodeWithText(stringResource(R.string.save_button)).performClick()
+        viewModel.saveTask()
 
         composeTestRule.onNodeWithTag(PendingLayoutTestTag).assertIsDisplayed()
         assertThat(onPopBackStackCalled).isTrue()
@@ -142,6 +178,7 @@ class TaskFormScreenTest {
             DiswantinTheme {
                 TaskFormScreen(
                     onPopBackStack = {},
+                    setTopBarState = {},
                     onSelectListType = {},
                     taskFormViewModel = viewModel,
                 )
@@ -155,7 +192,7 @@ class TaskFormScreenTest {
         composeTestRule.onNodeWithText(stringResource(R.string.name_label), useUnmergedTree = true)
             .onParent()
             .performTextInput(name)
-        composeTestRule.onNodeWithText(stringResource(R.string.save_button)).performClick()
+        viewModel.saveTask()
 
         composeTestRule.onNodeWithText(stringResource(R.string.task_form_save_error_new))
             .assertIsDisplayed()
@@ -173,6 +210,7 @@ class TaskFormScreenTest {
             DiswantinTheme {
                 TaskFormScreen(
                     onPopBackStack = { onPopBackStackCalled = true },
+                    setTopBarState = {},
                     onSelectListType = {},
                     taskFormViewModel = viewModel,
                 )
@@ -196,7 +234,7 @@ class TaskFormScreenTest {
         composeTestRule.onNodeWithText(stringResource(R.string.add_scheduled_at_button))
             .performClick()
         composeTestRule.onNodeWithText(stringResource(R.string.ok_button)).performClick()
-        composeTestRule.onNodeWithText(stringResource(R.string.save_button)).performClick()
+        viewModel.saveTask()
 
         composeTestRule.onNodeWithTag(PendingLayoutTestTag).assertIsDisplayed()
         assertThat(onPopBackStackCalled).isTrue()
@@ -213,6 +251,7 @@ class TaskFormScreenTest {
             DiswantinTheme {
                 TaskFormScreen(
                     onPopBackStack = {},
+                    setTopBarState = {},
                     onSelectListType = {},
                     taskFormViewModel = viewModel,
                 )
@@ -226,7 +265,7 @@ class TaskFormScreenTest {
         composeTestRule.onNodeWithText(stringResource(R.string.name_label), useUnmergedTree = true)
             .onParent()
             .performTextReplacement(name)
-        composeTestRule.onNodeWithText(stringResource(R.string.save_button)).performClick()
+        viewModel.saveTask()
 
         composeTestRule.onNodeWithText(stringResource(R.string.task_form_save_error_edit))
             .assertIsDisplayed()
@@ -243,7 +282,7 @@ class TaskFormScreenTest {
 
     private fun createTaskFormViewModelForEdit(taskRepository: TaskRepository) =
         TaskFormViewModel(
-            SavedStateHandle(mapOf(Destination.ID_KEY to 1L)),
+            SavedStateHandle(mapOf(NavArguments.ID_KEY to 1L)),
             taskRepository,
             Clock.systemDefaultZone()
         )

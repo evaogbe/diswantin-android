@@ -24,8 +24,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -57,16 +55,67 @@ import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TaskDetailTopBar(
+    uiState: TaskDetailTopBarState,
+    onBackClick: () -> Unit,
+    onEditTask: (Long) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var menuExpanded by remember { mutableStateOf(false) }
+
+    TopAppBar(
+        title = {},
+        modifier = modifier,
+        navigationIcon = {
+            IconButton(onClick = onBackClick) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Default.ArrowBack,
+                    contentDescription = stringResource(R.string.back_button)
+                )
+            }
+        },
+        actions = {
+            if (uiState.taskId != null) {
+                IconButton(onClick = { onEditTask(uiState.taskId) }) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = stringResource(R.string.edit_button),
+                    )
+                }
+
+                IconButton(onClick = { menuExpanded = !menuExpanded }) {
+                    Icon(
+                        imageVector = Icons.Default.MoreVert,
+                        contentDescription = stringResource(R.string.more_actions_button),
+                    )
+                }
+
+                DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.delete_button)) },
+                        onClick = uiState.onDeleteTask,
+                        leadingIcon = {
+                            Icon(imageVector = Icons.Default.Delete, contentDescription = null)
+                        },
+                    )
+                }
+            }
+        },
+    )
+}
+
 @Composable
 fun TaskDetailScreen(
     onPopBackStack: () -> Unit,
-    onEditTask: (Long) -> Unit,
+    setTopBarState: (TaskDetailTopBarState) -> Unit,
+    setUserMessage: (String) -> Unit,
     onSelectTaskList: (Long) -> Unit,
     taskDetailViewModel: TaskDetailViewModel = hiltViewModel(),
 ) {
     val uiState by taskDetailViewModel.uiState.collectAsStateWithLifecycle()
     val resources = LocalContext.current.resources
-    val snackbarHostState = remember { SnackbarHostState() }
 
     if (uiState is TaskDetailUiState.Deleted) {
         LaunchedEffect(onPopBackStack) {
@@ -74,106 +123,34 @@ fun TaskDetailScreen(
         }
     }
 
+    LaunchedEffect(setTopBarState, uiState, taskDetailViewModel) {
+        setTopBarState(
+            TaskDetailTopBarState(
+                taskId = (uiState as? TaskDetailUiState.Success)?.task?.id,
+                onDeleteTask = taskDetailViewModel::deleteTask,
+            )
+        )
+    }
+
     (uiState as? TaskDetailUiState.Success)?.userMessage?.let { message ->
-        LaunchedEffect(message, snackbarHostState) {
-            snackbarHostState.showSnackbar(resources.getString(message))
+        LaunchedEffect(message, setUserMessage) {
+            setUserMessage(resources.getString(message))
             taskDetailViewModel.userMessageShown()
         }
     }
 
-    TaskDetailScreen(
-        onBackClick = onPopBackStack,
-        onEditTask = onEditTask,
-        onDeleteTask = taskDetailViewModel::deleteTask,
-        snackbarHostState = snackbarHostState,
-        uiState = uiState,
-        onSelectTaskList = onSelectTaskList,
-    )
-}
+    when (val state = uiState) {
+        is TaskDetailUiState.Pending,
+        is TaskDetailUiState.Deleted -> {
+            PendingLayout()
+        }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun TaskDetailScreen(
-    onBackClick: () -> Unit,
-    onEditTask: (Long) -> Unit,
-    onDeleteTask: () -> Unit,
-    snackbarHostState: SnackbarHostState,
-    uiState: TaskDetailUiState,
-    onSelectTaskList: (Long) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Scaffold(
-        modifier = modifier,
-        topBar = {
-            var menuExpanded by remember { mutableStateOf(false) }
+        is TaskDetailUiState.Failure -> {
+            LoadFailureLayout(message = stringResource(R.string.task_detail_fetch_error))
+        }
 
-            TopAppBar(
-                title = {},
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Default.ArrowBack,
-                            contentDescription = stringResource(R.string.back_button)
-                        )
-                    }
-                },
-                actions = {
-                    if (uiState is TaskDetailUiState.Success) {
-                        IconButton(onClick = { onEditTask(uiState.task.id) }) {
-                            Icon(
-                                imageVector = Icons.Default.Edit,
-                                contentDescription = stringResource(R.string.edit_button),
-                            )
-                        }
-
-                        IconButton(onClick = { menuExpanded = !menuExpanded }) {
-                            Icon(
-                                imageVector = Icons.Default.MoreVert,
-                                contentDescription = stringResource(R.string.more_actions_button),
-                            )
-                        }
-
-                        DropdownMenu(
-                            expanded = menuExpanded,
-                            onDismissRequest = { menuExpanded = false }
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text(text = stringResource(R.string.delete_button)) },
-                                onClick = onDeleteTask,
-                                leadingIcon = {
-                                    Icon(
-                                        imageVector = Icons.Default.Delete,
-                                        contentDescription = null,
-                                    )
-                                },
-                            )
-                        }
-                    }
-                },
-            )
-        },
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-    ) { innerPadding ->
-        when (uiState) {
-            is TaskDetailUiState.Pending,
-            is TaskDetailUiState.Deleted -> {
-                PendingLayout(modifier = Modifier.padding(innerPadding))
-            }
-
-            is TaskDetailUiState.Failure -> {
-                LoadFailureLayout(
-                    message = stringResource(R.string.task_detail_fetch_error),
-                    modifier = Modifier.padding(innerPadding)
-                )
-            }
-
-            is TaskDetailUiState.Success -> {
-                TaskDetailLayout(
-                    uiState = uiState,
-                    onSelectTaskList = onSelectTaskList,
-                    modifier = Modifier.padding(innerPadding)
-                )
-            }
+        is TaskDetailUiState.Success -> {
+            TaskDetailLayout(uiState = state, onSelectTaskList = onSelectTaskList)
         }
     }
 }
@@ -263,28 +240,33 @@ fun TaskDetailLayout(
 @Composable
 private fun TaskDetailScreenPreview() {
     DiswantinTheme {
-        TaskDetailScreen(
-            onBackClick = {},
-            onEditTask = {},
-            onDeleteTask = {},
-            snackbarHostState = SnackbarHostState(),
-            uiState = TaskDetailUiState.Success(
-                task = TaskDetail(
-                    id = 1L,
-                    name = "Brush teeth",
-                    deadlineDate = null,
-                    deadlineTime = null,
-                    scheduledAt = null,
-                    recurring = false,
-                    doneAt = null,
-                    listId = null,
-                    listName = null,
+        Scaffold(topBar = {
+            TaskDetailTopBar(
+                uiState = TaskDetailTopBarState(taskId = 1L, onDeleteTask = {}),
+                onBackClick = {},
+                onEditTask = {},
+            )
+        }) { innerPadding ->
+            TaskDetailLayout(
+                uiState = TaskDetailUiState.Success(
+                    task = TaskDetail(
+                        id = 1L,
+                        name = "Brush teeth",
+                        deadlineDate = null,
+                        deadlineTime = null,
+                        scheduledAt = null,
+                        recurring = false,
+                        doneAt = null,
+                        listId = null,
+                        listName = null,
+                    ),
+                    userMessage = null,
+                    clock = Clock.systemDefaultZone()
                 ),
-                userMessage = null,
-                clock = Clock.systemDefaultZone()
-            ),
-            onSelectTaskList = {},
-        )
+                onSelectTaskList = {},
+                modifier = Modifier.padding(innerPadding),
+            )
+        }
     }
 }
 

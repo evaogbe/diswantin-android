@@ -5,7 +5,6 @@
     <string name="add_scheduled_at_button">Schedule</string>
     <string name="add_task_button">Add to-do</string>
     <string name="add_task_list_button">Add list</string>
-    <string name="advice_button">Advice</string>
     <string name="advice_title">Advice</string>
     <string name="app_name">Diswantin</string>
     <string name="back_button">Back</string>
@@ -16,7 +15,7 @@
     <string name="current_task_empty">No upcoming to-dos</string>
     <string name="current_task_fetch_error">Something went wrong loading the current to-do</string>
     <string name="current_task_mark_done_error">Something went wrong marking the to-do as done</string>
-    <string name="current_task_title">Current To-do</string>
+    <string name="current_task_title">To do now</string>
     <string name="edit_button">Edit</string>
     <string name="delete_button">Delete</string>
     <string name="deadline_label">Deadline</string>

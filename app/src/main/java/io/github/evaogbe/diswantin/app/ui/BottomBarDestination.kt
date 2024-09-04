@@ -1,0 +1,15 @@
+package io.github.evaogbe.diswantin.app.ui
+
+import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
+import io.github.evaogbe.diswantin.R
+
+enum class BottomBarDestination(
+    val route: String,
+    @StringRes val titleId: Int,
+    @DrawableRes val iconId: Int,
+) {
+    CurrentTask("currentTask", R.string.current_task_title, R.drawable.baseline_task_alt_24),
+    Advice("advice", R.string.advice_title, R.drawable.psychiatry_24px),
+    TaskLists("taskLists", R.string.task_lists_title, R.drawable.baseline_list_alt_24)
+}

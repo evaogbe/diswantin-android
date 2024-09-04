@@ -21,7 +21,7 @@ import io.github.evaogbe.diswantin.testing.FakeTaskListRepository
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.stringResource
 import io.github.evaogbe.diswantin.ui.components.PendingLayoutTestTag
-import io.github.evaogbe.diswantin.ui.navigation.Destination
+import io.github.evaogbe.diswantin.ui.navigation.NavArguments
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
@@ -55,6 +55,8 @@ class TaskListFormScreenTest {
             DiswantinTheme {
                 TaskListFormScreen(
                     onPopBackStack = {},
+                    setTopBarState = {},
+                    setUserMessage = {},
                     onSelectTaskType = {},
                     taskListFormViewModel = viewModel,
                 )
@@ -86,6 +88,8 @@ class TaskListFormScreenTest {
             DiswantinTheme {
                 TaskListFormScreen(
                     onPopBackStack = {},
+                    setTopBarState = {},
+                    setUserMessage = {},
                     onSelectTaskType = {},
                     taskListFormViewModel = viewModel,
                 )
@@ -107,6 +111,7 @@ class TaskListFormScreenTest {
 
     @Test
     fun displaysErrorMessage_whenSearchTasksFailed() {
+        var userMessage: String? = null
         val query = loremFaker.verbs.base()
         val db = FakeDatabase()
         val taskRepository = FakeTaskRepository(db)
@@ -118,6 +123,8 @@ class TaskListFormScreenTest {
             DiswantinTheme {
                 TaskListFormScreen(
                     onPopBackStack = {},
+                    setTopBarState = {},
+                    setUserMessage = { userMessage = it },
                     onSelectTaskType = {},
                     taskListFormViewModel = viewModel,
                 )
@@ -132,10 +139,9 @@ class TaskListFormScreenTest {
             .onParent()
             .performTextInput(query)
 
-
-        composeTestRule.waitUntilExactlyOneExists(
-            hasText(stringResource(R.string.task_list_form_search_tasks_error)),
-        )
+        composeTestRule.waitUntil {
+            userMessage == stringResource(R.string.task_list_form_search_tasks_error)
+        }
     }
 
     @Test
@@ -162,6 +168,8 @@ class TaskListFormScreenTest {
             DiswantinTheme {
                 TaskListFormScreen(
                     onPopBackStack = { onPopBackStackCalled = true },
+                    setTopBarState = {},
+                    setUserMessage = {},
                     onSelectTaskType = {},
                     taskListFormViewModel = viewModel,
                 )
@@ -185,7 +193,7 @@ class TaskListFormScreenTest {
             composeTestRule.onNodeWithText(stringResource(R.string.add_task_button)).performClick()
         }
 
-        composeTestRule.onNodeWithText(stringResource(R.string.save_button)).performClick()
+        viewModel.saveTaskList()
 
         composeTestRule.onNodeWithTag(PendingLayoutTestTag).assertIsDisplayed()
         assertThat(onPopBackStackCalled).isTrue()
@@ -204,6 +212,8 @@ class TaskListFormScreenTest {
             DiswantinTheme {
                 TaskListFormScreen(
                     onPopBackStack = {},
+                    setTopBarState = {},
+                    setUserMessage = {},
                     onSelectTaskType = {},
                     taskListFormViewModel = viewModel,
                 )
@@ -217,7 +227,7 @@ class TaskListFormScreenTest {
         composeTestRule.onNodeWithText(stringResource(R.string.name_label), useUnmergedTree = true)
             .onParent()
             .performTextInput(name)
-        composeTestRule.onNodeWithText(stringResource(R.string.save_button)).performClick()
+        viewModel.saveTaskList()
 
         composeTestRule.onNodeWithText(stringResource(R.string.task_list_form_save_error_new))
             .assertIsDisplayed()
@@ -243,6 +253,8 @@ class TaskListFormScreenTest {
             DiswantinTheme {
                 TaskListFormScreen(
                     onPopBackStack = { onPopBackStackCalled = true },
+                    setTopBarState = {},
+                    setUserMessage = {},
                     onSelectTaskType = {},
                     taskListFormViewModel = viewModel,
                 )
@@ -252,7 +264,7 @@ class TaskListFormScreenTest {
         composeTestRule.onNodeWithText(stringResource(R.string.name_label), useUnmergedTree = true)
             .onParent()
             .performTextReplacement(name)
-        composeTestRule.onNodeWithText(stringResource(R.string.save_button)).performClick()
+        viewModel.saveTaskList()
 
         composeTestRule.onNodeWithTag(PendingLayoutTestTag).assertIsDisplayed()
         assertThat(onPopBackStackCalled).isTrue()
@@ -277,6 +289,8 @@ class TaskListFormScreenTest {
             DiswantinTheme {
                 TaskListFormScreen(
                     onPopBackStack = {},
+                    setTopBarState = {},
+                    setUserMessage = {},
                     onSelectTaskType = {},
                     taskListFormViewModel = viewModel,
                 )
@@ -290,7 +304,7 @@ class TaskListFormScreenTest {
         composeTestRule.onNodeWithText(stringResource(R.string.name_label), useUnmergedTree = true)
             .onParent()
             .performTextReplacement(name)
-        composeTestRule.onNodeWithText(stringResource(R.string.save_button)).performClick()
+        viewModel.saveTaskList()
 
         composeTestRule.onNodeWithText(stringResource(R.string.task_list_form_save_error_edit))
             .assertIsDisplayed()
@@ -298,5 +312,6 @@ class TaskListFormScreenTest {
 
     private fun genTaskList() = TaskList(id = 1L, name = loremFaker.lorem.words())
 
-    private fun createSavedStateHandleForEdit() = SavedStateHandle(mapOf(Destination.ID_KEY to 1L))
+    private fun createSavedStateHandleForEdit() =
+        SavedStateHandle(mapOf(NavArguments.ID_KEY to 1L))
 }

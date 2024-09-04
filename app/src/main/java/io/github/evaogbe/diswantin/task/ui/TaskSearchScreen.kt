@@ -72,10 +72,57 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import java.time.Instant
 import kotlin.time.Duration.Companion.milliseconds
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TaskSearchTopBar(
+    uiState: TaskSearchTopBarState,
+    onBackClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    TopAppBar(
+        title = {
+            AutoFocusTextField(
+                value = uiState.query,
+                onValueChange = uiState.onQueryChange,
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text(stringResource(R.string.task_search_title)) },
+                trailingIcon = if (uiState.query.isNotEmpty()) {
+                    {
+                        IconButton(onClick = { uiState.onQueryChange("") }) {
+                            Icon(
+                                imageVector = Icons.Default.Clear,
+                                contentDescription = stringResource(R.string.clear_button)
+                            )
+                        }
+                    }
+                } else {
+                    null
+                },
+                keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(onSearch = { uiState.onSearch(uiState.query) }),
+                singleLine = true,
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                )
+            )
+        },
+        modifier = modifier,
+        navigationIcon = {
+            IconButton(onClick = onBackClick) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Default.ArrowBack,
+                    contentDescription = stringResource(R.string.back_button),
+                )
+            }
+        },
+    )
+}
+
 @OptIn(FlowPreview::class)
 @Composable
 fun TaskSearchScreen(
-    onBackClick: () -> Unit,
+    setTopBarState: (TaskSearchTopBarState) -> Unit,
     onAddTask: (String) -> Unit,
     onSelectSearchResult: (Long) -> Unit,
     taskSearchViewModel: TaskSearchViewModel = hiltViewModel(),
@@ -93,104 +140,32 @@ fun TaskSearchScreen(
             }
     }
 
-    TaskSearchScreen(
-        query = query,
-        onQueryChange = setQuery,
-        onSearch = taskSearchViewModel::searchTasks,
-        onBackClick = onBackClick,
-        uiState = uiState,
-        onAddTask = { onAddTask(query) },
-        onSelectSearchResult = { onSelectSearchResult(it.id) },
-    )
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun TaskSearchScreen(
-    query: String,
-    onQueryChange: (String) -> Unit,
-    onSearch: (String) -> Unit,
-    onBackClick: () -> Unit,
-    uiState: TaskSearchUiState,
-    onAddTask: () -> Unit,
-    onSelectSearchResult: (Task) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Scaffold(
-        modifier = modifier,
-        topBar = {
-            TopAppBar(
-                title = {
-                    AutoFocusTextField(
-                        value = query,
-                        onValueChange = onQueryChange,
-                        modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text(stringResource(R.string.task_search_title)) },
-                        trailingIcon = if (query.isNotEmpty()) {
-                            {
-                                IconButton(onClick = { onQueryChange("") }) {
-                                    Icon(
-                                        imageVector = Icons.Default.Clear,
-                                        contentDescription = stringResource(R.string.clear_button)
-                                    )
-                                }
-                            }
-                        } else {
-                            null
-                        },
-                        keyboardOptions = KeyboardOptions.Default.copy(
-                            imeAction = ImeAction.Search,
-                        ),
-                        keyboardActions = KeyboardActions(onSearch = { onSearch(query) }),
-                        singleLine = true,
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color.Transparent,
-                            unfocusedContainerColor = Color.Transparent,
-                        )
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Default.ArrowBack,
-                            contentDescription = stringResource(R.string.back_button)
-                        )
-                    }
-                },
+    LaunchedEffect(setTopBarState, query, setQuery, taskSearchViewModel) {
+        setTopBarState(
+            TaskSearchTopBarState(
+                query = query,
+                onQueryChange = setQuery,
+                onSearch = taskSearchViewModel::searchTasks,
             )
-        },
-    ) { innerPadding ->
-        when (uiState) {
-            is TaskSearchUiState.Initial -> {
-                Box(
-                    modifier = Modifier
-                        .padding(innerPadding)
-                        .fillMaxSize()
-                        .background(color = colorScheme.surfaceVariant),
-                )
-            }
+        )
+    }
 
-            is TaskSearchUiState.Failure -> {
-                LoadFailureLayout(
-                    message = stringResource(R.string.task_search_error),
-                    modifier = Modifier.padding(innerPadding)
-                )
-            }
+    when (val state = uiState) {
+        is TaskSearchUiState.Initial -> InitialTaskSearchLayout()
 
-            is TaskSearchUiState.Success -> {
-                if (uiState.searchResults.isEmpty()) {
-                    EmptyTaskSearchLayout(
-                        onAddTask = onAddTask,
-                        modifier = Modifier.padding(innerPadding),
-                    )
-                } else {
-                    TaskSearchLayout(
-                        query = query,
-                        searchResults = uiState.searchResults,
-                        onSelectSearchResult = onSelectSearchResult,
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+        is TaskSearchUiState.Failure -> {
+            LoadFailureLayout(message = stringResource(R.string.task_search_error))
+        }
+
+        is TaskSearchUiState.Success -> {
+            if (state.searchResults.isEmpty()) {
+                EmptyTaskSearchLayout(onAddTask = { onAddTask(query.trim()) })
+            } else {
+                TaskSearchLayout(
+                    query = query,
+                    searchResults = state.searchResults,
+                    onSelectSearchResult = { onSelectSearchResult(it.id) },
+                )
             }
         }
     }
@@ -280,16 +255,27 @@ fun EmptyTaskSearchLayout(onAddTask: () -> Unit, modifier: Modifier = Modifier) 
     }
 }
 
+@Composable
+fun InitialTaskSearchLayout(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(color = colorScheme.surfaceVariant),
+    )
+}
+
 @DevicePreviews
 @Composable
 private fun TaskSearchScreenPreview_Present() {
     DiswantinTheme {
-        TaskSearchScreen(
-            query = "Bru",
-            onQueryChange = {},
-            onSearch = {},
-            onBackClick = {},
-            uiState = TaskSearchUiState.Success(
+        Scaffold(topBar = {
+            TaskSearchTopBar(
+                uiState = TaskSearchTopBarState(query = "Bru", onQueryChange = {}, onSearch = {}),
+                onBackClick = {},
+            )
+        }) { innerPadding ->
+            TaskSearchLayout(
+                query = "Bru",
                 searchResults = persistentListOf(
                     Task(
                         id = 1L,
@@ -306,11 +292,11 @@ private fun TaskSearchScreenPreview_Present() {
                         createdAt = Instant.parse("2024-08-09T08:10:00Z"),
                         name = "Eat brunch",
                     ),
-                )
-            ),
-            onAddTask = {},
-            onSelectSearchResult = {}
-        )
+                ),
+                onSelectSearchResult = {},
+                modifier = Modifier.padding(innerPadding),
+            )
+        }
     }
 }
 
@@ -318,15 +304,14 @@ private fun TaskSearchScreenPreview_Present() {
 @Composable
 private fun TaskSearchScreenPreview_Empty() {
     DiswantinTheme {
-        TaskSearchScreen(
-            query = "Bru",
-            onQueryChange = {},
-            onSearch = {},
-            onBackClick = {},
-            uiState = TaskSearchUiState.Success(searchResults = persistentListOf()),
-            onAddTask = {},
-            onSelectSearchResult = {}
-        )
+        Scaffold(topBar = {
+            TaskSearchTopBar(
+                uiState = TaskSearchTopBarState(query = "Bru", onQueryChange = {}, onSearch = {}),
+                onBackClick = {},
+            )
+        }) { innerPadding ->
+            EmptyTaskSearchLayout(onAddTask = {}, modifier = Modifier.padding(innerPadding))
+        }
     }
 }
 
@@ -334,14 +319,13 @@ private fun TaskSearchScreenPreview_Empty() {
 @Composable
 private fun TaskSearchScreenPreview_Initial() {
     DiswantinTheme {
-        TaskSearchScreen(
-            query = "",
-            onQueryChange = {},
-            onSearch = {},
-            onBackClick = {},
-            uiState = TaskSearchUiState.Initial,
-            onAddTask = {},
-            onSelectSearchResult = {}
-        )
+        Scaffold(topBar = {
+            TaskSearchTopBar(
+                uiState = TaskSearchTopBarState(query = "", onQueryChange = {}, onSearch = {}),
+                onBackClick = {},
+            )
+        }) { innerPadding ->
+            InitialTaskSearchLayout(modifier = Modifier.padding(innerPadding))
+        }
     }
 }

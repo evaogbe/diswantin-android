@@ -2,10 +2,8 @@ package io.github.evaogbe.diswantin.task.ui
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
 import androidx.lifecycle.SavedStateHandle
 import assertk.assertThat
 import assertk.assertions.isTrue
@@ -14,7 +12,7 @@ import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.stringResource
 import io.github.evaogbe.diswantin.ui.components.PendingLayoutTestTag
-import io.github.evaogbe.diswantin.ui.navigation.Destination
+import io.github.evaogbe.diswantin.ui.navigation.NavArguments
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
@@ -49,7 +47,8 @@ class TaskDetailScreenTest {
             DiswantinTheme {
                 TaskDetailScreen(
                     onPopBackStack = {},
-                    onEditTask = {},
+                    setTopBarState = {},
+                    setUserMessage = {},
                     onSelectTaskList = {},
                     taskDetailViewModel = viewModel,
                 )
@@ -71,7 +70,8 @@ class TaskDetailScreenTest {
             DiswantinTheme {
                 TaskDetailScreen(
                     onPopBackStack = {},
-                    onEditTask = {},
+                    setTopBarState = {},
+                    setUserMessage = {},
                     onSelectTaskList = {},
                     taskDetailViewModel = viewModel,
                 )
@@ -93,16 +93,15 @@ class TaskDetailScreenTest {
             DiswantinTheme {
                 TaskDetailScreen(
                     onPopBackStack = { onPopBackStackCalled = true },
-                    onEditTask = {},
+                    setTopBarState = {},
+                    setUserMessage = {},
                     onSelectTaskList = {},
                     taskDetailViewModel = viewModel,
                 )
             }
         }
 
-        composeTestRule.onNodeWithContentDescription(stringResource(R.string.more_actions_button))
-            .performClick()
-        composeTestRule.onNodeWithText(stringResource(R.string.delete_button)).performClick()
+        viewModel.deleteTask()
 
         composeTestRule.onNodeWithTag(PendingLayoutTestTag).assertIsDisplayed()
         assertThat(onPopBackStackCalled).isTrue()
@@ -110,6 +109,7 @@ class TaskDetailScreenTest {
 
     @Test
     fun displaysErrorMessage_whenDeleteTaskFailed() {
+        var userMessage: String? = null
         val task = genTask()
         val taskRepository = FakeTaskRepository.withTasks(task)
         val viewModel = TaskDetailViewModel(createSavedStateHandle(), taskRepository, createClock())
@@ -118,7 +118,8 @@ class TaskDetailScreenTest {
             DiswantinTheme {
                 TaskDetailScreen(
                     onPopBackStack = {},
-                    onEditTask = {},
+                    setTopBarState = {},
+                    setUserMessage = { userMessage = it },
                     onSelectTaskList = {},
                     taskDetailViewModel = viewModel,
                 )
@@ -126,12 +127,11 @@ class TaskDetailScreenTest {
         }
 
         taskRepository.setThrows(taskRepository::delete, true)
-        composeTestRule.onNodeWithContentDescription(stringResource(R.string.more_actions_button))
-            .performClick()
-        composeTestRule.onNodeWithText(stringResource(R.string.delete_button)).performClick()
+        viewModel.deleteTask()
 
-        composeTestRule.onNodeWithText(stringResource(R.string.task_detail_delete_error))
-            .assertIsDisplayed()
+        composeTestRule.waitUntil {
+            userMessage == stringResource(R.string.task_detail_delete_error)
+        }
     }
 
     private fun genTask() = Task(
@@ -140,7 +140,7 @@ class TaskDetailScreenTest {
         name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
     )
 
-    private fun createSavedStateHandle() = SavedStateHandle(mapOf(Destination.ID_KEY to 1L))
+    private fun createSavedStateHandle() = SavedStateHandle(mapOf(NavArguments.ID_KEY to 1L))
 
     private fun createClock() =
         Clock.fixed(Instant.parse("2024-08-23T21:00:00Z"), ZoneId.of("America/New_York"))

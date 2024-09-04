@@ -11,7 +11,7 @@ import assertk.assertions.isTrue
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.MainDispatcherRule
-import io.github.evaogbe.diswantin.ui.navigation.Destination
+import io.github.evaogbe.diswantin.ui.navigation.NavArguments
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -273,6 +273,6 @@ class TaskFormViewModelTest {
     )
 
     private fun createSavedStateHandleForEdit() =
-        SavedStateHandle(mapOf(Destination.ID_KEY to 1L))
+        SavedStateHandle(mapOf(NavArguments.ID_KEY to 1L))
 
 }

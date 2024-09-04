@@ -1,12 +1,8 @@
 package io.github.evaogbe.diswantin.task.ui
 
-import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.onParent
-import androidx.compose.ui.test.performTextInput
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
@@ -17,7 +13,6 @@ import io.github.serpro69.kfaker.lorem.LoremFaker
 import org.junit.Rule
 import org.junit.Test
 
-@OptIn(ExperimentalTestApi::class)
 class TaskSearchScreenTest {
     @get:Rule
     val composeTestRule = createComposeRule()
@@ -42,21 +37,16 @@ class TaskSearchScreenTest {
         composeTestRule.setContent {
             DiswantinTheme {
                 TaskSearchScreen(
-                    onBackClick = {},
+                    setTopBarState = {},
                     onAddTask = {},
                     onSelectSearchResult = {},
-                    taskSearchViewModel = viewModel
+                    taskSearchViewModel = viewModel,
                 )
             }
         }
 
-        composeTestRule.onNodeWithText(
-            stringResource(R.string.task_search_title),
-            useUnmergedTree = true
-        ).onParent()
-            .performTextInput(query)
+        viewModel.searchTasks(query)
 
-        composeTestRule.waitUntilExactlyOneExists(hasText(tasks[0].name))
         composeTestRule.onNodeWithText(tasks[0].name).assertIsDisplayed()
         composeTestRule.onNodeWithText(tasks[1].name).assertIsDisplayed()
         composeTestRule.onNodeWithText(tasks[2].name).assertIsDisplayed()
@@ -71,23 +61,18 @@ class TaskSearchScreenTest {
         composeTestRule.setContent {
             DiswantinTheme {
                 TaskSearchScreen(
-                    onBackClick = {},
+                    setTopBarState = {},
                     onAddTask = {},
                     onSelectSearchResult = {},
-                    taskSearchViewModel = viewModel
+                    taskSearchViewModel = viewModel,
                 )
             }
         }
 
-        composeTestRule.onNodeWithText(
-            stringResource(R.string.task_search_title),
-            useUnmergedTree = true
-        ).onParent()
-            .performTextInput(query)
+        viewModel.searchTasks(query)
 
-        composeTestRule.waitUntilExactlyOneExists(
-            hasText(stringResource(R.string.task_search_empty))
-        )
+        composeTestRule.onNodeWithText(stringResource(R.string.task_search_empty))
+            .assertIsDisplayed()
     }
 
     @Test
@@ -99,23 +84,18 @@ class TaskSearchScreenTest {
         composeTestRule.setContent {
             DiswantinTheme {
                 TaskSearchScreen(
-                    onBackClick = {},
+                    setTopBarState = {},
                     onAddTask = {},
                     onSelectSearchResult = {},
-                    taskSearchViewModel = viewModel
+                    taskSearchViewModel = viewModel,
                 )
             }
         }
 
         taskRepository.setThrows(taskRepository::search, true)
-        composeTestRule.onNodeWithText(
-            stringResource(R.string.task_search_title),
-            useUnmergedTree = true
-        ).onParent()
-            .performTextInput(query)
+        viewModel.searchTasks(query)
 
-        composeTestRule.waitUntilExactlyOneExists(
-            hasText(stringResource(R.string.task_search_error))
-        )
+        composeTestRule.onNodeWithText(stringResource(R.string.task_search_error))
+            .assertIsDisplayed()
     }
 }

@@ -1,8 +1,14 @@
 package io.github.evaogbe.diswantin.task.ui
 
+import android.os.Parcelable
 import androidx.annotation.StringRes
 import io.github.evaogbe.diswantin.task.data.TaskList
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.parcelize.Parcelize
+
+@Parcelize
+data class TaskListDetailTopBarState(val taskListId: Long?, val onDeleteTaskList: () -> Unit) :
+    Parcelable
 
 data class TaskItemState(
     val id: Long,

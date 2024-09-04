@@ -1,12 +1,17 @@
 package io.github.evaogbe.diswantin.task.ui
 
+import android.os.Parcelable
 import androidx.annotation.StringRes
 import io.github.evaogbe.diswantin.task.data.TaskDetail
+import kotlinx.parcelize.Parcelize
 import java.time.Clock
 import java.time.LocalTime
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
+
+@Parcelize
+data class TaskDetailTopBarState(val taskId: Long?, val onDeleteTask: () -> Unit) : Parcelable
 
 sealed interface TaskDetailUiState {
     data object Pending : TaskDetailUiState

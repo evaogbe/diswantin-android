@@ -6,7 +6,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.TaskListRepository
-import io.github.evaogbe.diswantin.ui.navigation.Destination
+import io.github.evaogbe.diswantin.ui.navigation.NavArguments
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,7 +28,7 @@ class TaskListDetailViewModel @Inject constructor(
     private val taskListRepository: TaskListRepository,
     clock: Clock,
 ) : ViewModel() {
-    private val taskListId: Long = checkNotNull(savedStateHandle[Destination.ID_KEY])
+    private val taskListId: Long = checkNotNull(savedStateHandle[NavArguments.ID_KEY])
 
     private val initialized = MutableStateFlow(false)
 

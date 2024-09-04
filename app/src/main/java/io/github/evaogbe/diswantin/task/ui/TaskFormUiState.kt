@@ -1,9 +1,19 @@
 package io.github.evaogbe.diswantin.task.ui
 
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
 import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZonedDateTime
+
+@Parcelize
+data class TaskFormTopBarState(
+    val isNew: Boolean,
+    val showSave: Boolean,
+    val onSave: () -> Unit,
+    val saveEnabled: Boolean,
+) : Parcelable
 
 sealed interface TaskFormUiState {
     data object Pending : TaskFormUiState

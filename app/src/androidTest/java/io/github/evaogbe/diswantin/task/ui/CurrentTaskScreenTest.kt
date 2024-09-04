@@ -5,7 +5,6 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import assertk.assertThat
-import assertk.assertions.isEqualTo
 import assertk.assertions.isTrue
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.Task
@@ -35,10 +34,9 @@ class CurrentTaskScreenTest {
         composeTestRule.setContent {
             DiswantinTheme {
                 CurrentTaskScreen(
-                    setCurrentTaskId = {},
+                    setTopBarState = {},
                     setUserMessage = {},
                     onAddTask = {},
-                    onAdviceClick = {},
                     currentTaskViewModel = viewModel,
                 )
             }
@@ -55,10 +53,9 @@ class CurrentTaskScreenTest {
         composeTestRule.setContent {
             DiswantinTheme {
                 CurrentTaskScreen(
-                    setCurrentTaskId = {},
+                    setTopBarState = {},
                     setUserMessage = {},
                     onAddTask = {},
-                    onAdviceClick = {},
                     currentTaskViewModel = viewModel,
                 )
             }
@@ -79,10 +76,9 @@ class CurrentTaskScreenTest {
         composeTestRule.setContent {
             DiswantinTheme {
                 CurrentTaskScreen(
-                    setCurrentTaskId = {},
+                    setTopBarState = {},
                     setUserMessage = {},
                     onAddTask = {},
-                    onAdviceClick = {},
                     currentTaskViewModel = viewModel,
                 )
             }
@@ -101,10 +97,9 @@ class CurrentTaskScreenTest {
         composeTestRule.setContent {
             DiswantinTheme {
                 CurrentTaskScreen(
-                    setCurrentTaskId = {},
+                    setTopBarState = {},
                     setUserMessage = {},
                     onAddTask = { onAddTaskCalled = true },
-                    onAdviceClick = {},
                     currentTaskViewModel = viewModel,
                 )
             }
@@ -125,10 +120,9 @@ class CurrentTaskScreenTest {
         composeTestRule.setContent {
             DiswantinTheme {
                 CurrentTaskScreen(
-                    setCurrentTaskId = {},
+                    setTopBarState = {},
                     setUserMessage = {},
                     onAddTask = {},
-                    onAdviceClick = {},
                     currentTaskViewModel = viewModel,
                 )
             }
@@ -143,7 +137,7 @@ class CurrentTaskScreenTest {
 
     @Test
     fun displaysErrorMessage_whenMarkDoneFailed() {
-        var setUserMessageCalled = false
+        var userMessage: String? = null
         val task = genTasks(1).single()
         val taskRepository = FakeTaskRepository.withTasks(task)
         val viewModel = createCurrentTaskViewModel(taskRepository)
@@ -151,14 +145,9 @@ class CurrentTaskScreenTest {
         composeTestRule.setContent {
             DiswantinTheme {
                 CurrentTaskScreen(
-                    setCurrentTaskId = {},
-                    setUserMessage = {
-                        assertThat(it)
-                            .isEqualTo(stringResource(R.string.current_task_mark_done_error))
-                        setUserMessageCalled = true
-                    },
+                    setTopBarState = {},
+                    setUserMessage = { userMessage = it },
                     onAddTask = {},
-                    onAdviceClick = {},
                     currentTaskViewModel = viewModel
                 )
             }
@@ -168,7 +157,9 @@ class CurrentTaskScreenTest {
         composeTestRule.onNodeWithText(stringResource(R.string.mark_done_button)).performClick()
         composeTestRule.waitForIdle()
 
-        assertThat(setUserMessageCalled).isTrue()
+        composeTestRule.waitUntil {
+            userMessage == stringResource(R.string.current_task_mark_done_error)
+        }
     }
 
     private fun genTasks(count: Int) = generateSequence(

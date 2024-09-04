@@ -14,7 +14,7 @@ import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskListRepository
 import io.github.evaogbe.diswantin.task.data.TaskListWithTasks
 import io.github.evaogbe.diswantin.task.data.TaskRepository
-import io.github.evaogbe.diswantin.ui.navigation.Destination
+import io.github.evaogbe.diswantin.ui.navigation.NavArguments
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
@@ -41,11 +41,11 @@ class TaskListFormViewModel @Inject constructor(
     private val taskListRepository: TaskListRepository,
     taskRepository: TaskRepository
 ) : ViewModel() {
-    private val taskListId: Long? = savedStateHandle[Destination.ID_KEY]
+    private val taskListId: Long? = savedStateHandle[NavArguments.ID_KEY]
 
     val isNew = taskListId == null
 
-    var nameInput by mutableStateOf(savedStateHandle[Destination.NAME_KEY] ?: "")
+    var nameInput by mutableStateOf(savedStateHandle[NavArguments.NAME_KEY] ?: "")
         private set
 
     private val tasks = MutableStateFlow(persistentListOf<Task>())

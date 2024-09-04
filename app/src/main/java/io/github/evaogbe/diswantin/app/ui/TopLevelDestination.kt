@@ -1,0 +1,61 @@
+package io.github.evaogbe.diswantin.app.ui
+
+import io.github.evaogbe.diswantin.ui.navigation.NavArguments
+
+sealed interface TopLevelDestination {
+    val route: String
+
+    data class TaskDetail(private val id: Long) : TopLevelDestination {
+        override val route = "task/$id"
+
+        companion object : TopLevelDestination {
+            override val route = "task/{${NavArguments.ID_KEY}}"
+        }
+    }
+
+    data class NewTaskForm(private val name: String?) : TopLevelDestination {
+        override val route = name?.let { "taskForm?${NavArguments.NAME_KEY}=$it" } ?: "taskForm"
+
+        companion object : TopLevelDestination {
+            override val route = "taskForm?${NavArguments.NAME_KEY}={${NavArguments.NAME_KEY}}"
+        }
+    }
+
+    data class EditTaskForm(private val id: Long) : TopLevelDestination {
+        override val route = "taskForm/$id"
+
+        companion object : TopLevelDestination {
+            override val route = "taskForm/{${NavArguments.ID_KEY}}"
+        }
+    }
+
+    data class TaskListDetail(private val id: Long) : TopLevelDestination {
+        override val route = "taskList/$id"
+
+        companion object : TopLevelDestination {
+            override val route = "taskList/{${NavArguments.ID_KEY}}"
+        }
+    }
+
+    data class NewTaskListForm(private val name: String?) : TopLevelDestination {
+        override val route = name?.let {
+            "taskListForm?${NavArguments.NAME_KEY}=$name"
+        } ?: "taskListForm"
+
+        companion object : TopLevelDestination {
+            override val route = "taskListForm?${NavArguments.NAME_KEY}={${NavArguments.NAME_KEY}}"
+        }
+    }
+
+    data class EditTaskListForm(private val id: Long) : TopLevelDestination {
+        override val route = "taskListForm/$id"
+
+        companion object : TopLevelDestination {
+            override val route = "taskListForm/{${NavArguments.ID_KEY}}"
+        }
+    }
+
+    data object TaskSearch : TopLevelDestination {
+        override val route = "taskSearch"
+    }
+}
