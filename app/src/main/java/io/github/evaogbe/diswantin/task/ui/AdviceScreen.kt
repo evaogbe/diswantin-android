@@ -69,12 +69,8 @@ fun AdviceScreen(modifier: Modifier = Modifier) {
             BulletedList(
                 items = persistentListOf(
                     BulletedItem(annotatedStringResource(R.string.suggestion_item_stop)),
-                    BulletedItem(
-                        annotatedStringResource(R.string.suggestion_item_move),
-                        stringArrayResource(R.array.suggestion_item_move_sublist).map {
-                            BulletedItem(AnnotatedString(it))
-                        }.toImmutableList()
-                    ),
+                    BulletedItem(annotatedStringResource(R.string.suggestion_item_meditate)),
+                    BulletedItem(annotatedStringResource(R.string.suggestion_item_break_down_task)),
                     BulletedItem(
                         annotatedStringResource(R.string.suggestion_item_check_the_facts),
                         stringArrayResource(R.array.suggestion_item_check_the_facts_steps).map {
@@ -84,10 +80,14 @@ fun AdviceScreen(modifier: Modifier = Modifier) {
                         }.toImmutableList()
                     ),
                     BulletedItem(annotatedStringResource(R.string.suggestion_item_imagine)),
-                    BulletedItem(annotatedStringResource(R.string.suggestion_item_snack)),
-                    BulletedItem(annotatedStringResource(R.string.suggestion_item_meditate)),
                     BulletedItem(annotatedStringResource(R.string.suggestion_item_journal)),
-                    BulletedItem(annotatedStringResource(R.string.suggestion_item_break_down_task)),
+                    BulletedItem(
+                        annotatedStringResource(R.string.suggestion_item_move),
+                        stringArrayResource(R.array.suggestion_item_move_sublist).map {
+                            BulletedItem(AnnotatedString(it))
+                        }.toImmutableList()
+                    ),
+                    BulletedItem(annotatedStringResource(R.string.suggestion_item_snack)),
                     BulletedItem(annotatedStringResource(R.string.suggestion_item_friend)),
                     BulletedItem(annotatedStringResource(R.string.suggestion_item_meds)),
                     BulletedItem(annotatedStringResource(R.string.suggestion_item_day_off))
