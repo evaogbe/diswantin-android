@@ -44,7 +44,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.evaogbe.diswantin.R
-import io.github.evaogbe.diswantin.task.data.TaskList
+import io.github.evaogbe.diswantin.task.data.TaskCategory
 import io.github.evaogbe.diswantin.ui.components.LoadFailureLayout
 import io.github.evaogbe.diswantin.ui.components.PendingLayout
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
@@ -55,10 +55,10 @@ import kotlinx.collections.immutable.persistentListOf
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TaskListDetailTopBar(
-    uiState: TaskListDetailTopBarState,
+fun TaskCategoryDetailTopBar(
+    uiState: TaskCategoryDetailTopBarState,
     onBackClick: () -> Unit,
-    onEditTaskList: (Long) -> Unit,
+    onEditCategory: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
@@ -75,8 +75,8 @@ fun TaskListDetailTopBar(
             }
         },
         actions = {
-            if (uiState.taskListId != null) {
-                IconButton(onClick = { onEditTaskList(uiState.taskListId) }) {
+            if (uiState.categoryId != null) {
+                IconButton(onClick = { onEditCategory(uiState.categoryId) }) {
                     Icon(
                         imageVector = Icons.Default.Edit,
                         contentDescription = stringResource(R.string.edit_button),
@@ -93,7 +93,7 @@ fun TaskListDetailTopBar(
                 DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.delete_button)) },
-                        onClick = uiState.onDeleteTaskList,
+                        onClick = uiState.onDeleteCategory,
                         leadingIcon = {
                             Icon(imageVector = Icons.Default.Delete, contentDescription = null)
                         },
@@ -105,57 +105,57 @@ fun TaskListDetailTopBar(
 }
 
 @Composable
-fun TaskListDetailScreen(
+fun TaskCategoryDetailScreen(
     onPopBackStack: () -> Unit,
-    setTopBarState: (TaskListDetailTopBarState) -> Unit,
+    setTopBarState: (TaskCategoryDetailTopBarState) -> Unit,
     setUserMessage: (String) -> Unit,
     onSelectTask: (Long) -> Unit,
-    taskListDetailViewModel: TaskListDetailViewModel = hiltViewModel(),
+    taskCategoryDetailViewModel: TaskCategoryDetailViewModel = hiltViewModel(),
 ) {
-    val uiState by taskListDetailViewModel.uiState.collectAsStateWithLifecycle()
+    val uiState by taskCategoryDetailViewModel.uiState.collectAsStateWithLifecycle()
     val resources = LocalContext.current.resources
 
-    if (uiState is TaskListDetailUiState.Deleted) {
+    if (uiState is TaskCategoryDetailUiState.Deleted) {
         LaunchedEffect(onPopBackStack) {
             onPopBackStack()
         }
     }
 
-    LaunchedEffect(setTopBarState, uiState, taskListDetailViewModel) {
+    LaunchedEffect(setTopBarState, uiState, taskCategoryDetailViewModel) {
         setTopBarState(
-            TaskListDetailTopBarState(
-                taskListId = (uiState as? TaskListDetailUiState.Success)?.taskList?.id,
-                onDeleteTaskList = taskListDetailViewModel::deleteTaskList,
+            TaskCategoryDetailTopBarState(
+                categoryId = (uiState as? TaskCategoryDetailUiState.Success)?.category?.id,
+                onDeleteCategory = taskCategoryDetailViewModel::deleteCategory,
             )
         )
     }
 
-    (uiState as? TaskListDetailUiState.Success)?.userMessage?.let { message ->
+    (uiState as? TaskCategoryDetailUiState.Success)?.userMessage?.let { message ->
         LaunchedEffect(message, setUserMessage) {
             setUserMessage(resources.getString(message))
-            taskListDetailViewModel.userMessageShown()
+            taskCategoryDetailViewModel.userMessageShown()
         }
     }
 
     when (val state = uiState) {
-        is TaskListDetailUiState.Pending,
-        is TaskListDetailUiState.Deleted -> {
+        is TaskCategoryDetailUiState.Pending,
+        is TaskCategoryDetailUiState.Deleted -> {
             PendingLayout()
         }
 
-        is TaskListDetailUiState.Failure -> {
-            LoadFailureLayout(message = stringResource(R.string.task_list_detail_fetch_error))
+        is TaskCategoryDetailUiState.Failure -> {
+            LoadFailureLayout(message = stringResource(R.string.task_category_detail_fetch_error))
         }
 
-        is TaskListDetailUiState.Success -> {
-            TaskListDetailLayout(uiState = state, onSelectTask = onSelectTask)
+        is TaskCategoryDetailUiState.Success -> {
+            TaskCategoryDetailLayout(uiState = state, onSelectTask = onSelectTask)
         }
     }
 }
 
 @Composable
-fun TaskListDetailLayout(
-    uiState: TaskListDetailUiState.Success,
+fun TaskCategoryDetailLayout(
+    uiState: TaskCategoryDetailUiState.Success,
     onSelectTask: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -170,7 +170,7 @@ fun TaskListDetailLayout(
         ) {
             item {
                 SelectionContainer(modifier = Modifier.padding(horizontal = SpaceMd)) {
-                    Text(text = uiState.taskList.name, style = typography.displaySmall)
+                    Text(text = uiState.category.name, style = typography.displaySmall)
                 }
             }
 
@@ -212,18 +212,18 @@ fun TaskListDetailLayout(
 
 @DevicePreviews
 @Composable
-private fun TaskListDetailScreenPreview() {
+private fun TaskCategoryDetailScreenPreview() {
     DiswantinTheme {
         Scaffold(topBar = {
-            TaskListDetailTopBar(
-                uiState = TaskListDetailTopBarState(taskListId = 1L, onDeleteTaskList = {}),
+            TaskCategoryDetailTopBar(
+                uiState = TaskCategoryDetailTopBarState(categoryId = 1L, onDeleteCategory = {}),
                 onBackClick = {},
-                onEditTaskList = {},
+                onEditCategory = {},
             )
         }) { innerPadding ->
-            TaskListDetailLayout(
-                uiState = TaskListDetailUiState.Success(
-                    taskList = TaskList(name = "Morning Routine"),
+            TaskCategoryDetailLayout(
+                uiState = TaskCategoryDetailUiState.Success(
+                    category = TaskCategory(name = "Morning Routine"),
                     tasks = persistentListOf(
                         TaskItemState(
                             id = 1L,

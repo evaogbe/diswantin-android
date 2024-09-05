@@ -151,7 +151,7 @@ class TaskFormViewModelTest {
                     deadlineTime = LocalTime.parse("17:00"),
                     scheduledAt = null,
                     recurring = true,
-                    listId = null,
+                    categoryId = null,
                 ),
                 Task::id,
             )

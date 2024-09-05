@@ -121,7 +121,7 @@ fun TaskFormTopBar(
 fun TaskFormScreen(
     onPopBackStack: () -> Unit,
     setTopBarState: (TaskFormTopBarState) -> Unit,
-    onSelectListType: (String) -> Unit,
+    onSelectCategoryType: (String) -> Unit,
     taskFormViewModel: TaskFormViewModel = hiltViewModel(),
 ) {
     val uiState by taskFormViewModel.uiState.collectAsStateWithLifecycle()
@@ -160,7 +160,7 @@ fun TaskFormScreen(
                 uiState = state,
                 name = nameInput,
                 onNameChange = taskFormViewModel::updateNameInput,
-                onSelectListType = onSelectListType,
+                onSelectCategoryType = onSelectCategoryType,
                 onDeadlineDateChange = taskFormViewModel::updateDeadlineDateInput,
                 onDeadlineTimeChange = taskFormViewModel::updateDeadlineTimeInput,
                 onScheduleAtChange = taskFormViewModel::updateScheduledAtInput,
@@ -180,7 +180,7 @@ fun TaskFormLayout(
     uiState: TaskFormUiState.Success,
     name: String,
     onNameChange: (String) -> Unit,
-    onSelectListType: (String) -> Unit,
+    onSelectCategoryType: (String) -> Unit,
     onDeadlineDateChange: (LocalDate?) -> Unit,
     onDeadlineTimeChange: (LocalTime?) -> Unit,
     onScheduleAtChange: (ZonedDateTime?) -> Unit,
@@ -228,7 +228,7 @@ fun TaskFormLayout(
                     selectedIndex = 0,
                     onSelect = {
                         if (it == 1) {
-                            onSelectListType(name)
+                            onSelectCategoryType(name)
                         }
                     },
                 )
@@ -581,7 +581,7 @@ private fun TaskFormScreenPreview_New() {
                 ),
                 name = "",
                 onNameChange = {},
-                onSelectListType = {},
+                onSelectCategoryType = {},
                 onDeadlineDateChange = {},
                 onDeadlineTimeChange = {},
                 onScheduleAtChange = {},
@@ -619,7 +619,7 @@ private fun TaskFormScreenPreview_Edit() {
                 ),
                 name = "Shower",
                 onNameChange = {},
-                onSelectListType = {},
+                onSelectCategoryType = {},
                 onDeadlineDateChange = {},
                 onDeadlineTimeChange = {},
                 onScheduleAtChange = {},
@@ -647,7 +647,7 @@ private fun TaskFormLayoutPreview_Deadline() {
                 ),
                 name = "",
                 onNameChange = {},
-                onSelectListType = {},
+                onSelectCategoryType = {},
                 onDeadlineDateChange = {},
                 onDeadlineTimeChange = {},
                 onScheduleAtChange = {},
@@ -674,7 +674,7 @@ private fun TaskFormLayoutPreview_DeadlineDate() {
                 ),
                 name = "",
                 onNameChange = {},
-                onSelectListType = {},
+                onSelectCategoryType = {},
                 onDeadlineDateChange = {},
                 onDeadlineTimeChange = {},
                 onScheduleAtChange = {},

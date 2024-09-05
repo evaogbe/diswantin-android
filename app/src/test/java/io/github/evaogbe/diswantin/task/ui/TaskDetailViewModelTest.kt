@@ -145,7 +145,9 @@ class TaskDetailViewModelTest {
         scheduledAt = scheduledAt,
         recurring = recurring,
         doneAt = null,
-        listId = null,
-        listName = null,
+        categoryId = null,
+        categoryName = null,
+        parentId = null,
+        parentName = null,
     )
 }

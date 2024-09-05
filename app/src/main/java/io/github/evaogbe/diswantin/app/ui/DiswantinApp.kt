@@ -44,16 +44,16 @@ import io.github.evaogbe.diswantin.task.ui.AdviceTopBar
 import io.github.evaogbe.diswantin.task.ui.CurrentTaskScreen
 import io.github.evaogbe.diswantin.task.ui.CurrentTaskTopBar
 import io.github.evaogbe.diswantin.task.ui.CurrentTaskTopBarState
+import io.github.evaogbe.diswantin.task.ui.TaskCategoryDetailScreen
+import io.github.evaogbe.diswantin.task.ui.TaskCategoryDetailTopBar
+import io.github.evaogbe.diswantin.task.ui.TaskCategoryFormScreen
+import io.github.evaogbe.diswantin.task.ui.TaskCategoryFormTopBar
+import io.github.evaogbe.diswantin.task.ui.TaskCategoryListScreen
+import io.github.evaogbe.diswantin.task.ui.TaskCategoryListTopBar
 import io.github.evaogbe.diswantin.task.ui.TaskDetailScreen
 import io.github.evaogbe.diswantin.task.ui.TaskDetailTopBar
 import io.github.evaogbe.diswantin.task.ui.TaskFormScreen
 import io.github.evaogbe.diswantin.task.ui.TaskFormTopBar
-import io.github.evaogbe.diswantin.task.ui.TaskListDetailScreen
-import io.github.evaogbe.diswantin.task.ui.TaskListDetailTopBar
-import io.github.evaogbe.diswantin.task.ui.TaskListFormScreen
-import io.github.evaogbe.diswantin.task.ui.TaskListFormTopBar
-import io.github.evaogbe.diswantin.task.ui.TaskListsScreen
-import io.github.evaogbe.diswantin.task.ui.TaskListsTopBar
 import io.github.evaogbe.diswantin.task.ui.TaskSearchScreen
 import io.github.evaogbe.diswantin.task.ui.TaskSearchTopBar
 import io.github.evaogbe.diswantin.ui.navigation.NavArguments
@@ -125,27 +125,27 @@ fun DiswantinApp() {
                     TaskFormTopBar(uiState = state.uiState, onClose = navController::popBackStack)
                 }
 
-                is TopBarState.TaskListDetail -> {
-                    TaskListDetailTopBar(
+                is TopBarState.TaskCategoryDetail -> {
+                    TaskCategoryDetailTopBar(
                         uiState = state.uiState,
                         onBackClick = navController::popBackStack,
-                        onEditTaskList = {
+                        onEditCategory = {
                             navController.navigate(
-                                route = TopLevelDestination.EditTaskListForm(it).route
+                                route = TopLevelDestination.EditTaskCategoryForm(it).route
                             )
                         },
                     )
                 }
 
-                is TopBarState.TaskListForm -> {
-                    TaskListFormTopBar(
+                is TopBarState.TaskCategoryForm -> {
+                    TaskCategoryFormTopBar(
                         uiState = state.uiState,
                         onClose = navController::popBackStack,
                     )
                 }
 
-                is TopBarState.TaskLists -> {
-                    TaskListsTopBar(onSearch = {
+                is TopBarState.TaskCategoryList -> {
+                    TaskCategoryListTopBar(onSearch = {
                         navController.navigate(route = TopLevelDestination.TaskSearch.route)
                     })
                 }
@@ -220,8 +220,10 @@ fun DiswantinApp() {
                     onPopBackStack = navController::popBackStack,
                     setTopBarState = { topBarState = TopBarState.TaskDetail(uiState = it) },
                     setUserMessage = { userMessage = it },
-                    onSelectTaskList = {
-                        navController.navigate(route = TopLevelDestination.TaskListDetail(it).route)
+                    onSelectCategory = {
+                        navController.navigate(
+                            route = TopLevelDestination.TaskCategoryDetail(it).route
+                        )
                     },
                 )
             }
@@ -235,9 +237,9 @@ fun DiswantinApp() {
                 TaskFormScreen(
                     onPopBackStack = navController::popBackStack,
                     setTopBarState = { topBarState = TopBarState.TaskForm(uiState = it) },
-                    onSelectListType = {
+                    onSelectCategoryType = {
                         navController.navigate(
-                            route = TopLevelDestination.NewTaskListForm(name = it).route
+                            route = TopLevelDestination.NewTaskCategoryForm(name = it).route
                         ) {
                             popUpTo(backStackEntry.destination.id) {
                                 inclusive = true
@@ -255,18 +257,18 @@ fun DiswantinApp() {
                 TaskFormScreen(
                     onPopBackStack = navController::popBackStack,
                     setTopBarState = { topBarState = TopBarState.TaskForm(uiState = it) },
-                    onSelectListType = {},
+                    onSelectCategoryType = {},
                 )
             }
             composable(
-                TopLevelDestination.TaskListDetail.route,
+                TopLevelDestination.TaskCategoryDetail.route,
                 arguments = listOf(navArgument(NavArguments.ID_KEY) {
                     type = NavType.LongType
                 }),
             ) {
-                TaskListDetailScreen(
+                TaskCategoryDetailScreen(
                     onPopBackStack = navController::popBackStack,
-                    setTopBarState = { topBarState = TopBarState.TaskListDetail(uiState = it) },
+                    setTopBarState = { topBarState = TopBarState.TaskCategoryDetail(uiState = it) },
                     setUserMessage = { userMessage = it },
                     onSelectTask = {
                         navController.navigate(route = TopLevelDestination.TaskDetail(it).route)
@@ -274,15 +276,15 @@ fun DiswantinApp() {
                 )
             }
             composable(
-                TopLevelDestination.NewTaskListForm.route,
+                TopLevelDestination.NewTaskCategoryForm.route,
                 arguments = listOf(navArgument(NavArguments.NAME_KEY) {
                     type = NavType.StringType
                     nullable = true
                 }),
             ) { backStackEntry ->
-                TaskListFormScreen(
+                TaskCategoryFormScreen(
                     onPopBackStack = navController::popBackStack,
-                    setTopBarState = { topBarState = TopBarState.TaskListForm(uiState = it) },
+                    setTopBarState = { topBarState = TopBarState.TaskCategoryForm(uiState = it) },
                     setUserMessage = { userMessage = it },
                     onSelectTaskType = {
                         navController.navigate(
@@ -296,31 +298,33 @@ fun DiswantinApp() {
                 )
             }
             composable(
-                TopLevelDestination.EditTaskListForm.route,
+                TopLevelDestination.EditTaskCategoryForm.route,
                 arguments = listOf(navArgument(NavArguments.ID_KEY) {
                     type = NavType.LongType
                 }),
             ) {
-                TaskListFormScreen(
+                TaskCategoryFormScreen(
                     onPopBackStack = navController::popBackStack,
-                    setTopBarState = { topBarState = TopBarState.TaskListForm(uiState = it) },
+                    setTopBarState = { topBarState = TopBarState.TaskCategoryForm(uiState = it) },
                     setUserMessage = { userMessage = it },
                     onSelectTaskType = {},
                 )
             }
-            composable(BottomBarDestination.TaskLists.route) {
+            composable(BottomBarDestination.TaskCategoryList.route) {
                 LaunchedEffect(Unit) {
-                    topBarState = TopBarState.TaskLists
+                    topBarState = TopBarState.TaskCategoryList
                 }
 
-                TaskListsScreen(
-                    onAddList = {
+                TaskCategoryListScreen(
+                    onAddCategory = {
                         navController.navigate(
-                            route = TopLevelDestination.NewTaskListForm(name = null).route
+                            route = TopLevelDestination.NewTaskCategoryForm(name = null).route
                         )
                     },
-                    onSelectTaskList = {
-                        navController.navigate(route = TopLevelDestination.TaskListDetail(it).route)
+                    onSelectCategory = {
+                        navController.navigate(
+                            route = TopLevelDestination.TaskCategoryDetail(it).route
+                        )
                     },
                 )
             }

@@ -25,13 +25,13 @@ class CurrentTaskViewModel @Inject constructor(
     private val taskRepository: TaskRepository,
     private val clock: Clock,
 ) : ViewModel() {
-    private val queryParams = MutableStateFlow(CurrentTaskParams(ZonedDateTime.now(clock)))
+    private val currentTaskParams = MutableStateFlow(CurrentTaskParams(ZonedDateTime.now(clock)))
 
     private val userMessage = MutableStateFlow<Int?>(null)
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val uiState = combine(
-        queryParams.flatMapLatest { taskRepository.getCurrentTask(it) },
+        currentTaskParams.flatMapLatest { taskRepository.getCurrentTask(it) },
         userMessage
     ) { task, userMessage ->
         if (task == null) {
@@ -45,11 +45,11 @@ class CurrentTaskViewModel @Inject constructor(
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000L),
-        initialValue = CurrentTaskUiState.Pending
+        initialValue = CurrentTaskUiState.Pending,
     )
 
     fun initialize() {
-        queryParams.value = CurrentTaskParams(ZonedDateTime.now(clock))
+        currentTaskParams.value = CurrentTaskParams(ZonedDateTime.now(clock))
     }
 
     fun markCurrentTaskDone() {
@@ -58,7 +58,7 @@ class CurrentTaskViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 taskRepository.markDone(task.id)
-                queryParams.value = CurrentTaskParams(ZonedDateTime.now(clock))
+                currentTaskParams.value = CurrentTaskParams(ZonedDateTime.now(clock))
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {

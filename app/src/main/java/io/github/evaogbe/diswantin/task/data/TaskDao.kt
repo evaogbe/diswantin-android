@@ -60,53 +60,41 @@ interface TaskDao {
             t.deadline_time,
             t.scheduled_at,
             t.recurring,
-            c.done_at,
-            t.list_id,
-            l.name AS list_name
+            com.done_at,
+            t.category_id,
+            cat.name AS category_name,
+            t2.id AS parent_id,
+            t2.name AS parent_name
         FROM task t
         LEFT JOIN (
             SELECT task_id, MAX(done_at) AS done_at
             FROM task_completion
             GROUP BY task_id
-        ) c ON c.task_id = t.id
-        LEFT JOIN task_list l ON l.id = t.list_id
+        ) com ON com.task_id = t.id
+        LEFT JOIN task_category cat ON cat.id = t.category_id
+        LEFT JOIN task_path p ON p.descendant = t.id AND p.depth = 1
+        LEFT JOIN task t2 ON t2.id = p.ancestor
         WHERE t.id = :id 
         LIMIT 1"""
     )
     fun getTaskDetailById(id: Long): Flow<TaskDetail?>
 
-    @Query(
-        """SELECT t.*
-        FROM task t
-        JOIN (
-            SELECT ancestor, MAX(depth) AS depth
-            FROM task_path
-            GROUP BY ancestor
-        ) p ON p.ancestor = t.id
-        WHERE t.list_id = :listId
-        ORDER BY p.depth DESC
-        LIMIT 20"""
-    )
-    fun getTasksByListId(listId: Long): Flow<List<Task>>
+    @Query("SELECT * FROM task WHERE category_id = :categoryId ORDER BY name LIMIT 20")
+    fun getTasksByCategoryId(categoryId: Long): Flow<List<Task>>
 
     @Query(
         """SELECT t.id, t.name, t.recurring, c.done_at
         FROM task t
-        JOIN (
-            SELECT ancestor, MAX(depth) AS depth
-            FROM task_path
-            GROUP BY ancestor
-        ) p ON p.ancestor = t.id
         LEFT JOIN (
             SELECT task_id, MAX(done_at) AS done_at
             FROM task_completion
             GROUP BY task_id
         ) c ON c.task_id = t.id
-        WHERE t.list_id = :listId
-        ORDER BY p.depth DESC
+        WHERE t.category_id = :categoryId
+        ORDER BY c.done_at, t.name
         LIMIT 20"""
     )
-    fun getTaskItemsByListId(listId: Long): Flow<List<TaskItem>>
+    fun getTaskItemsByCategoryId(categoryId: Long): Flow<List<TaskItem>>
 
     @Query(
         """SELECT DISTINCT task.*
@@ -139,8 +127,8 @@ interface TaskDao {
     @Query("SELECT ancestor FROM task_path WHERE descendant = :id AND depth = 1 LIMIT 1")
     suspend fun getParentId(id: Long): Long?
 
-    @Query("SELECT descendant FROM task_path WHERE ancestor = :id AND depth = 1 LIMIT 1")
-    suspend fun getChildId(id: Long): Long?
+    @Query("SELECT descendant FROM task_path WHERE ancestor = :id AND depth = 1")
+    suspend fun getChildIds(id: Long): List<Long>
 
     @Query("DELETE FROM task WHERE id = :id")
     suspend fun deleteById(id: Long)
@@ -149,17 +137,72 @@ interface TaskDao {
         """UPDATE task_path
         SET depth = depth - 1
         WHERE ancestor IN (SELECT ancestor FROM task_path WHERE descendant = :parentId)
-            AND descendant IN (SELECT descendant FROM task_path WHERE ancestor = :id)"""
+            AND descendant IN (SELECT descendant FROM task_path WHERE ancestor IN (:childIds))"""
     )
-    suspend fun decrementDepth(id: Long, parentId: Long)
+    suspend fun decrementDepth(parentId: Long, childIds: List<Long>)
 
     @Transaction
     suspend fun deleteWithPath(id: Long) {
         val parentId = getParentId(id)
-        val childId = getChildId(id)
+        val childIds = getChildIds(id)
         deleteById(id)
-        if (parentId != null && childId != null) {
-            decrementDepth(id = childId, parentId = parentId)
+        if (parentId != null && childIds.isNotEmpty()) {
+            decrementDepth(parentId = parentId, childIds = childIds)
+        }
+    }
+
+    @Query(
+        """SELECT *
+        FROM task_path
+        WHERE (ancestor = :taskId1 AND descendant = :taskId2)
+            OR (ancestor = :taskId2 AND descendant = :taskId1)
+        LIMIT 1"""
+    )
+    suspend fun getConnectingPath(taskId1: Long, taskId2: Long): TaskPath?
+
+    @Query("DELETE FROM task_path WHERE (ancestor = :taskId OR descendant = :taskId) AND depth > 0")
+    suspend fun deletePathsByTaskId(taskId: Long)
+
+    @Query(
+        """INSERT INTO task_path
+        (ancestor, descendant, depth)
+        SELECT a.ancestor, d.descendant, a.depth + d.depth + 1
+        FROM (SELECT ancestor, depth FROM task_path WHERE descendant = :parentId) a,
+            (SELECT descendant, depth FROM task_path WHERE ancestor = :childId) d"""
+    )
+    suspend fun insertChain(parentId: Long, childId: Long)
+
+    @Query(
+        """UPDATE task_path
+        SET depth = depth + 1
+        WHERE ancestor IN (SELECT ancestor FROM task_path WHERE descendant = :descendant)
+            AND descendant IN (SELECT descendant FROM task_path WHERE ancestor = :descendant)
+            AND depth > 0"""
+    )
+    suspend fun incrementDepth(descendant: Long)
+
+    @Transaction
+    suspend fun connectPath(parentId: Long, childId: Long) {
+        val connectingPath = getConnectingPath(parentId, childId)
+        when (connectingPath?.ancestor) {
+            parentId -> {}
+            childId -> {
+                val existingParentId = getParentId(childId)
+                val existingChildIds = getChildIds(childId)
+                if (existingParentId != null && existingChildIds.isNotEmpty()) {
+                    decrementDepth(parentId = existingParentId, childIds = existingChildIds)
+                }
+                deletePathsByTaskId(childId)
+                insertChain(parentId = parentId, childId = childId)
+            }
+
+            null -> {
+                if (getParentId(childId) != null) {
+                    incrementDepth(childId)
+                }
+
+                insertChain(parentId = parentId, childId = childId)
+            }
         }
     }
 }

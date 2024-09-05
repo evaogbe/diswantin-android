@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.evaogbe.diswantin.R
-import io.github.evaogbe.diswantin.task.data.TaskListRepository
+import io.github.evaogbe.diswantin.task.data.TaskCategoryRepository
 import io.github.evaogbe.diswantin.ui.navigation.NavArguments
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CancellationException
@@ -23,12 +23,12 @@ import java.time.ZonedDateTime
 import javax.inject.Inject
 
 @HiltViewModel
-class TaskListDetailViewModel @Inject constructor(
+class TaskCategoryDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    private val taskListRepository: TaskListRepository,
+    private val taskCategoryRepository: TaskCategoryRepository,
     clock: Clock,
 ) : ViewModel() {
-    private val taskListId: Long = checkNotNull(savedStateHandle[NavArguments.ID_KEY])
+    private val categoryId: Long = checkNotNull(savedStateHandle[NavArguments.ID_KEY])
 
     private val initialized = MutableStateFlow(false)
 
@@ -37,15 +37,15 @@ class TaskListDetailViewModel @Inject constructor(
     val uiState =
         combine(
             initialized,
-            taskListRepository.getTaskListWithTaskItemsById(taskListId),
+            taskCategoryRepository.getCategoryWithTaskItemsById(categoryId),
             userMessage,
-        ) { initialized, taskListWithTasks, userMessage ->
+        ) { initialized, categoryWithTasks, userMessage ->
             when {
-                taskListWithTasks != null -> {
+                categoryWithTasks != null -> {
                     val midnight = ZonedDateTime.now(clock).with(LocalTime.MIN).toInstant()
-                    TaskListDetailUiState.Success(
-                        taskList = taskListWithTasks.taskList,
-                        tasks = taskListWithTasks.tasks.map { task ->
+                    TaskCategoryDetailUiState.Success(
+                        category = categoryWithTasks.category,
+                        tasks = categoryWithTasks.tasks.map { task ->
                             TaskItemState(
                                 id = task.id,
                                 name = task.name,
@@ -61,33 +61,33 @@ class TaskListDetailViewModel @Inject constructor(
                     )
                 }
 
-                initialized -> TaskListDetailUiState.Deleted
-                else -> TaskListDetailUiState.Failure
+                initialized -> TaskCategoryDetailUiState.Deleted
+                else -> TaskCategoryDetailUiState.Failure
             }
         }.onEach {
-            if (it is TaskListDetailUiState.Success) {
+            if (it is TaskCategoryDetailUiState.Success) {
                 initialized.value = true
             }
         }.catch { e ->
-            Timber.e(e, "Failed to fetch task list by id: %d", taskListId)
-            emit(TaskListDetailUiState.Failure)
+            Timber.e(e, "Failed to fetch task category by id: %d", categoryId)
+            emit(TaskCategoryDetailUiState.Failure)
         }.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000L),
-            initialValue = TaskListDetailUiState.Pending,
+            initialValue = TaskCategoryDetailUiState.Pending,
         )
 
-    fun deleteTaskList() {
-        val taskList = (uiState.value as? TaskListDetailUiState.Success)?.taskList ?: return
+    fun deleteCategory() {
+        val category = (uiState.value as? TaskCategoryDetailUiState.Success)?.category ?: return
 
         viewModelScope.launch {
             try {
-                taskListRepository.delete(taskList)
+                taskCategoryRepository.delete(category)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Timber.e(e, "Failed to delete taskList: %s", taskList)
-                userMessage.value = R.string.task_list_detail_delete_error
+                Timber.e(e, "Failed to delete task category: %s", category)
+                userMessage.value = R.string.task_category_detail_delete_error
             }
         }
     }

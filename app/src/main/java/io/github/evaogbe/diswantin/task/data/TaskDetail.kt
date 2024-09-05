@@ -13,6 +13,8 @@ data class TaskDetail(
     @ColumnInfo("scheduled_at") val scheduledAt: Instant?,
     val recurring: Boolean,
     @ColumnInfo("done_at") val doneAt: Instant?,
-    @ColumnInfo("list_id") val listId: Long?,
-    @ColumnInfo("list_name") val listName: String?,
+    @ColumnInfo("category_id") val categoryId: Long?,
+    @ColumnInfo("category_name") val categoryName: String?,
+    @ColumnInfo("parent_id") val parentId: Long?,
+    @ColumnInfo("parent_name") val parentName: String?,
 )

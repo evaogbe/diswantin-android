@@ -49,7 +49,7 @@ class TaskDetailScreenTest {
                     onPopBackStack = {},
                     setTopBarState = {},
                     setUserMessage = {},
-                    onSelectTaskList = {},
+                    onSelectCategory = {},
                     taskDetailViewModel = viewModel,
                 )
             }
@@ -72,7 +72,7 @@ class TaskDetailScreenTest {
                     onPopBackStack = {},
                     setTopBarState = {},
                     setUserMessage = {},
-                    onSelectTaskList = {},
+                    onSelectCategory = {},
                     taskDetailViewModel = viewModel,
                 )
             }
@@ -95,7 +95,7 @@ class TaskDetailScreenTest {
                     onPopBackStack = { onPopBackStackCalled = true },
                     setTopBarState = {},
                     setUserMessage = {},
-                    onSelectTaskList = {},
+                    onSelectCategory = {},
                     taskDetailViewModel = viewModel,
                 )
             }
@@ -120,7 +120,7 @@ class TaskDetailScreenTest {
                     onPopBackStack = {},
                     setTopBarState = {},
                     setUserMessage = { userMessage = it },
-                    onSelectTaskList = {},
+                    onSelectCategory = {},
                     taskDetailViewModel = viewModel,
                 )
             }

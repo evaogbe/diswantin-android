@@ -7,17 +7,17 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.parcelize.Parcelize
 
 @Parcelize
-data class TaskListFormTopBarState(
+data class TaskCategoryFormTopBarState(
     val isNew: Boolean,
     val showSave: Boolean,
     val onSave: () -> Unit,
     val saveEnabled: Boolean,
 ) : Parcelable
 
-sealed interface TaskListFormUiState {
-    data object Pending : TaskListFormUiState
+sealed interface TaskCategoryFormUiState {
+    data object Pending : TaskCategoryFormUiState
 
-    data object Failure : TaskListFormUiState
+    data object Failure : TaskCategoryFormUiState
 
     data class Success(
         val tasks: ImmutableList<Task>,
@@ -25,7 +25,7 @@ sealed interface TaskListFormUiState {
         val taskOptions: ImmutableList<Task>,
         val hasSaveError: Boolean,
         @StringRes val userMessage: Int?,
-    ) : TaskListFormUiState
+    ) : TaskCategoryFormUiState
 
-    data object Saved : TaskListFormUiState
+    data object Saved : TaskCategoryFormUiState
 }

@@ -11,9 +11,9 @@ import java.time.LocalTime
 @Entity(
     tableName = "task",
     foreignKeys = [ForeignKey(
-        entity = TaskList::class,
+        entity = TaskCategory::class,
         parentColumns = ["id"],
-        childColumns = ["list_id"],
+        childColumns = ["category_id"],
         onDelete = ForeignKey.SET_NULL,
         onUpdate = ForeignKey.CASCADE,
     )]
@@ -26,5 +26,5 @@ data class Task(
     @ColumnInfo("deadline_time") val deadlineTime: LocalTime? = null,
     @ColumnInfo("scheduled_at") val scheduledAt: Instant? = null,
     @ColumnInfo(defaultValue = "0") val recurring: Boolean = false,
-    @ColumnInfo("list_id", index = true) val listId: Long? = null,
+    @ColumnInfo("category_id", index = true) val categoryId: Long? = null,
 )

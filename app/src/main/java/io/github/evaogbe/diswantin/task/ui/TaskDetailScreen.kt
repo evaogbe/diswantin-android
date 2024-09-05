@@ -111,7 +111,7 @@ fun TaskDetailScreen(
     onPopBackStack: () -> Unit,
     setTopBarState: (TaskDetailTopBarState) -> Unit,
     setUserMessage: (String) -> Unit,
-    onSelectTaskList: (Long) -> Unit,
+    onSelectCategory: (Long) -> Unit,
     taskDetailViewModel: TaskDetailViewModel = hiltViewModel(),
 ) {
     val uiState by taskDetailViewModel.uiState.collectAsStateWithLifecycle()
@@ -150,7 +150,7 @@ fun TaskDetailScreen(
         }
 
         is TaskDetailUiState.Success -> {
-            TaskDetailLayout(uiState = state, onSelectTaskList = onSelectTaskList)
+            TaskDetailLayout(uiState = state, onSelectCategory = onSelectCategory)
         }
     }
 }
@@ -158,7 +158,7 @@ fun TaskDetailScreen(
 @Composable
 fun TaskDetailLayout(
     uiState: TaskDetailUiState.Success,
-    onSelectTaskList: (Long) -> Unit,
+    onSelectCategory: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val resources = LocalContext.current.resources
@@ -217,17 +217,17 @@ fun TaskDetailLayout(
                 )
             }
 
-            if (uiState.task.listId != null && uiState.task.listName != null) {
+            if (uiState.task.categoryId != null && uiState.task.categoryName != null) {
                 ListItem(
                     headlineContent = {
                         SelectionContainer {
-                            Text(text = uiState.task.listName)
+                            Text(text = uiState.task.categoryName)
                         }
                     },
-                    overlineContent = { Text(stringResource(R.string.task_list_label)) },
+                    overlineContent = { Text(stringResource(R.string.task_category_label)) },
                     supportingContent = {
-                        TextButton(onClick = { onSelectTaskList(uiState.task.listId) }) {
-                            Text(stringResource(R.string.go_to_task_list))
+                        TextButton(onClick = { onSelectCategory(uiState.task.categoryId) }) {
+                            Text(stringResource(R.string.go_to_task_category_button))
                         }
                     }
                 )
@@ -257,13 +257,15 @@ private fun TaskDetailScreenPreview() {
                         scheduledAt = null,
                         recurring = false,
                         doneAt = null,
-                        listId = null,
-                        listName = null,
+                        categoryId = null,
+                        categoryName = null,
+                        parentId = null,
+                        parentName = null,
                     ),
                     userMessage = null,
                     clock = Clock.systemDefaultZone()
                 ),
-                onSelectTaskList = {},
+                onSelectCategory = {},
                 modifier = Modifier.padding(innerPadding),
             )
         }
@@ -285,13 +287,15 @@ private fun TaskDetailLayoutPreview() {
                         scheduledAt = null,
                         recurring = true,
                         doneAt = Instant.now(),
-                        listId = 1L,
-                        listName = "Morning Routine",
+                        categoryId = 1L,
+                        categoryName = "Morning Routine",
+                        parentId = null,
+                        parentName = null,
                     ),
                     userMessage = null,
                     clock = Clock.systemDefaultZone()
                 ),
-                onSelectTaskList = {},
+                onSelectCategory = {},
             )
         }
     }

@@ -49,7 +49,7 @@ fun FormTypeButtonGroup(
                 )
             },
         ) {
-            Text(stringResource(R.string.form_type_button_list))
+            Text(stringResource(R.string.form_type_button_category))
         }
     }
 }

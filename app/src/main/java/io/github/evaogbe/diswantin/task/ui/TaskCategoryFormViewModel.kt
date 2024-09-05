@@ -8,11 +8,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.evaogbe.diswantin.R
-import io.github.evaogbe.diswantin.task.data.EditTaskListForm
-import io.github.evaogbe.diswantin.task.data.NewTaskListForm
+import io.github.evaogbe.diswantin.task.data.EditTaskCategoryForm
+import io.github.evaogbe.diswantin.task.data.NewTaskCategoryForm
 import io.github.evaogbe.diswantin.task.data.Task
-import io.github.evaogbe.diswantin.task.data.TaskListRepository
-import io.github.evaogbe.diswantin.task.data.TaskListWithTasks
+import io.github.evaogbe.diswantin.task.data.TaskCategoryRepository
+import io.github.evaogbe.diswantin.task.data.TaskCategoryWithTasks
 import io.github.evaogbe.diswantin.task.data.TaskRepository
 import io.github.evaogbe.diswantin.ui.navigation.NavArguments
 import kotlinx.collections.immutable.ImmutableList
@@ -36,14 +36,14 @@ import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
-class TaskListFormViewModel @Inject constructor(
+class TaskCategoryFormViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    private val taskListRepository: TaskListRepository,
+    private val taskCategoryRepository: TaskCategoryRepository,
     taskRepository: TaskRepository
 ) : ViewModel() {
-    private val taskListId: Long? = savedStateHandle[NavArguments.ID_KEY]
+    private val categoryId: Long? = savedStateHandle[NavArguments.ID_KEY]
 
-    val isNew = taskListId == null
+    val isNew = categoryId == null
 
     var nameInput by mutableStateOf(savedStateHandle[NavArguments.NAME_KEY] ?: "")
         private set
@@ -58,11 +58,11 @@ class TaskListFormViewModel @Inject constructor(
 
     private val userMessage = MutableStateFlow<Int?>(null)
 
-    private val existingTaskListWithTasksStream = taskListId?.let { id ->
-        taskListRepository.getTaskListWithTasksById(id)
+    private val existingCategoryWithTasksStream = categoryId?.let { id ->
+        taskCategoryRepository.getCategoryWithTasksById(id)
             .map { Result.success(it) }
             .catch { e ->
-                Timber.e(e, "Failed to fetch task list by id: %d", id)
+                Timber.e(e, "Failed to fetch task category by id: %d", id)
                 emit(Result.failure(e))
             }
     } ?: flowOf(Result.success(null))
@@ -70,7 +70,7 @@ class TaskListFormViewModel @Inject constructor(
     @Suppress("UNCHECKED_CAST")
     @OptIn(ExperimentalCoroutinesApi::class)
     val uiState = combine(
-        existingTaskListWithTasksStream,
+        existingCategoryWithTasksStream,
         tasks,
         editingTaskIndex,
         taskQuery,
@@ -81,14 +81,14 @@ class TaskListFormViewModel @Inject constructor(
                 taskRepository.search(query.trim()).catch { e ->
                     Timber.e(e, "Failed to search for tasks by query: %s", query)
                     emit(emptyList())
-                    userMessage.value = R.string.task_list_form_search_tasks_error
+                    userMessage.value = R.string.task_category_form_search_tasks_error
                 }
             }
         },
         saveResult,
         userMessage,
     ) { args ->
-        val existingTaskListWithTasks = args[0] as Result<TaskListWithTasks?>
+        val existingCategoryWithTasks = args[0] as Result<TaskCategoryWithTasks?>
         val tasks = args[1] as ImmutableList<Task>
         val editingTaskIndex = args[2] as Int?
         val taskQuery = args[3] as String
@@ -97,17 +97,17 @@ class TaskListFormViewModel @Inject constructor(
         val userMessage = args[6] as Int?
 
         if (saveResult?.isSuccess == true) {
-            TaskListFormUiState.Saved
+            TaskCategoryFormUiState.Saved
         } else {
-            existingTaskListWithTasks.fold(
-                onSuccess = { taskListWithTasks ->
+            existingCategoryWithTasks.fold(
+                onSuccess = { categoryWithTasks ->
                     val editingTask = editingTaskIndex?.let(tasks::getOrNull)
                     val taskOptions = taskSearchResults.filter { option ->
-                        (option.listId == null ||
-                                option.listId == taskListWithTasks?.taskList?.id) &&
+                        (option.categoryId == null ||
+                                option.categoryId == categoryWithTasks?.category?.id) &&
                                 option !in tasks
                     }
-                    TaskListFormUiState.Success(
+                    TaskCategoryFormUiState.Success(
                         tasks = tasks,
                         editingTaskIndex = editingTaskIndex,
                         taskOptions = if (
@@ -121,21 +121,21 @@ class TaskListFormViewModel @Inject constructor(
                         userMessage = userMessage,
                     )
                 },
-                onFailure = { TaskListFormUiState.Failure },
+                onFailure = { TaskCategoryFormUiState.Failure },
             )
         }
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000L),
-        initialValue = TaskListFormUiState.Pending,
+        initialValue = TaskCategoryFormUiState.Pending,
     )
 
     init {
         viewModelScope.launch {
-            val existingTaskListWithTasks = existingTaskListWithTasksStream.first().getOrNull()
+            val existingCategoryWithTasks = existingCategoryWithTasksStream.first().getOrNull()
                 ?: return@launch
-            nameInput = existingTaskListWithTasks.taskList.name
-            tasks.value = existingTaskListWithTasks.tasks.toPersistentList()
+            nameInput = existingCategoryWithTasks.category.name
+            tasks.value = existingCategoryWithTasks.tasks.toPersistentList()
             editingTaskIndex.value = null
         }
     }
@@ -173,39 +173,40 @@ class TaskListFormViewModel @Inject constructor(
         taskQuery.value = query
     }
 
-    fun saveTaskList() {
+    fun saveCategory() {
         if (nameInput.isBlank()) return
-        val state = (uiState.value as? TaskListFormUiState.Success) ?: return
-        if (taskListId == null) {
-            val form = NewTaskListForm(name = nameInput, tasks = state.tasks)
+        val state = (uiState.value as? TaskCategoryFormUiState.Success) ?: return
+
+        if (categoryId == null) {
+            val form = NewTaskCategoryForm(name = nameInput, tasks = state.tasks)
             viewModelScope.launch {
                 try {
-                    taskListRepository.create(form)
+                    taskCategoryRepository.create(form)
                     saveResult.value = Result.success(Unit)
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
-                    Timber.e(e, "Failed to create task list with params: %s", form)
+                    Timber.e(e, "Failed to create task category with form: %s", form)
                     saveResult.value = Result.failure(e)
                 }
             }
         } else {
             viewModelScope.launch {
                 try {
-                    val existingTaskListWithTasks =
-                        checkNotNull(existingTaskListWithTasksStream.first().getOrNull())
-                    taskListRepository.update(
-                        EditTaskListForm(
+                    val existingCategoryWithTasks =
+                        checkNotNull(existingCategoryWithTasksStream.first().getOrNull())
+                    taskCategoryRepository.update(
+                        EditTaskCategoryForm(
                             name = nameInput,
                             tasks = state.tasks,
-                            existingTaskListWithTasks = existingTaskListWithTasks,
+                            existingCategoryWithTasks = existingCategoryWithTasks,
                         )
                     )
                     saveResult.value = Result.success(Unit)
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
-                    Timber.e(e, "Failed to update task list with id: %s", taskListId)
+                    Timber.e(e, "Failed to update task category with id: %s", categoryId)
                     saveResult.value = Result.failure(e)
                 }
             }

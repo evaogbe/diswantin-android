@@ -2,12 +2,12 @@ package io.github.evaogbe.diswantin.task.ui
 
 import android.os.Parcelable
 import androidx.annotation.StringRes
-import io.github.evaogbe.diswantin.task.data.TaskList
+import io.github.evaogbe.diswantin.task.data.TaskCategory
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.parcelize.Parcelize
 
 @Parcelize
-data class TaskListDetailTopBarState(val taskListId: Long?, val onDeleteTaskList: () -> Unit) :
+data class TaskCategoryDetailTopBarState(val categoryId: Long?, val onDeleteCategory: () -> Unit) :
     Parcelable
 
 data class TaskItemState(
@@ -17,16 +17,16 @@ data class TaskItemState(
     val isDone: Boolean,
 )
 
-sealed interface TaskListDetailUiState {
-    data object Pending : TaskListDetailUiState
+sealed interface TaskCategoryDetailUiState {
+    data object Pending : TaskCategoryDetailUiState
 
-    data object Failure : TaskListDetailUiState
+    data object Failure : TaskCategoryDetailUiState
 
     data class Success(
-        val taskList: TaskList,
+        val category: TaskCategory,
         val tasks: ImmutableList<TaskItemState>,
         @StringRes val userMessage: Int?
-    ) : TaskListDetailUiState
+    ) : TaskCategoryDetailUiState
 
-    data object Deleted : TaskListDetailUiState
+    data object Deleted : TaskCategoryDetailUiState
 }

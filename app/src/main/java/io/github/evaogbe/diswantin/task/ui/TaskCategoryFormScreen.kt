@@ -67,8 +67,8 @@ import java.time.Instant
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TaskListFormTopBar(
-    uiState: TaskListFormTopBarState,
+fun TaskCategoryFormTopBar(
+    uiState: TaskCategoryFormTopBarState,
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -76,9 +76,9 @@ fun TaskListFormTopBar(
         title = {
             Text(
                 text = if (uiState.isNew) {
-                    stringResource(R.string.task_list_form_title_new)
+                    stringResource(R.string.task_category_form_title_new)
                 } else {
-                    stringResource(R.string.task_list_form_title_edit)
+                    stringResource(R.string.task_category_form_title_edit)
                 }
             )
         },
@@ -106,61 +106,62 @@ fun TaskListFormTopBar(
 }
 
 @Composable
-fun TaskListFormScreen(
+fun TaskCategoryFormScreen(
     onPopBackStack: () -> Unit,
-    setTopBarState: (TaskListFormTopBarState) -> Unit,
+    setTopBarState: (TaskCategoryFormTopBarState) -> Unit,
     setUserMessage: (String) -> Unit,
     onSelectTaskType: (String) -> Unit,
-    taskListFormViewModel: TaskListFormViewModel = hiltViewModel(),
+    taskCategoryFormViewModel: TaskCategoryFormViewModel = hiltViewModel(),
 ) {
-    val uiState by taskListFormViewModel.uiState.collectAsStateWithLifecycle()
-    val nameInput = taskListFormViewModel.nameInput
+    val uiState by taskCategoryFormViewModel.uiState.collectAsStateWithLifecycle()
+    val nameInput = taskCategoryFormViewModel.nameInput
     val resources = LocalContext.current.resources
 
-    if (uiState is TaskListFormUiState.Saved) {
+    if (uiState is TaskCategoryFormUiState.Saved) {
         LaunchedEffect(onPopBackStack) {
             onPopBackStack()
         }
     }
 
-    LaunchedEffect(setTopBarState, uiState, nameInput, taskListFormViewModel) {
+    LaunchedEffect(setTopBarState, uiState, nameInput, taskCategoryFormViewModel) {
         setTopBarState(
-            TaskListFormTopBarState(
-                isNew = taskListFormViewModel.isNew,
-                showSave = taskListFormViewModel.isNew || uiState is TaskListFormUiState.Success,
-                onSave = taskListFormViewModel::saveTaskList,
+            TaskCategoryFormTopBarState(
+                isNew = taskCategoryFormViewModel.isNew,
+                showSave = taskCategoryFormViewModel.isNew ||
+                        uiState is TaskCategoryFormUiState.Success,
+                onSave = taskCategoryFormViewModel::saveCategory,
                 saveEnabled = nameInput.isNotBlank(),
             )
         )
     }
 
-    (uiState as? TaskListFormUiState.Success)?.userMessage?.let { message ->
+    (uiState as? TaskCategoryFormUiState.Success)?.userMessage?.let { message ->
         LaunchedEffect(message, setUserMessage) {
             setUserMessage(resources.getString(message))
-            taskListFormViewModel.userMessageShown()
+            taskCategoryFormViewModel.userMessageShown()
         }
     }
 
     when (val state = uiState) {
-        is TaskListFormUiState.Pending,
-        is TaskListFormUiState.Saved -> PendingLayout()
+        is TaskCategoryFormUiState.Pending,
+        is TaskCategoryFormUiState.Saved -> PendingLayout()
 
-        is TaskListFormUiState.Failure -> {
-            LoadFailureLayout(message = stringResource(R.string.task_list_form_fetch_error))
+        is TaskCategoryFormUiState.Failure -> {
+            LoadFailureLayout(message = stringResource(R.string.task_category_form_fetch_error))
         }
 
-        is TaskListFormUiState.Success -> {
-            TaskListFormLayout(
-                isNew = taskListFormViewModel.isNew,
+        is TaskCategoryFormUiState.Success -> {
+            TaskCategoryFormLayout(
+                isNew = taskCategoryFormViewModel.isNew,
                 uiState = state,
                 name = nameInput,
-                onNameChange = taskListFormViewModel::updateNameInput,
+                onNameChange = taskCategoryFormViewModel::updateNameInput,
                 onSelectTaskType = onSelectTaskType,
-                onRemoveTask = taskListFormViewModel::removeTask,
-                onTaskSearch = taskListFormViewModel::searchTasks,
-                onSelectTaskOption = taskListFormViewModel::setTask,
-                startEditTask = taskListFormViewModel::startEditTask,
-                stopEditTask = taskListFormViewModel::stopEditTask,
+                onRemoveTask = taskCategoryFormViewModel::removeTask,
+                onTaskSearch = taskCategoryFormViewModel::searchTasks,
+                onSelectTaskOption = taskCategoryFormViewModel::setTask,
+                startEditTask = taskCategoryFormViewModel::startEditTask,
+                stopEditTask = taskCategoryFormViewModel::stopEditTask,
             )
         }
     }
@@ -168,9 +169,9 @@ fun TaskListFormScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TaskListFormLayout(
+fun TaskCategoryFormLayout(
     isNew: Boolean,
-    uiState: TaskListFormUiState.Success,
+    uiState: TaskCategoryFormUiState.Success,
     name: String,
     onNameChange: (String) -> Unit,
     onSelectTaskType: (String) -> Unit,
@@ -198,9 +199,9 @@ fun TaskListFormLayout(
                     SelectionContainer {
                         Text(
                             text = if (isNew) {
-                                stringResource(R.string.task_list_form_save_error_new)
+                                stringResource(R.string.task_category_form_save_error_new)
                             } else {
-                                stringResource(R.string.task_list_form_save_error_edit)
+                                stringResource(R.string.task_category_form_save_error_edit)
                             },
                             color = colorScheme.error,
                             style = typography.titleSmall
@@ -330,11 +331,11 @@ fun TaskListFormLayout(
 
 @DevicePreviews
 @Composable
-private fun TaskListFormScreenPreview_New() {
+private fun TaskCategoryFormScreenPreview_New() {
     DiswantinTheme {
         Scaffold(topBar = {
-            TaskListFormTopBar(
-                uiState = TaskListFormTopBarState(
+            TaskCategoryFormTopBar(
+                uiState = TaskCategoryFormTopBarState(
                     isNew = true,
                     showSave = true,
                     onSave = {},
@@ -343,9 +344,9 @@ private fun TaskListFormScreenPreview_New() {
                 onClose = {},
             )
         }) { innerPadding ->
-            TaskListFormLayout(
+            TaskCategoryFormLayout(
                 isNew = true,
-                uiState = TaskListFormUiState.Success(
+                uiState = TaskCategoryFormUiState.Success(
                     tasks = persistentListOf(),
                     editingTaskIndex = 0,
                     taskOptions = persistentListOf(),
@@ -368,11 +369,11 @@ private fun TaskListFormScreenPreview_New() {
 
 @DevicePreviews
 @Composable
-private fun TaskListFormScreenPreview_Edit() {
+private fun TaskCategoryFormScreenPreview_Edit() {
     DiswantinTheme {
         Scaffold(topBar = {
-            TaskListFormTopBar(
-                uiState = TaskListFormTopBarState(
+            TaskCategoryFormTopBar(
+                uiState = TaskCategoryFormTopBarState(
                     isNew = false,
                     showSave = true,
                     onSave = {},
@@ -381,9 +382,9 @@ private fun TaskListFormScreenPreview_Edit() {
                 onClose = {},
             )
         }) { innerPadding ->
-            TaskListFormLayout(
+            TaskCategoryFormLayout(
                 isNew = false,
-                uiState = TaskListFormUiState.Success(
+                uiState = TaskCategoryFormUiState.Success(
                     tasks = persistentListOf(
                         Task(
                             id = 1L,
@@ -422,12 +423,12 @@ private fun TaskListFormScreenPreview_Edit() {
 
 @DevicePreviews
 @Composable
-private fun TaskListFormLayoutPreview() {
+private fun TaskCategoryFormLayoutPreview() {
     DiswantinTheme {
         Surface {
-            TaskListFormLayout(
+            TaskCategoryFormLayout(
                 isNew = true,
-                uiState = TaskListFormUiState.Success(
+                uiState = TaskCategoryFormUiState.Success(
                     tasks = persistentListOf(
                         Task(
                             id = 1L,

@@ -5,12 +5,10 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.cash.turbine.test
 import assertk.assertThat
-import assertk.assertions.containsExactly
 import assertk.assertions.isDataClassEqualTo
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
-import assertk.assertions.prop
 import io.github.evaogbe.diswantin.app.data.DiswantinDatabase
 import io.github.serpro69.kfaker.lorem.LoremFaker
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -49,18 +47,13 @@ class LocalTaskRepositoryTest {
     }
 
     @Test
-    fun currentTaskStream_emitsFirstPlannedTask() = runTest {
+    fun currentTaskStream_emitsFirstPrioritizedTask() = runTest {
         val clock =
             Clock.fixed(Instant.parse("2024-08-23T17:00:00Z"), ZoneId.of("America/New_York"))
         val taskRepository = LocalTaskRepository(
             db.taskDao(),
             UnconfinedTestDispatcher(testScheduler),
             clock,
-        )
-        val taskListRepository = LocalTaskListRepository(
-            db.taskListDao(),
-            db.taskDao(),
-            UnconfinedTestDispatcher(testScheduler),
         )
 
         taskRepository.getCurrentTask(
@@ -160,24 +153,13 @@ class LocalTaskRepositoryTest {
                     .isNotNull()
                     .isDataClassEqualTo(updatedTask2)
 
-                val taskListWithTasks = taskListRepository.create(
-                    NewTaskListForm(
-                        name = loremFaker.lorem.words(),
-                        tasks = listOf(task3, updatedTask2),
-                    )
-                )
+                taskRepository.addParent(id = updatedTask2.id, parentId = task3.id)
 
                 assertThat(awaitItem())
                     .isNotNull()
-                    .isDataClassEqualTo(task3.copy(listId = taskListWithTasks.taskList.id))
+                    .isDataClassEqualTo(task3)
 
-                taskListRepository.update(
-                    EditTaskListForm(
-                        name = taskListWithTasks.taskList.name,
-                        tasks = listOf(updatedTask1) + taskListWithTasks.tasks,
-                        existingTaskListWithTasks = taskListWithTasks,
-                    )
-                )
+                taskRepository.addParent(id = task3.id, parentId = updatedTask1.id)
 
                 assertThat(awaitItem()).isNull()
 
@@ -325,11 +307,6 @@ class LocalTaskRepositoryTest {
             UnconfinedTestDispatcher(testScheduler),
             clock,
         )
-        val taskListRepository = LocalTaskListRepository(
-            db.taskListDao(),
-            db.taskDao(),
-            UnconfinedTestDispatcher(testScheduler),
-        )
 
         val tasks = List(3) {
             taskRepository.create(
@@ -344,22 +321,87 @@ class LocalTaskRepositoryTest {
             )
         }
 
-        val taskListWithTasks =
-            taskListRepository.create(
-                NewTaskListForm(
-                    name = loremFaker.lorem.words(),
-                    tasks = tasks,
-                )
+        taskRepository.addParent(id = tasks[1].id, parentId = tasks[0].id)
+        taskRepository.addParent(id = tasks[2].id, parentId = tasks[1].id)
+
+        assertThat(taskRepository.getTaskDetailById(tasks[0].id).first()).isEqualTo(
+            TaskDetail(
+                id = tasks[0].id,
+                name = tasks[0].name,
+                deadlineDate = tasks[0].deadlineDate,
+                deadlineTime = tasks[0].deadlineTime,
+                scheduledAt = tasks[0].scheduledAt,
+                recurring = tasks[0].recurring,
+                doneAt = null,
+                categoryId = null,
+                categoryName = null,
+                parentId = null,
+                parentName = null,
             )
+        )
+        assertThat(taskRepository.getTaskDetailById(tasks[1].id).first()).isEqualTo(
+            TaskDetail(
+                id = tasks[1].id,
+                name = tasks[1].name,
+                deadlineDate = tasks[1].deadlineDate,
+                deadlineTime = tasks[1].deadlineTime,
+                scheduledAt = tasks[1].scheduledAt,
+                recurring = tasks[1].recurring,
+                doneAt = null,
+                categoryId = null,
+                categoryName = null,
+                parentId = tasks[0].id,
+                parentName = tasks[0].name,
+            )
+        )
+        assertThat(taskRepository.getTaskDetailById(tasks[2].id).first()).isEqualTo(
+            TaskDetail(
+                id = tasks[2].id,
+                name = tasks[2].name,
+                deadlineDate = tasks[2].deadlineDate,
+                deadlineTime = tasks[2].deadlineTime,
+                scheduledAt = tasks[2].scheduledAt,
+                recurring = tasks[2].recurring,
+                doneAt = null,
+                categoryId = null,
+                categoryName = null,
+                parentId = tasks[1].id,
+                parentName = tasks[1].name,
+            )
+        )
 
         taskRepository.delete(tasks[1].id)
 
         assertThat(taskRepository.getById(tasks[1].id).first()).isNull()
-        assertThat(
-            taskListRepository.getTaskListWithTasksById(taskListWithTasks.taskList.id).first()
+        assertThat(taskRepository.getTaskDetailById(tasks[0].id).first()).isEqualTo(
+            TaskDetail(
+                id = tasks[0].id,
+                name = tasks[0].name,
+                deadlineDate = tasks[0].deadlineDate,
+                deadlineTime = tasks[0].deadlineTime,
+                scheduledAt = tasks[0].scheduledAt,
+                recurring = tasks[0].recurring,
+                doneAt = null,
+                categoryId = null,
+                categoryName = null,
+                parentId = null,
+                parentName = null,
+            )
         )
-            .isNotNull()
-            .prop(TaskListWithTasks::tasks)
-            .containsExactly(taskListWithTasks.tasks[0], taskListWithTasks.tasks[2])
+        assertThat(taskRepository.getTaskDetailById(tasks[2].id).first()).isEqualTo(
+            TaskDetail(
+                id = tasks[2].id,
+                name = tasks[2].name,
+                deadlineDate = tasks[2].deadlineDate,
+                deadlineTime = tasks[2].deadlineTime,
+                scheduledAt = tasks[2].scheduledAt,
+                recurring = tasks[2].recurring,
+                doneAt = null,
+                categoryId = null,
+                categoryName = null,
+                parentId = tasks[0].id,
+                parentName = tasks[0].name,
+            )
+        )
     }
 }

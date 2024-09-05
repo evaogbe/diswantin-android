@@ -12,7 +12,7 @@ interface TaskDataModule {
     fun bindTaskRepository(localTaskRepository: LocalTaskRepository): TaskRepository
 
     @Binds
-    fun bindTaskListRepository(
-        localTaskListRepository: LocalTaskListRepository
-    ): TaskListRepository
+    fun bindTaskCategoryRepository(
+        localTaskCategoryRepository: LocalTaskCategoryRepository
+    ): TaskCategoryRepository
 }

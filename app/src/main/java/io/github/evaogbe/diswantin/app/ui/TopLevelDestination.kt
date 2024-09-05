@@ -29,29 +29,30 @@ sealed interface TopLevelDestination {
         }
     }
 
-    data class TaskListDetail(private val id: Long) : TopLevelDestination {
-        override val route = "taskList/$id"
+    data class TaskCategoryDetail(private val id: Long) : TopLevelDestination {
+        override val route = "taskCategory/$id"
 
         companion object : TopLevelDestination {
-            override val route = "taskList/{${NavArguments.ID_KEY}}"
+            override val route = "taskCategory/{${NavArguments.ID_KEY}}"
         }
     }
 
-    data class NewTaskListForm(private val name: String?) : TopLevelDestination {
+    data class NewTaskCategoryForm(private val name: String?) : TopLevelDestination {
         override val route = name?.let {
-            "taskListForm?${NavArguments.NAME_KEY}=$name"
-        } ?: "taskListForm"
+            "taskCategoryForm?${NavArguments.NAME_KEY}=$name"
+        } ?: "taskCategoryForm"
 
         companion object : TopLevelDestination {
-            override val route = "taskListForm?${NavArguments.NAME_KEY}={${NavArguments.NAME_KEY}}"
+            override val route =
+                "taskCategoryForm?${NavArguments.NAME_KEY}={${NavArguments.NAME_KEY}}"
         }
     }
 
-    data class EditTaskListForm(private val id: Long) : TopLevelDestination {
-        override val route = "taskListForm/$id"
+    data class EditTaskCategoryForm(private val id: Long) : TopLevelDestination {
+        override val route = "taskCategoryForm/$id"
 
         companion object : TopLevelDestination {
-            override val route = "taskListForm/{${NavArguments.ID_KEY}}"
+            override val route = "taskCategoryForm/{${NavArguments.ID_KEY}}"
         }
     }
 

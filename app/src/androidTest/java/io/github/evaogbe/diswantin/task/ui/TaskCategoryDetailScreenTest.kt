@@ -9,9 +9,9 @@ import assertk.assertThat
 import assertk.assertions.isTrue
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.Task
-import io.github.evaogbe.diswantin.task.data.TaskList
-import io.github.evaogbe.diswantin.task.data.TaskListWithTasks
-import io.github.evaogbe.diswantin.testing.FakeTaskListRepository
+import io.github.evaogbe.diswantin.task.data.TaskCategory
+import io.github.evaogbe.diswantin.task.data.TaskCategoryWithTasks
+import io.github.evaogbe.diswantin.testing.FakeTaskCategoryRepository
 import io.github.evaogbe.diswantin.testing.stringResource
 import io.github.evaogbe.diswantin.ui.components.PendingLayoutTestTag
 import io.github.evaogbe.diswantin.ui.navigation.NavArguments
@@ -22,7 +22,7 @@ import org.junit.Rule
 import org.junit.Test
 import java.time.Clock
 
-class TaskListDetailScreenTest {
+class TaskCategoryDetailScreenTest {
     @get:Rule
     val composeTestRule = createComposeRule()
 
@@ -31,118 +31,120 @@ class TaskListDetailScreenTest {
     private val faker = Faker()
 
     @Test
-    fun displaysTaskListNameWithTasks() {
-        val taskListWithTasks = genTaskListWithTasks()
-        val taskListRepository = FakeTaskListRepository.withTaskLists(taskListWithTasks)
-        val viewModel = createTaskListDetailViewModel(taskListRepository)
+    fun displaysCategoryNameWithTasks() {
+        val categoryWithTasks = genTaskCategoryWithTasks()
+        val taskCategoryRepository = FakeTaskCategoryRepository.withCategories(categoryWithTasks)
+        val viewModel = createTaskCategoryDetailViewModel(taskCategoryRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
-                TaskListDetailScreen(
+                TaskCategoryDetailScreen(
                     onPopBackStack = {},
                     setTopBarState = {},
                     setUserMessage = {},
                     onSelectTask = {},
-                    taskListDetailViewModel = viewModel,
+                    taskCategoryDetailViewModel = viewModel,
                 )
             }
         }
 
-        composeTestRule.onNodeWithText(taskListWithTasks.taskList.name).assertIsDisplayed()
-        composeTestRule.onNodeWithText(taskListWithTasks.tasks[0].name).assertIsDisplayed()
-        composeTestRule.onNodeWithText(taskListWithTasks.tasks[1].name).assertIsDisplayed()
-        composeTestRule.onNodeWithText(taskListWithTasks.tasks[2].name).assertIsDisplayed()
+        composeTestRule.onNodeWithText(categoryWithTasks.category.name).assertIsDisplayed()
+        composeTestRule.onNodeWithText(categoryWithTasks.tasks[0].name).assertIsDisplayed()
+        composeTestRule.onNodeWithText(categoryWithTasks.tasks[1].name).assertIsDisplayed()
+        composeTestRule.onNodeWithText(categoryWithTasks.tasks[2].name).assertIsDisplayed()
     }
 
     @Test
     fun displaysErrorMessage_withFailureUi() {
-        val taskListRepository = FakeTaskListRepository()
-        val viewModel = createTaskListDetailViewModel(taskListRepository)
+        val taskCategoryRepository = FakeTaskCategoryRepository()
+        val viewModel = createTaskCategoryDetailViewModel(taskCategoryRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
-                TaskListDetailScreen(
+                TaskCategoryDetailScreen(
                     onPopBackStack = {},
                     setTopBarState = {},
                     setUserMessage = {},
                     onSelectTask = {},
-                    taskListDetailViewModel = viewModel,
+                    taskCategoryDetailViewModel = viewModel,
                 )
             }
         }
 
-        composeTestRule.onNodeWithText(stringResource(R.string.task_list_detail_fetch_error))
+        composeTestRule.onNodeWithText(stringResource(R.string.task_category_detail_fetch_error))
             .assertIsDisplayed()
     }
 
     @Test
-    fun popsBackStack_whenTaskListDeleted() {
+    fun popsBackStack_whenCategoryDeleted() {
         var onPopBackStackClicked = false
-        val taskListWithTasks = genTaskListWithTasks()
-        val taskListRepository = FakeTaskListRepository.withTaskLists(taskListWithTasks)
-        val viewModel = createTaskListDetailViewModel(taskListRepository)
+        val categoryWithTasks = genTaskCategoryWithTasks()
+        val taskCategoryRepository = FakeTaskCategoryRepository.withCategories(categoryWithTasks)
+        val viewModel = createTaskCategoryDetailViewModel(taskCategoryRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
-                TaskListDetailScreen(
+                TaskCategoryDetailScreen(
                     onPopBackStack = { onPopBackStackClicked = true },
                     setTopBarState = {},
                     setUserMessage = {},
                     onSelectTask = {},
-                    taskListDetailViewModel = viewModel,
+                    taskCategoryDetailViewModel = viewModel,
                 )
             }
         }
 
-        viewModel.deleteTaskList()
+        viewModel.deleteCategory()
 
         composeTestRule.onNodeWithTag(PendingLayoutTestTag).assertIsDisplayed()
         assertThat(onPopBackStackClicked).isTrue()
     }
 
     @Test
-    fun displaysErrorMessage_whenDeleteTaskListFailed() {
+    fun displaysErrorMessage_whenDeleteCategoryFailed() {
         var userMessage: String? = null
-        val taskListWithTasks = genTaskListWithTasks()
-        val taskListRepository = FakeTaskListRepository.withTaskLists(taskListWithTasks)
-        val viewModel = createTaskListDetailViewModel(taskListRepository)
+        val categoryWithTasks = genTaskCategoryWithTasks()
+        val taskCategoryRepository = FakeTaskCategoryRepository.withCategories(categoryWithTasks)
+        val viewModel = createTaskCategoryDetailViewModel(taskCategoryRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
-                TaskListDetailScreen(
+                TaskCategoryDetailScreen(
                     onPopBackStack = {},
                     setTopBarState = {},
                     setUserMessage = { userMessage = it },
                     onSelectTask = {},
-                    taskListDetailViewModel = viewModel,
+                    taskCategoryDetailViewModel = viewModel,
                 )
             }
         }
 
-        taskListRepository.setThrows(taskListRepository::delete, true)
-        viewModel.deleteTaskList()
+        taskCategoryRepository.setThrows(taskCategoryRepository::delete, true)
+        viewModel.deleteCategory()
 
         composeTestRule.waitUntil {
-            userMessage == stringResource(R.string.task_list_detail_delete_error)
+            userMessage == stringResource(R.string.task_category_detail_delete_error)
         }
     }
 
-    private fun genTaskListWithTasks() = TaskListWithTasks(
-        TaskList(id = 1L, name = loremFaker.lorem.words()),
+    private fun genTaskCategoryWithTasks() = TaskCategoryWithTasks(
+        TaskCategory(id = 1L, name = loremFaker.lorem.words()),
         List(3) {
             Task(
                 id = it + 1L,
                 createdAt = faker.random.randomPastDate().toInstant(),
                 name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-                listId = 1L,
+                categoryId = 1L,
             )
         },
     )
 
-    private fun createTaskListDetailViewModel(taskListRepository: FakeTaskListRepository) =
-        TaskListDetailViewModel(
+    private fun createTaskCategoryDetailViewModel(
+        taskCategoryRepository: FakeTaskCategoryRepository,
+    ) =
+        TaskCategoryDetailViewModel(
             SavedStateHandle(mapOf(NavArguments.ID_KEY to 1L)),
-            taskListRepository,
+            taskCategoryRepository,
             Clock.systemDefaultZone(),
         )
 }

@@ -2,10 +2,10 @@ package io.github.evaogbe.diswantin.app.ui
 
 import android.os.Parcelable
 import io.github.evaogbe.diswantin.task.ui.CurrentTaskTopBarState
+import io.github.evaogbe.diswantin.task.ui.TaskCategoryDetailTopBarState
+import io.github.evaogbe.diswantin.task.ui.TaskCategoryFormTopBarState
 import io.github.evaogbe.diswantin.task.ui.TaskDetailTopBarState
 import io.github.evaogbe.diswantin.task.ui.TaskFormTopBarState
-import io.github.evaogbe.diswantin.task.ui.TaskListDetailTopBarState
-import io.github.evaogbe.diswantin.task.ui.TaskListFormTopBarState
 import io.github.evaogbe.diswantin.task.ui.TaskSearchTopBarState
 import kotlinx.parcelize.Parcelize
 
@@ -23,13 +23,13 @@ sealed interface TopBarState : Parcelable {
     data class TaskForm(val uiState: TaskFormTopBarState) : TopBarState
 
     @Parcelize
-    data class TaskListDetail(val uiState: TaskListDetailTopBarState) : TopBarState
+    data class TaskCategoryDetail(val uiState: TaskCategoryDetailTopBarState) : TopBarState
 
     @Parcelize
-    data class TaskListForm(val uiState: TaskListFormTopBarState) : TopBarState
+    data class TaskCategoryForm(val uiState: TaskCategoryFormTopBarState) : TopBarState
 
     @Parcelize
-    data object TaskLists : TopBarState
+    data object TaskCategoryList : TopBarState
 
     @Parcelize
     data class TaskSearch(val uiState: TaskSearchTopBarState) : TopBarState

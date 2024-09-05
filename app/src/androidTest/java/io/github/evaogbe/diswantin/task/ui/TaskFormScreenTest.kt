@@ -80,13 +80,13 @@ class TaskFormScreenTest {
                 TaskFormScreen(
                     onPopBackStack = {},
                     setTopBarState = {},
-                    onSelectListType = {},
+                    onSelectCategoryType = {},
                     taskFormViewModel = viewModel,
                 )
             }
         }
 
-        composeTestRule.onNodeWithText(stringResource(R.string.form_type_button_list))
+        composeTestRule.onNodeWithText(stringResource(R.string.form_type_button_category))
             .assertIsDisplayed()
     }
 
@@ -101,13 +101,13 @@ class TaskFormScreenTest {
                 TaskFormScreen(
                     onPopBackStack = {},
                     setTopBarState = {},
-                    onSelectListType = {},
+                    onSelectCategoryType = {},
                     taskFormViewModel = viewModel,
                 )
             }
         }
 
-        composeTestRule.onNodeWithText(stringResource(R.string.form_type_button_list))
+        composeTestRule.onNodeWithText(stringResource(R.string.form_type_button_category))
             .assertDoesNotExist()
     }
 
@@ -121,7 +121,7 @@ class TaskFormScreenTest {
                 TaskFormScreen(
                     onPopBackStack = {},
                     setTopBarState = {},
-                    onSelectListType = {},
+                    onSelectCategoryType = {},
                     taskFormViewModel = viewModel,
                 )
             }
@@ -143,7 +143,7 @@ class TaskFormScreenTest {
                 TaskFormScreen(
                     onPopBackStack = { onPopBackStackCalled = true },
                     setTopBarState = {},
-                    onSelectListType = {},
+                    onSelectCategoryType = {},
                     taskFormViewModel = viewModel,
                 )
             }
@@ -179,7 +179,7 @@ class TaskFormScreenTest {
                 TaskFormScreen(
                     onPopBackStack = {},
                     setTopBarState = {},
-                    onSelectListType = {},
+                    onSelectCategoryType = {},
                     taskFormViewModel = viewModel,
                 )
             }
@@ -211,7 +211,7 @@ class TaskFormScreenTest {
                 TaskFormScreen(
                     onPopBackStack = { onPopBackStackCalled = true },
                     setTopBarState = {},
-                    onSelectListType = {},
+                    onSelectCategoryType = {},
                     taskFormViewModel = viewModel,
                 )
             }
@@ -252,7 +252,7 @@ class TaskFormScreenTest {
                 TaskFormScreen(
                     onPopBackStack = {},
                     setTopBarState = {},
-                    onSelectListType = {},
+                    onSelectCategoryType = {},
                     taskFormViewModel = viewModel,
                 )
             }

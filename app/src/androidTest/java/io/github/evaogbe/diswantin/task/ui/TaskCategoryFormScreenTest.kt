@@ -15,9 +15,9 @@ import assertk.assertThat
 import assertk.assertions.isTrue
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.Task
-import io.github.evaogbe.diswantin.task.data.TaskList
+import io.github.evaogbe.diswantin.task.data.TaskCategory
 import io.github.evaogbe.diswantin.testing.FakeDatabase
-import io.github.evaogbe.diswantin.testing.FakeTaskListRepository
+import io.github.evaogbe.diswantin.testing.FakeTaskCategoryRepository
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.stringResource
 import io.github.evaogbe.diswantin.ui.components.PendingLayoutTestTag
@@ -30,7 +30,7 @@ import org.junit.Test
 import timber.log.Timber
 
 @OptIn(ExperimentalTestApi::class)
-class TaskListFormScreenTest {
+class TaskCategoryFormScreenTest {
     @get:Rule
     val composeTestRule = createComposeRule()
 
@@ -42,28 +42,28 @@ class TaskListFormScreenTest {
     fun displaysErrorMessage_withFailureUi() {
         val db = FakeDatabase()
         val taskRepository = FakeTaskRepository(db)
-        val taskListRepository = FakeTaskListRepository(db)
-        taskListRepository.setThrows(taskListRepository::getTaskListWithTasksById, true)
+        val taskCategoryRepository = FakeTaskCategoryRepository(db)
+        taskCategoryRepository.setThrows(taskCategoryRepository::getCategoryWithTasksById, true)
 
-        val viewModel = TaskListFormViewModel(
+        val viewModel = TaskCategoryFormViewModel(
             createSavedStateHandleForEdit(),
-            taskListRepository,
+            taskCategoryRepository,
             taskRepository
         )
 
         composeTestRule.setContent {
             DiswantinTheme {
-                TaskListFormScreen(
+                TaskCategoryFormScreen(
                     onPopBackStack = {},
                     setTopBarState = {},
                     setUserMessage = {},
                     onSelectTaskType = {},
-                    taskListFormViewModel = viewModel,
+                    taskCategoryFormViewModel = viewModel,
                 )
             }
         }
 
-        composeTestRule.onNodeWithText(stringResource(R.string.task_list_form_fetch_error))
+        composeTestRule.onNodeWithText(stringResource(R.string.task_category_form_fetch_error))
     }
 
     @Test
@@ -80,18 +80,18 @@ class TaskListFormScreenTest {
             tasks.forEach(::insertTask)
         }
         val taskRepository = FakeTaskRepository(db)
-        val taskListRepository = FakeTaskListRepository(db)
+        val taskCategoryRepository = FakeTaskCategoryRepository(db)
         val viewModel =
-            TaskListFormViewModel(SavedStateHandle(), taskListRepository, taskRepository)
+            TaskCategoryFormViewModel(SavedStateHandle(), taskCategoryRepository, taskRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
-                TaskListFormScreen(
+                TaskCategoryFormScreen(
                     onPopBackStack = {},
                     setTopBarState = {},
                     setUserMessage = {},
                     onSelectTaskType = {},
-                    taskListFormViewModel = viewModel,
+                    taskCategoryFormViewModel = viewModel,
                 )
             }
         }
@@ -115,18 +115,18 @@ class TaskListFormScreenTest {
         val query = loremFaker.verbs.base()
         val db = FakeDatabase()
         val taskRepository = FakeTaskRepository(db)
-        val taskListRepository = FakeTaskListRepository(db)
+        val taskCategoryRepository = FakeTaskCategoryRepository(db)
         val viewModel =
-            TaskListFormViewModel(SavedStateHandle(), taskListRepository, taskRepository)
+            TaskCategoryFormViewModel(SavedStateHandle(), taskCategoryRepository, taskRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
-                TaskListFormScreen(
+                TaskCategoryFormScreen(
                     onPopBackStack = {},
                     setTopBarState = {},
                     setUserMessage = { userMessage = it },
                     onSelectTaskType = {},
-                    taskListFormViewModel = viewModel,
+                    taskCategoryFormViewModel = viewModel,
                 )
             }
         }
@@ -140,12 +140,12 @@ class TaskListFormScreenTest {
             .performTextInput(query)
 
         composeTestRule.waitUntil {
-            userMessage == stringResource(R.string.task_list_form_search_tasks_error)
+            userMessage == stringResource(R.string.task_category_form_search_tasks_error)
         }
     }
 
     @Test
-    fun popsBackStack_whenTaskListCreated() {
+    fun popsBackStack_whenCategoryCreated() {
         var onPopBackStackCalled = false
         val name = loremFaker.lorem.words()
         val tasks = List(3) {
@@ -160,18 +160,18 @@ class TaskListFormScreenTest {
             tasks.forEach(::insertTask)
         }
         val taskRepository = FakeTaskRepository(db)
-        val taskListRepository = FakeTaskListRepository(db)
+        val taskCategoryRepository = FakeTaskCategoryRepository(db)
         val viewModel =
-            TaskListFormViewModel(SavedStateHandle(), taskListRepository, taskRepository)
+            TaskCategoryFormViewModel(SavedStateHandle(), taskCategoryRepository, taskRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
-                TaskListFormScreen(
+                TaskCategoryFormScreen(
                     onPopBackStack = { onPopBackStackCalled = true },
                     setTopBarState = {},
                     setUserMessage = {},
                     onSelectTaskType = {},
-                    taskListFormViewModel = viewModel,
+                    taskCategoryFormViewModel = viewModel,
                 )
             }
         }
@@ -193,7 +193,7 @@ class TaskListFormScreenTest {
             composeTestRule.onNodeWithText(stringResource(R.string.add_task_button)).performClick()
         }
 
-        viewModel.saveTaskList()
+        viewModel.saveCategory()
 
         composeTestRule.onNodeWithTag(PendingLayoutTestTag).assertIsDisplayed()
         assertThat(onPopBackStackCalled).isTrue()
@@ -204,59 +204,59 @@ class TaskListFormScreenTest {
         val name = loremFaker.lorem.words()
         val db = FakeDatabase()
         val taskRepository = FakeTaskRepository(db)
-        val taskListRepository = FakeTaskListRepository(db)
+        val taskCategoryRepository = FakeTaskCategoryRepository(db)
         val viewModel =
-            TaskListFormViewModel(SavedStateHandle(), taskListRepository, taskRepository)
+            TaskCategoryFormViewModel(SavedStateHandle(), taskCategoryRepository, taskRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
-                TaskListFormScreen(
+                TaskCategoryFormScreen(
                     onPopBackStack = {},
                     setTopBarState = {},
                     setUserMessage = {},
                     onSelectTaskType = {},
-                    taskListFormViewModel = viewModel,
+                    taskCategoryFormViewModel = viewModel,
                 )
             }
         }
 
-        composeTestRule.onNodeWithText(stringResource(R.string.task_list_form_save_error_new))
+        composeTestRule.onNodeWithText(stringResource(R.string.task_category_form_save_error_new))
             .assertDoesNotExist()
 
-        taskListRepository.setThrows(taskListRepository::create, true)
+        taskCategoryRepository.setThrows(taskCategoryRepository::create, true)
         composeTestRule.onNodeWithText(stringResource(R.string.name_label), useUnmergedTree = true)
             .onParent()
             .performTextInput(name)
-        viewModel.saveTaskList()
+        viewModel.saveCategory()
 
-        composeTestRule.onNodeWithText(stringResource(R.string.task_list_form_save_error_new))
+        composeTestRule.onNodeWithText(stringResource(R.string.task_category_form_save_error_new))
             .assertIsDisplayed()
     }
 
     @Test
-    fun popsBackStack_whenTaskListUpdated() {
+    fun popsBackStack_whenCategoryUpdated() {
         var onPopBackStackCalled = false
         val name = loremFaker.lorem.words()
-        val taskList = genTaskList()
+        val category = genTaskCategory()
         val db = FakeDatabase().apply {
-            insertTaskList(taskList, emptyList())
+            insertTaskCategory(category, emptySet())
         }
         val taskRepository = FakeTaskRepository(db)
-        val taskListRepository = FakeTaskListRepository(db)
-        val viewModel = TaskListFormViewModel(
+        val taskCategoryRepository = FakeTaskCategoryRepository(db)
+        val viewModel = TaskCategoryFormViewModel(
             createSavedStateHandleForEdit(),
-            taskListRepository,
+            taskCategoryRepository,
             taskRepository,
         )
 
         composeTestRule.setContent {
             DiswantinTheme {
-                TaskListFormScreen(
+                TaskCategoryFormScreen(
                     onPopBackStack = { onPopBackStackCalled = true },
                     setTopBarState = {},
                     setUserMessage = {},
                     onSelectTaskType = {},
-                    taskListFormViewModel = viewModel,
+                    taskCategoryFormViewModel = viewModel,
                 )
             }
         }
@@ -264,7 +264,7 @@ class TaskListFormScreenTest {
         composeTestRule.onNodeWithText(stringResource(R.string.name_label), useUnmergedTree = true)
             .onParent()
             .performTextReplacement(name)
-        viewModel.saveTaskList()
+        viewModel.saveCategory()
 
         composeTestRule.onNodeWithTag(PendingLayoutTestTag).assertIsDisplayed()
         assertThat(onPopBackStackCalled).isTrue()
@@ -273,44 +273,44 @@ class TaskListFormScreenTest {
     @Test
     fun displaysErrorMessage_withSaveErrorForEdit() {
         val name = loremFaker.lorem.words()
-        val taskList = genTaskList()
+        val category = genTaskCategory()
         val db = FakeDatabase().apply {
-            insertTaskList(taskList, emptyList())
+            insertTaskCategory(category, emptySet())
         }
         val taskRepository = FakeTaskRepository(db)
-        val taskListRepository = FakeTaskListRepository(db)
-        val viewModel = TaskListFormViewModel(
+        val taskCategoryRepository = FakeTaskCategoryRepository(db)
+        val viewModel = TaskCategoryFormViewModel(
             createSavedStateHandleForEdit(),
-            taskListRepository,
+            taskCategoryRepository,
             taskRepository,
         )
 
         composeTestRule.setContent {
             DiswantinTheme {
-                TaskListFormScreen(
+                TaskCategoryFormScreen(
                     onPopBackStack = {},
                     setTopBarState = {},
                     setUserMessage = {},
                     onSelectTaskType = {},
-                    taskListFormViewModel = viewModel,
+                    taskCategoryFormViewModel = viewModel,
                 )
             }
         }
 
-        composeTestRule.onNodeWithText(stringResource(R.string.task_list_form_save_error_edit))
+        composeTestRule.onNodeWithText(stringResource(R.string.task_category_form_save_error_edit))
             .assertDoesNotExist()
 
-        taskListRepository.setThrows(taskListRepository::update, true)
+        taskCategoryRepository.setThrows(taskCategoryRepository::update, true)
         composeTestRule.onNodeWithText(stringResource(R.string.name_label), useUnmergedTree = true)
             .onParent()
             .performTextReplacement(name)
-        viewModel.saveTaskList()
+        viewModel.saveCategory()
 
-        composeTestRule.onNodeWithText(stringResource(R.string.task_list_form_save_error_edit))
+        composeTestRule.onNodeWithText(stringResource(R.string.task_category_form_save_error_edit))
             .assertIsDisplayed()
     }
 
-    private fun genTaskList() = TaskList(id = 1L, name = loremFaker.lorem.words())
+    private fun genTaskCategory() = TaskCategory(id = 1L, name = loremFaker.lorem.words())
 
     private fun createSavedStateHandleForEdit() =
         SavedStateHandle(mapOf(NavArguments.ID_KEY to 1L))

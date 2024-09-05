@@ -9,10 +9,10 @@ import assertk.assertions.isTrue
 import assertk.assertions.prop
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.Task
-import io.github.evaogbe.diswantin.task.data.TaskList
-import io.github.evaogbe.diswantin.task.data.TaskListWithTasks
+import io.github.evaogbe.diswantin.task.data.TaskCategory
+import io.github.evaogbe.diswantin.task.data.TaskCategoryWithTasks
 import io.github.evaogbe.diswantin.testing.FakeDatabase
-import io.github.evaogbe.diswantin.testing.FakeTaskListRepository
+import io.github.evaogbe.diswantin.testing.FakeTaskCategoryRepository
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.MainDispatcherRule
 import io.github.evaogbe.diswantin.ui.navigation.NavArguments
@@ -30,7 +30,7 @@ import org.junit.Rule
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class TaskListFormViewModelTest {
+class TaskCategoryFormViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
@@ -39,12 +39,12 @@ class TaskListFormViewModelTest {
     private val faker = Faker()
 
     @Test
-    fun `initializes for new without taskListId`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `initializes for new without categoryId`() = runTest(mainDispatcherRule.testDispatcher) {
         val db = FakeDatabase()
         val taskRepository = FakeTaskRepository(db)
-        val taskListRepository = FakeTaskListRepository(db)
+        val taskCategoryRepository = FakeTaskCategoryRepository(db)
         val viewModel =
-            TaskListFormViewModel(SavedStateHandle(), taskListRepository, taskRepository)
+            TaskCategoryFormViewModel(SavedStateHandle(), taskCategoryRepository, taskRepository)
 
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect()
@@ -52,7 +52,7 @@ class TaskListFormViewModelTest {
 
         assertThat(viewModel.isNew).isTrue()
         assertThat(viewModel.uiState.value).isEqualTo(
-            TaskListFormUiState.Success(
+            TaskCategoryFormUiState.Success(
                 tasks = persistentListOf(),
                 editingTaskIndex = 0,
                 taskOptions = persistentListOf(),
@@ -64,18 +64,18 @@ class TaskListFormViewModelTest {
     }
 
     @Test
-    fun `initializes for edit with taskListId`() = runTest(mainDispatcherRule.testDispatcher) {
-        val taskList = genTaskList()
-        val tasks = genTasks(listId = taskList.id)
+    fun `initializes for edit with categoryId`() = runTest(mainDispatcherRule.testDispatcher) {
+        val category = genTaskCategory()
+        val tasks = genTasks(categoryId = category.id)
         val db = FakeDatabase().apply {
             tasks.forEach(::insertTask)
-            insertTaskList(taskList, tasks.map(Task::id))
+            insertTaskCategory(category, tasks.map(Task::id).toSet())
         }
         val taskRepository = FakeTaskRepository(db)
-        val taskListRepository = FakeTaskListRepository(db)
-        val viewModel = TaskListFormViewModel(
+        val taskCategoryRepository = FakeTaskCategoryRepository(db)
+        val viewModel = TaskCategoryFormViewModel(
             createSavedStateHandleForEdit(),
-            taskListRepository,
+            taskCategoryRepository,
             taskRepository,
         )
 
@@ -85,7 +85,7 @@ class TaskListFormViewModelTest {
 
         assertThat(viewModel.isNew).isFalse()
         assertThat(viewModel.uiState.value).isEqualTo(
-            TaskListFormUiState.Success(
+            TaskCategoryFormUiState.Success(
                 tasks = tasks.toImmutableList(),
                 editingTaskIndex = null,
                 taskOptions = persistentListOf(),
@@ -93,7 +93,7 @@ class TaskListFormViewModelTest {
                 userMessage = null,
             )
         )
-        assertThat(viewModel.nameInput).isEqualTo(taskList.name)
+        assertThat(viewModel.nameInput).isEqualTo(category.name)
     }
 
     @Test
@@ -101,12 +101,12 @@ class TaskListFormViewModelTest {
         runTest(mainDispatcherRule.testDispatcher) {
             val db = FakeDatabase()
             val taskRepository = FakeTaskRepository(db)
-            val taskListRepository = FakeTaskListRepository(db)
-            taskListRepository.setThrows(taskListRepository::getTaskListWithTasksById, true)
+            val taskCategoryRepository = FakeTaskCategoryRepository(db)
+            taskCategoryRepository.setThrows(taskCategoryRepository::getCategoryWithTasksById, true)
 
-            val viewModel = TaskListFormViewModel(
+            val viewModel = TaskCategoryFormViewModel(
                 createSavedStateHandleForEdit(),
-                taskListRepository,
+                taskCategoryRepository,
                 taskRepository
             )
 
@@ -115,7 +115,7 @@ class TaskListFormViewModelTest {
             }
 
             assertThat(viewModel.isNew).isFalse()
-            assertThat(viewModel.uiState.value).isEqualTo(TaskListFormUiState.Failure)
+            assertThat(viewModel.uiState.value).isEqualTo(TaskCategoryFormUiState.Failure)
         }
 
     @Test
@@ -132,9 +132,9 @@ class TaskListFormViewModelTest {
             tasks.forEach(::insertTask)
         }
         val taskRepository = FakeTaskRepository(db)
-        val taskListRepository = FakeTaskListRepository(db)
+        val taskCategoryRepository = FakeTaskCategoryRepository(db)
         val viewModel =
-            TaskListFormViewModel(SavedStateHandle(), taskListRepository, taskRepository)
+            TaskCategoryFormViewModel(SavedStateHandle(), taskCategoryRepository, taskRepository)
 
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect()
@@ -143,7 +143,7 @@ class TaskListFormViewModelTest {
         viewModel.searchTasks(query)
 
         assertThat(viewModel.uiState.value).isEqualTo(
-            TaskListFormUiState.Success(
+            TaskCategoryFormUiState.Success(
                 tasks = persistentListOf(),
                 editingTaskIndex = 0,
                 taskOptions = tasks.toImmutableList(),
@@ -159,9 +159,13 @@ class TaskListFormViewModelTest {
             val query = loremFaker.verbs.base()
             val db = FakeDatabase()
             val taskRepository = FakeTaskRepository(db)
-            val taskListRepository = FakeTaskListRepository(db)
+            val taskCategoryRepository = FakeTaskCategoryRepository(db)
             val viewModel =
-                TaskListFormViewModel(SavedStateHandle(), taskListRepository, taskRepository)
+                TaskCategoryFormViewModel(
+                    SavedStateHandle(),
+                    taskCategoryRepository,
+                    taskRepository
+                )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -171,18 +175,18 @@ class TaskListFormViewModelTest {
             viewModel.searchTasks(query)
 
             assertThat(viewModel.uiState.value).isEqualTo(
-                TaskListFormUiState.Success(
+                TaskCategoryFormUiState.Success(
                     tasks = persistentListOf(),
                     editingTaskIndex = 0,
                     taskOptions = persistentListOf(),
                     hasSaveError = false,
-                    userMessage = R.string.task_list_form_search_tasks_error,
+                    userMessage = R.string.task_category_form_search_tasks_error,
                 )
             )
         }
 
     @Test
-    fun `saveTaskList creates task list without taskListId`() =
+    fun `saveCategory creates task category without categoryId`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val name = loremFaker.lorem.words()
             val tasks = genTasks()
@@ -190,16 +194,20 @@ class TaskListFormViewModelTest {
                 tasks.forEach(::insertTask)
             }
             val taskRepository = FakeTaskRepository(db)
-            val taskListRepository = FakeTaskListRepository(db)
+            val taskCategoryRepository = FakeTaskCategoryRepository(db)
             val viewModel =
-                TaskListFormViewModel(SavedStateHandle(), taskListRepository, taskRepository)
+                TaskCategoryFormViewModel(
+                    SavedStateHandle(),
+                    taskCategoryRepository,
+                    taskRepository
+                )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
             }
 
             assertThat(viewModel.uiState.value).isEqualTo(
-                TaskListFormUiState.Success(
+                TaskCategoryFormUiState.Success(
                     tasks = persistentListOf(),
                     editingTaskIndex = 0,
                     taskOptions = persistentListOf(),
@@ -212,37 +220,41 @@ class TaskListFormViewModelTest {
             tasks.forEachIndexed { index, task ->
                 viewModel.setTask(index, task)
             }
-            viewModel.saveTaskList()
+            viewModel.saveCategory()
 
-            val taskList = taskListRepository.taskLists.single()
-            assertThat(taskList.name).isEqualTo(name)
-            assertThat(taskListRepository.getTaskListWithTasksById(taskList.id).first())
+            val category = taskCategoryRepository.taskCategories.single()
+            assertThat(category.name).isEqualTo(name)
+            assertThat(taskCategoryRepository.getCategoryWithTasksById(category.id).first())
                 .isNotNull()
-                .prop(TaskListWithTasks::tasks)
-                .isEqualTo(tasks.map { it.copy(listId = taskList.id) })
-            assertThat(viewModel.uiState.value).isEqualTo(TaskListFormUiState.Saved)
+                .prop(TaskCategoryWithTasks::tasks)
+                .isEqualTo(tasks.map { it.copy(categoryId = category.id) })
+            assertThat(viewModel.uiState.value).isEqualTo(TaskCategoryFormUiState.Saved)
         }
 
     @Test
-    fun `saveTaskList shows error message when create throws`() =
+    fun `saveCategory shows error message when create throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val name = loremFaker.lorem.words()
             val db = FakeDatabase()
             val taskRepository = FakeTaskRepository(db)
-            val taskListRepository = FakeTaskListRepository(db)
+            val taskCategoryRepository = FakeTaskCategoryRepository(db)
             val viewModel =
-                TaskListFormViewModel(SavedStateHandle(), taskListRepository, taskRepository)
+                TaskCategoryFormViewModel(
+                    SavedStateHandle(),
+                    taskCategoryRepository,
+                    taskRepository
+                )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
             }
 
-            taskListRepository.setThrows(taskListRepository::create, true)
+            taskCategoryRepository.setThrows(taskCategoryRepository::create, true)
             viewModel.updateNameInput(name)
-            viewModel.saveTaskList()
+            viewModel.saveCategory()
 
             assertThat(viewModel.uiState.value).isEqualTo(
-                TaskListFormUiState.Success(
+                TaskCategoryFormUiState.Success(
                     tasks = persistentListOf(),
                     editingTaskIndex = 0,
                     taskOptions = persistentListOf(),
@@ -253,20 +265,20 @@ class TaskListFormViewModelTest {
         }
 
     @Test
-    fun `saveTaskList updates task list with taskListId`() =
+    fun `saveCategory updates task category with categoryId`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val name = loremFaker.lorem.words()
-            val taskList = genTaskList()
-            val tasks = genTasks(listId = taskList.id)
+            val category = genTaskCategory()
+            val tasks = genTasks(categoryId = category.id)
             val db = FakeDatabase().apply {
                 tasks.forEach(::insertTask)
-                insertTaskList(taskList, tasks.map(Task::id))
+                insertTaskCategory(category, tasks.map(Task::id).toSet())
             }
             val taskRepository = FakeTaskRepository(db)
-            val taskListRepository = FakeTaskListRepository(db)
-            val viewModel = TaskListFormViewModel(
+            val taskCategoryRepository = FakeTaskCategoryRepository(db)
+            val viewModel = TaskCategoryFormViewModel(
                 createSavedStateHandleForEdit(),
-                taskListRepository,
+                taskCategoryRepository,
                 taskRepository,
             )
 
@@ -275,7 +287,7 @@ class TaskListFormViewModelTest {
             }
 
             assertThat(viewModel.uiState.value).isEqualTo(
-                TaskListFormUiState.Success(
+                TaskCategoryFormUiState.Success(
                     tasks = tasks.toImmutableList(),
                     editingTaskIndex = null,
                     taskOptions = persistentListOf(),
@@ -285,29 +297,29 @@ class TaskListFormViewModelTest {
             )
 
             viewModel.updateNameInput(name)
-            viewModel.saveTaskList()
+            viewModel.saveCategory()
 
-            assertThat(taskListRepository.getTaskListWithTasksById(taskList.id).first())
+            assertThat(taskCategoryRepository.getCategoryWithTasksById(category.id).first())
                 .isNotNull()
-                .isEqualTo(TaskListWithTasks(taskList.copy(name = name), tasks))
-            assertThat(viewModel.uiState.value).isEqualTo(TaskListFormUiState.Saved)
+                .isEqualTo(TaskCategoryWithTasks(category.copy(name = name), tasks))
+            assertThat(viewModel.uiState.value).isEqualTo(TaskCategoryFormUiState.Saved)
         }
 
     @Test
-    fun `saveTaskList shows error message with update throws`() =
+    fun `saveCategory shows error message with update throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val name = loremFaker.lorem.words()
-            val taskList = genTaskList()
-            val tasks = genTasks(listId = taskList.id)
+            val category = genTaskCategory()
+            val tasks = genTasks(categoryId = category.id)
             val db = FakeDatabase().apply {
                 tasks.forEach(::insertTask)
-                insertTaskList(taskList, tasks.map(Task::id))
+                insertTaskCategory(category, tasks.map(Task::id).toSet())
             }
             val taskRepository = FakeTaskRepository(db)
-            val taskListRepository = FakeTaskListRepository(db)
-            val viewModel = TaskListFormViewModel(
+            val taskCategoryRepository = FakeTaskCategoryRepository(db)
+            val viewModel = TaskCategoryFormViewModel(
                 createSavedStateHandleForEdit(),
-                taskListRepository,
+                taskCategoryRepository,
                 taskRepository,
             )
 
@@ -315,12 +327,12 @@ class TaskListFormViewModelTest {
                 viewModel.uiState.collect()
             }
 
-            taskListRepository.setThrows(taskListRepository::update, true)
+            taskCategoryRepository.setThrows(taskCategoryRepository::update, true)
             viewModel.updateNameInput(name)
-            viewModel.saveTaskList()
+            viewModel.saveCategory()
 
             assertThat(viewModel.uiState.value).isEqualTo(
-                TaskListFormUiState.Success(
+                TaskCategoryFormUiState.Success(
                     tasks = tasks.toImmutableList(),
                     editingTaskIndex = null,
                     taskOptions = persistentListOf(),
@@ -330,15 +342,15 @@ class TaskListFormViewModelTest {
             )
         }
 
-    private fun genTaskList() = TaskList(id = 1L, name = loremFaker.lorem.words())
+    private fun genTaskCategory() = TaskCategory(id = 1L, name = loremFaker.lorem.words())
 
-    private fun genTasks(listId: Long? = null) =
+    private fun genTasks(categoryId: Long? = null) =
         List(3) {
             Task(
                 id = it + 1L,
                 createdAt = faker.random.randomPastDate().toInstant(),
-                name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-                listId = listId,
+                name = "${it + 1}. ${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                categoryId = categoryId,
             )
         }
 

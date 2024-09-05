@@ -18,4 +18,6 @@ interface TaskRepository {
     suspend fun delete(id: Long)
 
     suspend fun markDone(id: Long)
+
+    suspend fun addParent(id: Long, parentId: Long)
 }

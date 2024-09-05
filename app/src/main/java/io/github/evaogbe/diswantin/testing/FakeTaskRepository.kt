@@ -89,14 +89,17 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
     override fun getTaskDetailById(id: Long): Flow<TaskDetail?> =
         combine(
             throwingMethods,
-            db.taskListTable,
+            db.taskCategoryTable,
             db.taskTable,
             db.taskCompletionTable,
-        ) { throwingMethods, taskLists, tasks, taskCompletions ->
+            db.taskPathTable,
+        ) { throwingMethods, taskCategories, tasks, taskCompletions, taskPaths ->
             if (::getTaskDetailById in throwingMethods) {
                 throw RuntimeException("Test")
             }
 
+            val parentId =
+                taskPaths.values.firstOrNull { it.descendant == id && it.depth == 1 }?.ancestor
             tasks[id]?.let { task ->
                 TaskDetail(
                     id = task.id,
@@ -108,8 +111,10 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
                     doneAt = taskCompletions.values
                         .filter { it.taskId == task.id }
                         .maxOfOrNull { it.doneAt },
-                    listId = task.listId,
-                    listName = task.listId?.let { taskLists[it] }?.name,
+                    categoryId = task.categoryId,
+                    categoryName = task.categoryId?.let { taskCategories[it] }?.name,
+                    parentId = parentId,
+                    parentName = parentId?.let { tasks[it] }?.name
                 )
             }
         }
@@ -156,6 +161,14 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
         }
 
         db.insertTaskCompletion(TaskCompletion(taskId = id, doneAt = Instant.now()))
+    }
+
+    override suspend fun addParent(id: Long, parentId: Long) {
+        if (::addParent in throwingMethods.value) {
+            throw RuntimeException("Test")
+        }
+
+        db.connectTaskPath(parentId = parentId, childId = id)
     }
 
     fun setThrows(method: KFunction<*>, shouldThrow: Boolean) {

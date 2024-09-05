@@ -15,23 +15,23 @@ import androidx.room.migration.AutoMigrationSpec
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import io.github.evaogbe.diswantin.task.data.Task
+import io.github.evaogbe.diswantin.task.data.TaskCategory
+import io.github.evaogbe.diswantin.task.data.TaskCategoryDao
 import io.github.evaogbe.diswantin.task.data.TaskCompletion
 import io.github.evaogbe.diswantin.task.data.TaskDao
 import io.github.evaogbe.diswantin.task.data.TaskFts
-import io.github.evaogbe.diswantin.task.data.TaskList
-import io.github.evaogbe.diswantin.task.data.TaskListDao
 import io.github.evaogbe.diswantin.task.data.TaskPath
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 @Database(
-    version = 19,
+    version = 20,
     entities = [
         Task::class,
         TaskFts::class,
         TaskPath::class,
-        TaskList::class,
+        TaskCategory::class,
         TaskCompletion::class,
     ],
     autoMigrations = [
@@ -47,13 +47,14 @@ import java.time.format.DateTimeFormatter
         AutoMigration(from = 15, to = 16, spec = DiswantinDatabase.Migration15to16::class),
         AutoMigration(from = 16, to = 17),
         AutoMigration(from = 18, to = 19, spec = DiswantinDatabase.Migration18to19::class),
+        AutoMigration(from = 19, to = 20, spec = DiswantinDatabase.Migration19to20::class),
     ]
 )
 @TypeConverters(Converters::class)
 abstract class DiswantinDatabase : RoomDatabase() {
     abstract fun taskDao(): TaskDao
 
-    abstract fun taskListDao(): TaskListDao
+    abstract fun taskCategoryDao(): TaskCategoryDao
 
     @DeleteColumn(tableName = "activity", columnName = "skipped_at")
     class Migration4To5 : AutoMigrationSpec
@@ -71,6 +72,10 @@ abstract class DiswantinDatabase : RoomDatabase() {
 
     @DeleteColumn(tableName = "task", columnName = "deadline")
     class Migration18to19 : AutoMigrationSpec
+
+    @RenameTable(fromTableName = "task_list", toTableName = "task_category")
+    @RenameColumn(tableName = "task", fromColumnName = "list_id", toColumnName = "category_id")
+    class Migration19to20 : AutoMigrationSpec
 
     companion object {
         const val DB_NAME = "diswantin"

@@ -37,7 +37,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.evaogbe.diswantin.R
-import io.github.evaogbe.diswantin.task.data.TaskList
+import io.github.evaogbe.diswantin.task.data.TaskCategory
 import io.github.evaogbe.diswantin.ui.components.LoadFailureLayout
 import io.github.evaogbe.diswantin.ui.components.PendingLayout
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
@@ -51,7 +51,7 @@ import kotlinx.collections.immutable.persistentListOf
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TaskListsTopBar(onSearch: () -> Unit, modifier: Modifier = Modifier) {
+fun TaskCategoryListTopBar(onSearch: () -> Unit, modifier: Modifier = Modifier) {
     TopAppBar(
         title = {},
         modifier = modifier,
@@ -67,26 +67,26 @@ fun TaskListsTopBar(onSearch: () -> Unit, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun TaskListsScreen(
-    onAddList: () -> Unit,
-    onSelectTaskList: (Long) -> Unit,
-    taskListsViewModel: TaskListsViewModel = hiltViewModel(),
+fun TaskCategoryListScreen(
+    onAddCategory: () -> Unit,
+    onSelectCategory: (Long) -> Unit,
+    taskCategoryListViewModel: TaskCategoryListViewModel = hiltViewModel(),
 ) {
-    val uiState by taskListsViewModel.uiState.collectAsStateWithLifecycle()
+    val uiState by taskCategoryListViewModel.uiState.collectAsStateWithLifecycle()
 
     when (val state = uiState) {
-        is TaskListsUiState.Pending -> PendingLayout()
-        is TaskListsUiState.Failure -> {
-            LoadFailureLayout(message = stringResource(R.string.task_lists_fetch_error))
+        is TaskCategoryListUiState.Pending -> PendingLayout()
+        is TaskCategoryListUiState.Failure -> {
+            LoadFailureLayout(message = stringResource(R.string.task_category_list_fetch_error))
         }
 
-        is TaskListsUiState.Success -> {
-            if (state.taskLists.isEmpty()) {
-                EmptyTaskListsLayout(onAddList = onAddList)
+        is TaskCategoryListUiState.Success -> {
+            if (state.categories.isEmpty()) {
+                EmptyTaskCategoryListLayout(onAddCategory = onAddCategory)
             } else {
-                TaskListsLayout(
-                    taskLists = state.taskLists,
-                    onSelectTaskList = { onSelectTaskList(it.id) },
+                TaskCategoryListLayout(
+                    categories = state.categories,
+                    onSelectCategory = { onSelectCategory(it.id) },
                 )
             }
         }
@@ -94,24 +94,21 @@ fun TaskListsScreen(
 }
 
 @Composable
-fun TaskListsLayout(
-    taskLists: ImmutableList<TaskList>,
-    onSelectTaskList: (TaskList) -> Unit,
+fun TaskCategoryListLayout(
+    categories: ImmutableList<TaskCategory>,
+    onSelectCategory: (TaskCategory) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box(
-        modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.TopCenter
-    ) {
+    Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         LazyColumn(
             modifier = Modifier
                 .widthIn(max = ScreenLg)
                 .fillMaxSize(),
         ) {
-            items(taskLists, key = TaskList::id) { taskList ->
+            items(categories, key = TaskCategory::id) { category ->
                 ListItem(
-                    headlineContent = { Text(text = taskList.name) },
-                    modifier = Modifier.clickable { onSelectTaskList(taskList) },
+                    headlineContent = { Text(text = category.name) },
+                    modifier = Modifier.clickable { onSelectCategory(category) },
                 )
                 HorizontalDivider()
             }
@@ -120,7 +117,7 @@ fun TaskListsLayout(
 }
 
 @Composable
-fun EmptyTaskListsLayout(onAddList: () -> Unit, modifier: Modifier = Modifier) {
+fun EmptyTaskCategoryListLayout(onAddCategory: () -> Unit, modifier: Modifier = Modifier) {
     Surface(modifier = modifier.fillMaxSize(), color = colorScheme.surfaceVariant) {
         Column(
             verticalArrangement = Arrangement.Center,
@@ -133,13 +130,13 @@ fun EmptyTaskListsLayout(onAddList: () -> Unit, modifier: Modifier = Modifier) {
             )
             Spacer(Modifier.size(SpaceXl))
             Text(
-                stringResource(R.string.task_lists_empty),
+                stringResource(R.string.task_category_list_empty),
                 textAlign = TextAlign.Center,
                 style = typography.headlineLarge,
             )
             Spacer(Modifier.size(SpaceLg))
             Button(
-                onClick = onAddList,
+                onClick = onAddCategory,
                 contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
             ) {
                 Icon(
@@ -148,7 +145,7 @@ fun EmptyTaskListsLayout(onAddList: () -> Unit, modifier: Modifier = Modifier) {
                     modifier = Modifier.size(ButtonDefaults.IconSize),
                 )
                 Spacer(Modifier.size(ButtonDefaults.IconSpacing))
-                Text(stringResource(R.string.add_task_list_button))
+                Text(stringResource(R.string.add_task_category_button))
             }
         }
     }
@@ -156,16 +153,16 @@ fun EmptyTaskListsLayout(onAddList: () -> Unit, modifier: Modifier = Modifier) {
 
 @DevicePreviews
 @Composable
-private fun TaskListsScreenPreview_Present() {
+private fun TaskCategoryListScreenPreview_Present() {
     DiswantinTheme {
-        Scaffold(topBar = { TaskListsTopBar(onSearch = {}) }) { innerPadding ->
-            TaskListsLayout(
-                taskLists = persistentListOf(
-                    TaskList(id = 1L, name = "Morning routine"),
-                    TaskList(id = 2L, name = "Work"),
-                    TaskList(id = 3L, name = "Bedtime routine")
+        Scaffold(topBar = { TaskCategoryListTopBar(onSearch = {}) }) { innerPadding ->
+            TaskCategoryListLayout(
+                categories = persistentListOf(
+                    TaskCategory(id = 1L, name = "Morning routine"),
+                    TaskCategory(id = 2L, name = "Work"),
+                    TaskCategory(id = 3L, name = "Bedtime routine")
                 ),
-                onSelectTaskList = {},
+                onSelectCategory = {},
                 modifier = Modifier.padding(innerPadding),
             )
         }
@@ -174,10 +171,13 @@ private fun TaskListsScreenPreview_Present() {
 
 @DevicePreviews
 @Composable
-private fun TaskListsScreenPreview_Empty() {
+private fun TaskCategoryListScreenPreview_Empty() {
     DiswantinTheme {
-        Scaffold(topBar = { TaskListsTopBar(onSearch = {}) }) { innerPadding ->
-            EmptyTaskListsLayout(onAddList = {}, modifier = Modifier.padding(innerPadding))
+        Scaffold(topBar = { TaskCategoryListTopBar(onSearch = {}) }) { innerPadding ->
+            EmptyTaskCategoryListLayout(
+                onAddCategory = {},
+                modifier = Modifier.padding(innerPadding),
+            )
         }
     }
 }

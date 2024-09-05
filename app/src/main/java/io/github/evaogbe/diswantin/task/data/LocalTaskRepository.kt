@@ -85,4 +85,10 @@ class LocalTaskRepository @Inject constructor(
             taskDao.insertCompletion(TaskCompletion(taskId = id, doneAt = Instant.now(clock)))
         }
     }
+
+    override suspend fun addParent(id: Long, parentId: Long) {
+        withContext(ioDispatcher) {
+            taskDao.connectPath(parentId = parentId, childId = id)
+        }
+    }
 }
