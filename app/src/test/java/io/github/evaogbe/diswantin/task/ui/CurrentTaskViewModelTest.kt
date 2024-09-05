@@ -6,6 +6,7 @@ import assertk.assertions.isNotNull
 import assertk.assertions.prop
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.EditTaskForm
+import io.github.evaogbe.diswantin.task.data.PathUpdateType
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskDetail
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
@@ -53,6 +54,7 @@ class CurrentTaskViewModelTest {
                     deadlineTime = task1.deadlineTime,
                     scheduledAt = task1.scheduledAt,
                     recurring = task1.recurring,
+                    parentUpdateType = PathUpdateType.Keep,
                     existingTask = task1,
                 )
             )

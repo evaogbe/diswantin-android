@@ -8,12 +8,15 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isEqualToIgnoringGivenProperties
 import assertk.assertions.isFalse
 import assertk.assertions.isTrue
+import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.MainDispatcherRule
 import io.github.evaogbe.diswantin.ui.navigation.NavArguments
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
@@ -51,11 +54,15 @@ class TaskFormViewModelTest {
             assertThat(viewModel.isNew).isTrue()
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    deadlineDateInput = null,
-                    deadlineTimeInput = null,
-                    scheduledAtInput = null,
-                    recurringInput = false,
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    scheduledAt = null,
+                    recurring = false,
+                    showParentTaskField = false,
+                    parentTask = null,
+                    parentTaskOptions = persistentListOf(),
                     hasSaveError = false,
+                    userMessage = null,
                     clock = clock,
                 )
             )
@@ -82,11 +89,15 @@ class TaskFormViewModelTest {
             assertThat(viewModel.isNew).isFalse()
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    deadlineDateInput = LocalDate.parse("2024-08-22"),
-                    deadlineTimeInput = LocalTime.parse("17:00"),
-                    scheduledAtInput = null,
-                    recurringInput = true,
+                    deadlineDate = LocalDate.parse("2024-08-22"),
+                    deadlineTime = LocalTime.parse("17:00"),
+                    scheduledAt = null,
+                    showParentTaskField = false,
+                    recurring = true,
+                    parentTask = null,
+                    parentTaskOptions = persistentListOf(),
                     hasSaveError = false,
+                    userMessage = null,
                     clock = clock,
                 )
             )
@@ -94,7 +105,7 @@ class TaskFormViewModelTest {
         }
 
     @Test
-    fun `uiState emits failure when repository throws`() =
+    fun `uiState emits failure when fetch existing task fails`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val clock = createClock()
             val task = genTask()
@@ -113,6 +124,177 @@ class TaskFormViewModelTest {
         }
 
     @Test
+    fun `uiState emits failure when fetch existing task parent fails`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val clock = createClock()
+            val task = genTask()
+            val taskRepository = FakeTaskRepository.withTasks(task)
+            taskRepository.setThrows(taskRepository::getParentTask, true)
+
+            val viewModel =
+                TaskFormViewModel(createSavedStateHandleForEdit(), taskRepository, clock)
+
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect()
+            }
+
+            assertThat(viewModel.isNew).isFalse()
+            assertThat(viewModel.uiState.value).isEqualTo(TaskFormUiState.Failure)
+        }
+
+    @Test
+    fun `uiState shows parent task field when taskId is null and repository has tasks`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val clock = createClock()
+            val taskRepository = FakeTaskRepository.withTasks(genTask())
+            val viewModel = TaskFormViewModel(SavedStateHandle(), taskRepository, clock)
+
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect()
+            }
+
+            assertThat(viewModel.uiState.value).isEqualTo(
+                TaskFormUiState.Success(
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    scheduledAt = null,
+                    recurring = false,
+                    showParentTaskField = true,
+                    parentTask = null,
+                    parentTaskOptions = persistentListOf(),
+                    hasSaveError = false,
+                    userMessage = null,
+                    clock = clock,
+                )
+            )
+        }
+
+    @Test
+    fun `uiState shows parent task field when taskId is present and repository has other tasks`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val clock = createClock()
+            val taskRepository = FakeTaskRepository.withTasks(genTask(), genTask(id = 2L))
+            val viewModel =
+                TaskFormViewModel(createSavedStateHandleForEdit(), taskRepository, clock)
+
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect()
+            }
+
+            assertThat(viewModel.isNew).isFalse()
+            assertThat(viewModel.uiState.value).isEqualTo(
+                TaskFormUiState.Success(
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    scheduledAt = null,
+                    showParentTaskField = true,
+                    recurring = false,
+                    parentTask = null,
+                    parentTaskOptions = persistentListOf(),
+                    hasSaveError = false,
+                    userMessage = null,
+                    clock = clock,
+                )
+            )
+        }
+
+    @Test
+    fun `uiState hides parent task field when repository throws`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val clock = createClock()
+            val taskRepository = FakeTaskRepository.withTasks(genTask())
+            taskRepository.setThrows(taskRepository::hasTasksExcluding, true)
+
+            val viewModel = TaskFormViewModel(SavedStateHandle(), taskRepository, clock)
+
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect()
+            }
+
+            assertThat(viewModel.uiState.value).isEqualTo(
+                TaskFormUiState.Success(
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    scheduledAt = null,
+                    recurring = false,
+                    showParentTaskField = false,
+                    parentTask = null,
+                    parentTaskOptions = persistentListOf(),
+                    hasSaveError = false,
+                    userMessage = null,
+                    clock = clock,
+                )
+            )
+        }
+
+    @Test
+    fun `searchTasks sets task options`() = runTest(mainDispatcherRule.testDispatcher) {
+        val clock = createClock()
+        val query = loremFaker.verbs.base()
+        val tasks = List(faker.random.nextInt(bound = 5)) {
+            Task(
+                id = it + 1L,
+                createdAt = faker.random.randomPastDate().toInstant(),
+                name = "$query ${loremFaker.lorem.words()}",
+            )
+        }
+        val taskRepository = FakeTaskRepository.withTasks(tasks)
+        val viewModel = TaskFormViewModel(SavedStateHandle(), taskRepository, clock)
+
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiState.collect()
+        }
+
+        viewModel.searchTasks(query)
+
+        assertThat(viewModel.uiState.value).isEqualTo(
+            TaskFormUiState.Success(
+                deadlineDate = null,
+                deadlineTime = null,
+                scheduledAt = null,
+                recurring = false,
+                showParentTaskField = true,
+                parentTask = null,
+                parentTaskOptions = tasks.toPersistentList(),
+                hasSaveError = false,
+                userMessage = null,
+                clock = clock,
+            )
+        )
+    }
+
+    @Test
+    fun `searchTasks shows error message when repository throws`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val clock = createClock()
+            val query = loremFaker.verbs.base()
+            val taskRepository = FakeTaskRepository.withTasks(genTask())
+            val viewModel = TaskFormViewModel(SavedStateHandle(), taskRepository, clock)
+
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect()
+            }
+
+            taskRepository.setThrows(taskRepository::search, true)
+            viewModel.searchTasks(query)
+
+            assertThat(viewModel.uiState.value).isEqualTo(
+                TaskFormUiState.Success(
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    scheduledAt = null,
+                    recurring = false,
+                    showParentTaskField = true,
+                    parentTask = null,
+                    parentTaskOptions = persistentListOf(),
+                    hasSaveError = false,
+                    userMessage = R.string.task_form_search_tasks_error,
+                    clock = clock,
+                )
+            )
+        }
+
+    @Test
     fun `saveTask creates task without taskId`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
@@ -127,19 +309,23 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    deadlineDateInput = null,
-                    deadlineTimeInput = null,
-                    scheduledAtInput = null,
-                    recurringInput = false,
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    scheduledAt = null,
+                    recurring = false,
+                    showParentTaskField = false,
+                    parentTask = null,
+                    parentTaskOptions = persistentListOf(),
                     hasSaveError = false,
+                    userMessage = null,
                     clock = clock,
                 )
             )
 
             viewModel.updateNameInput(name)
-            viewModel.updateDeadlineDateInput(LocalDate.parse("2024-08-22"))
-            viewModel.updateDeadlineTimeInput(LocalTime.parse("17:00"))
-            viewModel.updateRecurringInput(true)
+            viewModel.updateDeadlineDate(LocalDate.parse("2024-08-22"))
+            viewModel.updateDeadlineTime(LocalTime.parse("17:00"))
+            viewModel.updateRecurring(true)
             viewModel.saveTask()
 
             val task = taskRepository.tasks.single()
@@ -176,11 +362,15 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    deadlineDateInput = null,
-                    deadlineTimeInput = null,
-                    scheduledAtInput = null,
-                    recurringInput = false,
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    scheduledAt = null,
+                    recurring = false,
+                    showParentTaskField = false,
+                    parentTask = null,
+                    parentTaskOptions = persistentListOf(),
                     hasSaveError = true,
+                    userMessage = null,
                     clock = clock,
                 )
             )
@@ -205,19 +395,23 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    deadlineDateInput = LocalDate.parse("2024-08-22"),
-                    deadlineTimeInput = LocalTime.parse("21:00"),
-                    scheduledAtInput = null,
-                    recurringInput = false,
+                    deadlineDate = LocalDate.parse("2024-08-22"),
+                    deadlineTime = LocalTime.parse("21:00"),
+                    scheduledAt = null,
+                    recurring = false,
+                    showParentTaskField = false,
+                    parentTask = null,
+                    parentTaskOptions = persistentListOf(),
                     hasSaveError = false,
+                    userMessage = null,
                     clock = clock,
                 )
             )
 
             viewModel.updateNameInput(name)
-            viewModel.updateDeadlineDateInput(null)
-            viewModel.updateDeadlineTimeInput(null)
-            viewModel.updateScheduledAtInput(
+            viewModel.updateDeadlineDate(null)
+            viewModel.updateDeadlineTime(null)
+            viewModel.updateScheduledAt(
                 ZonedDateTime.parse("2024-08-22T17:00:00-04:00[America/New_York]")
             )
             viewModel.saveTask()
@@ -253,11 +447,15 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    deadlineDateInput = null,
-                    deadlineTimeInput = null,
-                    scheduledAtInput = null,
-                    recurringInput = false,
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    scheduledAt = null,
+                    recurring = false,
+                    showParentTaskField = false,
+                    parentTask = null,
+                    parentTaskOptions = persistentListOf(),
                     hasSaveError = true,
+                    userMessage = null,
                     clock = clock,
                 )
             )
@@ -266,8 +464,8 @@ class TaskFormViewModelTest {
     private fun createClock() =
         Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
 
-    private fun genTask() = Task(
-        id = 1L,
+    private fun genTask(id: Long = 1L) = Task(
+        id = id,
         createdAt = faker.random.randomPastDate().toInstant(),
         name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
     )

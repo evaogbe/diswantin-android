@@ -119,7 +119,7 @@ class TaskCategoryFormViewModelTest {
         }
 
     @Test
-    fun `searchTasks adds task options`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `searchTasks sets task options`() = runTest(mainDispatcherRule.testDispatcher) {
         val query = loremFaker.verbs.base()
         val tasks = List(faker.random.nextInt(bound = 5)) {
             Task(

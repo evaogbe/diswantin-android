@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.evaogbe.diswantin.R
+import io.github.evaogbe.diswantin.data.Result
 import io.github.evaogbe.diswantin.task.data.EditTaskCategoryForm
 import io.github.evaogbe.diswantin.task.data.NewTaskCategoryForm
 import io.github.evaogbe.diswantin.task.data.Task
@@ -60,12 +61,12 @@ class TaskCategoryFormViewModel @Inject constructor(
 
     private val existingCategoryWithTasksStream = categoryId?.let { id ->
         taskCategoryRepository.getCategoryWithTasksById(id)
-            .map { Result.success(it) }
+            .map<TaskCategoryWithTasks, Result<TaskCategoryWithTasks>> { Result.Success(it) }
             .catch { e ->
                 Timber.e(e, "Failed to fetch task category by id: %d", id)
-                emit(Result.failure(e))
+                emit(Result.Failure)
             }
-    } ?: flowOf(Result.success(null))
+    } ?: flowOf(Result.Success(null))
 
     @Suppress("UNCHECKED_CAST")
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -80,7 +81,6 @@ class TaskCategoryFormViewModel @Inject constructor(
             } else {
                 taskRepository.search(query.trim()).catch { e ->
                     Timber.e(e, "Failed to search for tasks by query: %s", query)
-                    emit(emptyList())
                     userMessage.value = R.string.task_category_form_search_tasks_error
                 }
             }
@@ -96,33 +96,31 @@ class TaskCategoryFormViewModel @Inject constructor(
         val saveResult = args[5] as Result<Unit>?
         val userMessage = args[6] as Int?
 
-        if (saveResult?.isSuccess == true) {
-            TaskCategoryFormUiState.Saved
-        } else {
-            existingCategoryWithTasks.fold(
-                onSuccess = { categoryWithTasks ->
-                    val editingTask = editingTaskIndex?.let(tasks::getOrNull)
-                    val taskOptions = taskSearchResults.filter { option ->
-                        (option.categoryId == null ||
-                                option.categoryId == categoryWithTasks?.category?.id) &&
-                                option !in tasks
-                    }
-                    TaskCategoryFormUiState.Success(
-                        tasks = tasks,
-                        editingTaskIndex = editingTaskIndex,
-                        taskOptions = if (
-                            taskOptions == listOf(editingTask) && taskQuery == editingTask?.name
-                        ) {
-                            persistentListOf()
-                        } else {
-                            taskOptions.toImmutableList()
-                        },
-                        hasSaveError = saveResult?.isFailure == true,
-                        userMessage = userMessage,
-                    )
-                },
-                onFailure = { TaskCategoryFormUiState.Failure },
-            )
+        when {
+            saveResult is Result.Success -> TaskCategoryFormUiState.Saved
+            existingCategoryWithTasks is Result.Success -> {
+                val editingTask = editingTaskIndex?.let(tasks::getOrNull)
+                val taskOptions = taskSearchResults.filter { option ->
+                    (option.categoryId == null ||
+                            option.categoryId == existingCategoryWithTasks.value?.category?.id) &&
+                            option !in tasks
+                }
+                TaskCategoryFormUiState.Success(
+                    tasks = tasks,
+                    editingTaskIndex = editingTaskIndex,
+                    taskOptions = if (
+                        taskOptions == listOf(editingTask) && taskQuery == editingTask?.name
+                    ) {
+                        persistentListOf()
+                    } else {
+                        taskOptions.toImmutableList()
+                    },
+                    hasSaveError = saveResult is Result.Failure,
+                    userMessage = userMessage,
+                )
+            }
+
+            else -> TaskCategoryFormUiState.Failure
         }
     }.stateIn(
         scope = viewModelScope,
@@ -182,12 +180,12 @@ class TaskCategoryFormViewModel @Inject constructor(
             viewModelScope.launch {
                 try {
                     taskCategoryRepository.create(form)
-                    saveResult.value = Result.success(Unit)
+                    saveResult.value = Result.Success(Unit)
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
                     Timber.e(e, "Failed to create task category with form: %s", form)
-                    saveResult.value = Result.failure(e)
+                    saveResult.value = Result.Failure
                 }
             }
         } else {
@@ -202,12 +200,12 @@ class TaskCategoryFormViewModel @Inject constructor(
                             existingCategoryWithTasks = existingCategoryWithTasks,
                         )
                     )
-                    saveResult.value = Result.success(Unit)
+                    saveResult.value = Result.Success(Unit)
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
                     Timber.e(e, "Failed to update task category with id: %s", categoryId)
-                    saveResult.value = Result.failure(e)
+                    saveResult.value = Result.Failure
                 }
             }
         }

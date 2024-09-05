@@ -11,6 +11,7 @@ data class NewTaskForm(
     private val deadlineTime: LocalTime?,
     private val scheduledAt: Instant?,
     private val recurring: Boolean,
+    val parentTaskId: Long?,
     private val clock: Clock,
 ) {
     init {

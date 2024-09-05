@@ -7,17 +7,23 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.github.evaogbe.diswantin.R
+import io.github.evaogbe.diswantin.data.Result
 import io.github.evaogbe.diswantin.task.data.EditTaskForm
 import io.github.evaogbe.diswantin.task.data.NewTaskForm
+import io.github.evaogbe.diswantin.task.data.PathUpdateType
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskRepository
 import io.github.evaogbe.diswantin.ui.navigation.NavArguments
+import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -42,51 +48,98 @@ class TaskFormViewModel @Inject constructor(
     var nameInput by mutableStateOf(savedStateHandle[NavArguments.NAME_KEY] ?: "")
         private set
 
-    private val deadlineDateInput = MutableStateFlow<LocalDate?>(null)
+    private val deadlineDate = MutableStateFlow<LocalDate?>(null)
 
-    private val deadlineTimeInput = MutableStateFlow<LocalTime?>(null)
+    private val deadlineTime = MutableStateFlow<LocalTime?>(null)
 
-    private val scheduledAtInput = MutableStateFlow<ZonedDateTime?>(null)
+    private val scheduledAt = MutableStateFlow<ZonedDateTime?>(null)
 
-    private val recurringInput = MutableStateFlow(false)
+    private val recurring = MutableStateFlow(false)
+
+    private val parentTask = MutableStateFlow<Task?>(null)
+
+    private val parentTaskQuery = MutableStateFlow("")
 
     private val saveResult = MutableStateFlow<Result<Unit>?>(null)
 
+    private val userMessage = MutableStateFlow<Int?>(null)
+
     private val existingTaskStream = taskId?.let { id ->
         taskRepository.getById(id)
-            .map { Result.success(it) }
+            .map<Task, Result<Task>> { Result.Success(it) }
             .catch { e ->
                 Timber.e(e, "Failed to fetch task by id: %d", id)
-                emit(Result.failure(e))
+                emit(Result.Failure)
             }
-    } ?: flowOf(Result.success(null))
+    } ?: flowOf(Result.Success(null))
 
+    private val existingParentTaskStream = taskId?.let { id ->
+        taskRepository.getParentTask(id)
+            .map<Task?, Result<Task?>> { Result.Success(it) }
+            .catch { e ->
+                Timber.e(e, "Failed to fetch parent task by child id: %d", id)
+                emit(Result.Failure)
+            }
+    } ?: flowOf(Result.Success(null))
+
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Suppress("UNCHECKED_CAST")
     val uiState = combine(
-        deadlineDateInput,
-        deadlineTimeInput,
-        scheduledAtInput,
-        recurringInput,
+        deadlineDate,
+        deadlineTime,
+        scheduledAt,
+        recurring,
+        taskRepository.hasTasksExcluding(taskId?.let { listOf(it) } ?: emptyList()).catch { e ->
+            Timber.e(e, "Failed to query tasks excluding id: %d", taskId)
+            emit(false)
+        },
+        parentTask,
+        parentTaskQuery.flatMapLatest { query ->
+            if (query.isBlank()) {
+                flowOf(emptyList())
+            } else {
+                taskRepository.search(query.trim()).catch { e ->
+                    Timber.e(e, "Failed to search for task by query: %s", query)
+                    userMessage.value = R.string.task_form_search_tasks_error
+                }
+            }
+        },
         saveResult,
+        userMessage,
         existingTaskStream,
+        existingParentTaskStream,
     ) { args ->
-        val deadlineDateInput = args[0] as LocalDate?
-        val deadlineTimeInput = args[1] as LocalTime?
-        val scheduledAtInput = args[2] as ZonedDateTime?
-        val recurringInput = args[3] as Boolean
-        val saveResult = args[4] as Result<Unit>?
-        val existingTask = args[5] as Result<Task?>
+        val deadlineDate = args[0] as LocalDate?
+        val deadlineTime = args[1] as LocalTime?
+        val scheduledAt = args[2] as ZonedDateTime?
+        val recurring = args[3] as Boolean
+        val showParentTaskField = args[4] as Boolean
+        val parentTask = args[5] as Task?
+        val parentTaskOptions = args[6] as List<Task>
+        val saveResult = args[7] as Result<Unit>?
+        val userMessage = args[8] as Int?
+        val existingTask = args[9] as Result<Task?>
+        val existingParentTask = args[10] as Result<Task?>
+
         when {
-            saveResult?.isSuccess == true -> TaskFormUiState.Saved
-            existingTask.isFailure -> TaskFormUiState.Failure
-            else -> TaskFormUiState.Success(
-                deadlineDateInput = deadlineDateInput,
-                deadlineTimeInput = deadlineTimeInput,
-                scheduledAtInput = scheduledAtInput,
-                recurringInput = recurringInput,
-                hasSaveError = saveResult?.isFailure == true,
-                clock = clock,
-            )
+            saveResult is Result.Success -> TaskFormUiState.Saved
+            existingTask is Result.Success && existingParentTask is Result.Success -> {
+                TaskFormUiState.Success(
+                    deadlineDate = deadlineDate,
+                    deadlineTime = deadlineTime,
+                    scheduledAt = scheduledAt,
+                    recurring = recurring,
+                    showParentTaskField = showParentTaskField,
+                    parentTask = parentTask,
+                    parentTaskOptions = parentTaskOptions.filterNot { it == existingTask.value }
+                        .toPersistentList(),
+                    hasSaveError = saveResult is Result.Failure,
+                    userMessage = userMessage,
+                    clock = clock,
+                )
+            }
+
+            else -> TaskFormUiState.Failure
         }
     }.stateIn(
         scope = viewModelScope,
@@ -98,10 +151,11 @@ class TaskFormViewModel @Inject constructor(
         viewModelScope.launch {
             val existingTask = existingTaskStream.first().getOrNull() ?: return@launch
             nameInput = existingTask.name
-            deadlineDateInput.value = existingTask.deadlineDate
-            deadlineTimeInput.value = existingTask.deadlineTime
-            scheduledAtInput.value = existingTask.scheduledAt?.atZone(clock.zone)
-            recurringInput.value = existingTask.recurring
+            deadlineDate.value = existingTask.deadlineDate
+            deadlineTime.value = existingTask.deadlineTime
+            scheduledAt.value = existingTask.scheduledAt?.atZone(clock.zone)
+            recurring.value = existingTask.recurring
+            parentTask.value = existingParentTaskStream.first().getOrNull()
         }
     }
 
@@ -109,76 +163,95 @@ class TaskFormViewModel @Inject constructor(
         nameInput = value
     }
 
-    fun updateDeadlineDateInput(value: LocalDate?) {
-        deadlineDateInput.value = value
+    fun updateDeadlineDate(value: LocalDate?) {
+        deadlineDate.value = value
     }
 
-    fun updateDeadlineTimeInput(value: LocalTime?) {
-        deadlineTimeInput.value = value
+    fun updateDeadlineTime(value: LocalTime?) {
+        deadlineTime.value = value
     }
 
-    fun updateScheduledAtInput(value: ZonedDateTime?) {
-        scheduledAtInput.value = value
+    fun updateScheduledAt(value: ZonedDateTime?) {
+        scheduledAt.value = value
     }
 
-    fun updateRecurringInput(value: Boolean) {
-        recurringInput.value = value
+    fun updateRecurring(value: Boolean) {
+        recurring.value = value
+    }
+
+    fun updateParentTask(value: Task?) {
+        parentTask.value = value
+    }
+
+    fun searchTasks(query: String) {
+        parentTaskQuery.value = query
     }
 
     fun saveTask() {
         if (nameInput.isBlank()) return
         val state = (uiState.value as? TaskFormUiState.Success) ?: return
         val deadlineDate = if (
-            state.deadlineDateInput == null &&
-            state.deadlineTimeInput != null &&
-            !state.recurringInput
+            state.deadlineDate == null &&
+            state.deadlineTime != null &&
+            !state.recurring
         ) {
             LocalDate.now()
         } else {
-            state.deadlineDateInput
+            state.deadlineDate
         }
         if (taskId == null) {
             val form = NewTaskForm(
                 name = nameInput,
                 deadlineDate = deadlineDate,
-                deadlineTime = state.deadlineTimeInput,
-                scheduledAt = state.scheduledAtInput?.toInstant(),
-                recurring = state.recurringInput,
+                deadlineTime = state.deadlineTime,
+                scheduledAt = state.scheduledAt?.toInstant(),
+                recurring = state.recurring,
+                parentTaskId = state.parentTask?.id,
                 clock = clock,
             )
             viewModelScope.launch {
                 try {
                     taskRepository.create(form)
-                    saveResult.value = Result.success(Unit)
+                    saveResult.value = Result.Success(Unit)
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
                     Timber.e(e, "Failed to create task with form: %s", form)
-                    saveResult.value = Result.failure(e)
+                    saveResult.value = Result.Failure
                 }
             }
         } else {
             viewModelScope.launch {
                 try {
                     val existingTask = checkNotNull(existingTaskStream.first().getOrNull())
+                    val existingParent = existingParentTaskStream.first().getOrNull()
                     taskRepository.update(
                         EditTaskForm(
                             name = nameInput,
                             deadlineDate = deadlineDate,
-                            deadlineTime = state.deadlineTimeInput,
-                            scheduledAt = state.scheduledAtInput?.toInstant(),
-                            recurring = state.recurringInput,
+                            deadlineTime = state.deadlineTime,
+                            scheduledAt = state.scheduledAt?.toInstant(),
+                            recurring = state.recurring,
+                            parentUpdateType = when (state.parentTask) {
+                                existingParent -> PathUpdateType.Keep
+                                null -> PathUpdateType.Remove
+                                else -> PathUpdateType.Replace(state.parentTask.id)
+                            },
                             existingTask = existingTask,
                         )
                     )
-                    saveResult.value = Result.success(Unit)
+                    saveResult.value = Result.Success(Unit)
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
                     Timber.e(e, "Failed to update task with id: %d", taskId)
-                    saveResult.value = Result.failure(e)
+                    saveResult.value = Result.Failure
                 }
             }
         }
+    }
+
+    fun userMessageShown() {
+        userMessage.value = null
     }
 }

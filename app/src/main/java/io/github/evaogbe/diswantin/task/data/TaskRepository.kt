@@ -7,9 +7,13 @@ interface TaskRepository {
 
     fun getById(id: Long): Flow<Task>
 
+    fun getParentTask(id: Long): Flow<Task?>
+
     fun getTaskDetailById(id: Long): Flow<TaskDetail?>
 
     fun search(query: String): Flow<List<Task>>
+
+    fun hasTasksExcluding(ids: Collection<Long>): Flow<Boolean>
 
     suspend fun create(form: NewTaskForm): Task
 

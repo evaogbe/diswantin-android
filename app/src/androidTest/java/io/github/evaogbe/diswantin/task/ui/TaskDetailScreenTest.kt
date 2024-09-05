@@ -49,7 +49,8 @@ class TaskDetailScreenTest {
                     onPopBackStack = {},
                     setTopBarState = {},
                     setUserMessage = {},
-                    onSelectCategory = {},
+                    onNavigateToTask = {},
+                    onNavigateToCategory = {},
                     taskDetailViewModel = viewModel,
                 )
             }
@@ -72,7 +73,8 @@ class TaskDetailScreenTest {
                     onPopBackStack = {},
                     setTopBarState = {},
                     setUserMessage = {},
-                    onSelectCategory = {},
+                    onNavigateToTask = {},
+                    onNavigateToCategory = {},
                     taskDetailViewModel = viewModel,
                 )
             }
@@ -95,7 +97,8 @@ class TaskDetailScreenTest {
                     onPopBackStack = { onPopBackStackCalled = true },
                     setTopBarState = {},
                     setUserMessage = {},
-                    onSelectCategory = {},
+                    onNavigateToTask = {},
+                    onNavigateToCategory = {},
                     taskDetailViewModel = viewModel,
                 )
             }
@@ -120,7 +123,8 @@ class TaskDetailScreenTest {
                     onPopBackStack = {},
                     setTopBarState = {},
                     setUserMessage = { userMessage = it },
-                    onSelectCategory = {},
+                    onNavigateToTask = {},
+                    onNavigateToCategory = {},
                     taskDetailViewModel = viewModel,
                 )
             }

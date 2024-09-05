@@ -112,6 +112,10 @@ class FakeDatabase {
         _taskCompletionTable.update { it + (newCompletion.id to newCompletion) }
     }
 
+    fun insertChain(parentId: Long, childId: Long) {
+        _taskPathTable.update { it + createTaskPathChain(parentId = parentId, childId = childId) }
+    }
+
     fun connectTaskPath(parentId: Long, childId: Long) {
         _taskPathTable.update { taskPathTable ->
             val connectingPath = taskPathTable.values.firstOrNull {
@@ -154,6 +158,24 @@ class FakeDatabase {
                 }
 
                 else -> taskPathTable
+            }
+        }
+    }
+
+    fun deleteTaskPathAncestors(descendant: Long) {
+        _taskPathTable.update { taskPathTable ->
+            val ancestors =
+                taskPathTable.values
+                    .filter { it.descendant == descendant && it.depth > 0 }
+                    .map { it.ancestor }
+                    .toSet()
+            val descendants =
+                taskPathTable.values
+                    .filter { it.ancestor == descendant }
+                    .map { it.descendant }
+                    .toSet()
+            taskPathTable.filterValues {
+                it.ancestor !in ancestors || it.descendant !in descendants
             }
         }
     }

@@ -1,6 +1,9 @@
 package io.github.evaogbe.diswantin.task.ui
 
 import android.os.Parcelable
+import androidx.annotation.StringRes
+import io.github.evaogbe.diswantin.task.data.Task
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.parcelize.Parcelize
 import java.time.Clock
 import java.time.LocalDate
@@ -21,14 +24,18 @@ sealed interface TaskFormUiState {
     data object Failure : TaskFormUiState
 
     data class Success(
-        val deadlineDateInput: LocalDate?,
-        val deadlineTimeInput: LocalTime?,
-        val scheduledAtInput: ZonedDateTime?,
-        val recurringInput: Boolean,
+        val deadlineDate: LocalDate?,
+        val deadlineTime: LocalTime?,
+        val scheduledAt: ZonedDateTime?,
+        val recurring: Boolean,
+        val showParentTaskField: Boolean,
+        val parentTask: Task?,
+        val parentTaskOptions: ImmutableList<Task>,
         val hasSaveError: Boolean,
-        private val clock: Clock
+        @StringRes val userMessage: Int?,
+        private val clock: Clock,
     ) : TaskFormUiState {
-        val deadlineDateAsZonedDateTime = deadlineDateInput?.atStartOfDay(clock.zone)
+        val deadlineDateAsZonedDateTime = deadlineDate?.atStartOfDay(clock.zone)
     }
 
     data object Saved : TaskFormUiState

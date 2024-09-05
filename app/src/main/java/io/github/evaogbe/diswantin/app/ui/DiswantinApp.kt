@@ -220,7 +220,10 @@ fun DiswantinApp() {
                     onPopBackStack = navController::popBackStack,
                     setTopBarState = { topBarState = TopBarState.TaskDetail(uiState = it) },
                     setUserMessage = { userMessage = it },
-                    onSelectCategory = {
+                    onNavigateToTask = {
+                        navController.navigate(route = TopLevelDestination.TaskDetail(it).route)
+                    },
+                    onNavigateToCategory = {
                         navController.navigate(
                             route = TopLevelDestination.TaskCategoryDetail(it).route
                         )
@@ -237,6 +240,7 @@ fun DiswantinApp() {
                 TaskFormScreen(
                     onPopBackStack = navController::popBackStack,
                     setTopBarState = { topBarState = TopBarState.TaskForm(uiState = it) },
+                    setUserMessage = { userMessage = it },
                     onSelectCategoryType = {
                         navController.navigate(
                             route = TopLevelDestination.NewTaskCategoryForm(name = it).route
@@ -257,6 +261,7 @@ fun DiswantinApp() {
                 TaskFormScreen(
                     onPopBackStack = navController::popBackStack,
                     setTopBarState = { topBarState = TopBarState.TaskForm(uiState = it) },
+                    setUserMessage = { userMessage = it },
                     onSelectCategoryType = {},
                 )
             }

@@ -23,11 +23,11 @@
     <string name="deadline_time_label">Deadline time</string>
     <string name="form_type_button_category">Category</string>
     <string name="form_type_button_task">Task</string>
-    <string name="go_to_task_category_button">Go to category</string>
     <string name="mark_done_button">Done</string>
     <string name="more_actions_button">More actions</string>
     <string name="name_label">Name</string>
     <string name="ok_button">OK</string>
+    <string name="parent_task_label">Previous to-do</string>
     <string name="recurring_label">Recurring</string>
     <string name="save_button">Save</string>
     <string name="scheduled_at_label">Scheduled at</string>
@@ -78,6 +78,7 @@
     <string name="task_form_fetch_error">Something went wrong loading the to-do</string>
     <string name="task_form_save_error_edit">Something went wrong editing the to-do</string>
     <string name="task_form_save_error_new">Something went wrong adding the to-do</string>
+    <string name="task_form_search_tasks_error">Something went wrong loading to-dos</string>
     <string name="task_form_title_edit">Edit To-do</string>
     <string name="task_form_title_new">New To-do</string>
     <string name="task_name_label">To-do name</string>
@@ -88,4 +89,6 @@
     <string name="time_picker_dialog_title">Select time</string>
     <string name="time_picker_switch_to_dial_mode">Switch to clock input mode</string>
     <string name="time_picker_switch_to_input_mode">Switch to text input mode</string>
+    <string name="view_task_button">View to-do</string>
+    <string name="view_task_category_button">View category</string>
 </resources>

@@ -56,21 +56,32 @@ class LocalTaskRepository @Inject constructor(
     override fun getTaskDetailById(id: Long) =
         taskDao.getTaskDetailById(id).flowOn(ioDispatcher)
 
+    override fun getParentTask(id: Long) = taskDao.getParentTask(id).flowOn(ioDispatcher)
+
     override fun search(query: String) = taskDao.search(escapeSql(query)).flowOn(ioDispatcher)
 
     private fun escapeSql(str: String) =
         str.replace("'", "''").replace("\"", "\"\"")
 
+    override fun hasTasksExcluding(ids: Collection<Long>) =
+        taskDao.hasTasksExcluding(ids).flowOn(ioDispatcher)
+
     override suspend fun create(form: NewTaskForm): Task {
         val task = form.newTask
         return withContext(ioDispatcher) {
-            task.copy(id = taskDao.insertWithPath(task))
+            task.copy(id = taskDao.insertWithParent(task, form.parentTaskId))
         }
     }
 
     override suspend fun update(form: EditTaskForm) =
         withContext(ioDispatcher) {
-            taskDao.update(form.updatedTask)
+            when (form.parentUpdateType) {
+                is PathUpdateType.Keep -> taskDao.update(form.updatedTask)
+                is PathUpdateType.Remove -> taskDao.updateWithoutParent(form.updatedTask)
+                is PathUpdateType.Replace -> {
+                    taskDao.updateWithParent(form.updatedTask, form.parentUpdateType.id)
+                }
+            }
             form.updatedTask
         }
 

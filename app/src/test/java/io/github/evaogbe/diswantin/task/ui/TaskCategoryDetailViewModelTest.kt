@@ -145,7 +145,7 @@ class TaskCategoryDetailViewModelTest {
             Task(
                 id = it + 1L,
                 createdAt = faker.random.randomPastDate().toInstant(),
-                name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                name = "${it + 1}. ${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
                 categoryId = 1L,
             )
         },

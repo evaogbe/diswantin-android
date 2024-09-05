@@ -50,6 +50,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -59,6 +60,8 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.evaogbe.diswantin.R
+import io.github.evaogbe.diswantin.task.data.Task
+import io.github.evaogbe.diswantin.ui.components.AutocompleteField
 import io.github.evaogbe.diswantin.ui.components.ClearableLayout
 import io.github.evaogbe.diswantin.ui.components.LoadFailureLayout
 import io.github.evaogbe.diswantin.ui.components.PendingLayout
@@ -67,6 +70,7 @@ import io.github.evaogbe.diswantin.ui.theme.ScreenLg
 import io.github.evaogbe.diswantin.ui.theme.SpaceMd
 import io.github.evaogbe.diswantin.ui.theme.SpaceSm
 import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
+import kotlinx.collections.immutable.persistentListOf
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -121,11 +125,13 @@ fun TaskFormTopBar(
 fun TaskFormScreen(
     onPopBackStack: () -> Unit,
     setTopBarState: (TaskFormTopBarState) -> Unit,
+    setUserMessage: (String) -> Unit,
     onSelectCategoryType: (String) -> Unit,
     taskFormViewModel: TaskFormViewModel = hiltViewModel(),
 ) {
     val uiState by taskFormViewModel.uiState.collectAsStateWithLifecycle()
     val nameInput = taskFormViewModel.nameInput
+    val resources = LocalContext.current.resources
 
     if (uiState is TaskFormUiState.Saved) {
         LaunchedEffect(onPopBackStack) {
@@ -142,6 +148,13 @@ fun TaskFormScreen(
                 saveEnabled = nameInput.isNotBlank(),
             )
         )
+    }
+
+    (uiState as? TaskFormUiState.Success)?.userMessage?.let { message ->
+        LaunchedEffect(message, setUserMessage) {
+            setUserMessage(resources.getString(message))
+            taskFormViewModel.userMessageShown()
+        }
     }
 
     when (val state = uiState) {
@@ -161,10 +174,12 @@ fun TaskFormScreen(
                 name = nameInput,
                 onNameChange = taskFormViewModel::updateNameInput,
                 onSelectCategoryType = onSelectCategoryType,
-                onDeadlineDateChange = taskFormViewModel::updateDeadlineDateInput,
-                onDeadlineTimeChange = taskFormViewModel::updateDeadlineTimeInput,
-                onScheduleAtChange = taskFormViewModel::updateScheduledAtInput,
-                onRecurringChange = taskFormViewModel::updateRecurringInput,
+                onDeadlineDateChange = taskFormViewModel::updateDeadlineDate,
+                onDeadlineTimeChange = taskFormViewModel::updateDeadlineTime,
+                onScheduleAtChange = taskFormViewModel::updateScheduledAt,
+                onRecurringChange = taskFormViewModel::updateRecurring,
+                onParentTaskChange = taskFormViewModel::updateParentTask,
+                onTaskSearch = taskFormViewModel::searchTasks,
             )
         }
     }
@@ -185,11 +200,15 @@ fun TaskFormLayout(
     onDeadlineTimeChange: (LocalTime?) -> Unit,
     onScheduleAtChange: (ZonedDateTime?) -> Unit,
     onRecurringChange: (Boolean) -> Unit,
+    onParentTaskChange: (Task?) -> Unit,
+    onTaskSearch: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var dateTimePickerType by rememberSaveable {
         mutableStateOf<DateTimeConstraintField?>(null)
     }
+    val parentTask = uiState.parentTask
+    var parentTaskQuery by rememberSaveable(parentTask) { mutableStateOf(parentTask?.name ?: "") }
 
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         Column(
@@ -197,7 +216,7 @@ fun TaskFormLayout(
                 .widthIn(max = ScreenLg)
                 .verticalScroll(rememberScrollState())
                 .padding(SpaceMd),
-            verticalArrangement = Arrangement.spacedBy(SpaceMd)
+            verticalArrangement = Arrangement.spacedBy(SpaceMd),
         ) {
             if (uiState.hasSaveError) {
                 SelectionContainer {
@@ -235,8 +254,8 @@ fun TaskFormLayout(
             }
 
             when {
-                uiState.deadlineDateInput != null || uiState.deadlineTimeInput != null -> {
-                    if (uiState.deadlineDateInput == null) {
+                uiState.deadlineDate != null || uiState.deadlineTime != null -> {
+                    if (uiState.deadlineDate == null) {
                         AddDateTimeButton(
                             onClick = { dateTimePickerType = DateTimeConstraintField.DeadlineDate },
                             text = stringResource(R.string.add_deadline_date_button),
@@ -256,7 +275,7 @@ fun TaskFormLayout(
                                     onClick = {
                                         dateTimePickerType = DateTimeConstraintField.DeadlineDate
                                     },
-                                    dateTime = uiState.deadlineDateInput.format(
+                                    dateTime = uiState.deadlineDate.format(
                                         DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
                                     ),
                                 )
@@ -264,7 +283,7 @@ fun TaskFormLayout(
                         }
                     }
 
-                    if (uiState.deadlineTimeInput == null) {
+                    if (uiState.deadlineTime == null) {
                         AddDateTimeButton(
                             onClick = { dateTimePickerType = DateTimeConstraintField.DeadlineTime },
                             text = stringResource(R.string.add_deadline_time_button),
@@ -284,7 +303,7 @@ fun TaskFormLayout(
                                     onClick = {
                                         dateTimePickerType = DateTimeConstraintField.DeadlineTime
                                     },
-                                    dateTime = uiState.deadlineTimeInput.format(
+                                    dateTime = uiState.deadlineTime.format(
                                         DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
                                     ),
                                 )
@@ -293,7 +312,7 @@ fun TaskFormLayout(
                     }
                 }
 
-                uiState.scheduledAtInput != null -> {
+                uiState.scheduledAt != null -> {
                     Column {
                         Text(
                             text = stringResource(R.string.scheduled_at_label),
@@ -305,7 +324,7 @@ fun TaskFormLayout(
                                 onClick = {
                                     dateTimePickerType = DateTimeConstraintField.ScheduledDate
                                 },
-                                dateTime = uiState.scheduledAtInput.format(
+                                dateTime = uiState.scheduledAt.format(
                                     DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
                                 ),
                             )
@@ -313,7 +332,7 @@ fun TaskFormLayout(
                                 onClick = {
                                     dateTimePickerType = DateTimeConstraintField.ScheduledTime
                                 },
-                                dateTime = uiState.scheduledAtInput.format(
+                                dateTime = uiState.scheduledAt.format(
                                     DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
                                 ),
                             )
@@ -338,9 +357,30 @@ fun TaskFormLayout(
             }
 
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Checkbox(checked = uiState.recurringInput, onCheckedChange = onRecurringChange)
+                Checkbox(checked = uiState.recurring, onCheckedChange = onRecurringChange)
                 Text(stringResource(R.string.recurring_label))
             }
+
+            if (uiState.showParentTaskField) {
+                ClearableLayout(
+                    onClear = { onParentTaskChange(null) },
+                    invert = true,
+                    canClear = uiState.parentTask != null,
+                ) {
+                    AutocompleteField(
+                        query = parentTaskQuery,
+                        onQueryChange = { parentTaskQuery = it },
+                        label = { Text(stringResource(R.string.parent_task_label)) },
+                        onSearch = onTaskSearch,
+                        options = uiState.parentTaskOptions,
+                        formatOption = Task::name,
+                        onSelectOption = onParentTaskChange,
+                        autoFocus = false,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
+
         }
     }
 
@@ -362,7 +402,7 @@ fun TaskFormLayout(
         DateTimeConstraintField.DeadlineTime -> {
             TaskFormTimePickerDialog(
                 onDismissRequest = { dateTimePickerType = null },
-                time = uiState.deadlineTimeInput,
+                time = uiState.deadlineTime,
                 onSelectTime = {
                     onDeadlineTimeChange(it)
                     dateTimePickerType = null
@@ -373,7 +413,7 @@ fun TaskFormLayout(
         DateTimeConstraintField.ScheduledDate -> {
             TaskFormDatePickerDialog(
                 onDismissRequest = { dateTimePickerType = null },
-                dateTime = uiState.scheduledAtInput,
+                dateTime = uiState.scheduledAt,
                 onSelectDateTime = {
                     if (it != null) {
                         onScheduleAtChange(it)
@@ -386,11 +426,11 @@ fun TaskFormLayout(
         DateTimeConstraintField.ScheduledTime -> {
             TaskFormTimePickerDialog(
                 onDismissRequest = { dateTimePickerType = null },
-                time = uiState.scheduledAtInput?.toLocalTime(),
+                time = uiState.scheduledAt?.toLocalTime(),
                 onSelectTime = {
-                    if (uiState.scheduledAtInput != null) {
+                    if (uiState.scheduledAt != null) {
                         onScheduleAtChange(
-                            uiState.scheduledAtInput.withHour(it.hour).withMinute(it.minute),
+                            uiState.scheduledAt.withHour(it.hour).withMinute(it.minute),
                         )
                     }
                     dateTimePickerType = null
@@ -572,11 +612,15 @@ private fun TaskFormScreenPreview_New() {
             TaskFormLayout(
                 isNew = true,
                 uiState = TaskFormUiState.Success(
-                    deadlineDateInput = null,
-                    deadlineTimeInput = null,
-                    scheduledAtInput = null,
-                    recurringInput = false,
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    scheduledAt = null,
+                    recurring = false,
+                    showParentTaskField = false,
+                    parentTask = null,
+                    parentTaskOptions = persistentListOf(),
                     hasSaveError = false,
+                    userMessage = null,
                     clock = Clock.systemDefaultZone(),
                 ),
                 name = "",
@@ -586,6 +630,8 @@ private fun TaskFormScreenPreview_New() {
                 onDeadlineTimeChange = {},
                 onScheduleAtChange = {},
                 onRecurringChange = {},
+                onParentTaskChange = {},
+                onTaskSearch = {},
                 modifier = Modifier.padding(innerPadding),
             )
         }
@@ -610,11 +656,15 @@ private fun TaskFormScreenPreview_Edit() {
             TaskFormLayout(
                 isNew = false,
                 uiState = TaskFormUiState.Success(
-                    deadlineDateInput = null,
-                    deadlineTimeInput = null,
-                    scheduledAtInput = ZonedDateTime.now(),
-                    recurringInput = true,
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    scheduledAt = ZonedDateTime.now(),
+                    recurring = true,
+                    showParentTaskField = true,
+                    parentTask = Task(id = 1L, createdAt = Instant.now(), name = "Brush teeth"),
+                    parentTaskOptions = persistentListOf(),
                     hasSaveError = true,
+                    userMessage = null,
                     clock = Clock.systemDefaultZone(),
                 ),
                 name = "Shower",
@@ -624,6 +674,8 @@ private fun TaskFormScreenPreview_Edit() {
                 onDeadlineTimeChange = {},
                 onScheduleAtChange = {},
                 onRecurringChange = {},
+                onParentTaskChange = {},
+                onTaskSearch = {},
                 modifier = Modifier.padding(innerPadding),
             )
         }
@@ -638,12 +690,16 @@ private fun TaskFormLayoutPreview_Deadline() {
             TaskFormLayout(
                 isNew = true,
                 uiState = TaskFormUiState.Success(
-                    deadlineDateInput = LocalDate.now(),
-                    deadlineTimeInput = LocalTime.now(),
-                    scheduledAtInput = null,
-                    recurringInput = false,
-                    hasSaveError = false,
-                    clock = Clock.systemDefaultZone()
+                    deadlineDate = LocalDate.now(),
+                    deadlineTime = LocalTime.now(),
+                    scheduledAt = null,
+                    recurring = false,
+                    showParentTaskField = true,
+                    parentTask = null,
+                    parentTaskOptions = persistentListOf(),
+                    hasSaveError = true,
+                    userMessage = null,
+                    clock = Clock.systemDefaultZone(),
                 ),
                 name = "",
                 onNameChange = {},
@@ -652,6 +708,8 @@ private fun TaskFormLayoutPreview_Deadline() {
                 onDeadlineTimeChange = {},
                 onScheduleAtChange = {},
                 onRecurringChange = {},
+                onParentTaskChange = {},
+                onTaskSearch = {},
             )
         }
     }
@@ -665,12 +723,16 @@ private fun TaskFormLayoutPreview_DeadlineDate() {
             TaskFormLayout(
                 isNew = false,
                 uiState = TaskFormUiState.Success(
-                    deadlineDateInput = LocalDate.now(),
-                    deadlineTimeInput = null,
-                    scheduledAtInput = null,
-                    recurringInput = false,
+                    deadlineDate = LocalDate.now(),
+                    deadlineTime = null,
+                    scheduledAt = null,
+                    recurring = false,
+                    showParentTaskField = false,
+                    parentTask = null,
+                    parentTaskOptions = persistentListOf(),
                     hasSaveError = false,
-                    clock = Clock.systemDefaultZone()
+                    userMessage = null,
+                    clock = Clock.systemDefaultZone(),
                 ),
                 name = "",
                 onNameChange = {},
@@ -679,6 +741,8 @@ private fun TaskFormLayoutPreview_DeadlineDate() {
                 onDeadlineTimeChange = {},
                 onScheduleAtChange = {},
                 onRecurringChange = {},
+                onParentTaskChange = {},
+                onTaskSearch = {},
             )
         }
     }

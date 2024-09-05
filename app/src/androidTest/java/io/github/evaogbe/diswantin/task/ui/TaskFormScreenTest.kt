@@ -1,6 +1,8 @@
 package io.github.evaogbe.diswantin.task.ui
 
+import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -80,6 +82,7 @@ class TaskFormScreenTest {
                 TaskFormScreen(
                     onPopBackStack = {},
                     setTopBarState = {},
+                    setUserMessage = {},
                     onSelectCategoryType = {},
                     taskFormViewModel = viewModel,
                 )
@@ -101,6 +104,7 @@ class TaskFormScreenTest {
                 TaskFormScreen(
                     onPopBackStack = {},
                     setTopBarState = {},
+                    setUserMessage = {},
                     onSelectCategoryType = {},
                     taskFormViewModel = viewModel,
                 )
@@ -121,6 +125,7 @@ class TaskFormScreenTest {
                 TaskFormScreen(
                     onPopBackStack = {},
                     setTopBarState = {},
+                    setUserMessage = {},
                     onSelectCategoryType = {},
                     taskFormViewModel = viewModel,
                 )
@@ -129,6 +134,77 @@ class TaskFormScreenTest {
 
         composeTestRule.onNodeWithText(stringResource(R.string.task_form_fetch_error))
             .assertIsDisplayed()
+    }
+
+    @OptIn(ExperimentalTestApi::class)
+    @Test
+    fun displaysMatchingTaskOptions_whenTaskSearchedFor() {
+        val query = loremFaker.verbs.base()
+        val tasks = List(3) {
+            Task(
+                id = it + 1L,
+                createdAt = faker.random.randomPastDate().toInstant(),
+                name = "$query ${loremFaker.lorem.unique.words()}",
+            )
+        }
+        val taskRepository = FakeTaskRepository.withTasks(tasks)
+        val viewModel = createTaskFormViewModelForNew(taskRepository)
+
+        composeTestRule.setContent {
+            DiswantinTheme {
+                TaskFormScreen(
+                    onPopBackStack = {},
+                    setTopBarState = {},
+                    setUserMessage = {},
+                    onSelectCategoryType = {},
+                    taskFormViewModel = viewModel,
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(
+            stringResource(R.string.parent_task_label),
+            useUnmergedTree = true
+        )
+            .onParent()
+            .performTextInput(query)
+
+        composeTestRule.waitUntilExactlyOneExists(hasText(tasks[0].name))
+        composeTestRule.onNodeWithText(tasks[0].name).assertIsDisplayed()
+        composeTestRule.onNodeWithText(tasks[1].name).assertIsDisplayed()
+        composeTestRule.onNodeWithText(tasks[2].name).assertIsDisplayed()
+    }
+
+    @Test
+    fun displaysErrorMessage_whenSearchTasksFailed() {
+        var userMessage: String? = null
+        val query = loremFaker.verbs.base()
+        val taskRepository = FakeTaskRepository.withTasks(genTask())
+        val viewModel = createTaskFormViewModelForNew(taskRepository)
+
+        composeTestRule.setContent {
+            DiswantinTheme {
+                TaskFormScreen(
+                    onPopBackStack = {},
+                    setTopBarState = {},
+                    setUserMessage = { userMessage = it },
+                    onSelectCategoryType = {},
+                    taskFormViewModel = viewModel,
+                )
+            }
+        }
+
+        taskRepository.setThrows(taskRepository::search, true)
+        composeTestRule.onNodeWithText(
+            stringResource(R.string.parent_task_label),
+            useUnmergedTree = true
+        )
+            .onParent()
+            .performTextInput(query)
+
+        composeTestRule.waitUntil {
+            userMessage == stringResource(R.string.task_form_search_tasks_error)
+        }
     }
 
     @Test
@@ -143,6 +219,7 @@ class TaskFormScreenTest {
                 TaskFormScreen(
                     onPopBackStack = { onPopBackStackCalled = true },
                     setTopBarState = {},
+                    setUserMessage = {},
                     onSelectCategoryType = {},
                     taskFormViewModel = viewModel,
                 )
@@ -179,6 +256,7 @@ class TaskFormScreenTest {
                 TaskFormScreen(
                     onPopBackStack = {},
                     setTopBarState = {},
+                    setUserMessage = {},
                     onSelectCategoryType = {},
                     taskFormViewModel = viewModel,
                 )
@@ -211,6 +289,7 @@ class TaskFormScreenTest {
                 TaskFormScreen(
                     onPopBackStack = { onPopBackStackCalled = true },
                     setTopBarState = {},
+                    setUserMessage = {},
                     onSelectCategoryType = {},
                     taskFormViewModel = viewModel,
                 )
@@ -252,6 +331,7 @@ class TaskFormScreenTest {
                 TaskFormScreen(
                     onPopBackStack = {},
                     setTopBarState = {},
+                    setUserMessage = {},
                     onSelectCategoryType = {},
                     taskFormViewModel = viewModel,
                 )

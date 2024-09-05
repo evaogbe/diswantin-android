@@ -33,6 +33,7 @@ fun ClearableLayout(
     onClear: () -> Unit,
     invert: Boolean,
     modifier: Modifier = Modifier,
+    canClear: Boolean = true,
     content: @Composable (RowScope.() -> Unit),
 ) {
     Row(
@@ -44,22 +45,24 @@ fun ClearableLayout(
     ) {
         content()
 
-        IconButton(
-            onClick = onClear,
-            colors = if (invert) {
-                IconButtonDefaults.iconButtonColors(
-                    containerColor = colorScheme.surfaceVariant,
-                    contentColor = colorScheme.onSurfaceVariant,
+        if (canClear) {
+            IconButton(
+                onClick = onClear,
+                colors = if (invert) {
+                    IconButtonDefaults.iconButtonColors(
+                        containerColor = colorScheme.surfaceVariant,
+                        contentColor = colorScheme.onSurfaceVariant,
+                    )
+                } else {
+                    IconButtonDefaults.iconButtonColors()
+                },
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Clear,
+                    contentDescription = stringResource(R.string.clear_button),
+                    tint = colorScheme.onSurfaceVariant,
                 )
-            } else {
-                IconButtonDefaults.iconButtonColors()
-            },
-        ) {
-            Icon(
-                imageVector = Icons.Default.Clear,
-                contentDescription = stringResource(R.string.clear_button),
-                tint = colorScheme.onSurfaceVariant,
-            )
+            }
         }
     }
 }

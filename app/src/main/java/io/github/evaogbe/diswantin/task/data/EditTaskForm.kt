@@ -4,12 +4,21 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 
+sealed interface PathUpdateType {
+    data object Keep : PathUpdateType
+
+    data object Remove : PathUpdateType
+
+    data class Replace(val id: Long) : PathUpdateType
+}
+
 data class EditTaskForm(
     private val name: String,
     private val deadlineDate: LocalDate?,
     private val deadlineTime: LocalTime?,
     private val scheduledAt: Instant?,
     private val recurring: Boolean,
+    val parentUpdateType: PathUpdateType,
     private val existingTask: Task,
 ) {
     init {

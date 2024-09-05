@@ -111,7 +111,8 @@ fun TaskDetailScreen(
     onPopBackStack: () -> Unit,
     setTopBarState: (TaskDetailTopBarState) -> Unit,
     setUserMessage: (String) -> Unit,
-    onSelectCategory: (Long) -> Unit,
+    onNavigateToTask: (Long) -> Unit,
+    onNavigateToCategory: (Long) -> Unit,
     taskDetailViewModel: TaskDetailViewModel = hiltViewModel(),
 ) {
     val uiState by taskDetailViewModel.uiState.collectAsStateWithLifecycle()
@@ -150,7 +151,11 @@ fun TaskDetailScreen(
         }
 
         is TaskDetailUiState.Success -> {
-            TaskDetailLayout(uiState = state, onSelectCategory = onSelectCategory)
+            TaskDetailLayout(
+                uiState = state,
+                onNavigateToTask = onNavigateToTask,
+                onNavigateToCategory = onNavigateToCategory,
+            )
         }
     }
 }
@@ -158,7 +163,8 @@ fun TaskDetailScreen(
 @Composable
 fun TaskDetailLayout(
     uiState: TaskDetailUiState.Success,
-    onSelectCategory: (Long) -> Unit,
+    onNavigateToTask: (Long) -> Unit,
+    onNavigateToCategory: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val resources = LocalContext.current.resources
@@ -217,6 +223,22 @@ fun TaskDetailLayout(
                 )
             }
 
+            if (uiState.task.parentId != null && uiState.task.parentName != null) {
+                ListItem(
+                    headlineContent = {
+                        SelectionContainer {
+                            Text(text = uiState.task.parentName)
+                        }
+                    },
+                    overlineContent = { Text(stringResource(R.string.parent_task_label)) },
+                    supportingContent = {
+                        TextButton(onClick = { onNavigateToTask(uiState.task.parentId) }) {
+                            Text(stringResource(R.string.view_task_button))
+                        }
+                    }
+                )
+            }
+
             if (uiState.task.categoryId != null && uiState.task.categoryName != null) {
                 ListItem(
                     headlineContent = {
@@ -226,8 +248,8 @@ fun TaskDetailLayout(
                     },
                     overlineContent = { Text(stringResource(R.string.task_category_label)) },
                     supportingContent = {
-                        TextButton(onClick = { onSelectCategory(uiState.task.categoryId) }) {
-                            Text(stringResource(R.string.go_to_task_category_button))
+                        TextButton(onClick = { onNavigateToCategory(uiState.task.categoryId) }) {
+                            Text(stringResource(R.string.view_task_category_button))
                         }
                     }
                 )
@@ -250,8 +272,8 @@ private fun TaskDetailScreenPreview() {
             TaskDetailLayout(
                 uiState = TaskDetailUiState.Success(
                     task = TaskDetail(
-                        id = 1L,
-                        name = "Brush teeth",
+                        id = 2L,
+                        name = "Shower",
                         deadlineDate = null,
                         deadlineTime = null,
                         scheduledAt = null,
@@ -265,7 +287,8 @@ private fun TaskDetailScreenPreview() {
                     userMessage = null,
                     clock = Clock.systemDefaultZone()
                 ),
-                onSelectCategory = {},
+                onNavigateToTask = {},
+                onNavigateToCategory = {},
                 modifier = Modifier.padding(innerPadding),
             )
         }
@@ -280,8 +303,8 @@ private fun TaskDetailLayoutPreview() {
             TaskDetailLayout(
                 uiState = TaskDetailUiState.Success(
                     task = TaskDetail(
-                        id = 1L,
-                        name = "Brush teeth",
+                        id = 2L,
+                        name = "Shower",
                         deadlineDate = LocalDate.now(),
                         deadlineTime = null,
                         scheduledAt = null,
@@ -289,13 +312,14 @@ private fun TaskDetailLayoutPreview() {
                         doneAt = Instant.now(),
                         categoryId = 1L,
                         categoryName = "Morning Routine",
-                        parentId = null,
-                        parentName = null,
+                        parentId = 2L,
+                        parentName = "Brush teeth",
                     ),
                     userMessage = null,
                     clock = Clock.systemDefaultZone()
                 ),
-                onSelectCategory = {},
+                onNavigateToTask = {},
+                onNavigateToCategory = {},
             )
         }
     }

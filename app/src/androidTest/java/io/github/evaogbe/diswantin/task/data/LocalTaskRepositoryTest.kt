@@ -70,6 +70,7 @@ class LocalTaskRepositoryTest {
                             deadlineTime = null,
                             scheduledAt = null,
                             recurring = false,
+                            parentTaskId = null,
                             clock = clock,
                         )
                     )
@@ -86,6 +87,7 @@ class LocalTaskRepositoryTest {
                             deadlineTime = null,
                             scheduledAt = null,
                             recurring = false,
+                            parentTaskId = null,
                             clock = clock,
                         )
                     )
@@ -99,6 +101,7 @@ class LocalTaskRepositoryTest {
                         deadlineTime = LocalTime.parse("00:00"),
                         scheduledAt = null,
                         recurring = task2.recurring,
+                        parentUpdateType = PathUpdateType.Keep,
                         existingTask = task2,
                     )
                 )
@@ -114,6 +117,7 @@ class LocalTaskRepositoryTest {
                         deadlineTime = null,
                         scheduledAt = Instant.parse("2024-08-23T18:00:00Z"),
                         recurring = task1.recurring,
+                        parentUpdateType = PathUpdateType.Keep,
                         existingTask = task1,
                     )
                 )
@@ -129,6 +133,7 @@ class LocalTaskRepositoryTest {
                         deadlineTime = null,
                         scheduledAt = Instant.parse("2024-08-23T19:00:00Z"),
                         recurring = updatedTask1.recurring,
+                        parentUpdateType = PathUpdateType.Keep,
                         existingTask = updatedTask1,
                     )
                 )
@@ -145,6 +150,7 @@ class LocalTaskRepositoryTest {
                             deadlineTime = null,
                             scheduledAt = null,
                             recurring = false,
+                            parentTaskId = null,
                             clock = clock,
                         )
                     )
@@ -170,6 +176,7 @@ class LocalTaskRepositoryTest {
                         deadlineTime = null,
                         scheduledAt = null,
                         recurring = false,
+                        parentUpdateType = PathUpdateType.Keep,
                         existingTask = updatedTask1,
                     )
                 )
@@ -185,6 +192,7 @@ class LocalTaskRepositoryTest {
                         deadlineTime = null,
                         scheduledAt = null,
                         recurring = true,
+                        parentTaskId = null,
                         clock = clock,
                     )
                 )
@@ -200,6 +208,7 @@ class LocalTaskRepositoryTest {
                         deadlineTime = LocalTime.parse("23:00"),
                         scheduledAt = null,
                         recurring = false,
+                        parentUpdateType = PathUpdateType.Keep,
                         existingTask = updatedTask2,
                     )
                 )
@@ -215,6 +224,7 @@ class LocalTaskRepositoryTest {
                         deadlineTime = LocalTime.parse("23:00"),
                         scheduledAt = null,
                         recurring = true,
+                        parentUpdateType = PathUpdateType.Keep,
                         existingTask = task4,
                     )
                 )
@@ -252,6 +262,7 @@ class LocalTaskRepositoryTest {
                         deadlineTime = null,
                         scheduledAt = null,
                         recurring = false,
+                        parentTaskId = null,
                         clock = clock,
                     )
                 )
@@ -267,6 +278,7 @@ class LocalTaskRepositoryTest {
                         deadlineTime = null,
                         scheduledAt = null,
                         recurring = false,
+                        parentTaskId = null,
                         clock = clock,
                     )
                 )
@@ -288,6 +300,7 @@ class LocalTaskRepositoryTest {
                         deadlineTime = null,
                         scheduledAt = null,
                         recurring = true,
+                        parentUpdateType = PathUpdateType.Keep,
                         existingTask = task1,
                     )
                 )
@@ -316,6 +329,7 @@ class LocalTaskRepositoryTest {
                     deadlineTime = null,
                     scheduledAt = null,
                     recurring = false,
+                    parentTaskId = null,
                     clock = clock,
                 )
             )

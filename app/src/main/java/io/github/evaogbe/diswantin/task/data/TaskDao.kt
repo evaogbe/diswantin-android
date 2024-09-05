@@ -6,6 +6,7 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import java.time.Instant
 
 @Dao
@@ -79,6 +80,15 @@ interface TaskDao {
     )
     fun getTaskDetailById(id: Long): Flow<TaskDetail?>
 
+    @Query(
+        """SELECT t.*
+        FROM task t
+        JOIN task_path p ON p.ancestor = t.id
+        WHERE p.descendant = :id AND p.depth = 1
+        LIMIT 1"""
+    )
+    fun getParentTask(id: Long): Flow<Task?>
+
     @Query("SELECT * FROM task WHERE category_id = :categoryId ORDER BY name LIMIT 20")
     fun getTasksByCategoryId(categoryId: Long): Flow<List<Task>>
 
@@ -105,6 +115,9 @@ interface TaskDao {
     )
     fun search(query: String): Flow<List<Task>>
 
+    @Query("SELECT EXISTS(SELECT * FROM task WHERE id NOT IN (:ids))")
+    fun hasTasksExcluding(ids: Collection<Long>): Flow<Boolean>
+
     @Insert
     suspend fun insert(task: Task): Long
 
@@ -114,18 +127,92 @@ interface TaskDao {
     @Insert
     suspend fun insertCompletion(completion: TaskCompletion)
 
+    @Query(
+        """INSERT INTO task_path
+        (ancestor, descendant, depth)
+        SELECT a.ancestor, d.descendant, a.depth + d.depth + 1
+        FROM (SELECT ancestor, depth FROM task_path WHERE descendant = :parentId) a,
+            (SELECT descendant, depth FROM task_path WHERE ancestor = :childId) d"""
+    )
+    suspend fun insertChain(parentId: Long, childId: Long)
+
     @Transaction
-    suspend fun insertWithPath(task: Task): Long {
+    suspend fun insertWithParent(task: Task, parentId: Long?): Long {
         val id = insert(task)
         insertPath(TaskPath(ancestor = id, descendant = id, depth = 0))
+        if (parentId != null) {
+            insertChain(parentId = parentId, childId = id)
+        }
         return id
     }
 
     @Update
     suspend fun update(task: Task)
 
-    @Query("SELECT ancestor FROM task_path WHERE descendant = :id AND depth = 1 LIMIT 1")
-    suspend fun getParentId(id: Long): Long?
+    @Query(
+        """SELECT *
+        FROM task_path
+        WHERE (ancestor = :taskId1 AND descendant = :taskId2)
+            OR (ancestor = :taskId2 AND descendant = :taskId1)
+        LIMIT 1"""
+    )
+    suspend fun getConnectingPath(taskId1: Long, taskId2: Long): TaskPath?
+
+    @Query("DELETE FROM task_path WHERE (ancestor = :taskId OR descendant = :taskId) AND depth > 0")
+    suspend fun deletePathsByTaskId(taskId: Long)
+
+    @Query(
+        """UPDATE task_path
+        SET depth = depth + 1
+        WHERE ancestor IN (SELECT ancestor FROM task_path WHERE descendant = :descendant)
+            AND descendant IN (SELECT descendant FROM task_path WHERE ancestor = :descendant)
+            AND depth > 0"""
+    )
+    suspend fun incrementDepth(descendant: Long)
+
+    @Transaction
+    suspend fun connectPath(parentId: Long, childId: Long) {
+        val connectingPath = getConnectingPath(parentId, childId)
+        when (connectingPath?.ancestor) {
+            parentId -> {}
+            childId -> {
+                val existingParentId = getParentTask(childId).first()?.id
+                val existingChildIds = getChildIds(childId)
+                if (existingParentId != null && existingChildIds.isNotEmpty()) {
+                    decrementDepth(parentId = existingParentId, childIds = existingChildIds)
+                }
+                deletePathsByTaskId(childId)
+                insertChain(parentId = parentId, childId = childId)
+            }
+
+            null -> {
+                if (getParentTask(childId).first() != null) {
+                    incrementDepth(childId)
+                }
+
+                insertChain(parentId = parentId, childId = childId)
+            }
+        }
+    }
+
+    @Query(
+        """DELETE FROM task_path
+        WHERE ancestor IN (SELECT ancestor FROM task_path WHERE descendant = :id AND depth > 0)
+            AND descendant IN (SELECT descendant FROM task_path WHERE ancestor = :id)"""
+    )
+    suspend fun deleteAncestors(id: Long)
+
+    @Transaction
+    suspend fun updateWithoutParent(task: Task) {
+        update(task)
+        deleteAncestors(task.id)
+    }
+
+    @Transaction
+    suspend fun updateWithParent(task: Task, parentId: Long) {
+        update(task)
+        connectPath(parentId = parentId, childId = task.id)
+    }
 
     @Query("SELECT descendant FROM task_path WHERE ancestor = :id AND depth = 1")
     suspend fun getChildIds(id: Long): List<Long>
@@ -143,66 +230,11 @@ interface TaskDao {
 
     @Transaction
     suspend fun deleteWithPath(id: Long) {
-        val parentId = getParentId(id)
+        val parentId = getParentTask(id).first()?.id
         val childIds = getChildIds(id)
         deleteById(id)
         if (parentId != null && childIds.isNotEmpty()) {
             decrementDepth(parentId = parentId, childIds = childIds)
-        }
-    }
-
-    @Query(
-        """SELECT *
-        FROM task_path
-        WHERE (ancestor = :taskId1 AND descendant = :taskId2)
-            OR (ancestor = :taskId2 AND descendant = :taskId1)
-        LIMIT 1"""
-    )
-    suspend fun getConnectingPath(taskId1: Long, taskId2: Long): TaskPath?
-
-    @Query("DELETE FROM task_path WHERE (ancestor = :taskId OR descendant = :taskId) AND depth > 0")
-    suspend fun deletePathsByTaskId(taskId: Long)
-
-    @Query(
-        """INSERT INTO task_path
-        (ancestor, descendant, depth)
-        SELECT a.ancestor, d.descendant, a.depth + d.depth + 1
-        FROM (SELECT ancestor, depth FROM task_path WHERE descendant = :parentId) a,
-            (SELECT descendant, depth FROM task_path WHERE ancestor = :childId) d"""
-    )
-    suspend fun insertChain(parentId: Long, childId: Long)
-
-    @Query(
-        """UPDATE task_path
-        SET depth = depth + 1
-        WHERE ancestor IN (SELECT ancestor FROM task_path WHERE descendant = :descendant)
-            AND descendant IN (SELECT descendant FROM task_path WHERE ancestor = :descendant)
-            AND depth > 0"""
-    )
-    suspend fun incrementDepth(descendant: Long)
-
-    @Transaction
-    suspend fun connectPath(parentId: Long, childId: Long) {
-        val connectingPath = getConnectingPath(parentId, childId)
-        when (connectingPath?.ancestor) {
-            parentId -> {}
-            childId -> {
-                val existingParentId = getParentId(childId)
-                val existingChildIds = getChildIds(childId)
-                if (existingParentId != null && existingChildIds.isNotEmpty()) {
-                    decrementDepth(parentId = existingParentId, childIds = existingChildIds)
-                }
-                deletePathsByTaskId(childId)
-                insertChain(parentId = parentId, childId = childId)
-            }
-
-            null -> {
-                if (getParentId(childId) != null) {
-                    incrementDepth(childId)
-                }
-
-                insertChain(parentId = parentId, childId = childId)
-            }
         }
     }
 }
