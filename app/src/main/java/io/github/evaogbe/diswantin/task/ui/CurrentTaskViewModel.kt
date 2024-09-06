@@ -86,7 +86,7 @@ class CurrentTaskViewModel @Inject constructor(
         initialValue = CurrentTaskUiState.Pending,
     )
 
-    fun initialize() {
+    fun refresh() {
         currentTaskParams.value = CurrentTaskParams(ZonedDateTime.now(clock))
     }
 

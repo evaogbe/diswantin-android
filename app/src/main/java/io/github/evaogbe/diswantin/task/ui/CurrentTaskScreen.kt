@@ -45,7 +45,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.flowWithLifecycle
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.data.Result
 import io.github.evaogbe.diswantin.data.getOrDefault
@@ -61,7 +63,11 @@ import io.github.evaogbe.diswantin.ui.theme.SpaceMd
 import io.github.evaogbe.diswantin.ui.theme.SpaceXl
 import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.flow
 import java.time.Instant
+import kotlin.time.Duration.Companion.hours
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -103,9 +109,22 @@ fun CurrentTaskScreen(
 ) {
     val uiState by currentTaskViewModel.uiState.collectAsStateWithLifecycle()
     val resources = LocalContext.current.resources
+    val lifecycleOwner = LocalLifecycleOwner.current
 
     LaunchedEffect(currentTaskViewModel) {
-        currentTaskViewModel.initialize()
+        currentTaskViewModel.refresh()
+    }
+
+    LaunchedEffect(lifecycleOwner) {
+        flow {
+            while (true) {
+                delay(5.hours)
+                emit(Unit)
+            }
+        }.flowWithLifecycle(lifecycleOwner.lifecycle)
+            .collectLatest {
+                currentTaskViewModel.refresh()
+            }
     }
 
     LaunchedEffect(uiState, setTopBarState) {
