@@ -115,8 +115,20 @@ interface TaskDao {
     )
     fun search(query: String): Flow<List<Task>>
 
-    @Query("SELECT EXISTS(SELECT * FROM task WHERE id NOT IN (:ids))")
-    fun hasTasksExcluding(ids: Collection<Long>): Flow<Boolean>
+    @Query("SELECT COUNT(*) FROM task")
+    fun getCount(): Flow<Long>
+
+    @Query(
+        """SELECT COUNT(*)
+        FROM task t
+        LEFT JOIN (
+            SELECT task_id, MAX(done_at) AS done_at
+            FROM task_completion
+            GROUP BY task_id
+        ) c ON c.task_id = t.id
+        WHERE c.done_at IS NULL OR (t.recurring AND c.done_at < :doneBefore)"""
+    )
+    fun getUndoneCount(doneBefore: Instant): Flow<Long>
 
     @Insert
     suspend fun insert(task: Task): Long

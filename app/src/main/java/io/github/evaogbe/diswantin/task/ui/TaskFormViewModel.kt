@@ -89,9 +89,9 @@ class TaskFormViewModel @Inject constructor(
         deadlineTime,
         scheduledAt,
         recurring,
-        taskRepository.hasTasksExcluding(taskId?.let { listOf(it) } ?: emptyList()).catch { e ->
-            Timber.e(e, "Failed to query tasks excluding id: %d", taskId)
-            emit(false)
+        taskRepository.getCount().catch { e ->
+            Timber.e(e, "Failed to fetch task count")
+            emit(0L)
         },
         parentTask,
         parentTaskQuery.flatMapLatest { query ->
@@ -100,7 +100,7 @@ class TaskFormViewModel @Inject constructor(
             } else {
                 taskRepository.search(query.trim()).catch { e ->
                     Timber.e(e, "Failed to search for task by query: %s", query)
-                    userMessage.value = R.string.task_form_search_tasks_error
+                    userMessage.value = R.string.search_task_options_error
                 }
             }
         },
@@ -113,7 +113,7 @@ class TaskFormViewModel @Inject constructor(
         val deadlineTime = args[1] as LocalTime?
         val scheduledAt = args[2] as ZonedDateTime?
         val recurring = args[3] as Boolean
-        val showParentTaskField = args[4] as Boolean
+        val taskCount = args[4] as Long
         val parentTask = args[5] as Task?
         val parentTaskOptions = args[6] as List<Task>
         val saveResult = args[7] as Result<Unit>?
@@ -129,7 +129,7 @@ class TaskFormViewModel @Inject constructor(
                     deadlineTime = deadlineTime,
                     scheduledAt = scheduledAt,
                     recurring = recurring,
-                    showParentTaskField = showParentTaskField,
+                    showParentTaskField = taskCount > if (taskId == null) 0L else 1L,
                     parentTask = parentTask,
                     parentTaskOptions = parentTaskOptions.filterNot { it == existingTask.value }
                         .toPersistentList(),

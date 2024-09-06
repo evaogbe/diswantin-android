@@ -180,7 +180,7 @@ class TaskCategoryFormViewModelTest {
                     editingTaskIndex = 0,
                     taskOptions = persistentListOf(),
                     hasSaveError = false,
-                    userMessage = R.string.task_category_form_search_tasks_error,
+                    userMessage = R.string.search_task_options_error,
                 )
             )
         }

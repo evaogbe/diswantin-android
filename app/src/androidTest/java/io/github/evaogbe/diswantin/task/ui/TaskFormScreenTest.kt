@@ -203,7 +203,7 @@ class TaskFormScreenTest {
             .performTextInput(query)
 
         composeTestRule.waitUntil {
-            userMessage == stringResource(R.string.task_form_search_tasks_error)
+            userMessage == stringResource(R.string.search_task_options_error)
         }
     }
 

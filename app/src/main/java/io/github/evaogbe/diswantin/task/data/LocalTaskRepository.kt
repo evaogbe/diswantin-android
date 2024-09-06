@@ -63,8 +63,13 @@ class LocalTaskRepository @Inject constructor(
     private fun escapeSql(str: String) =
         str.replace("'", "''").replace("\"", "\"\"")
 
-    override fun hasTasksExcluding(ids: Collection<Long>) =
-        taskDao.hasTasksExcluding(ids).flowOn(ioDispatcher)
+    override fun getCount(excludeDone: Boolean) =
+        if (excludeDone) {
+            taskDao.getUndoneCount(ZonedDateTime.now(clock).with(LocalTime.MIN).toInstant())
+                .flowOn(ioDispatcher)
+        } else {
+            taskDao.getCount().flowOn(ioDispatcher)
+        }
 
     override suspend fun create(form: NewTaskForm): Task {
         val task = form.newTask

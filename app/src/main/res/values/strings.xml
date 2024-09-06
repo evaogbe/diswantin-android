@@ -12,6 +12,8 @@
     <string name="cancel_button">Cancel</string>
     <string name="clear_button">Clear</string>
     <string name="close_button">Close</string>
+    <string name="confirm_button">Confirm</string>
+    <string name="current_task_add_parent_error">Something went wrong adding the previous to-do</string>
     <string name="current_task_empty">No upcoming to-dos</string>
     <string name="current_task_fetch_error">Something went wrong loading the current to-do</string>
     <string name="current_task_mark_done_error">Something went wrong marking the to-do as done</string>
@@ -32,6 +34,9 @@
     <string name="save_button">Save</string>
     <string name="scheduled_at_label">Scheduled at</string>
     <string name="search_tasks_button">Search to-dos</string>
+    <string name="search_task_options_error">Something went wrong loading to-dos</string>
+    <string name="skip_button">Skip</string>
+    <string name="skip_dialog_title">What should be done earlier?</string>
     <string name="suggestion_item_break_down_task"><![CDATA[Be <b>flexible</b> about how much of the task needs to be completed. Do just the first <b>2 minutes</b>]]></string>
     <string name="suggestion_item_check_the_facts"><![CDATA[<b>Check the Facts</b>]]></string>
     <string-array name="suggestion_item_check_the_facts_steps">
@@ -65,7 +70,6 @@
     <string name="task_category_form_fetch_error">Something went wrong loading the category</string>
     <string name="task_category_form_save_error_edit">Something went wrong editing the category</string>
     <string name="task_category_form_save_error_new">Something went wrong adding the category</string>
-    <string name="task_category_form_search_tasks_error">Something went wrong loading to-dos</string>
     <string name="task_category_form_title_edit">Edit Category</string>
     <string name="task_category_form_title_new">New Category</string>
     <string name="task_category_label">Category</string>
@@ -78,7 +82,6 @@
     <string name="task_form_fetch_error">Something went wrong loading the to-do</string>
     <string name="task_form_save_error_edit">Something went wrong editing the to-do</string>
     <string name="task_form_save_error_new">Something went wrong adding the to-do</string>
-    <string name="task_form_search_tasks_error">Something went wrong loading to-dos</string>
     <string name="task_form_title_edit">Edit To-do</string>
     <string name="task_form_title_new">New To-do</string>
     <string name="task_name_label">To-do name</string>

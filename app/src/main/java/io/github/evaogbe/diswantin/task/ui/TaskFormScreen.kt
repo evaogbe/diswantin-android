@@ -208,7 +208,9 @@ fun TaskFormLayout(
         mutableStateOf<DateTimeConstraintField?>(null)
     }
     val parentTask = uiState.parentTask
-    var parentTaskQuery by rememberSaveable(parentTask) { mutableStateOf(parentTask?.name ?: "") }
+    val (parentTaskQuery, setParentTaskQuery) = rememberSaveable(parentTask) {
+        mutableStateOf(parentTask?.name ?: "")
+    }
 
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         Column(
@@ -369,7 +371,7 @@ fun TaskFormLayout(
                 ) {
                     AutocompleteField(
                         query = parentTaskQuery,
-                        onQueryChange = { parentTaskQuery = it },
+                        onQueryChange = setParentTaskQuery,
                         label = { Text(stringResource(R.string.parent_task_label)) },
                         onSearch = onTaskSearch,
                         options = uiState.parentTaskOptions,

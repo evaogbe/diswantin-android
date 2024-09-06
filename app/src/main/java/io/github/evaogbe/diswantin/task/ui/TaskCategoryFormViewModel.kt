@@ -81,7 +81,7 @@ class TaskCategoryFormViewModel @Inject constructor(
             } else {
                 taskRepository.search(query.trim()).catch { e ->
                     Timber.e(e, "Failed to search for tasks by query: %s", query)
-                    userMessage.value = R.string.task_category_form_search_tasks_error
+                    userMessage.value = R.string.search_task_options_error
                 }
             }
         },

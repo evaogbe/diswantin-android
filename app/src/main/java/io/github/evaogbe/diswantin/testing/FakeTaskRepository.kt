@@ -146,16 +146,26 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
             }
         }
 
-    override fun hasTasksExcluding(ids: Collection<Long>): Flow<Boolean> =
-        combine(throwingMethods, db.taskTable) { throwingMethods, tasks ->
-            if (::hasTasksExcluding in throwingMethods) {
+    override fun getCount(excludeDone: Boolean): Flow<Long> =
+        combine(
+            throwingMethods,
+            db.taskTable,
+            db.taskCompletionTable,
+        ) { throwingMethods, tasks, taskCompletions ->
+            if (::getCount in throwingMethods) {
                 throw RuntimeException("Test")
             }
 
-            if (ids.isEmpty()) {
-                tasks.isNotEmpty()
+            if (excludeDone) {
+                val doneBefore = ZonedDateTime.now().with(LocalTime.MIN).toInstant()
+                tasks.filterValues { task ->
+                    val doneAt = taskCompletions.values
+                        .filter { it.taskId == task.id }
+                        .maxOfOrNull { it.doneAt }
+                    doneAt == null || (task.recurring == true && doneAt < doneBefore)
+                }.size.toLong()
             } else {
-                tasks.filter { it.value.id !in ids }.isNotEmpty()
+                tasks.size.toLong()
             }
         }
 

@@ -203,7 +203,7 @@ class TaskFormViewModelTest {
         runTest(mainDispatcherRule.testDispatcher) {
             val clock = createClock()
             val taskRepository = FakeTaskRepository.withTasks(genTask())
-            taskRepository.setThrows(taskRepository::hasTasksExcluding, true)
+            taskRepository.setThrows(taskRepository::getCount, true)
 
             val viewModel = TaskFormViewModel(SavedStateHandle(), taskRepository, clock)
 
@@ -228,10 +228,10 @@ class TaskFormViewModelTest {
         }
 
     @Test
-    fun `searchTasks sets task options`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `searchTasks fetches parentTaskOptions`() = runTest(mainDispatcherRule.testDispatcher) {
         val clock = createClock()
         val query = loremFaker.verbs.base()
-        val tasks = List(faker.random.nextInt(bound = 5)) {
+        val tasks = List(faker.random.nextInt(min = 1, max = 5)) {
             Task(
                 id = it + 1L,
                 createdAt = faker.random.randomPastDate().toInstant(),
@@ -288,7 +288,7 @@ class TaskFormViewModelTest {
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
                     hasSaveError = false,
-                    userMessage = R.string.task_form_search_tasks_error,
+                    userMessage = R.string.search_task_options_error,
                     clock = clock,
                 )
             )

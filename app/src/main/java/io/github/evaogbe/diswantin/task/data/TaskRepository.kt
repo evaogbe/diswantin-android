@@ -13,7 +13,7 @@ interface TaskRepository {
 
     fun search(query: String): Flow<List<Task>>
 
-    fun hasTasksExcluding(ids: Collection<Long>): Flow<Boolean>
+    fun getCount(excludeDone: Boolean = false): Flow<Long>
 
     suspend fun create(form: NewTaskForm): Task
 
