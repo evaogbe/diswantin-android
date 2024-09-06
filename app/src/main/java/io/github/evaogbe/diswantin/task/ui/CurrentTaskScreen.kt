@@ -118,7 +118,7 @@ fun CurrentTaskScreen(
     LaunchedEffect(lifecycleOwner) {
         flow {
             while (true) {
-                delay(5.hours)
+                delay(1.hours)
                 emit(Unit)
             }
         }.flowWithLifecycle(lifecycleOwner.lifecycle)
