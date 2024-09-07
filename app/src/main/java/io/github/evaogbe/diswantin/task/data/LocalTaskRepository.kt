@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import java.time.Clock
 import java.time.Instant
+import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZonedDateTime
 import javax.inject.Inject
@@ -18,14 +19,25 @@ class LocalTaskRepository @Inject constructor(
 ) : TaskRepository {
     override fun getCurrentTask(params: CurrentTaskParams) =
         taskDao.getTaskPriorities(
-            scheduledBefore = params.scheduledBefore,
+            scheduledDateBefore = params.scheduledDateBefore,
+            scheduledTimeBefore = params.scheduledTimeBefore,
             doneBefore = params.doneBefore,
         )
             .map { priorities ->
                 priorities.sortedWith(
-                    compareBy(nullsLast(), TaskPriority::scheduledAtPriority)
+                    compareBy<TaskPriority, ZonedDateTime?>(nullsLast()) {
+                        dateTimePartsToZonedDateTime(
+                            it.scheduledDatePriority,
+                            it.scheduledTimePriority,
+                            LocalTime.of(9, 0),
+                        )
+                    }
                         .thenComparing({
-                            it.deadline
+                            dateTimePartsToZonedDateTime(
+                                it.deadlineDatePriority,
+                                it.deadlineTimePriority,
+                                LocalTime.MAX,
+                            )
                                 ?: if (it.recurringPriority) params.recurringDeadline else null
                         }, nullsLast())
                         .thenComparing(TaskPriority::recurringPriority, reverseOrder())
@@ -37,26 +49,22 @@ class LocalTaskRepository @Inject constructor(
             }
             .flowOn(ioDispatcher)
 
-    private val TaskPriority.deadline
-        get() = when {
-            deadlineDatePriority != null && deadlineTimePriority != null -> {
-                deadlineDatePriority.atTime(deadlineTimePriority).atZone(clock.zone)
-            }
-
-            deadlineDatePriority != null -> {
-                deadlineDatePriority.atTime(LocalTime.MAX).atZone(clock.zone)
-            }
-
-            deadlineTimePriority != null -> ZonedDateTime.now(clock).with(deadlineTimePriority)
-            else -> null
-        }
+    private fun dateTimePartsToZonedDateTime(
+        date: LocalDate?,
+        time: LocalTime?,
+        defaultTime: LocalTime,
+    ) = when {
+        date != null -> date.atTime(time ?: defaultTime).atZone(clock.zone)
+        time != null -> ZonedDateTime.now(clock).with(time)
+        else -> null
+    }
 
     override fun getById(id: Long) = taskDao.getById(id).flowOn(ioDispatcher)
 
     override fun getTaskDetailById(id: Long) =
         taskDao.getTaskDetailById(id).flowOn(ioDispatcher)
 
-    override fun getParentTask(id: Long) = taskDao.getParentTask(id).flowOn(ioDispatcher)
+    override fun getParent(id: Long) = taskDao.getParent(id).flowOn(ioDispatcher)
 
     override fun search(query: String) = taskDao.search(escapeSql(query)).flowOn(ioDispatcher)
 

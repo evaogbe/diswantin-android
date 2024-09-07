@@ -5,6 +5,7 @@ import androidx.annotation.StringRes
 import io.github.evaogbe.diswantin.task.data.TaskDetail
 import kotlinx.parcelize.Parcelize
 import java.time.Clock
+import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
@@ -23,33 +24,9 @@ sealed interface TaskDetailUiState {
         @StringRes val userMessage: Int?,
         private val clock: Clock,
     ) : TaskDetailUiState {
-        val formattedDeadline = when {
-            task.deadlineDate != null && task.deadlineTime != null -> {
-                task.deadlineDate
-                    .atTime(task.deadlineTime)
-                    .format(
-                        DateTimeFormatter.ofLocalizedDateTime(
-                            FormatStyle.FULL,
-                            FormatStyle.SHORT
-                        )
-                    )
-            }
+        val formattedDeadline = formatDateTime(task.deadlineDate, task.deadlineTime)
 
-            task.deadlineDate != null -> {
-                task.deadlineDate.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL))
-            }
-
-            task.deadlineTime != null -> {
-                task.deadlineTime.format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT))
-            }
-
-            else -> null
-        }
-
-        val formattedScheduledAt =
-            task.scheduledAt
-                ?.atZone(clock.zone)
-                ?.format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL, FormatStyle.SHORT))
+        val formattedScheduledAt = formatDateTime(task.scheduledDate, task.scheduledTime)
 
         val isDone = if (task.recurring) {
             task.doneAt?.let {
@@ -57,6 +34,21 @@ sealed interface TaskDetailUiState {
             } == false
         } else {
             task.doneAt != null
+        }
+
+        private fun formatDateTime(date: LocalDate?, time: LocalTime?) = when {
+            date != null && time != null -> {
+                date.atTime(time).format(
+                    DateTimeFormatter.ofLocalizedDateTime(
+                        FormatStyle.FULL,
+                        FormatStyle.SHORT,
+                    )
+                )
+            }
+
+            date != null -> date.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL))
+            time != null -> time.format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT))
+            else -> null
         }
     }
 

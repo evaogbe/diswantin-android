@@ -26,7 +26,7 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 @Database(
-    version = 20,
+    version = 22,
     entities = [
         Task::class,
         TaskFts::class,
@@ -48,6 +48,7 @@ import java.time.format.DateTimeFormatter
         AutoMigration(from = 16, to = 17),
         AutoMigration(from = 18, to = 19, spec = DiswantinDatabase.Migration18to19::class),
         AutoMigration(from = 19, to = 20, spec = DiswantinDatabase.Migration19to20::class),
+        AutoMigration(from = 21, to = 22, spec = DiswantinDatabase.Migration21to22::class),
     ]
 )
 @TypeConverters(Converters::class)
@@ -76,6 +77,9 @@ abstract class DiswantinDatabase : RoomDatabase() {
     @RenameTable(fromTableName = "task_list", toTableName = "task_category")
     @RenameColumn(tableName = "task", fromColumnName = "list_id", toColumnName = "category_id")
     class Migration19to20 : AutoMigrationSpec
+
+    @DeleteColumn(tableName = "task", columnName = "scheduled_at")
+    class Migration21to22 : AutoMigrationSpec
 
     companion object {
         const val DB_NAME = "diswantin"
@@ -236,6 +240,42 @@ abstract class DiswantinDatabase : RoomDatabase() {
                 }
             }
 
+        fun getMigration20to21(zoneId: ZoneId = ZoneId.systemDefault()) =
+            object : Migration(20, 21) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    val taskValues = mutableListOf<String>()
+                    db.query(
+                        """SELECT `id`, `created_at`, `name`, `scheduled_at`
+                        FROM `task`
+                        WHERE `scheduled_at` IS NOT NULL"""
+                    )
+                        .use { stmt ->
+                            while (stmt.moveToNext()) {
+                                val scheduledAt =
+                                    Instant.ofEpochMilli(stmt.getLong(3)).atZone(zoneId)
+                                taskValues += "(%d, %d, \"%s\", \"%s\", \"%s\")".format(
+                                    stmt.getLong(0),
+                                    stmt.getLong(1),
+                                    stmt.getString(2),
+                                    scheduledAt.toLocalDate(),
+                                    scheduledAt.toLocalTime()
+                                        .format(DateTimeFormatter.ofPattern("HH:mm")),
+                                )
+                            }
+                        }
+                    db.execSQL("ALTER TABLE `task` ADD COLUMN `scheduled_date` TEXT")
+                    db.execSQL("ALTER TABLE `task` ADD COLUMN `scheduled_time` TEXT")
+                    db.execSQL(
+                        """INSERT INTO `task`
+                            (`id`, `created_at`, `name`, `scheduled_date`, `scheduled_time`)
+                            VALUES ${taskValues.joinToString()}
+                            ON CONFLICT (`id`) DO UPDATE SET
+                                `scheduled_date` = excluded.`scheduled_date`,
+                                `scheduled_time` = excluded.`scheduled_time`"""
+                    )
+                }
+            }
+
         fun createDatabase(context: Context) =
             Room.databaseBuilder(
                 context.applicationContext,
@@ -248,6 +288,7 @@ abstract class DiswantinDatabase : RoomDatabase() {
                 MIGRATION_11_12,
                 MIGRATION_14_15,
                 getMigration17to18(),
+                getMigration20to21(),
             ).build()
     }
 }

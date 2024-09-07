@@ -3,6 +3,7 @@
     <string name="add_deadline_date_button">Add deadline date</string>
     <string name="add_deadline_time_button">Add deadline time</string>
     <string name="add_scheduled_at_button">Schedule</string>
+    <string name="add_scheduled_date_button">Add scheduled date</string>
     <string name="add_task_button">Add to-do</string>
     <string name="add_task_category_button">Add category</string>
     <string name="advice_title">Advice</string>
@@ -33,6 +34,8 @@
     <string name="recurring_label">Recurring</string>
     <string name="save_button">Save</string>
     <string name="scheduled_at_label">Scheduled at</string>
+    <string name="scheduled_date_label">Scheduled date</string>
+    <string name="scheduled_time_label">Scheduled time</string>
     <string name="search_tasks_button">Search to-dos</string>
     <string name="search_task_options_error">Something went wrong loading to-dos</string>
     <string name="skip_button">Skip</string>

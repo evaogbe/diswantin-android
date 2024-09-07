@@ -8,13 +8,16 @@ import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalTime
 
 @Dao
 interface TaskDao {
     @Query(
         """SELECT
             t.*,
-            t2.scheduled_at AS scheduled_at_priority,
+            t2.scheduled_date AS scheduled_date_priority,
+            t2.scheduled_time AS scheduled_time_priority,
             t2.deadline_date AS deadline_date_priority,
             t2.deadline_time AS deadline_time_priority,
             t2.recurring AS recurring_priority,
@@ -35,10 +38,13 @@ interface TaskDao {
                 GROUP BY p2.descendant
             ) leaf ON leaf.descendant = p.descendant AND leaf.depth = p.depth
         JOIN task t2 ON p.descendant = t2.id
-        WHERE t.scheduled_at IS NULL OR t.scheduled_at <= :scheduledBefore
+        WHERE (t.scheduled_date IS NULL OR t.scheduled_date <= :scheduledDateBefore)
+            AND (t.scheduled_time IS NULL OR t.scheduled_time <= :scheduledTimeBefore)
         ORDER BY
-            scheduled_at_priority IS NULL,
-            scheduled_at_priority,
+            scheduled_date_priority IS NULL,
+            scheduled_date_priority,
+            scheduled_time_priority IS NULL,
+            scheduled_time_priority,
             recurring_priority DESC,
             deadline_date_priority IS NULL,
             deadline_date_priority,
@@ -48,7 +54,11 @@ interface TaskDao {
             id_priority
         LIMIT 20"""
     )
-    fun getTaskPriorities(scheduledBefore: Instant, doneBefore: Instant): Flow<List<TaskPriority>>
+    fun getTaskPriorities(
+        scheduledDateBefore: LocalDate,
+        scheduledTimeBefore: LocalTime,
+        doneBefore: Instant,
+    ): Flow<List<TaskPriority>>
 
     @Query("SELECT * FROM task WHERE id = :id LIMIT 1")
     fun getById(id: Long): Flow<Task>
@@ -59,7 +69,8 @@ interface TaskDao {
             t.name,
             t.deadline_date,
             t.deadline_time,
-            t.scheduled_at,
+            t.scheduled_date,
+            t.scheduled_time,
             t.recurring,
             com.done_at,
             t.category_id,
@@ -87,7 +98,7 @@ interface TaskDao {
         WHERE p.descendant = :id AND p.depth = 1
         LIMIT 1"""
     )
-    fun getParentTask(id: Long): Flow<Task?>
+    fun getParent(id: Long): Flow<Task?>
 
     @Query("SELECT * FROM task WHERE category_id = :categoryId ORDER BY name LIMIT 20")
     fun getTasksByCategoryId(categoryId: Long): Flow<List<Task>>
@@ -188,7 +199,7 @@ interface TaskDao {
         when (connectingPath?.ancestor) {
             parentId -> {}
             childId -> {
-                val existingParentId = getParentTask(childId).first()?.id
+                val existingParentId = getParent(childId).first()?.id
                 val existingChildIds = getChildIds(childId)
                 if (existingParentId != null && existingChildIds.isNotEmpty()) {
                     decrementDepth(parentId = existingParentId, childIds = existingChildIds)
@@ -198,7 +209,7 @@ interface TaskDao {
             }
 
             null -> {
-                if (getParentTask(childId).first() != null) {
+                if (getParent(childId).first() != null) {
                     incrementDepth(childId)
                 }
 
@@ -242,7 +253,7 @@ interface TaskDao {
 
     @Transaction
     suspend fun deleteWithPath(id: Long) {
-        val parentId = getParentTask(id).first()?.id
+        val parentId = getParent(id).first()?.id
         val childIds = getChildIds(id)
         deleteById(id)
         if (parentId != null && childIds.isNotEmpty()) {

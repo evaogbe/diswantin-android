@@ -8,7 +8,6 @@ import kotlinx.parcelize.Parcelize
 import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.ZonedDateTime
 
 @Parcelize
 data class TaskFormTopBarState(
@@ -26,7 +25,8 @@ sealed interface TaskFormUiState {
     data class Success(
         val deadlineDate: LocalDate?,
         val deadlineTime: LocalTime?,
-        val scheduledAt: ZonedDateTime?,
+        val scheduledDate: LocalDate?,
+        val scheduledTime: LocalTime?,
         val recurring: Boolean,
         val showParentTaskField: Boolean,
         val parentTask: Task?,
@@ -36,6 +36,8 @@ sealed interface TaskFormUiState {
         private val clock: Clock,
     ) : TaskFormUiState {
         val deadlineDateAsZonedDateTime = deadlineDate?.atStartOfDay(clock.zone)
+
+        val scheduledDateAsZonedDateTime = scheduledDate?.atStartOfDay(clock.zone)
     }
 
     data object Saved : TaskFormUiState

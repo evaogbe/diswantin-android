@@ -277,21 +277,9 @@ private fun TaskSearchScreenPreview_Present() {
             TaskSearchLayout(
                 query = "Bru",
                 searchResults = persistentListOf(
-                    Task(
-                        id = 1L,
-                        createdAt = Instant.parse("2024-08-09T08:00:00Z"),
-                        name = "Brush teeth",
-                    ),
-                    Task(
-                        id = 2L,
-                        createdAt = Instant.parse("2024-08-09T08:05:00Z"),
-                        name = "Brush hair",
-                    ),
-                    Task(
-                        id = 3L,
-                        createdAt = Instant.parse("2024-08-09T08:10:00Z"),
-                        name = "Eat brunch",
-                    ),
+                    Task(id = 1L, createdAt = Instant.now(), name = "Brush teeth"),
+                    Task(id = 2L, createdAt = Instant.now(), name = "Brush hair"),
+                    Task(id = 3L, createdAt = Instant.now(), name = "Eat brunch"),
                 ),
                 onSelectSearchResult = {},
                 modifier = Modifier.padding(innerPadding),

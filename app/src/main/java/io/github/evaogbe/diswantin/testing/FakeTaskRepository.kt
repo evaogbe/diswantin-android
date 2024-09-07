@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import java.time.Instant
+import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -37,25 +38,20 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
 
             tasks.values
                 .sortedWith(
-                    compareBy(nullsLast(), Task::scheduledAt)
+                    compareBy<Task, ZonedDateTime?>(nullsLast()) {
+                        dateTimePartsToZonedDateTime(
+                            it.scheduledDate,
+                            it.scheduledTime,
+                            LocalTime.of(9, 0),
+                        )
+                    }
                         .thenComparing({
-                            when {
-                                it.deadlineDate != null && it.deadlineTime != null -> {
-                                    it.deadlineDate
-                                        .atTime(it.deadlineTime)
-                                        .atZone(ZoneId.systemDefault())
-                                }
-
-                                it.deadlineDate != null -> {
-                                    it.deadlineDate
-                                        .atTime(LocalTime.MAX)
-                                        .atZone(ZoneId.systemDefault())
-                                }
-
-                                it.deadlineTime != null -> ZonedDateTime.now().with(it.deadlineTime)
-                                it.recurring -> params.recurringDeadline
-                                else -> null
-                            }
+                            dateTimePartsToZonedDateTime(
+                                it.deadlineDate,
+                                it.deadlineTime,
+                                LocalTime.MAX,
+                            )
+                                ?: if (it.recurring) params.recurringDeadline else null
                         }, nullsLast())
                         .thenComparing(Task::recurring, reverseOrder())
                         .thenComparing(Task::createdAt)
@@ -74,9 +70,20 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
                         .maxByOrNull { it.depth }
                         ?.let { tasks[it.ancestor] }
                 }.firstOrNull { task ->
-                    task.scheduledAt?.let { it <= params.scheduledBefore } != false
+                    task.scheduledDate?.let { it <= params.scheduledDateBefore } != false &&
+                            task.scheduledTime?.let { it <= params.scheduledTimeBefore } != false
                 }
         }
+
+    private fun dateTimePartsToZonedDateTime(
+        date: LocalDate?,
+        time: LocalTime?,
+        defaultTime: LocalTime,
+    ) = when {
+        date != null -> date.atTime(time ?: defaultTime).atZone(ZoneId.systemDefault())
+        time != null -> ZonedDateTime.now().with(time)
+        else -> null
+    }
 
     override fun getById(id: Long): Flow<Task> =
         combine(throwingMethods, db.taskTable) { throwingMethods, tasks ->
@@ -107,7 +114,8 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
                     name = task.name,
                     deadlineDate = task.deadlineDate,
                     deadlineTime = task.deadlineTime,
-                    scheduledAt = task.scheduledAt,
+                    scheduledDate = task.scheduledDate,
+                    scheduledTime = task.scheduledTime,
                     recurring = task.recurring,
                     doneAt = taskCompletions.values
                         .filter { it.taskId == task.id }
@@ -120,13 +128,13 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
             }
         }
 
-    override fun getParentTask(id: Long): Flow<Task?> =
+    override fun getParent(id: Long): Flow<Task?> =
         combine(
             throwingMethods,
             db.taskTable,
             db.taskPathTable
         ) { throwingMethods, tasks, taskPaths ->
-            if (::getParentTask in throwingMethods) {
+            if (::getParent in throwingMethods) {
                 throw RuntimeException("Test")
             }
 

@@ -32,7 +32,6 @@ import timber.log.Timber
 import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.ZonedDateTime
 import javax.inject.Inject
 
 @HiltViewModel
@@ -52,7 +51,9 @@ class TaskFormViewModel @Inject constructor(
 
     private val deadlineTime = MutableStateFlow<LocalTime?>(null)
 
-    private val scheduledAt = MutableStateFlow<ZonedDateTime?>(null)
+    private val scheduledDate = MutableStateFlow<LocalDate?>(null)
+
+    private val scheduledTime = MutableStateFlow<LocalTime?>(null)
 
     private val recurring = MutableStateFlow(false)
 
@@ -74,7 +75,7 @@ class TaskFormViewModel @Inject constructor(
     } ?: flowOf(Result.Success(null))
 
     private val existingParentTaskStream = taskId?.let { id ->
-        taskRepository.getParentTask(id)
+        taskRepository.getParent(id)
             .map<Task?, Result<Task?>> { Result.Success(it) }
             .catch { e ->
                 Timber.e(e, "Failed to fetch parent task by child id: %d", id)
@@ -87,7 +88,8 @@ class TaskFormViewModel @Inject constructor(
     val uiState = combine(
         deadlineDate,
         deadlineTime,
-        scheduledAt,
+        scheduledDate,
+        scheduledTime,
         recurring,
         taskRepository.getCount().catch { e ->
             Timber.e(e, "Failed to fetch task count")
@@ -111,15 +113,16 @@ class TaskFormViewModel @Inject constructor(
     ) { args ->
         val deadlineDate = args[0] as LocalDate?
         val deadlineTime = args[1] as LocalTime?
-        val scheduledAt = args[2] as ZonedDateTime?
-        val recurring = args[3] as Boolean
-        val taskCount = args[4] as Long
-        val parentTask = args[5] as Task?
-        val parentTaskOptions = args[6] as List<Task>
-        val saveResult = args[7] as Result<Unit>?
-        val userMessage = args[8] as Int?
-        val existingTask = args[9] as Result<Task?>
-        val existingParentTask = args[10] as Result<Task?>
+        val scheduledDate = args[2] as LocalDate?
+        val scheduledTime = args[3] as LocalTime?
+        val recurring = args[4] as Boolean
+        val taskCount = args[5] as Long
+        val parentTask = args[6] as Task?
+        val parentTaskOptions = args[7] as List<Task>
+        val saveResult = args[8] as Result<Unit>?
+        val userMessage = args[9] as Int?
+        val existingTask = args[10] as Result<Task?>
+        val existingParentTask = args[11] as Result<Task?>
 
         when {
             saveResult is Result.Success -> TaskFormUiState.Saved
@@ -127,7 +130,8 @@ class TaskFormViewModel @Inject constructor(
                 TaskFormUiState.Success(
                     deadlineDate = deadlineDate,
                     deadlineTime = deadlineTime,
-                    scheduledAt = scheduledAt,
+                    scheduledDate = scheduledDate,
+                    scheduledTime = scheduledTime,
                     recurring = recurring,
                     showParentTaskField = taskCount > if (taskId == null) 0L else 1L,
                     parentTask = parentTask,
@@ -153,7 +157,8 @@ class TaskFormViewModel @Inject constructor(
             nameInput = existingTask.name
             deadlineDate.value = existingTask.deadlineDate
             deadlineTime.value = existingTask.deadlineTime
-            scheduledAt.value = existingTask.scheduledAt?.atZone(clock.zone)
+            scheduledDate.value = existingTask.scheduledDate
+            scheduledTime.value = existingTask.scheduledTime
             recurring.value = existingTask.recurring
             parentTask.value = existingParentTaskStream.first().getOrNull()
         }
@@ -171,8 +176,18 @@ class TaskFormViewModel @Inject constructor(
         deadlineTime.value = value
     }
 
-    fun updateScheduledAt(value: ZonedDateTime?) {
-        scheduledAt.value = value
+    fun updateScheduledDate(value: LocalDate?) {
+        scheduledDate.value = value
+        if (scheduledTime.value == null) {
+            scheduledTime.value = LocalTime.of(9, 0)
+        }
+    }
+
+    fun updateScheduledTime(value: LocalTime?) {
+        scheduledTime.value = value
+        if (value == null) {
+            scheduledDate.value = null
+        }
     }
 
     fun updateRecurring(value: Boolean) {
@@ -199,12 +214,22 @@ class TaskFormViewModel @Inject constructor(
         } else {
             state.deadlineDate
         }
+        val scheduledDate = if (
+            state.scheduledDate == null &&
+            state.scheduledTime != null &&
+            !state.recurring
+        ) {
+            LocalDate.now()
+        } else {
+            state.scheduledDate
+        }
         if (taskId == null) {
             val form = NewTaskForm(
                 name = nameInput,
                 deadlineDate = deadlineDate,
                 deadlineTime = state.deadlineTime,
-                scheduledAt = state.scheduledAt?.toInstant(),
+                scheduledDate = scheduledDate,
+                scheduledTime = state.scheduledTime,
                 recurring = state.recurring,
                 parentTaskId = state.parentTask?.id,
                 clock = clock,
@@ -230,7 +255,8 @@ class TaskFormViewModel @Inject constructor(
                             name = nameInput,
                             deadlineDate = deadlineDate,
                             deadlineTime = state.deadlineTime,
-                            scheduledAt = state.scheduledAt?.toInstant(),
+                            scheduledDate = scheduledDate,
+                            scheduledTime = state.scheduledTime,
                             recurring = state.recurring,
                             parentUpdateType = when (state.parentTask) {
                                 existingParent -> PathUpdateType.Keep

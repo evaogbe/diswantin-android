@@ -9,18 +9,26 @@ data class NewTaskForm(
     private val name: String,
     private val deadlineDate: LocalDate?,
     private val deadlineTime: LocalTime?,
-    private val scheduledAt: Instant?,
+    private val scheduledDate: LocalDate?,
+    private val scheduledTime: LocalTime?,
     private val recurring: Boolean,
     val parentTaskId: Long?,
     private val clock: Clock,
 ) {
     init {
         require(name.isNotBlank()) { "Name must be present" }
-        require((deadlineDate == null && deadlineTime == null) || scheduledAt == null) {
-            """Must have only one of deadline and scheduledAt, but got 
+        require(
+            (deadlineDate == null && deadlineTime == null) ||
+                    (scheduledDate == null && scheduledTime == null)
+        ) {
+            """Must not have both deadline fields and scheduled fields, but got 
                 |deadlineDate: $deadlineDate, 
-                |deadlineTime: $deadlineTime, and
-                |scheduledAt: $scheduledAt""".trimMargin()
+                |deadlineTime: $deadlineTime, 
+                |scheduledDate: $scheduledDate, and
+                |scheduledTime: $scheduledTime""".trimMargin()
+        }
+        require(scheduledTime != null || scheduledDate == null) {
+            "Must have scheduledTime if scheduledDate is set, but got scheduledDate: $scheduledDate"
         }
     }
 
@@ -30,7 +38,8 @@ data class NewTaskForm(
             name = name,
             deadlineDate = deadlineDate,
             deadlineTime = deadlineTime,
-            scheduledAt = scheduledAt,
+            scheduledDate = scheduledDate,
+            scheduledTime = scheduledTime,
             recurring = recurring,
         )
 }

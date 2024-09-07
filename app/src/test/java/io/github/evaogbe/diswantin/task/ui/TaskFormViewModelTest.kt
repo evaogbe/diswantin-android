@@ -29,7 +29,6 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
-import java.time.ZonedDateTime
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TaskFormViewModelTest {
@@ -56,7 +55,8 @@ class TaskFormViewModelTest {
                 TaskFormUiState.Success(
                     deadlineDate = null,
                     deadlineTime = null,
-                    scheduledAt = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
                     recurring = false,
                     showParentTaskField = false,
                     parentTask = null,
@@ -91,7 +91,8 @@ class TaskFormViewModelTest {
                 TaskFormUiState.Success(
                     deadlineDate = LocalDate.parse("2024-08-22"),
                     deadlineTime = LocalTime.parse("17:00"),
-                    scheduledAt = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
                     showParentTaskField = false,
                     recurring = true,
                     parentTask = null,
@@ -129,7 +130,7 @@ class TaskFormViewModelTest {
             val clock = createClock()
             val task = genTask()
             val taskRepository = FakeTaskRepository.withTasks(task)
-            taskRepository.setThrows(taskRepository::getParentTask, true)
+            taskRepository.setThrows(taskRepository::getParent, true)
 
             val viewModel =
                 TaskFormViewModel(createSavedStateHandleForEdit(), taskRepository, clock)
@@ -157,7 +158,8 @@ class TaskFormViewModelTest {
                 TaskFormUiState.Success(
                     deadlineDate = null,
                     deadlineTime = null,
-                    scheduledAt = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
                     recurring = false,
                     showParentTaskField = true,
                     parentTask = null,
@@ -186,7 +188,8 @@ class TaskFormViewModelTest {
                 TaskFormUiState.Success(
                     deadlineDate = null,
                     deadlineTime = null,
-                    scheduledAt = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
                     showParentTaskField = true,
                     recurring = false,
                     parentTask = null,
@@ -215,7 +218,8 @@ class TaskFormViewModelTest {
                 TaskFormUiState.Success(
                     deadlineDate = null,
                     deadlineTime = null,
-                    scheduledAt = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
                     recurring = false,
                     showParentTaskField = false,
                     parentTask = null,
@@ -251,7 +255,8 @@ class TaskFormViewModelTest {
             TaskFormUiState.Success(
                 deadlineDate = null,
                 deadlineTime = null,
-                scheduledAt = null,
+                scheduledDate = null,
+                scheduledTime = null,
                 recurring = false,
                 showParentTaskField = true,
                 parentTask = null,
@@ -282,7 +287,8 @@ class TaskFormViewModelTest {
                 TaskFormUiState.Success(
                     deadlineDate = null,
                     deadlineTime = null,
-                    scheduledAt = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
                     recurring = false,
                     showParentTaskField = true,
                     parentTask = null,
@@ -311,7 +317,8 @@ class TaskFormViewModelTest {
                 TaskFormUiState.Success(
                     deadlineDate = null,
                     deadlineTime = null,
-                    scheduledAt = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
                     recurring = false,
                     showParentTaskField = false,
                     parentTask = null,
@@ -335,9 +342,7 @@ class TaskFormViewModelTest {
                     name = name,
                     deadlineDate = LocalDate.parse("2024-08-22"),
                     deadlineTime = LocalTime.parse("17:00"),
-                    scheduledAt = null,
                     recurring = true,
-                    categoryId = null,
                 ),
                 Task::id,
             )
@@ -364,7 +369,8 @@ class TaskFormViewModelTest {
                 TaskFormUiState.Success(
                     deadlineDate = null,
                     deadlineTime = null,
-                    scheduledAt = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
                     recurring = false,
                     showParentTaskField = false,
                     parentTask = null,
@@ -397,7 +403,8 @@ class TaskFormViewModelTest {
                 TaskFormUiState.Success(
                     deadlineDate = LocalDate.parse("2024-08-22"),
                     deadlineTime = LocalTime.parse("21:00"),
-                    scheduledAt = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
                     recurring = false,
                     showParentTaskField = false,
                     parentTask = null,
@@ -411,9 +418,8 @@ class TaskFormViewModelTest {
             viewModel.updateNameInput(name)
             viewModel.updateDeadlineDate(null)
             viewModel.updateDeadlineTime(null)
-            viewModel.updateScheduledAt(
-                ZonedDateTime.parse("2024-08-22T17:00:00-04:00[America/New_York]")
-            )
+            viewModel.updateScheduledDate(LocalDate.parse("2024-08-22"))
+            viewModel.updateScheduledTime(LocalTime.parse("17:00"))
             viewModel.saveTask()
 
             assertThat(taskRepository.tasks).containsExactlyInAnyOrder(
@@ -421,7 +427,8 @@ class TaskFormViewModelTest {
                     name = name,
                     deadlineDate = null,
                     deadlineTime = null,
-                    scheduledAt = Instant.parse("2024-08-22T21:00:00Z"),
+                    scheduledDate = LocalDate.parse("2024-08-22"),
+                    scheduledTime = LocalTime.parse("17:00"),
                 )
             )
             assertThat(viewModel.uiState.value).isEqualTo(TaskFormUiState.Saved)
@@ -449,7 +456,8 @@ class TaskFormViewModelTest {
                 TaskFormUiState.Success(
                     deadlineDate = null,
                     deadlineTime = null,
-                    scheduledAt = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
                     recurring = false,
                     showParentTaskField = false,
                     parentTask = null,
