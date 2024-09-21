@@ -1,6 +1,7 @@
 package io.github.evaogbe.diswantin.task.data
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Transaction
@@ -20,25 +21,101 @@ interface TaskDao {
             t2.scheduled_time AS scheduled_time_priority,
             t2.deadline_date AS deadline_date_priority,
             t2.deadline_time AS deadline_time_priority,
-            t2.recurring AS recurring_priority,
+            r2.task_id IS NOT NULL AS recurring_priority,
             t2.created_at AS created_at_priority,
             t2.id AS id_priority
         FROM task t
         JOIN task_path p ON p.ancestor = t.id
         JOIN (
-                SELECT p2.descendant, MAX(p2.depth) AS depth
-                FROM task_path p2
-                JOIN task t3 ON p2.ancestor = t3.id
-                LEFT JOIN (
-                    SELECT task_id, MAX(done_at) AS done_at
-                    FROM task_completion
-                    GROUP BY task_id
-                ) c ON c.task_id = t3.id
-                WHERE c.done_at IS NULL OR (t3.recurring AND c.done_at < :doneBefore)
-                GROUP BY p2.descendant
-            ) leaf ON leaf.descendant = p.descendant AND leaf.depth = p.depth
+            SELECT p2.descendant, MAX(p2.depth) AS depth
+            FROM task_path p2
+            LEFT JOIN (
+                SELECT task_id, MAX(done_at) AS done_at
+                FROM task_completion
+                GROUP BY task_id
+            ) ca ON ca.task_id = p2.ancestor
+            LEFT JOIN task_recurrence ra ON ra.task_id = p2.ancestor
+            LEFT JOIN (
+                SELECT task_id, MAX(done_at) AS done_at
+                FROM task_completion
+                GROUP BY task_id
+            ) cd ON cd.task_id = p2.descendant
+            LEFT JOIN task_recurrence rd ON rd.task_id = p2.descendant
+            WHERE (ca.done_at IS NULL OR (ra.task_id IS NOT NULL AND ca.done_at < :doneBefore))
+                AND (cd.done_at IS NULL OR (rd.task_id IS NOT NULL AND cd.done_at < :doneBefore))
+                AND (ra.start IS NULL OR ra.start <= :today)
+                AND CASE ra.type
+                    WHEN 0 THEN (julianday(:today) - julianday(ra.start)) % ra.step = 0
+                    WHEN 1 THEN (julianday(:today) - julianday(ra.start)) % (ra.step * 7) = 0
+                    WHEN 2 THEN (
+                            12
+                            + CAST(strftime('%m', :today) as INT)
+                            - CAST(strftime('%m', ra.start) as INT)
+                        ) % ra.step = 0
+                        AND (
+                            strftime('%d', ra.start) = strftime('%d', :today)
+                            OR (
+                                strftime('%m-%d', ra.start)
+                                    IN (
+                                        '01-31', '03-31', '05-31', '07-31', '08-31', '10-31',
+                                        '12-31'
+                                    )
+                                AND strftime('%m-%d', :today)
+                                    IN ('04-30', '06-30', '09-30', '11-30')
+                            )
+                            OR (
+                                strftime('%m-%d', ra.start)
+                                    IN (
+                                        '01-31', '02-29', '03-31', '04-30', '05-31', '06-30',
+                                        '07-31', '08-31', '09-30', '10-31', '11-30', '12-31'
+                                    )
+                                AND (
+                                    strftime('%m-%d', :today) = '02-29'
+                                    OR (
+                                        strftime('%m-%d', :today) = '02-28'
+                                        AND (
+                                            CAST(strftime('%Y', :today) as INT) & 3 != 0
+                                            OR (
+                                                CAST(strftime('%Y', :today) as INT) % 25 = 0
+                                                AND CAST(strftime('%Y', :today) as INT) & 15 != 0
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    WHEN 3 THEN (
+                            12
+                            + CAST(strftime('%m', :today) as INT)
+                            - CAST(strftime('%m', ra.start) as INT)
+                        ) % ra.step = 0
+                        AND ra.week = :week
+                        AND strftime('%w', ra.start) = strftime('%w', :today)
+                    WHEN 4 THEN (
+                            CAST(strftime('%Y', :today) as INT)
+                            - CAST(strftime('%Y', ra.start) as INT)
+                        ) % ra.step = 0
+                        AND (
+                            strftime('%m-%d', ra.start) = strftime('%m-%d', :today)
+                            OR (
+                                strftime('%m-%d', ra.start) = '02-29'
+                                AND strftime('%m-%d', :today) = '02-28'
+                                AND (
+                                    CAST(strftime('%Y', :today) as INT) & 3 != 0
+                                    OR (
+                                        CAST(strftime('%Y', :today) as INT) % 25 = 0
+                                        AND CAST(strftime('%Y', :today) as INT) & 15 != 0
+                                    )
+                                )
+                            )
+                        )
+                    ELSE TRUE
+                    END
+            GROUP BY p2.descendant
+        ) leaf ON leaf.descendant = p.descendant AND leaf.depth = p.depth
         JOIN task t2 ON p.descendant = t2.id
-        WHERE (t.scheduled_date IS NULL OR t.scheduled_date <= :scheduledDateBefore)
+        LEFT JOIN (SELECT DISTINCT task_id FROM task_recurrence) r2 ON r2.task_id = t2.id
+        WHERE (t.scheduled_date IS NULL OR t.scheduled_date <= :today)
             AND (t.scheduled_time IS NULL OR t.scheduled_time <= :scheduledTimeBefore)
         ORDER BY
             scheduled_date_priority IS NULL,
@@ -55,9 +132,10 @@ interface TaskDao {
         LIMIT 20"""
     )
     fun getTaskPriorities(
-        scheduledDateBefore: LocalDate,
+        today: LocalDate,
         scheduledTimeBefore: LocalTime,
         doneBefore: Instant,
+        week: Int,
     ): Flow<List<TaskPriority>>
 
     @Query("SELECT * FROM task WHERE id = :id LIMIT 1")
@@ -71,7 +149,6 @@ interface TaskDao {
             t.deadline_time,
             t.scheduled_date,
             t.scheduled_time,
-            t.recurring,
             com.done_at,
             t.category_id,
             cat.name AS category_name,
@@ -104,13 +181,14 @@ interface TaskDao {
     fun getTasksByCategoryId(categoryId: Long): Flow<List<Task>>
 
     @Query(
-        """SELECT t.id, t.name, t.recurring, c.done_at
+        """SELECT t.id, t.name, r.task_id IS NOT NULL AS recurring, c.done_at
         FROM task t
         LEFT JOIN (
             SELECT task_id, MAX(done_at) AS done_at
             FROM task_completion
             GROUP BY task_id
         ) c ON c.task_id = t.id
+        LEFT JOIN (SELECT DISTINCT task_id FROM task_recurrence) r ON r.task_id = t.id
         WHERE t.category_id = :categoryId
         ORDER BY c.done_at, t.name
         LIMIT 20"""
@@ -126,18 +204,22 @@ interface TaskDao {
     )
     fun search(query: String): Flow<List<Task>>
 
+    @Query("SELECT * FROM task_recurrence WHERE task_id = :taskId ORDER BY start")
+    fun getTaskRecurrencesByTaskId(taskId: Long): Flow<List<TaskRecurrence>>
+
     @Query("SELECT COUNT(*) FROM task")
     fun getCount(): Flow<Long>
 
     @Query(
-        """SELECT COUNT(*)
+        """SELECT COUNT(t.id)
         FROM task t
         LEFT JOIN (
             SELECT task_id, MAX(done_at) AS done_at
             FROM task_completion
             GROUP BY task_id
         ) c ON c.task_id = t.id
-        WHERE c.done_at IS NULL OR (t.recurring AND c.done_at < :doneBefore)"""
+        LEFT JOIN (SELECT DISTINCT task_id FROM task_recurrence) r ON r.task_id = t.id
+        WHERE c.done_at IS NULL OR (r.task_id IS NOT NULL AND c.done_at < :doneBefore)"""
     )
     fun getUndoneCount(doneBefore: Instant): Flow<Long>
 
@@ -150,6 +232,15 @@ interface TaskDao {
     @Insert
     suspend fun insertCompletion(completion: TaskCompletion)
 
+    @Insert
+    suspend fun insertRecurrences(recurrences: Collection<TaskRecurrence>)
+
+    @Update
+    suspend fun update(task: Task)
+
+    @Delete
+    suspend fun deleteRecurrences(recurrences: Collection<TaskRecurrence>)
+
     @Query(
         """INSERT INTO task_path
         (ancestor, descendant, depth)
@@ -160,63 +251,43 @@ interface TaskDao {
     suspend fun insertChain(parentId: Long, childId: Long)
 
     @Transaction
-    suspend fun insertWithParent(task: Task, parentId: Long?): Long {
-        val id = insert(task)
+    suspend fun insert(form: NewTaskForm): Long {
+        val id = insert(form.newTask)
         insertPath(TaskPath(ancestor = id, descendant = id, depth = 0))
-        if (parentId != null) {
-            insertChain(parentId = parentId, childId = id)
+
+        if (form.recurrences.isNotEmpty()) {
+            insertRecurrences(form.recurrences.map { it.copy(taskId = id) })
         }
+
+        if (form.parentTaskId != null) {
+            insertChain(parentId = form.parentTaskId, childId = id)
+        }
+
         return id
     }
 
-    @Update
-    suspend fun update(task: Task)
-
     @Query(
-        """SELECT *
-        FROM task_path
-        WHERE (ancestor = :taskId1 AND descendant = :taskId2)
-            OR (ancestor = :taskId2 AND descendant = :taskId1)
-        LIMIT 1"""
+        """SELECT EXISTS(
+            SELECT *
+            FROM task_path
+            WHERE ancestor = :ancestor AND descendant = :descendant
+        )"""
     )
-    suspend fun getConnectingPath(taskId1: Long, taskId2: Long): TaskPath?
+    suspend fun hasPath(ancestor: Long, descendant: Long): Boolean
 
-    @Query("DELETE FROM task_path WHERE (ancestor = :taskId OR descendant = :taskId) AND depth > 0")
-    suspend fun deletePathsByTaskId(taskId: Long)
+    @Query("SELECT descendant FROM task_path WHERE ancestor = :id AND depth = 1")
+    suspend fun getChildIds(id: Long): List<Long>
 
     @Query(
         """UPDATE task_path
-        SET depth = depth + 1
-        WHERE ancestor IN (SELECT ancestor FROM task_path WHERE descendant = :descendant)
-            AND descendant IN (SELECT descendant FROM task_path WHERE ancestor = :descendant)
-            AND depth > 0"""
+        SET depth = depth - 1
+        WHERE ancestor IN (SELECT ancestor FROM task_path WHERE descendant = :parentId)
+            AND descendant IN (SELECT descendant FROM task_path WHERE ancestor IN (:childIds))"""
     )
-    suspend fun incrementDepth(descendant: Long)
+    suspend fun decrementDepth(parentId: Long, childIds: List<Long>)
 
-    @Transaction
-    suspend fun connectPath(parentId: Long, childId: Long) {
-        val connectingPath = getConnectingPath(parentId, childId)
-        when (connectingPath?.ancestor) {
-            parentId -> {}
-            childId -> {
-                val existingParentId = getParent(childId).first()?.id
-                val existingChildIds = getChildIds(childId)
-                if (existingParentId != null && existingChildIds.isNotEmpty()) {
-                    decrementDepth(parentId = existingParentId, childIds = existingChildIds)
-                }
-                deletePathsByTaskId(childId)
-                insertChain(parentId = parentId, childId = childId)
-            }
-
-            null -> {
-                if (getParent(childId).first() != null) {
-                    incrementDepth(childId)
-                }
-
-                insertChain(parentId = parentId, childId = childId)
-            }
-        }
-    }
+    @Query("DELETE FROM task_path WHERE (ancestor = :taskId OR descendant = :taskId) AND depth > 0")
+    suspend fun deletePathsByTaskId(taskId: Long)
 
     @Query(
         """DELETE FROM task_path
@@ -226,30 +297,48 @@ interface TaskDao {
     suspend fun deleteAncestors(id: Long)
 
     @Transaction
-    suspend fun updateWithoutParent(task: Task) {
-        update(task)
-        deleteAncestors(task.id)
+    suspend fun connectPath(parentId: Long, childId: Long) {
+        if (hasPath(ancestor = childId, descendant = parentId)) {
+            val existingParentId = getParent(childId).first()?.id
+            val existingChildIds = getChildIds(childId)
+            if (existingParentId != null && existingChildIds.isNotEmpty()) {
+                decrementDepth(parentId = existingParentId, childIds = existingChildIds)
+            }
+
+            deletePathsByTaskId(childId)
+        } else {
+            deleteAncestors(childId)
+        }
+
+        insertChain(parentId = parentId, childId = childId)
     }
 
     @Transaction
-    suspend fun updateWithParent(task: Task, parentId: Long) {
-        update(task)
-        connectPath(parentId = parentId, childId = task.id)
-    }
+    suspend fun update(form: EditTaskForm) {
+        update(form.updatedTask)
 
-    @Query("SELECT descendant FROM task_path WHERE ancestor = :id AND depth = 1")
-    suspend fun getChildIds(id: Long): List<Long>
+        if (form.recurrencesToRemove.isNotEmpty()) {
+            deleteRecurrences(form.recurrencesToRemove)
+        }
+
+        if (form.recurrencesToAdd.isNotEmpty()) {
+            insertRecurrences(form.recurrencesToAdd)
+        }
+
+        when (form.parentUpdateType) {
+            is PathUpdateType.Keep -> {}
+            is PathUpdateType.Remove -> {
+                deleteAncestors(form.updatedTask.id)
+            }
+
+            is PathUpdateType.Replace -> {
+                connectPath(parentId = form.parentUpdateType.id, childId = form.updatedTask.id)
+            }
+        }
+    }
 
     @Query("DELETE FROM task WHERE id = :id")
     suspend fun deleteById(id: Long)
-
-    @Query(
-        """UPDATE task_path
-        SET depth = depth - 1
-        WHERE ancestor IN (SELECT ancestor FROM task_path WHERE descendant = :parentId)
-            AND descendant IN (SELECT descendant FROM task_path WHERE ancestor IN (:childIds))"""
-    )
-    suspend fun decrementDepth(parentId: Long, childIds: List<Long>)
 
     @Transaction
     suspend fun deleteWithPath(id: Long) {

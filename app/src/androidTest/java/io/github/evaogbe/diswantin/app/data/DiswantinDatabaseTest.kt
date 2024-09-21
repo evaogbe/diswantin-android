@@ -16,7 +16,9 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
+import java.util.Locale
 
 @RunWith(AndroidJUnit4::class)
 class DiswantinDatabaseTest {
@@ -343,6 +345,37 @@ class DiswantinDatabaseTest {
             assertThat(stmt.getString(3)).isEqualTo("2024-08-24")
             assertThat(stmt.getString(4)).isEqualTo("20:00")
             assertThat(stmt.moveToNext()).isFalse()
+        }
+        migratedDb.close()
+    }
+
+    fun testMigration22to23() {
+        val taskId = faker.random.nextLong(min = 1, max = Long.MAX_VALUE)
+        val taskCreatedAt = faker.random.randomPastDate().toInstant().toEpochMilli()
+        val taskName = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
+
+        val initialDb = migrationTestHelper.createDatabase(DiswantinDatabase.DB_NAME, 22)
+        initialDb.execSQL(
+            "INSERT INTO `task` (`id`, `created_at`, `name`, `recurring`) VALUES (?, ?, ?, ?)",
+            arrayOf(taskId, taskCreatedAt, taskName, true)
+        )
+        initialDb.close()
+
+        val migratedDb =
+            migrationTestHelper.runMigrationsAndValidate(
+                DiswantinDatabase.DB_NAME,
+                23,
+                true,
+                DiswantinDatabase.getMigration22To23(LocalDate.parse("2024-09-13"), Locale.US),
+            )
+        migratedDb.query("SELECT * FROM `task_recurrence`").use { stmt ->
+            assertThat(stmt.moveToFirst()).isTrue()
+            assertThat(stmt.getLong(0)).isPositive()
+            assertThat(stmt.getLong(1)).isEqualTo(taskId)
+            assertThat(stmt.getString(2)).isEqualTo("2024-09-13")
+            assertThat(stmt.getInt(3)).isEqualTo(0)
+            assertThat(stmt.getInt(4)).isEqualTo(1)
+            assertThat(stmt.getInt(5)).isEqualTo(2)
         }
         migratedDb.close()
     }

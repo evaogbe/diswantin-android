@@ -7,15 +7,13 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.parcelize.Parcelize
 
 @Parcelize
-data class TaskCategoryDetailTopBarState(val categoryId: Long?, val onDeleteCategory: () -> Unit) :
-    Parcelable
+data class TaskCategoryDetailTopBarState(val categoryId: Long?) : Parcelable
 
-data class TaskItemState(
-    val id: Long,
-    val name: String,
-    val recurring: Boolean,
-    val isDone: Boolean,
-)
+enum class TaskCategoryDetailTopBarAction {
+    Delete
+}
+
+data class TaskItemUiState(val id: Long, val name: String, val isDone: Boolean)
 
 sealed interface TaskCategoryDetailUiState {
     data object Pending : TaskCategoryDetailUiState
@@ -24,7 +22,7 @@ sealed interface TaskCategoryDetailUiState {
 
     data class Success(
         val category: TaskCategory,
-        val tasks: ImmutableList<TaskItemState>,
+        val tasks: ImmutableList<TaskItemUiState>,
         @StringRes val userMessage: Int?
     ) : TaskCategoryDetailUiState
 

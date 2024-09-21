@@ -12,7 +12,6 @@ data class TaskDetail(
     @ColumnInfo("deadline_time") val deadlineTime: LocalTime?,
     @ColumnInfo("scheduled_date") val scheduledDate: LocalDate?,
     @ColumnInfo("scheduled_time") val scheduledTime: LocalTime?,
-    val recurring: Boolean,
     @ColumnInfo("done_at") val doneAt: Instant?,
     @ColumnInfo("category_id") val categoryId: Long?,
     @ColumnInfo("category_name") val categoryName: String?,

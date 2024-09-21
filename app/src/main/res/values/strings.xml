@@ -2,6 +2,7 @@
     <string name="add_button">Add</string>
     <string name="add_deadline_date_button">Add deadline date</string>
     <string name="add_deadline_time_button">Add deadline time</string>
+    <string name="add_recurrence_button">Add recurrence</string>
     <string name="add_scheduled_at_button">Schedule</string>
     <string name="add_scheduled_date_button">Add scheduled date</string>
     <string name="add_task_button">Add to-do</string>
@@ -24,6 +25,7 @@
     <string name="deadline_label">Deadline</string>
     <string name="deadline_date_label">Deadline date</string>
     <string name="deadline_time_label">Deadline time</string>
+    <string name="done_button">Done</string>
     <string name="form_type_button_category">Category</string>
     <string name="form_type_button_task">Task</string>
     <string name="mark_done_button">Done</string>
@@ -31,7 +33,68 @@
     <string name="name_label">Name</string>
     <string name="ok_button">OK</string>
     <string name="parent_task_label">Previous to-do</string>
-    <string name="recurring_label">Recurring</string>
+    <plurals name="recurrence_daily">
+        <item quantity="one">Daily</item>
+        <item quantity="other">Every %1$d days</item>
+    </plurals>
+    <plurals name="recurrence_day">
+        <item quantity="one">day</item>
+        <item quantity="other">days</item>
+    </plurals>
+    <string name="recurrence_label">Repeats</string>
+    <plurals name="recurrence_month">
+        <item quantity="one">month</item>
+        <item quantity="other">months</item>
+    </plurals>
+    <plurals name="recurrence_monthly_on_day">
+        <item quantity="one">Monthly</item>
+        <item quantity="other">Every %1$d months</item>
+    </plurals>
+    <plurals name="recurrence_monthly_on_week_1">
+        <item quantity="one">Monthly on the first %2$s</item>
+        <item quantity="other">Every %1$d months on the first %2$s</item>
+    </plurals>
+    <plurals name="recurrence_monthly_on_week_2">
+        <item quantity="one">Monthly on the second %2$s</item>
+        <item quantity="other">Every %1$d months on the second %2$s</item>
+    </plurals>
+    <plurals name="recurrence_monthly_on_week_3">
+        <item quantity="one">Monthly on the third %2$s</item>
+        <item quantity="other">Every %1$d months on the third %2$s</item>
+    </plurals>
+    <plurals name="recurrence_monthly_on_week_4">
+        <item quantity="one">Monthly on the fourth %2$s</item>
+        <item quantity="other">Every %1$d months on the fourth %2$s</item>
+    </plurals>
+    <plurals name="recurrence_monthly_on_week_5">
+        <item quantity="one">Monthly on the fifth %2$s</item>
+        <item quantity="other">Every %1$d months on the fifth %2$s</item>
+    </plurals>
+    <plurals name="recurrence_monthly_on_week_6">
+        <item quantity="one">Monthly on the sixth %2$s</item>
+        <item quantity="other">Every %1$d months on the sixth %2$s</item>
+    </plurals>
+    <string name="recurrence_monthly_type_label">Repeats on</string>
+    <string name="recurrence_monthly_type_on_day">Day of month</string>
+    <string name="recurrence_monthly_type_on_week">Week of month</string>
+    <string name="recurrence_step_label">Every</string>
+    <plurals name="recurrence_week">
+        <item quantity="one">week</item>
+        <item quantity="other">weeks</item>
+    </plurals>
+    <string name="recurrence_weekday_label">Repeats on</string>
+    <plurals name="recurrence_weekly">
+        <item quantity="one">Weekly on %2$s</item>
+        <item quantity="other">Every %1$d weeks on %2$s</item>
+    </plurals>
+    <plurals name="recurrence_year">
+        <item quantity="one">year</item>
+        <item quantity="other">years</item>
+    </plurals>
+    <plurals name="recurrence_yearly">
+        <item quantity="one">Yearly</item>
+        <item quantity="other">Every %1$d years</item>
+    </plurals>
     <string name="save_button">Save</string>
     <string name="scheduled_at_label">Scheduled at</string>
     <string name="scheduled_date_label">Scheduled date</string>
@@ -40,6 +103,7 @@
     <string name="search_task_options_error">Something went wrong loading to-dos</string>
     <string name="skip_button">Skip</string>
     <string name="skip_dialog_title">What should be done earlier?</string>
+    <string name="start_date_label">Start date</string>
     <string name="suggestion_item_break_down_task"><![CDATA[Be <b>flexible</b> about how much of the task needs to be completed. Do just the first <b>2 minutes</b>]]></string>
     <string name="suggestion_item_check_the_facts"><![CDATA[<b>Check the Facts</b>]]></string>
     <string-array name="suggestion_item_check_the_facts_steps">
@@ -88,6 +152,7 @@
     <string name="task_form_title_edit">Edit To-do</string>
     <string name="task_form_title_new">New To-do</string>
     <string name="task_name_label">To-do name</string>
+    <string name="task_recurrence_form_title">Recurrence</string>
     <string name="task_search_empty">No matching to-dos</string>
     <string name="task_search_error">Something went wrong searching for to-dos</string>
     <string name="task_search_title">Search to-dos</string>

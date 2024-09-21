@@ -12,7 +12,7 @@ class LocalTaskCategoryRepository @Inject constructor(
     private val taskDao: TaskDao,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : TaskCategoryRepository {
-    override val categoryListStream = taskCategoryDao.getTaskCategories().flowOn(ioDispatcher)
+    override val categoriesStream = taskCategoryDao.getTaskCategories().flowOn(ioDispatcher)
 
     override fun getCategoryWithTasksById(id: Long) =
         combine(taskCategoryDao.getById(id), taskDao.getTasksByCategoryId(id)) { category, tasks ->

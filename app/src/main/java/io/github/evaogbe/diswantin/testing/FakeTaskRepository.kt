@@ -4,9 +4,11 @@ import io.github.evaogbe.diswantin.task.data.CurrentTaskParams
 import io.github.evaogbe.diswantin.task.data.EditTaskForm
 import io.github.evaogbe.diswantin.task.data.NewTaskForm
 import io.github.evaogbe.diswantin.task.data.PathUpdateType
+import io.github.evaogbe.diswantin.task.data.RecurrenceType
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskCompletion
 import io.github.evaogbe.diswantin.task.data.TaskDetail
+import io.github.evaogbe.diswantin.task.data.TaskRecurrence
 import io.github.evaogbe.diswantin.task.data.TaskRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,8 +17,10 @@ import kotlinx.coroutines.flow.update
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.Month
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import java.time.temporal.ChronoUnit
 import kotlin.reflect.KFunction
 
 class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRepository {
@@ -31,7 +35,8 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
             db.taskTable,
             db.taskPathTable,
             db.taskCompletionTable,
-        ) { throwingMethods, tasks, taskPaths, taskCompletions ->
+            db.taskRecurrenceTable,
+        ) { throwingMethods, tasks, taskPaths, taskCompletions, taskRecurrences ->
             if (::getCurrentTask in throwingMethods) {
                 throw RuntimeException("Test")
             }
@@ -45,32 +50,53 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
                             LocalTime.of(9, 0),
                         )
                     }
-                        .thenComparing({
+                        .thenComparing({ task ->
                             dateTimePartsToZonedDateTime(
-                                it.deadlineDate,
-                                it.deadlineTime,
+                                task.deadlineDate,
+                                task.deadlineTime,
                                 LocalTime.MAX,
-                            )
-                                ?: if (it.recurring) params.recurringDeadline else null
+                            ) ?: if (taskRecurrences.values.any { it.taskId == task.id }) {
+                                params.recurringDeadline
+                            } else {
+                                null
+                            }
                         }, nullsLast())
-                        .thenComparing(Task::recurring, reverseOrder())
+                        .thenComparing { task ->
+                            !taskRecurrences.values.any { it.taskId == task.id }
+                        }
                         .thenComparing(Task::createdAt)
                         .thenComparing(Task::id)
                 )
-                .mapNotNull { task ->
+                .filter { task ->
+                    val doneAt = taskCompletions.values
+                        .filter { it.taskId == task.id }
+                        .maxOfOrNull { it.doneAt }
+                    doneAt == null ||
+                            (taskRecurrences.values.any { it.taskId == task.id } &&
+                                    doneAt < params.doneBefore)
+                }
+                .mapNotNull { descTask ->
                     taskPaths.values
                         .filter { path ->
                             val doneAt = taskCompletions.values
                                 .filter { it.taskId == path.ancestor }
                                 .maxOfOrNull { it.doneAt }
-                            path.descendant == task.id && tasks[path.ancestor]?.let {
-                                doneAt == null || it.recurring && doneAt < params.doneBefore
+                            path.descendant == descTask.id && tasks[path.ancestor]?.let { ancTask ->
+                                val recurrences = taskRecurrences.values.filter {
+                                    it.taskId == ancTask.id
+                                }
+                                if (recurrences.isEmpty()) {
+                                    doneAt == null
+                                } else {
+                                    doesRecurToday(recurrences, params) &&
+                                            (doneAt == null || doneAt < params.doneBefore)
+                                }
                             } == true
                         }
                         .maxByOrNull { it.depth }
                         ?.let { tasks[it.ancestor] }
                 }.firstOrNull { task ->
-                    task.scheduledDate?.let { it <= params.scheduledDateBefore } != false &&
+                    task.scheduledDate?.let { it <= params.today } != false &&
                             task.scheduledTime?.let { it <= params.scheduledTimeBefore } != false
                 }
         }
@@ -83,6 +109,57 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
         date != null -> date.atTime(time ?: defaultTime).atZone(ZoneId.systemDefault())
         time != null -> ZonedDateTime.now().with(time)
         else -> null
+    }
+
+    private fun doesRecurToday(
+        recurrences: List<TaskRecurrence>,
+        params: CurrentTaskParams,
+    ): Boolean {
+        val recurrence = recurrences.first()
+        return when (recurrence.type) {
+            RecurrenceType.Day -> {
+                ChronoUnit.DAYS.between(recurrence.start, params.today) % recurrence.step == 0L
+            }
+
+            RecurrenceType.Week -> {
+                (ChronoUnit.WEEKS.between(
+                    recurrence.start,
+                    params.today
+                ) % recurrence.step == 0L) &&
+                        recurrence.start.dayOfWeek == params.today.dayOfWeek
+            }
+
+            RecurrenceType.DayOfMonth -> {
+                (ChronoUnit.MONTHS.between(
+                    recurrence.start,
+                    params.today
+                ) % recurrence.step == 0L) &&
+                        (recurrence.start.dayOfMonth == params.today.dayOfMonth ||
+                                (recurrence.start.dayOfMonth == recurrence.start.lengthOfMonth() &&
+                                        params.today.dayOfMonth == params.today.lengthOfMonth()))
+            }
+
+            RecurrenceType.WeekOfMonth -> {
+                recurrences.any {
+                    (ChronoUnit.MONTHS.between(it.start, params.today) % it.step == 0L) &&
+                            it.start.dayOfWeek == params.today.dayOfWeek &&
+                            it.week == params.week
+                }
+            }
+
+            RecurrenceType.Year -> {
+                (ChronoUnit.YEARS.between(
+                    recurrence.start,
+                    params.today
+                ) % recurrence.step == 0L) &&
+                        recurrence.start.month == params.today.month &&
+                        (recurrence.start.dayOfMonth == params.today.dayOfMonth ||
+                                (recurrence.start.month == Month.FEBRUARY &&
+                                        recurrence.start.dayOfMonth == 29 &&
+                                        params.today.dayOfMonth == 28 &&
+                                        !params.today.isLeapYear))
+            }
+        }
     }
 
     override fun getById(id: Long): Flow<Task> =
@@ -116,7 +193,6 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
                     deadlineTime = task.deadlineTime,
                     scheduledDate = task.scheduledDate,
                     scheduledTime = task.scheduledTime,
-                    recurring = task.recurring,
                     doneAt = taskCompletions.values
                         .filter { it.taskId == task.id }
                         .maxOfOrNull { it.doneAt },
@@ -154,12 +230,22 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
             }
         }
 
+    override fun getTaskRecurrencesByTaskId(taskId: Long): Flow<List<TaskRecurrence>> =
+        combine(throwingMethods, db.taskRecurrenceTable) { throwingMethods, taskRecurrences ->
+            if (::getTaskRecurrencesByTaskId in throwingMethods) {
+                throw RuntimeException("Test")
+            }
+
+            taskRecurrences.values.filter { it.taskId == taskId }.sortedBy { it.start }
+        }
+
     override fun getCount(excludeDone: Boolean): Flow<Long> =
         combine(
             throwingMethods,
             db.taskTable,
             db.taskCompletionTable,
-        ) { throwingMethods, tasks, taskCompletions ->
+            db.taskRecurrenceTable,
+        ) { throwingMethods, tasks, taskCompletions, taskRecurrences ->
             if (::getCount in throwingMethods) {
                 throw RuntimeException("Test")
             }
@@ -170,7 +256,9 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
                     val doneAt = taskCompletions.values
                         .filter { it.taskId == task.id }
                         .maxOfOrNull { it.doneAt }
-                    doneAt == null || (task.recurring == true && doneAt < doneBefore)
+                    doneAt == null ||
+                            (taskRecurrences.values.any { it.taskId == task.id } &&
+                                    doneAt < doneBefore)
                 }.size.toLong()
             } else {
                 tasks.size.toLong()
@@ -183,9 +271,12 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
         }
 
         val task = db.insertTask(form.newTask)
+        form.recurrences.forEach { db.insertTaskRecurrence(it.copy(taskId = task.id)) }
+
         if (form.parentTaskId != null) {
             db.insertChain(parentId = form.parentTaskId, childId = task.id)
         }
+
         return task
     }
 
@@ -195,6 +286,9 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
         }
 
         db.updateTask(form.updatedTask)
+        form.recurrencesToRemove.forEach { db.deleteTaskRecurrence(it.id) }
+        form.recurrencesToAdd.forEach(db::insertTaskRecurrence)
+
         when (form.parentUpdateType) {
             is PathUpdateType.Keep -> {}
             is PathUpdateType.Remove -> {
@@ -208,6 +302,7 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
                 )
             }
         }
+
         return form.updatedTask
     }
 

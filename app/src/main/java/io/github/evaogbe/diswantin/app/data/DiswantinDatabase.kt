@@ -14,6 +14,7 @@ import androidx.room.TypeConverters
 import androidx.room.migration.AutoMigrationSpec
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import io.github.evaogbe.diswantin.data.weekOfMonthField
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskCategory
 import io.github.evaogbe.diswantin.task.data.TaskCategoryDao
@@ -21,18 +22,22 @@ import io.github.evaogbe.diswantin.task.data.TaskCompletion
 import io.github.evaogbe.diswantin.task.data.TaskDao
 import io.github.evaogbe.diswantin.task.data.TaskFts
 import io.github.evaogbe.diswantin.task.data.TaskPath
+import io.github.evaogbe.diswantin.task.data.TaskRecurrence
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 @Database(
-    version = 22,
+    version = 24,
     entities = [
         Task::class,
         TaskFts::class,
         TaskPath::class,
         TaskCategory::class,
         TaskCompletion::class,
+        TaskRecurrence::class,
     ],
     autoMigrations = [
         AutoMigration(from = 2, to = 3),
@@ -49,6 +54,7 @@ import java.time.format.DateTimeFormatter
         AutoMigration(from = 18, to = 19, spec = DiswantinDatabase.Migration18to19::class),
         AutoMigration(from = 19, to = 20, spec = DiswantinDatabase.Migration19to20::class),
         AutoMigration(from = 21, to = 22, spec = DiswantinDatabase.Migration21to22::class),
+        AutoMigration(from = 23, to = 24, spec = DiswantinDatabase.Migration23to24::class),
     ]
 )
 @TypeConverters(Converters::class)
@@ -80,6 +86,9 @@ abstract class DiswantinDatabase : RoomDatabase() {
 
     @DeleteColumn(tableName = "task", columnName = "scheduled_at")
     class Migration21to22 : AutoMigrationSpec
+
+    @DeleteColumn(tableName = "task", columnName = "recurring")
+    class Migration23to24 : AutoMigrationSpec
 
     companion object {
         const val DB_NAME = "diswantin"
@@ -276,6 +285,37 @@ abstract class DiswantinDatabase : RoomDatabase() {
                 }
             }
 
+        fun getMigration22To23(
+            start: LocalDate = LocalDate.now(),
+            locale: Locale = Locale.getDefault(),
+        ) = object : Migration(22, 23) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                val week = start.get(weekOfMonthField(locale))
+                db.execSQL(
+                    """CREATE TABLE `task_recurrence` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `task_id` INTEGER NOT NULL
+                            REFERENCES `task` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+                        `start` TEXT NOT NULL,
+                        `type` INTEGER NOT NULL,
+                        `step` INTEGER NOT NULL,
+                        `week` INTEGER NOT NULL
+                    )"""
+                )
+                db.execSQL(
+                    """CREATE UNIQUE INDEX IF NOT EXISTS `index_task_recurrence_task_id_start`
+                    ON `task_recurrence` (`task_id`, `start`)"""
+                )
+                db.execSQL(
+                    """INSERT INTO `task_recurrence`
+                    (`task_id`, `start`, `type`, `step`, `week`)
+                    SELECT `id`, '$start', 0, 1, $week
+                    FROM `task`
+                    WHERE `recurring`"""
+                )
+            }
+        }
+
         fun createDatabase(context: Context) =
             Room.databaseBuilder(
                 context.applicationContext,
@@ -289,6 +329,7 @@ abstract class DiswantinDatabase : RoomDatabase() {
                 MIGRATION_14_15,
                 getMigration17to18(),
                 getMigration20to21(),
+                getMigration22To23(),
             ).build()
     }
 }

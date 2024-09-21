@@ -13,6 +13,8 @@ interface TaskRepository {
 
     fun search(query: String): Flow<List<Task>>
 
+    fun getTaskRecurrencesByTaskId(taskId: Long): Flow<List<TaskRecurrence>>
+
     fun getCount(excludeDone: Boolean = false): Flow<Long>
 
     suspend fun create(form: NewTaskForm): Task

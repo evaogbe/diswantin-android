@@ -12,7 +12,11 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
 @Parcelize
-data class TaskDetailTopBarState(val taskId: Long?, val onDeleteTask: () -> Unit) : Parcelable
+data class TaskDetailTopBarState(val taskId: Long?) : Parcelable
+
+enum class TaskDetailTopBarAction {
+    Delete
+}
 
 sealed interface TaskDetailUiState {
     data object Pending : TaskDetailUiState
@@ -21,6 +25,7 @@ sealed interface TaskDetailUiState {
 
     data class Success(
         val task: TaskDetail,
+        val recurrence: TaskRecurrenceUiState?,
         @StringRes val userMessage: Int?,
         private val clock: Clock,
     ) : TaskDetailUiState {
@@ -28,12 +33,12 @@ sealed interface TaskDetailUiState {
 
         val formattedScheduledAt = formatDateTime(task.scheduledDate, task.scheduledTime)
 
-        val isDone = if (task.recurring) {
+        val isDone = if (recurrence == null) {
+            task.doneAt != null
+        } else {
             task.doneAt?.let {
                 it < ZonedDateTime.now(clock).with(LocalTime.MIN).toInstant()
             } == false
-        } else {
-            task.doneAt != null
         }
 
         private fun formatDateTime(date: LocalDate?, time: LocalTime?) = when {

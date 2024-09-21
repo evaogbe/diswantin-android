@@ -18,15 +18,11 @@ import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.typography
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -53,7 +49,10 @@ import io.github.evaogbe.diswantin.data.Result
 import io.github.evaogbe.diswantin.data.getOrDefault
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.ui.components.AutocompleteField
+import io.github.evaogbe.diswantin.ui.components.ButtonWithIcon
+import io.github.evaogbe.diswantin.ui.components.FilledTonalButtonWithIcon
 import io.github.evaogbe.diswantin.ui.components.LoadFailureLayout
+import io.github.evaogbe.diswantin.ui.components.OutlinedButtonWithIcon
 import io.github.evaogbe.diswantin.ui.components.PendingLayout
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.evaogbe.diswantin.ui.theme.IconSizeLg
@@ -186,31 +185,17 @@ fun CurrentTaskLayout(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceAround,
             ) {
-                OutlinedButton(
+                OutlinedButtonWithIcon(
                     onClick = { showSkipDialog = true },
                     enabled = uiState.canSkip,
-                    contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.baseline_skip_next_24),
-                        contentDescription = null,
-                        modifier = Modifier.size(ButtonDefaults.IconSize),
-                    )
-                    Spacer(Modifier.size(ButtonDefaults.IconSpacing))
-                    Text(stringResource(R.string.skip_button))
-                }
-                FilledTonalButton(
+                    painter = painterResource(R.drawable.baseline_skip_next_24),
+                    text = stringResource(R.string.skip_button),
+                )
+                FilledTonalButtonWithIcon(
                     onClick = onMarkTaskDone,
-                    contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Done,
-                        contentDescription = null,
-                        modifier = Modifier.size(ButtonDefaults.IconSize),
-                    )
-                    Spacer(Modifier.size(ButtonDefaults.IconSpacing))
-                    Text(stringResource(R.string.mark_done_button))
-                }
+                    imageVector = Icons.Default.Done,
+                    text = stringResource(R.string.mark_done_button),
+                )
             }
         }
     }
@@ -294,18 +279,11 @@ fun EmptyCurrentTaskLayout(onAddTask: () -> Unit, modifier: Modifier = Modifier)
                 style = typography.headlineLarge
             )
             Spacer(Modifier.size(SpaceLg))
-            Button(
+            ButtonWithIcon(
                 onClick = onAddTask,
-                contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = null,
-                    modifier = Modifier.size(ButtonDefaults.IconSize),
-                )
-                Spacer(Modifier.size(ButtonDefaults.IconSpacing))
-                Text(stringResource(R.string.add_task_button))
-            }
+                imageVector = Icons.Default.Add,
+                text = stringResource(R.string.add_task_button),
+            )
         }
     }
 }

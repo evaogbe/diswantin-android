@@ -17,10 +17,15 @@ data class EditTaskForm(
     private val deadlineTime: LocalTime?,
     private val scheduledDate: LocalDate?,
     private val scheduledTime: LocalTime?,
-    private val recurring: Boolean,
+    private val recurrences: Collection<TaskRecurrence>,
     val parentUpdateType: PathUpdateType,
     private val existingTask: Task,
+    private val existingRecurrences: Collection<TaskRecurrence>,
 ) {
+    val recurrencesToRemove: Collection<TaskRecurrence>
+
+    val recurrencesToAdd: Collection<TaskRecurrence>
+
     init {
         require(name.isNotBlank()) { "Name must be present" }
         require(
@@ -36,6 +41,11 @@ data class EditTaskForm(
         require(scheduledTime != null || scheduledDate == null) {
             "Must have scheduledTime if scheduledDate is set, but got scheduledDate: $scheduledDate"
         }
+
+        val newRecurrenceSet = recurrences.toSet()
+        val oldRecurrenceSet = existingRecurrences.map { it.copy(id = 0L) }.toSet()
+        recurrencesToRemove = existingRecurrences.filterNot { it.copy(id = 0L) in newRecurrenceSet }
+        recurrencesToAdd = recurrences.filterNot { it in oldRecurrenceSet }
     }
 
     val updatedTask = existingTask.copy(
@@ -44,6 +54,5 @@ data class EditTaskForm(
         deadlineTime = deadlineTime,
         scheduledDate = scheduledDate,
         scheduledTime = scheduledTime,
-        recurring = recurring,
     )
 }

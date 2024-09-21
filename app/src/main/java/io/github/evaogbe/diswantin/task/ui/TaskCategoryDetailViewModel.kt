@@ -46,10 +46,9 @@ class TaskCategoryDetailViewModel @Inject constructor(
                     TaskCategoryDetailUiState.Success(
                         category = categoryWithTasks.category,
                         tasks = categoryWithTasks.tasks.map { task ->
-                            TaskItemState(
+                            TaskItemUiState(
                                 id = task.id,
                                 name = task.name,
-                                recurring = task.recurring,
                                 isDone = if (task.recurring) {
                                     task.doneAt?.let { it < midnight } == false
                                 } else {

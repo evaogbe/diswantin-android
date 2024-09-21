@@ -19,6 +19,12 @@ interface TaskCategoryDao {
     @Insert
     suspend fun insert(category: TaskCategory): Long
 
+    @Update
+    suspend fun update(category: TaskCategory)
+
+    @Delete
+    suspend fun delete(category: TaskCategory)
+
     @Query("UPDATE task SET category_id = :id WHERE id IN (:taskIds)")
     suspend fun addCategoryToTasks(id: Long, taskIds: List<Long>)
 
@@ -28,9 +34,6 @@ interface TaskCategoryDao {
         addCategoryToTasks(id, taskIds)
         return id
     }
-
-    @Update
-    suspend fun update(category: TaskCategory)
 
     @Query("UPDATE task SET category_id = NULL WHERE id in (:taskIds)")
     suspend fun removeCategoryFromTasks(taskIds: List<Long>)
@@ -45,7 +48,4 @@ interface TaskCategoryDao {
         removeCategoryFromTasks(taskIdsToRemove)
         addCategoryToTasks(category.id, taskIdsToInsert)
     }
-
-    @Delete
-    suspend fun delete(category: TaskCategory)
 }

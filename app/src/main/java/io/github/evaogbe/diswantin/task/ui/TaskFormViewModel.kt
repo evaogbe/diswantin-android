@@ -9,12 +9,17 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.data.Result
+import io.github.evaogbe.diswantin.data.getOrDefault
+import io.github.evaogbe.diswantin.data.weekOfMonthField
 import io.github.evaogbe.diswantin.task.data.EditTaskForm
 import io.github.evaogbe.diswantin.task.data.NewTaskForm
 import io.github.evaogbe.diswantin.task.data.PathUpdateType
+import io.github.evaogbe.diswantin.task.data.RecurrenceType
 import io.github.evaogbe.diswantin.task.data.Task
+import io.github.evaogbe.diswantin.task.data.TaskRecurrence
 import io.github.evaogbe.diswantin.task.data.TaskRepository
 import io.github.evaogbe.diswantin.ui.navigation.NavArguments
+import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -32,6 +37,7 @@ import timber.log.Timber
 import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalTime
+import java.util.Locale
 import javax.inject.Inject
 
 @HiltViewModel
@@ -39,6 +45,7 @@ class TaskFormViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val taskRepository: TaskRepository,
     private val clock: Clock,
+    val locale: Locale,
 ) : ViewModel() {
     private val taskId: Long? = savedStateHandle[NavArguments.ID_KEY]
 
@@ -55,7 +62,7 @@ class TaskFormViewModel @Inject constructor(
 
     private val scheduledTime = MutableStateFlow<LocalTime?>(null)
 
-    private val recurring = MutableStateFlow(false)
+    private val recurrenceUiState = MutableStateFlow<TaskRecurrenceUiState?>(null)
 
     private val parentTask = MutableStateFlow<Task?>(null)
 
@@ -74,6 +81,15 @@ class TaskFormViewModel @Inject constructor(
             }
     } ?: flowOf(Result.Success(null))
 
+    private val existingRecurrencesStream = taskId?.let { id ->
+        taskRepository.getTaskRecurrencesByTaskId(id)
+            .map<List<TaskRecurrence>, Result<List<TaskRecurrence>>> { Result.Success(it) }
+            .catch { e ->
+                Timber.e(e, "Failed to fetch task recurrences by task id: %d", id)
+                emit(Result.Failure)
+            }
+    } ?: flowOf(Result.Success(emptyList()))
+
     private val existingParentTaskStream = taskId?.let { id ->
         taskRepository.getParent(id)
             .map<Task?, Result<Task?>> { Result.Success(it) }
@@ -90,7 +106,7 @@ class TaskFormViewModel @Inject constructor(
         deadlineTime,
         scheduledDate,
         scheduledTime,
-        recurring,
+        recurrenceUiState,
         taskRepository.getCount().catch { e ->
             Timber.e(e, "Failed to fetch task count")
             emit(0L)
@@ -109,37 +125,40 @@ class TaskFormViewModel @Inject constructor(
         saveResult,
         userMessage,
         existingTaskStream,
+        existingRecurrencesStream,
         existingParentTaskStream,
     ) { args ->
         val deadlineDate = args[0] as LocalDate?
         val deadlineTime = args[1] as LocalTime?
         val scheduledDate = args[2] as LocalDate?
         val scheduledTime = args[3] as LocalTime?
-        val recurring = args[4] as Boolean
+        val recurrenceUiState = args[4] as TaskRecurrenceUiState?
         val taskCount = args[5] as Long
         val parentTask = args[6] as Task?
         val parentTaskOptions = args[7] as List<Task>
         val saveResult = args[8] as Result<Unit>?
         val userMessage = args[9] as Int?
         val existingTask = args[10] as Result<Task?>
-        val existingParentTask = args[11] as Result<Task?>
+        val existingRecurrences = args[11] as Result<List<TaskRecurrence>>
+        val existingParentTask = args[12] as Result<Task?>
 
         when {
             saveResult is Result.Success -> TaskFormUiState.Saved
-            existingTask is Result.Success && existingParentTask is Result.Success -> {
+            existingTask is Result.Success &&
+                    existingParentTask is Result.Success &&
+                    existingRecurrences is Result.Success -> {
                 TaskFormUiState.Success(
                     deadlineDate = deadlineDate,
                     deadlineTime = deadlineTime,
                     scheduledDate = scheduledDate,
                     scheduledTime = scheduledTime,
-                    recurring = recurring,
+                    recurrence = recurrenceUiState,
                     showParentTaskField = taskCount > if (taskId == null) 0L else 1L,
                     parentTask = parentTask,
                     parentTaskOptions = parentTaskOptions.filterNot { it == existingTask.value }
                         .toPersistentList(),
                     hasSaveError = saveResult is Result.Failure,
                     userMessage = userMessage,
-                    clock = clock,
                 )
             }
 
@@ -151,6 +170,28 @@ class TaskFormViewModel @Inject constructor(
         initialValue = TaskFormUiState.Pending,
     )
 
+    val recurrenceUiStateOrDefault = recurrenceUiState.map {
+        it ?: TaskRecurrenceUiState(
+            start = LocalDate.now(clock),
+            type = RecurrenceType.Day,
+            step = 1,
+            weekdays = persistentSetOf(),
+            locale = locale,
+        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000L),
+        initialValue = TaskRecurrenceUiState(
+            start = LocalDate.now(clock),
+            type = RecurrenceType.Day,
+            step = 1,
+            weekdays = persistentSetOf(),
+            locale = locale,
+        ),
+    )
+
+    val currentWeekday = LocalDate.now(clock).dayOfWeek
+
     init {
         viewModelScope.launch {
             val existingTask = existingTaskStream.first().getOrNull() ?: return@launch
@@ -159,7 +200,9 @@ class TaskFormViewModel @Inject constructor(
             deadlineTime.value = existingTask.deadlineTime
             scheduledDate.value = existingTask.scheduledDate
             scheduledTime.value = existingTask.scheduledTime
-            recurring.value = existingTask.recurring
+            recurrenceUiState.value = existingRecurrencesStream.first().getOrNull()?.let {
+                TaskRecurrenceUiState.tryFromEntities(it, locale)
+            }
             parentTask.value = existingParentTaskStream.first().getOrNull()
         }
     }
@@ -190,12 +233,17 @@ class TaskFormViewModel @Inject constructor(
         }
     }
 
-    fun updateRecurring(value: Boolean) {
-        recurring.value = value
-    }
-
     fun updateParentTask(value: Task?) {
         parentTask.value = value
+    }
+
+    fun updateRecurrence(value: TaskRecurrenceUiState?) {
+        recurrenceUiState.value =
+            if (value?.type == RecurrenceType.Week && value.weekdays.isEmpty()) {
+                value.copy(weekdays = persistentSetOf(value.start.dayOfWeek))
+            } else {
+                value
+            }
     }
 
     fun searchTasks(query: String) {
@@ -208,7 +256,7 @@ class TaskFormViewModel @Inject constructor(
         val deadlineDate = if (
             state.deadlineDate == null &&
             state.deadlineTime != null &&
-            !state.recurring
+            state.recurrence == null
         ) {
             LocalDate.now()
         } else {
@@ -217,12 +265,43 @@ class TaskFormViewModel @Inject constructor(
         val scheduledDate = if (
             state.scheduledDate == null &&
             state.scheduledTime != null &&
-            !state.recurring
+            state.recurrence == null
         ) {
             LocalDate.now()
         } else {
             state.scheduledDate
         }
+        val recurrences = when (state.recurrence?.type) {
+            null -> emptyList()
+            RecurrenceType.Week -> {
+                state.recurrence.weekdays.map {
+                    val start =
+                        state.recurrence.start.plusDays(
+                            (7 + it.value - state.recurrence.start.dayOfWeek.value) % 7L
+                        )
+                    TaskRecurrence(
+                        taskId = taskId ?: 0L,
+                        start = start,
+                        type = state.recurrence.type,
+                        step = state.recurrence.step,
+                        week = start.get(weekOfMonthField()),
+                    )
+                }
+            }
+
+            else -> {
+                listOf(
+                    TaskRecurrence(
+                        taskId = taskId ?: 0L,
+                        start = state.recurrence.start,
+                        type = state.recurrence.type,
+                        step = state.recurrence.step,
+                        week = state.recurrence.start.get(weekOfMonthField()),
+                    )
+                )
+            }
+        }
+
         if (taskId == null) {
             val form = NewTaskForm(
                 name = nameInput,
@@ -230,7 +309,7 @@ class TaskFormViewModel @Inject constructor(
                 deadlineTime = state.deadlineTime,
                 scheduledDate = scheduledDate,
                 scheduledTime = state.scheduledTime,
-                recurring = state.recurring,
+                recurrences = recurrences,
                 parentTaskId = state.parentTask?.id,
                 clock = clock,
             )
@@ -249,6 +328,8 @@ class TaskFormViewModel @Inject constructor(
             viewModelScope.launch {
                 try {
                     val existingTask = checkNotNull(existingTaskStream.first().getOrNull())
+                    val existingRecurrences =
+                        existingRecurrencesStream.first().getOrDefault(emptyList())
                     val existingParent = existingParentTaskStream.first().getOrNull()
                     taskRepository.update(
                         EditTaskForm(
@@ -257,13 +338,14 @@ class TaskFormViewModel @Inject constructor(
                             deadlineTime = state.deadlineTime,
                             scheduledDate = scheduledDate,
                             scheduledTime = state.scheduledTime,
-                            recurring = state.recurring,
+                            recurrences = recurrences,
                             parentUpdateType = when (state.parentTask) {
                                 existingParent -> PathUpdateType.Keep
                                 null -> PathUpdateType.Remove
                                 else -> PathUpdateType.Replace(state.parentTask.id)
                             },
                             existingTask = existingTask,
+                            existingRecurrences = existingRecurrences,
                         )
                     )
                     saveResult.value = Result.Success(Unit)

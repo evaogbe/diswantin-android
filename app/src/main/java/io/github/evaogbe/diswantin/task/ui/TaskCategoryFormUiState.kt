@@ -10,9 +10,12 @@ import kotlinx.parcelize.Parcelize
 data class TaskCategoryFormTopBarState(
     val isNew: Boolean,
     val showSave: Boolean,
-    val onSave: () -> Unit,
     val saveEnabled: Boolean,
 ) : Parcelable
+
+enum class TaskCategoryFormTopBarAction {
+    Save
+}
 
 sealed interface TaskCategoryFormUiState {
     data object Pending : TaskCategoryFormUiState

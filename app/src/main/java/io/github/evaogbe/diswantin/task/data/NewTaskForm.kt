@@ -11,7 +11,7 @@ data class NewTaskForm(
     private val deadlineTime: LocalTime?,
     private val scheduledDate: LocalDate?,
     private val scheduledTime: LocalTime?,
-    private val recurring: Boolean,
+    val recurrences: Collection<TaskRecurrence>,
     val parentTaskId: Long?,
     private val clock: Clock,
 ) {
@@ -40,6 +40,5 @@ data class NewTaskForm(
             deadlineTime = deadlineTime,
             scheduledDate = scheduledDate,
             scheduledTime = scheduledTime,
-            recurring = recurring,
         )
 }

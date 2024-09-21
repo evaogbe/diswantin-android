@@ -27,6 +27,7 @@ import io.github.serpro69.kfaker.lorem.LoremFaker
 import org.junit.Rule
 import org.junit.Test
 import java.time.Clock
+import java.util.Locale
 
 class TaskFormScreenTest {
     @get:Rule
@@ -40,13 +41,9 @@ class TaskFormScreenTest {
     fun topBar_displaysTitleForNew_whenNew() {
         composeTestRule.setContent {
             TaskFormTopBar(
-                uiState = TaskFormTopBarState(
-                    isNew = true,
-                    showSave = false,
-                    onSave = {},
-                    saveEnabled = false,
-                ),
+                uiState = TaskFormTopBarState(isNew = true, showSave = false, saveEnabled = false),
                 onClose = {},
+                onSave = {},
             )
         }
 
@@ -58,13 +55,9 @@ class TaskFormScreenTest {
     fun topBar_displaysTitleForEdit_whenEdit() {
         composeTestRule.setContent {
             TaskFormTopBar(
-                uiState = TaskFormTopBarState(
-                    isNew = false,
-                    showSave = false,
-                    onSave = {},
-                    saveEnabled = false,
-                ),
+                uiState = TaskFormTopBarState(isNew = false, showSave = false, saveEnabled = false),
                 onClose = {},
+                onSave = {},
             )
         }
 
@@ -82,8 +75,11 @@ class TaskFormScreenTest {
                 TaskFormScreen(
                     onPopBackStack = {},
                     setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
                     setUserMessage = {},
                     onSelectCategoryType = {},
+                    onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
             }
@@ -104,8 +100,11 @@ class TaskFormScreenTest {
                 TaskFormScreen(
                     onPopBackStack = {},
                     setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
                     setUserMessage = {},
                     onSelectCategoryType = {},
+                    onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
             }
@@ -125,8 +124,11 @@ class TaskFormScreenTest {
                 TaskFormScreen(
                     onPopBackStack = {},
                     setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
                     setUserMessage = {},
                     onSelectCategoryType = {},
+                    onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
             }
@@ -155,8 +157,11 @@ class TaskFormScreenTest {
                 TaskFormScreen(
                     onPopBackStack = {},
                     setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
                     setUserMessage = {},
                     onSelectCategoryType = {},
+                    onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
             }
@@ -187,8 +192,11 @@ class TaskFormScreenTest {
                 TaskFormScreen(
                     onPopBackStack = {},
                     setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
                     setUserMessage = { userMessage = it },
                     onSelectCategoryType = {},
+                    onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
             }
@@ -219,8 +227,11 @@ class TaskFormScreenTest {
                 TaskFormScreen(
                     onPopBackStack = { onPopBackStackCalled = true },
                     setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
                     setUserMessage = {},
                     onSelectCategoryType = {},
+                    onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
             }
@@ -256,8 +267,11 @@ class TaskFormScreenTest {
                 TaskFormScreen(
                     onPopBackStack = {},
                     setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
                     setUserMessage = {},
                     onSelectCategoryType = {},
+                    onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
             }
@@ -289,8 +303,11 @@ class TaskFormScreenTest {
                 TaskFormScreen(
                     onPopBackStack = { onPopBackStackCalled = true },
                     setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
                     setUserMessage = {},
                     onSelectCategoryType = {},
+                    onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
             }
@@ -333,8 +350,11 @@ class TaskFormScreenTest {
                 TaskFormScreen(
                     onPopBackStack = {},
                     setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
                     setUserMessage = {},
                     onSelectCategoryType = {},
+                    onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
             }
@@ -360,12 +380,18 @@ class TaskFormScreenTest {
     )
 
     private fun createTaskFormViewModelForNew(taskRepository: TaskRepository) =
-        TaskFormViewModel(SavedStateHandle(), taskRepository, Clock.systemDefaultZone())
+        TaskFormViewModel(
+            SavedStateHandle(),
+            taskRepository,
+            Clock.systemDefaultZone(),
+            Locale.getDefault(),
+        )
 
     private fun createTaskFormViewModelForEdit(taskRepository: TaskRepository) =
         TaskFormViewModel(
             SavedStateHandle(mapOf(NavArguments.ID_KEY to 1L)),
             taskRepository,
-            Clock.systemDefaultZone()
+            Clock.systemDefaultZone(),
+            Locale.getDefault(),
         )
 }

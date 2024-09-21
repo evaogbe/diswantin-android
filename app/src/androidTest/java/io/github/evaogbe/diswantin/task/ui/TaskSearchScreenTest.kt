@@ -37,15 +37,15 @@ class TaskSearchScreenTest {
         composeTestRule.setContent {
             DiswantinTheme {
                 TaskSearchScreen(
-                    setTopBarState = {},
+                    query = query,
+                    topBarAction = TaskSearchTopBarAction.Search,
+                    topBarActionHandled = {},
                     onAddTask = {},
                     onSelectSearchResult = {},
                     taskSearchViewModel = viewModel,
                 )
             }
         }
-
-        viewModel.searchTasks(query)
 
         composeTestRule.onNodeWithText(tasks[0].name).assertIsDisplayed()
         composeTestRule.onNodeWithText(tasks[1].name).assertIsDisplayed()
@@ -61,15 +61,15 @@ class TaskSearchScreenTest {
         composeTestRule.setContent {
             DiswantinTheme {
                 TaskSearchScreen(
-                    setTopBarState = {},
+                    query = query,
+                    topBarAction = TaskSearchTopBarAction.Search,
+                    topBarActionHandled = {},
                     onAddTask = {},
                     onSelectSearchResult = {},
                     taskSearchViewModel = viewModel,
                 )
             }
         }
-
-        viewModel.searchTasks(query)
 
         composeTestRule.onNodeWithText(stringResource(R.string.task_search_empty))
             .assertIsDisplayed()
@@ -81,19 +81,20 @@ class TaskSearchScreenTest {
         val taskRepository = FakeTaskRepository()
         val viewModel = TaskSearchViewModel(taskRepository)
 
+        taskRepository.setThrows(taskRepository::search, true)
+
         composeTestRule.setContent {
             DiswantinTheme {
                 TaskSearchScreen(
-                    setTopBarState = {},
+                    query = query,
+                    topBarAction = TaskSearchTopBarAction.Search,
+                    topBarActionHandled = {},
                     onAddTask = {},
                     onSelectSearchResult = {},
                     taskSearchViewModel = viewModel,
                 )
             }
         }
-
-        taskRepository.setThrows(taskRepository::search, true)
-        viewModel.searchTasks(query)
 
         composeTestRule.onNodeWithText(stringResource(R.string.task_search_error))
             .assertIsDisplayed()

@@ -3,7 +3,7 @@ package io.github.evaogbe.diswantin.task.data
 import kotlinx.coroutines.flow.Flow
 
 interface TaskCategoryRepository {
-    val categoryListStream: Flow<List<TaskCategory>>
+    val categoriesStream: Flow<List<TaskCategory>>
 
     fun getCategoryWithTasksById(id: Long): Flow<TaskCategoryWithTasks>
 

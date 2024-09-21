@@ -1,6 +1,7 @@
 package io.github.evaogbe.diswantin.app.data
 
 import androidx.room.TypeConverter
+import io.github.evaogbe.diswantin.task.data.RecurrenceType
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
@@ -24,4 +25,10 @@ object Converters {
 
     @TypeConverter
     fun fromLocalTime(value: LocalTime?) = value?.format(DateTimeFormatter.ofPattern("HH:mm"))
+
+    @TypeConverter
+    fun toRecurrenceType(value: Int?) = value?.let { RecurrenceType.entries[it] }
+
+    @TypeConverter
+    fun fromRecurrenceType(value: RecurrenceType?) = value?.ordinal
 }

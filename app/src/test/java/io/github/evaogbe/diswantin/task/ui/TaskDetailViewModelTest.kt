@@ -19,6 +19,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
 import java.time.Clock
+import java.util.Locale
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TaskDetailViewModelTest {
@@ -34,7 +35,8 @@ class TaskDetailViewModelTest {
         val task = genTask()
         val clock = createClock()
         val taskRepository = FakeTaskRepository.withTasks(task)
-        val viewModel = TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock)
+        val viewModel =
+            TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock, Locale.US)
 
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect()
@@ -43,6 +45,7 @@ class TaskDetailViewModelTest {
         assertThat(viewModel.uiState.value).isEqualTo(
             TaskDetailUiState.Success(
                 task = task.toTaskDetail(),
+                recurrence = null,
                 userMessage = null,
                 clock = clock,
             )
@@ -54,7 +57,8 @@ class TaskDetailViewModelTest {
         runTest(mainDispatcherRule.testDispatcher) {
             val clock = createClock()
             val taskRepository = FakeTaskRepository()
-            val viewModel = TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock)
+            val viewModel =
+                TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock, Locale.US)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -64,13 +68,32 @@ class TaskDetailViewModelTest {
         }
 
     @Test
-    fun `uiState emits failure when repository throws`() =
+    fun `uiState emits failure when fetch task detail throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val clock = createClock()
             val taskRepository = FakeTaskRepository()
             taskRepository.setThrows(taskRepository::getTaskDetailById, true)
 
-            val viewModel = TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock)
+            val viewModel =
+                TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock, Locale.US)
+
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect()
+            }
+
+            assertThat(viewModel.uiState.value).isEqualTo(TaskDetailUiState.Failure)
+        }
+
+    @Test
+    fun `uiState emits failure when fetch task recurrences throws`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val task = genTask()
+            val clock = createClock()
+            val taskRepository = FakeTaskRepository.withTasks(task)
+            taskRepository.setThrows(taskRepository::getTaskRecurrencesByTaskId, true)
+
+            val viewModel =
+                TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock, Locale.US)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -84,7 +107,8 @@ class TaskDetailViewModelTest {
         val task = genTask()
         val clock = createClock()
         val taskRepository = FakeTaskRepository.withTasks(task)
-        val viewModel = TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock)
+        val viewModel =
+            TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock, Locale.US)
 
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect()
@@ -93,6 +117,7 @@ class TaskDetailViewModelTest {
         assertThat(viewModel.uiState.value).isEqualTo(
             TaskDetailUiState.Success(
                 task = task.toTaskDetail(),
+                recurrence = null,
                 userMessage = null,
                 clock = clock,
             )
@@ -109,7 +134,8 @@ class TaskDetailViewModelTest {
             val task = genTask()
             val clock = createClock()
             val taskRepository = FakeTaskRepository.withTasks(task)
-            val viewModel = TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock)
+            val viewModel =
+                TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock, Locale.US)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -121,6 +147,7 @@ class TaskDetailViewModelTest {
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskDetailUiState.Success(
                     task = task.toTaskDetail(),
+                    recurrence = null,
                     userMessage = R.string.task_detail_delete_error,
                     clock = clock,
                 )
@@ -144,7 +171,6 @@ class TaskDetailViewModelTest {
         deadlineTime = deadlineTime,
         scheduledDate = scheduledDate,
         scheduledTime = scheduledTime,
-        recurring = recurring,
         doneAt = null,
         categoryId = null,
         categoryName = null,

@@ -59,6 +59,7 @@ fun TaskCategoryDetailTopBar(
     uiState: TaskCategoryDetailTopBarState,
     onBackClick: () -> Unit,
     onEditCategory: (Long) -> Unit,
+    onDeleteCategory: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
@@ -93,7 +94,7 @@ fun TaskCategoryDetailTopBar(
                 DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.delete_button)) },
-                        onClick = uiState.onDeleteCategory,
+                        onClick = onDeleteCategory,
                         leadingIcon = {
                             Icon(imageVector = Icons.Default.Delete, contentDescription = null)
                         },
@@ -107,7 +108,8 @@ fun TaskCategoryDetailTopBar(
 @Composable
 fun TaskCategoryDetailScreen(
     onPopBackStack: () -> Unit,
-    setTopBarState: (TaskCategoryDetailTopBarState) -> Unit,
+    topBarAction: TaskCategoryDetailTopBarAction?,
+    topBarActionHandled: () -> Unit,
     setUserMessage: (String) -> Unit,
     onSelectTask: (Long) -> Unit,
     taskCategoryDetailViewModel: TaskCategoryDetailViewModel = hiltViewModel(),
@@ -121,13 +123,14 @@ fun TaskCategoryDetailScreen(
         }
     }
 
-    LaunchedEffect(setTopBarState, uiState, taskCategoryDetailViewModel) {
-        setTopBarState(
-            TaskCategoryDetailTopBarState(
-                categoryId = (uiState as? TaskCategoryDetailUiState.Success)?.category?.id,
-                onDeleteCategory = taskCategoryDetailViewModel::deleteCategory,
-            )
-        )
+    LaunchedEffect(topBarAction, taskCategoryDetailViewModel) {
+        when (topBarAction) {
+            null -> {}
+            TaskCategoryDetailTopBarAction.Delete -> {
+                taskCategoryDetailViewModel.deleteCategory()
+                topBarActionHandled()
+            }
+        }
     }
 
     (uiState as? TaskCategoryDetailUiState.Success)?.userMessage?.let { message ->
@@ -185,7 +188,7 @@ fun TaskCategoryDetailLayout(
                     )
                 }
 
-                items(uiState.tasks, key = TaskItemState::id) { task ->
+                items(uiState.tasks, key = TaskItemUiState::id) { task ->
                     ListItem(
                         headlineContent = {
                             if (task.isDone) {
@@ -216,26 +219,25 @@ private fun TaskCategoryDetailScreenPreview() {
     DiswantinTheme {
         Scaffold(topBar = {
             TaskCategoryDetailTopBar(
-                uiState = TaskCategoryDetailTopBarState(categoryId = 1L, onDeleteCategory = {}),
+                uiState = TaskCategoryDetailTopBarState(categoryId = 1L),
                 onBackClick = {},
                 onEditCategory = {},
+                onDeleteCategory = {},
             )
         }) { innerPadding ->
             TaskCategoryDetailLayout(
                 uiState = TaskCategoryDetailUiState.Success(
                     category = TaskCategory(name = "Morning Routine"),
                     tasks = persistentListOf(
-                        TaskItemState(
+                        TaskItemUiState(
                             id = 1L,
                             name = "Brush teeth",
-                            recurring = false,
                             isDone = true,
                         ),
-                        TaskItemState(id = 2L, name = "Shower", recurring = false, isDone = false),
-                        TaskItemState(
+                        TaskItemUiState(id = 2L, name = "Shower", isDone = false),
+                        TaskItemUiState(
                             id = 3L,
                             name = "Eat breakfast",
-                            recurring = false,
                             isDone = false,
                         ),
                     ),

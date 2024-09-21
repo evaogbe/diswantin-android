@@ -48,7 +48,7 @@ class TaskCategoryListViewModelTest {
     fun `uiState emits failure when repository throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val taskCategoryRepository = FakeTaskCategoryRepository()
-            taskCategoryRepository.setThrows(taskCategoryRepository::categoryListStream, true)
+            taskCategoryRepository.setThrows(taskCategoryRepository::categoriesStream, true)
 
             val viewModel = TaskCategoryListViewModel(taskCategoryRepository)
 

@@ -9,6 +9,7 @@ import assertk.assertThat
 import assertk.assertions.isTrue
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.Task
+import io.github.evaogbe.diswantin.task.data.TaskRepository
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.stringResource
 import io.github.evaogbe.diswantin.ui.components.PendingLayoutTestTag
@@ -23,6 +24,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
+import java.util.Locale
 
 class TaskDetailScreenTest {
     @get:Rule
@@ -41,13 +43,15 @@ class TaskDetailScreenTest {
         val clock =
             Clock.fixed(Instant.parse("2024-08-23T21:00:00Z"), ZoneId.of("America/New_York"))
         val taskRepository = FakeTaskRepository.withTasks(task)
-        val viewModel = TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock)
+        val viewModel =
+            TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock, Locale.US)
 
         composeTestRule.setContent {
             DiswantinTheme {
                 TaskDetailScreen(
                     onPopBackStack = {},
-                    setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
                     setUserMessage = {},
                     onNavigateToTask = {},
                     onNavigateToCategory = {},
@@ -65,13 +69,14 @@ class TaskDetailScreenTest {
         val taskRepository = FakeTaskRepository()
         taskRepository.setThrows(taskRepository::getTaskDetailById, true)
 
-        val viewModel = TaskDetailViewModel(createSavedStateHandle(), taskRepository, createClock())
+        val viewModel = createTaskDetailViewModel(taskRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
                 TaskDetailScreen(
                     onPopBackStack = {},
-                    setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
                     setUserMessage = {},
                     onNavigateToTask = {},
                     onNavigateToCategory = {},
@@ -89,13 +94,14 @@ class TaskDetailScreenTest {
         val task = genTask()
         var onPopBackStackCalled = false
         val taskRepository = FakeTaskRepository.withTasks(task)
-        val viewModel = TaskDetailViewModel(createSavedStateHandle(), taskRepository, createClock())
+        val viewModel = createTaskDetailViewModel(taskRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
                 TaskDetailScreen(
                     onPopBackStack = { onPopBackStackCalled = true },
-                    setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
                     setUserMessage = {},
                     onNavigateToTask = {},
                     onNavigateToCategory = {},
@@ -115,13 +121,16 @@ class TaskDetailScreenTest {
         var userMessage: String? = null
         val task = genTask()
         val taskRepository = FakeTaskRepository.withTasks(task)
-        val viewModel = TaskDetailViewModel(createSavedStateHandle(), taskRepository, createClock())
+        val viewModel = createTaskDetailViewModel(taskRepository)
+
+        taskRepository.setThrows(taskRepository::delete, true)
 
         composeTestRule.setContent {
             DiswantinTheme {
                 TaskDetailScreen(
                     onPopBackStack = {},
-                    setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
                     setUserMessage = { userMessage = it },
                     onNavigateToTask = {},
                     onNavigateToCategory = {},
@@ -130,7 +139,6 @@ class TaskDetailScreenTest {
             }
         }
 
-        taskRepository.setThrows(taskRepository::delete, true)
         viewModel.deleteTask()
 
         composeTestRule.waitUntil {
@@ -146,6 +154,11 @@ class TaskDetailScreenTest {
 
     private fun createSavedStateHandle() = SavedStateHandle(mapOf(NavArguments.ID_KEY to 1L))
 
-    private fun createClock() =
-        Clock.fixed(Instant.parse("2024-08-23T21:00:00Z"), ZoneId.of("America/New_York"))
+    private fun createTaskDetailViewModel(taskRepository: TaskRepository) =
+        TaskDetailViewModel(
+            createSavedStateHandle(),
+            taskRepository,
+            Clock.systemDefaultZone(),
+            Locale.getDefault(),
+        )
 }

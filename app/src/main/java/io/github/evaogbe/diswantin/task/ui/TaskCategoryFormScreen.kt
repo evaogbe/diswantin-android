@@ -19,7 +19,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -33,7 +32,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
@@ -56,6 +54,7 @@ import io.github.evaogbe.diswantin.ui.components.AutocompleteField
 import io.github.evaogbe.diswantin.ui.components.ClearableLayout
 import io.github.evaogbe.diswantin.ui.components.LoadFailureLayout
 import io.github.evaogbe.diswantin.ui.components.PendingLayout
+import io.github.evaogbe.diswantin.ui.components.TextButtonWithIcon
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.evaogbe.diswantin.ui.theme.ScreenLg
 import io.github.evaogbe.diswantin.ui.theme.SpaceLg
@@ -70,6 +69,7 @@ import java.time.Instant
 fun TaskCategoryFormTopBar(
     uiState: TaskCategoryFormTopBarState,
     onClose: () -> Unit,
+    onSave: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     TopAppBar(
@@ -94,9 +94,9 @@ fun TaskCategoryFormTopBar(
         actions = {
             if (uiState.showSave) {
                 Button(
-                    onClick = uiState.onSave,
+                    onClick = onSave,
                     enabled = uiState.saveEnabled,
-                    contentPadding = PaddingValues(horizontal = 20.dp, vertical = 4.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
                 ) {
                     Text(stringResource(R.string.save_button))
                 }
@@ -109,11 +109,14 @@ fun TaskCategoryFormTopBar(
 fun TaskCategoryFormScreen(
     onPopBackStack: () -> Unit,
     setTopBarState: (TaskCategoryFormTopBarState) -> Unit,
+    topBarAction: TaskCategoryFormTopBarAction?,
+    topBarActionHandled: () -> Unit,
     setUserMessage: (String) -> Unit,
     onSelectTaskType: (String) -> Unit,
     taskCategoryFormViewModel: TaskCategoryFormViewModel = hiltViewModel(),
 ) {
     val uiState by taskCategoryFormViewModel.uiState.collectAsStateWithLifecycle()
+    val isNew = taskCategoryFormViewModel.isNew
     val nameInput = taskCategoryFormViewModel.nameInput
     val resources = LocalContext.current.resources
 
@@ -123,16 +126,24 @@ fun TaskCategoryFormScreen(
         }
     }
 
-    LaunchedEffect(setTopBarState, uiState, nameInput, taskCategoryFormViewModel) {
+    LaunchedEffect(setTopBarState, uiState, isNew, nameInput) {
         setTopBarState(
             TaskCategoryFormTopBarState(
-                isNew = taskCategoryFormViewModel.isNew,
-                showSave = taskCategoryFormViewModel.isNew ||
-                        uiState is TaskCategoryFormUiState.Success,
-                onSave = taskCategoryFormViewModel::saveCategory,
+                isNew = isNew,
+                showSave = isNew || uiState is TaskCategoryFormUiState.Success,
                 saveEnabled = nameInput.isNotBlank(),
             )
         )
+    }
+
+    LaunchedEffect(topBarAction, taskCategoryFormViewModel) {
+        when (topBarAction) {
+            null -> {}
+            TaskCategoryFormTopBarAction.Save -> {
+                taskCategoryFormViewModel.saveCategory()
+                topBarActionHandled()
+            }
+        }
     }
 
     (uiState as? TaskCategoryFormUiState.Success)?.userMessage?.let { message ->
@@ -311,18 +322,11 @@ fun TaskCategoryFormLayout(
                         autoFocus = editingTaskIndex > 0,
                     )
                 } else {
-                    TextButton(
+                    TextButtonWithIcon(
                         onClick = { startEditTask(tasks.size) },
-                        contentPadding = ButtonDefaults.TextButtonWithIconContentPadding,
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = null,
-                            modifier = Modifier.size(ButtonDefaults.IconSize),
-                        )
-                        Spacer(Modifier.size(ButtonDefaults.IconSpacing))
-                        Text(stringResource(R.string.add_task_button))
-                    }
+                        imageVector = Icons.Default.Add,
+                        text = stringResource(R.string.add_task_button),
+                    )
                 }
             }
         }
@@ -338,10 +342,10 @@ private fun TaskCategoryFormScreenPreview_New() {
                 uiState = TaskCategoryFormTopBarState(
                     isNew = true,
                     showSave = true,
-                    onSave = {},
                     saveEnabled = false,
                 ),
                 onClose = {},
+                onSave = {},
             )
         }) { innerPadding ->
             TaskCategoryFormLayout(
@@ -376,10 +380,10 @@ private fun TaskCategoryFormScreenPreview_Edit() {
                 uiState = TaskCategoryFormTopBarState(
                     isNew = false,
                     showSave = true,
-                    onSave = {},
                     saveEnabled = true,
                 ),
                 onClose = {},
+                onSave = {},
             )
         }) { innerPadding ->
             TaskCategoryFormLayout(

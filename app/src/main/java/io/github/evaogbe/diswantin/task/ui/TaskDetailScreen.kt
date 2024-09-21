@@ -44,6 +44,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.evaogbe.diswantin.R
+import io.github.evaogbe.diswantin.task.data.RecurrenceType
 import io.github.evaogbe.diswantin.task.data.TaskDetail
 import io.github.evaogbe.diswantin.ui.components.LoadFailureLayout
 import io.github.evaogbe.diswantin.ui.components.PendingLayout
@@ -51,9 +52,11 @@ import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.evaogbe.diswantin.ui.theme.ScreenLg
 import io.github.evaogbe.diswantin.ui.theme.SpaceMd
 import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
+import kotlinx.collections.immutable.persistentSetOf
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,6 +64,7 @@ fun TaskDetailTopBar(
     uiState: TaskDetailTopBarState,
     onBackClick: () -> Unit,
     onEditTask: (Long) -> Unit,
+    onDeleteTask: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
@@ -95,7 +99,7 @@ fun TaskDetailTopBar(
                 DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.delete_button)) },
-                        onClick = uiState.onDeleteTask,
+                        onClick = onDeleteTask,
                         leadingIcon = {
                             Icon(imageVector = Icons.Default.Delete, contentDescription = null)
                         },
@@ -109,7 +113,8 @@ fun TaskDetailTopBar(
 @Composable
 fun TaskDetailScreen(
     onPopBackStack: () -> Unit,
-    setTopBarState: (TaskDetailTopBarState) -> Unit,
+    topBarAction: TaskDetailTopBarAction?,
+    topBarActionHandled: () -> Unit,
     setUserMessage: (String) -> Unit,
     onNavigateToTask: (Long) -> Unit,
     onNavigateToCategory: (Long) -> Unit,
@@ -124,13 +129,14 @@ fun TaskDetailScreen(
         }
     }
 
-    LaunchedEffect(setTopBarState, uiState, taskDetailViewModel) {
-        setTopBarState(
-            TaskDetailTopBarState(
-                taskId = (uiState as? TaskDetailUiState.Success)?.task?.id,
-                onDeleteTask = taskDetailViewModel::deleteTask,
-            )
-        )
+    LaunchedEffect(topBarAction, taskDetailViewModel) {
+        when (topBarAction) {
+            null -> {}
+            TaskDetailTopBarAction.Delete -> {
+                taskDetailViewModel.deleteTask()
+                topBarActionHandled()
+            }
+        }
     }
 
     (uiState as? TaskDetailUiState.Success)?.userMessage?.let { message ->
@@ -216,10 +222,14 @@ fun TaskDetailLayout(
                 )
             }
 
-            if (uiState.task.recurring) {
+            if (uiState.recurrence != null) {
                 ListItem(
-                    headlineContent = { Text(stringResource(R.string.boolean_yes)) },
-                    overlineContent = { Text(stringResource(R.string.recurring_label)) },
+                    headlineContent = {
+                        SelectionContainer {
+                            Text(text = taskRecurrenceText(uiState.recurrence))
+                        }
+                    },
+                    overlineContent = { Text(stringResource(R.string.recurrence_label)) },
                 )
             }
 
@@ -264,9 +274,10 @@ private fun TaskDetailScreenPreview() {
     DiswantinTheme {
         Scaffold(topBar = {
             TaskDetailTopBar(
-                uiState = TaskDetailTopBarState(taskId = 1L, onDeleteTask = {}),
+                uiState = TaskDetailTopBarState(taskId = 1L),
                 onBackClick = {},
                 onEditTask = {},
+                onDeleteTask = {},
             )
         }) { innerPadding ->
             TaskDetailLayout(
@@ -278,15 +289,15 @@ private fun TaskDetailScreenPreview() {
                         deadlineTime = null,
                         scheduledDate = null,
                         scheduledTime = null,
-                        recurring = false,
                         doneAt = null,
                         categoryId = null,
                         categoryName = null,
                         parentId = null,
                         parentName = null,
                     ),
+                    recurrence = null,
                     userMessage = null,
-                    clock = Clock.systemDefaultZone()
+                    clock = Clock.systemDefaultZone(),
                 ),
                 onNavigateToTask = {},
                 onNavigateToCategory = {},
@@ -298,7 +309,7 @@ private fun TaskDetailScreenPreview() {
 
 @DevicePreviews
 @Composable
-private fun TaskDetailLayoutPreview() {
+private fun TaskDetailLayoutPreview_WithoutRecurrence() {
     DiswantinTheme {
         Surface {
             TaskDetailLayout(
@@ -310,15 +321,52 @@ private fun TaskDetailLayoutPreview() {
                         deadlineTime = null,
                         scheduledDate = null,
                         scheduledTime = null,
-                        recurring = true,
                         doneAt = Instant.now(),
                         categoryId = 1L,
                         categoryName = "Morning Routine",
                         parentId = 2L,
                         parentName = "Brush teeth",
                     ),
+                    recurrence = null,
                     userMessage = null,
-                    clock = Clock.systemDefaultZone()
+                    clock = Clock.systemDefaultZone(),
+                ),
+                onNavigateToTask = {},
+                onNavigateToCategory = {},
+            )
+        }
+    }
+}
+
+@DevicePreviews
+@Composable
+private fun TaskDetailLayoutPreview_WithRecurrence() {
+    DiswantinTheme {
+        Surface {
+            TaskDetailLayout(
+                uiState = TaskDetailUiState.Success(
+                    task = TaskDetail(
+                        id = 2L,
+                        name = "Shower",
+                        deadlineDate = null,
+                        deadlineTime = null,
+                        scheduledDate = null,
+                        scheduledTime = null,
+                        doneAt = null,
+                        categoryId = null,
+                        categoryName = null,
+                        parentId = null,
+                        parentName = null,
+                    ),
+                    recurrence = TaskRecurrenceUiState(
+                        start = LocalDate.now(),
+                        type = RecurrenceType.Day,
+                        step = 1,
+                        weekdays = persistentSetOf(),
+                        locale = Locale.getDefault(),
+                    ),
+                    userMessage = null,
+                    clock = Clock.systemDefaultZone(),
                 ),
                 onNavigateToTask = {},
                 onNavigateToCategory = {},

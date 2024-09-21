@@ -99,7 +99,6 @@ class TaskCategoryFormViewModel @Inject constructor(
         when {
             saveResult is Result.Success -> TaskCategoryFormUiState.Saved
             existingCategoryWithTasks is Result.Success -> {
-                val editingTask = editingTaskIndex?.let(tasks::getOrNull)
                 val taskOptions = taskSearchResults.filter { option ->
                     (option.categoryId == null ||
                             option.categoryId == existingCategoryWithTasks.value?.category?.id) &&
@@ -108,9 +107,7 @@ class TaskCategoryFormViewModel @Inject constructor(
                 TaskCategoryFormUiState.Success(
                     tasks = tasks,
                     editingTaskIndex = editingTaskIndex,
-                    taskOptions = if (
-                        taskOptions == listOf(editingTask) && taskQuery == editingTask?.name
-                    ) {
+                    taskOptions = if (taskOptions.singleOrNull()?.name == taskQuery.trim()) {
                         persistentListOf()
                     } else {
                         taskOptions.toImmutableList()

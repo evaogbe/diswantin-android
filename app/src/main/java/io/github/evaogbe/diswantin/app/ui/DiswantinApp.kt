@@ -31,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -38,6 +39,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.navigation.navigation
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.ui.AdviceScreen
 import io.github.evaogbe.diswantin.task.ui.AdviceTopBar
@@ -46,16 +48,27 @@ import io.github.evaogbe.diswantin.task.ui.CurrentTaskTopBar
 import io.github.evaogbe.diswantin.task.ui.CurrentTaskTopBarState
 import io.github.evaogbe.diswantin.task.ui.TaskCategoryDetailScreen
 import io.github.evaogbe.diswantin.task.ui.TaskCategoryDetailTopBar
+import io.github.evaogbe.diswantin.task.ui.TaskCategoryDetailTopBarAction
+import io.github.evaogbe.diswantin.task.ui.TaskCategoryDetailTopBarState
 import io.github.evaogbe.diswantin.task.ui.TaskCategoryFormScreen
 import io.github.evaogbe.diswantin.task.ui.TaskCategoryFormTopBar
+import io.github.evaogbe.diswantin.task.ui.TaskCategoryFormTopBarAction
 import io.github.evaogbe.diswantin.task.ui.TaskCategoryListScreen
 import io.github.evaogbe.diswantin.task.ui.TaskCategoryListTopBar
 import io.github.evaogbe.diswantin.task.ui.TaskDetailScreen
 import io.github.evaogbe.diswantin.task.ui.TaskDetailTopBar
+import io.github.evaogbe.diswantin.task.ui.TaskDetailTopBarAction
+import io.github.evaogbe.diswantin.task.ui.TaskDetailTopBarState
 import io.github.evaogbe.diswantin.task.ui.TaskFormScreen
 import io.github.evaogbe.diswantin.task.ui.TaskFormTopBar
+import io.github.evaogbe.diswantin.task.ui.TaskFormTopBarAction
+import io.github.evaogbe.diswantin.task.ui.TaskRecurrenceFormTopBar
+import io.github.evaogbe.diswantin.task.ui.TaskRecurrenceFormTopBarAction
+import io.github.evaogbe.diswantin.task.ui.TaskRecurrentFormScreen
 import io.github.evaogbe.diswantin.task.ui.TaskSearchScreen
 import io.github.evaogbe.diswantin.task.ui.TaskSearchTopBar
+import io.github.evaogbe.diswantin.task.ui.TaskSearchTopBarAction
+import io.github.evaogbe.diswantin.task.ui.TaskSearchTopBarState
 import io.github.evaogbe.diswantin.ui.navigation.NavArguments
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
@@ -91,7 +104,7 @@ fun DiswantinApp() {
             when (val state = topBarState) {
                 is TopBarState.Advice -> {
                     AdviceTopBar(onSearch = {
-                        navController.navigate(route = TopLevelDestination.TaskSearch.route)
+                        navController.navigate(route = MainDestination.TaskSearch.route)
                     })
                 }
 
@@ -99,11 +112,11 @@ fun DiswantinApp() {
                     CurrentTaskTopBar(
                         uiState = state.uiState,
                         onSearch = {
-                            navController.navigate(route = TopLevelDestination.TaskSearch.route)
+                            navController.navigate(route = MainDestination.TaskSearch.route)
                         },
                         onEditTask = {
                             navController.navigate(
-                                route = TopLevelDestination.EditTaskForm(it).route
+                                route = MainDestination.EditTaskForm.Main(it).route
                             )
                         },
                     )
@@ -115,14 +128,35 @@ fun DiswantinApp() {
                         onBackClick = navController::popBackStack,
                         onEditTask = {
                             navController.navigate(
-                                route = TopLevelDestination.EditTaskForm(it).route
+                                route = MainDestination.EditTaskForm.Main(it).route
                             )
                         },
+                        onDeleteTask = {
+                            topBarState = state.copy(action = TaskDetailTopBarAction.Delete)
+                        }
                     )
                 }
 
                 is TopBarState.TaskForm -> {
-                    TaskFormTopBar(uiState = state.uiState, onClose = navController::popBackStack)
+                    TaskFormTopBar(
+                        uiState = state.uiState,
+                        onClose = navController::popBackStack,
+                        onSave = {
+                            topBarState = state.copy(action = TaskFormTopBarAction.Save)
+                        },
+                    )
+                }
+
+                is TopBarState.TaskRecurrenceForm -> {
+                    TaskRecurrenceFormTopBar(
+                        onClose = navController::popBackStack,
+                        onConfirm = {
+                            topBarState = state.copy(
+                                action = TaskRecurrenceFormTopBarAction.Confirm,
+                            )
+                            navController.popBackStack()
+                        }
+                    )
                 }
 
                 is TopBarState.TaskCategoryDetail -> {
@@ -131,9 +165,12 @@ fun DiswantinApp() {
                         onBackClick = navController::popBackStack,
                         onEditCategory = {
                             navController.navigate(
-                                route = TopLevelDestination.EditTaskCategoryForm(it).route
+                                route = MainDestination.EditTaskCategoryForm(it).route
                             )
                         },
+                        onDeleteCategory = {
+                            topBarState = state.copy(action = TaskCategoryDetailTopBarAction.Delete)
+                        }
                     )
                 }
 
@@ -141,12 +178,15 @@ fun DiswantinApp() {
                     TaskCategoryFormTopBar(
                         uiState = state.uiState,
                         onClose = navController::popBackStack,
+                        onSave = {
+                            topBarState = state.copy(action = TaskCategoryFormTopBarAction.Save)
+                        }
                     )
                 }
 
                 is TopBarState.TaskCategoryList -> {
                     TaskCategoryListTopBar(onSearch = {
-                        navController.navigate(route = TopLevelDestination.TaskSearch.route)
+                        navController.navigate(route = MainDestination.TaskSearch.route)
                     })
                 }
 
@@ -154,6 +194,14 @@ fun DiswantinApp() {
                     TaskSearchTopBar(
                         uiState = state.uiState,
                         onBackClick = navController::popBackStack,
+                        onQueryChange = { query ->
+                            (topBarState as? TopBarState.TaskSearch)?.let {
+                                topBarState = it.copy(uiState = state.uiState.copy(query = query))
+                            }
+                        },
+                        onSearch = {
+                            topBarState = state.copy(action = TaskSearchTopBarAction.Search)
+                        }
                     )
                 }
             }
@@ -181,7 +229,7 @@ fun DiswantinApp() {
             if (currentRoute in BottomBarDestination.entries.map(BottomBarDestination::route)) {
                 DiswantinFab(onClick = {
                     navController.navigate(
-                        route = TopLevelDestination.NewTaskForm(name = null).route
+                        route = MainDestination.NewTaskForm.Main(name = null).route
                     )
                 })
             }
@@ -205,83 +253,78 @@ fun DiswantinApp() {
                     setUserMessage = { userMessage = it },
                     onAddTask = {
                         navController.navigate(
-                            route = TopLevelDestination.NewTaskForm(name = null).route
+                            route = MainDestination.NewTaskForm.Main(name = null).route
                         )
                     },
                 )
             }
             composable(
-                TopLevelDestination.TaskDetail.route,
+                MainDestination.TaskDetail.route,
                 arguments = listOf(navArgument(NavArguments.ID_KEY) {
                     type = NavType.LongType
                 }),
-            ) {
+            ) { backStackEntry ->
+                LaunchedEffect(backStackEntry) {
+                    topBarState = TopBarState.TaskDetail(
+                        uiState = TaskDetailTopBarState(
+                            taskId = requireNotNull(backStackEntry.arguments)
+                                .getLong(NavArguments.ID_KEY)
+                        ),
+                        action = null,
+                    )
+                }
+
                 TaskDetailScreen(
                     onPopBackStack = navController::popBackStack,
-                    setTopBarState = { topBarState = TopBarState.TaskDetail(uiState = it) },
+                    topBarAction = (topBarState as? TopBarState.TaskDetail)?.action,
+                    topBarActionHandled = {
+                        (topBarState as? TopBarState.TaskDetail)?.copy(action = null)?.let {
+                            topBarState = it
+                        }
+                    },
                     setUserMessage = { userMessage = it },
                     onNavigateToTask = {
-                        navController.navigate(route = TopLevelDestination.TaskDetail(it).route)
+                        navController.navigate(route = MainDestination.TaskDetail(it).route)
                     },
                     onNavigateToCategory = {
                         navController.navigate(
-                            route = TopLevelDestination.TaskCategoryDetail(it).route
+                            route = MainDestination.TaskCategoryDetail(it).route
                         )
                     },
                 )
             }
             composable(
-                TopLevelDestination.NewTaskForm.route,
-                arguments = listOf(navArgument(NavArguments.NAME_KEY) {
-                    type = NavType.StringType
-                    nullable = true
+                MainDestination.TaskCategoryDetail.route,
+                arguments = listOf(navArgument(NavArguments.ID_KEY) {
+                    type = NavType.LongType
                 }),
             ) { backStackEntry ->
-                TaskFormScreen(
-                    onPopBackStack = navController::popBackStack,
-                    setTopBarState = { topBarState = TopBarState.TaskForm(uiState = it) },
-                    setUserMessage = { userMessage = it },
-                    onSelectCategoryType = {
-                        navController.navigate(
-                            route = TopLevelDestination.NewTaskCategoryForm(name = it).route
-                        ) {
-                            popUpTo(backStackEntry.destination.id) {
-                                inclusive = true
-                            }
-                        }
-                    },
-                )
-            }
-            composable(
-                TopLevelDestination.EditTaskForm.route,
-                arguments = listOf(navArgument(NavArguments.ID_KEY) {
-                    type = NavType.LongType
-                }),
-            ) {
-                TaskFormScreen(
-                    onPopBackStack = navController::popBackStack,
-                    setTopBarState = { topBarState = TopBarState.TaskForm(uiState = it) },
-                    setUserMessage = { userMessage = it },
-                    onSelectCategoryType = {},
-                )
-            }
-            composable(
-                TopLevelDestination.TaskCategoryDetail.route,
-                arguments = listOf(navArgument(NavArguments.ID_KEY) {
-                    type = NavType.LongType
-                }),
-            ) {
+                LaunchedEffect(backStackEntry) {
+                    topBarState = TopBarState.TaskCategoryDetail(
+                        uiState = TaskCategoryDetailTopBarState(
+                            categoryId = requireNotNull(backStackEntry.arguments)
+                                .getLong(NavArguments.ID_KEY)
+                        ),
+                        action = null,
+                    )
+                }
+
                 TaskCategoryDetailScreen(
                     onPopBackStack = navController::popBackStack,
-                    setTopBarState = { topBarState = TopBarState.TaskCategoryDetail(uiState = it) },
+                    topBarAction = (topBarState as? TopBarState.TaskCategoryDetail)?.action,
+                    topBarActionHandled = {
+                        (topBarState as? TopBarState.TaskCategoryDetail)?.copy(action = null)?.let {
+                            topBarState = it
+                        }
+                    },
                     setUserMessage = { userMessage = it },
                     onSelectTask = {
-                        navController.navigate(route = TopLevelDestination.TaskDetail(it).route)
+                        navController.navigate(route = MainDestination.TaskDetail(it).route)
                     },
                 )
             }
             composable(
-                TopLevelDestination.NewTaskCategoryForm.route,
+                MainDestination.NewTaskCategoryForm.route,
                 arguments = listOf(navArgument(NavArguments.NAME_KEY) {
                     type = NavType.StringType
                     nullable = true
@@ -289,11 +332,19 @@ fun DiswantinApp() {
             ) { backStackEntry ->
                 TaskCategoryFormScreen(
                     onPopBackStack = navController::popBackStack,
-                    setTopBarState = { topBarState = TopBarState.TaskCategoryForm(uiState = it) },
+                    setTopBarState = {
+                        topBarState = TopBarState.TaskCategoryForm(uiState = it, action = null)
+                    },
+                    topBarAction = (topBarState as? TopBarState.TaskCategoryForm)?.action,
+                    topBarActionHandled = {
+                        (topBarState as? TopBarState.TaskCategoryForm)?.copy(action = null)?.let {
+                            topBarState = it
+                        }
+                    },
                     setUserMessage = { userMessage = it },
                     onSelectTaskType = {
                         navController.navigate(
-                            route = TopLevelDestination.NewTaskForm(name = it).route
+                            route = MainDestination.NewTaskForm.Main(name = it).route
                         ) {
                             popUpTo(backStackEntry.destination.id) {
                                 inclusive = true
@@ -303,14 +354,22 @@ fun DiswantinApp() {
                 )
             }
             composable(
-                TopLevelDestination.EditTaskCategoryForm.route,
+                MainDestination.EditTaskCategoryForm.route,
                 arguments = listOf(navArgument(NavArguments.ID_KEY) {
                     type = NavType.LongType
                 }),
             ) {
                 TaskCategoryFormScreen(
                     onPopBackStack = navController::popBackStack,
-                    setTopBarState = { topBarState = TopBarState.TaskCategoryForm(uiState = it) },
+                    setTopBarState = {
+                        topBarState = TopBarState.TaskCategoryForm(uiState = it, action = null)
+                    },
+                    topBarAction = (topBarState as? TopBarState.TaskCategoryForm)?.action,
+                    topBarActionHandled = {
+                        (topBarState as? TopBarState.TaskCategoryForm)?.copy(action = null)?.let {
+                            topBarState = it
+                        }
+                    },
                     setUserMessage = { userMessage = it },
                     onSelectTaskType = {},
                 )
@@ -323,28 +382,164 @@ fun DiswantinApp() {
                 TaskCategoryListScreen(
                     onAddCategory = {
                         navController.navigate(
-                            route = TopLevelDestination.NewTaskCategoryForm(name = null).route
+                            route = MainDestination.NewTaskCategoryForm(name = null).route
                         )
                     },
                     onSelectCategory = {
                         navController.navigate(
-                            route = TopLevelDestination.TaskCategoryDetail(it).route
+                            route = MainDestination.TaskCategoryDetail(it).route
                         )
                     },
                 )
             }
-            composable(TopLevelDestination.TaskSearch.route) {
+            composable(MainDestination.TaskSearch.route) {
+                LaunchedEffect(Unit) {
+                    if (topBarState !is TopBarState.TaskSearch) {
+                        topBarState = TopBarState.TaskSearch(
+                            uiState = TaskSearchTopBarState(query = ""),
+                            action = null,
+                        )
+                    }
+                }
+
                 TaskSearchScreen(
-                    setTopBarState = { topBarState = TopBarState.TaskSearch(uiState = it) },
+                    query = (topBarState as? TopBarState.TaskSearch)?.uiState?.query ?: "",
+                    topBarAction = (topBarState as? TopBarState.TaskSearch)?.action,
+                    topBarActionHandled = {
+                        (topBarState as? TopBarState.TaskSearch)?.copy(action = null)?.let {
+                            topBarState = it
+                        }
+                    },
                     onAddTask = {
                         navController.navigate(
-                            route = TopLevelDestination.NewTaskForm(name = it).route
+                            route = MainDestination.NewTaskForm.Main(name = it).route
                         )
                     },
                     onSelectSearchResult = {
-                        navController.navigate(route = TopLevelDestination.TaskDetail(it).route)
+                        navController.navigate(route = MainDestination.TaskDetail(it).route)
                     },
                 )
+            }
+            navigation(
+                startDestination = MainDestination.NewTaskForm.Main.route,
+                route = MainDestination.NewTaskForm.route,
+            ) {
+                composable(
+                    MainDestination.NewTaskForm.Main.route,
+                    arguments = listOf(navArgument(NavArguments.NAME_KEY) {
+                        type = NavType.StringType
+                        nullable = true
+                    }),
+                ) { backStackEntry ->
+                    val parentEntry = remember(backStackEntry) {
+                        navController.getBackStackEntry(MainDestination.NewTaskForm.route)
+                    }
+
+                    TaskFormScreen(
+                        onPopBackStack = navController::popBackStack,
+                        setTopBarState = {
+                            topBarState = TopBarState.TaskForm(uiState = it, action = null)
+                        },
+                        topBarAction = (topBarState as? TopBarState.TaskForm)?.action,
+                        topBarActionHandled = {
+                            (topBarState as? TopBarState.TaskForm)?.copy(action = null)?.let {
+                                topBarState = it
+                            }
+                        },
+                        setUserMessage = { userMessage = it },
+                        onSelectCategoryType = {
+                            navController.navigate(
+                                route = MainDestination.NewTaskCategoryForm(name = it).route
+                            ) {
+                                popUpTo(backStackEntry.destination.id) {
+                                    inclusive = true
+                                }
+                            }
+                        },
+                        onEditRecurrence = {
+                            navController.navigate(
+                                route = MainDestination.NewTaskForm.Recurrence.route
+                            )
+                        },
+                        taskFormViewModel = hiltViewModel(parentEntry),
+                    )
+                }
+                composable(MainDestination.NewTaskForm.Recurrence.route) {
+                    val parentEntry = remember(it) {
+                        navController.getBackStackEntry(MainDestination.NewTaskForm.route)
+                    }
+
+                    LaunchedEffect(Unit) {
+                        topBarState = TopBarState.TaskRecurrenceForm(action = null)
+                    }
+
+                    TaskRecurrentFormScreen(
+                        topBarAction = (topBarState as? TopBarState.TaskRecurrenceForm)?.action,
+                        topBarActionHandled = {
+                            (topBarState as? TopBarState.TaskRecurrenceForm)?.copy(action = null)
+                                ?.let {
+                                    topBarState = it
+                                }
+                        },
+                        taskFormViewModel = hiltViewModel(parentEntry),
+                    )
+                }
+            }
+            navigation(
+                startDestination = MainDestination.EditTaskForm.Main.route,
+                route = MainDestination.EditTaskForm.route,
+            ) {
+                composable(
+                    MainDestination.EditTaskForm.Main.route,
+                    arguments = listOf(navArgument(NavArguments.ID_KEY) {
+                        type = NavType.LongType
+                    }),
+                ) {
+                    val parentEntry = remember(it) {
+                        navController.getBackStackEntry(MainDestination.EditTaskForm.route)
+                    }
+
+                    TaskFormScreen(
+                        onPopBackStack = navController::popBackStack,
+                        setTopBarState = {
+                            topBarState = TopBarState.TaskForm(uiState = it, action = null)
+                        },
+                        topBarAction = (topBarState as? TopBarState.TaskForm)?.action,
+                        topBarActionHandled = {
+                            (topBarState as? TopBarState.TaskForm)?.copy(action = null)?.let {
+                                topBarState = it
+                            }
+                        },
+                        setUserMessage = { userMessage = it },
+                        onSelectCategoryType = {},
+                        onEditRecurrence = {
+                            navController.navigate(
+                                route = MainDestination.EditTaskForm.Recurrence.route
+                            )
+                        },
+                        taskFormViewModel = hiltViewModel(parentEntry),
+                    )
+                }
+                composable(MainDestination.EditTaskForm.Recurrence.route) {
+                    val parentEntry = remember(it) {
+                        navController.getBackStackEntry(MainDestination.EditTaskForm.route)
+                    }
+
+                    LaunchedEffect(Unit) {
+                        topBarState = TopBarState.TaskRecurrenceForm(action = null)
+                    }
+
+                    TaskRecurrentFormScreen(
+                        topBarAction = (topBarState as? TopBarState.TaskRecurrenceForm)?.action,
+                        topBarActionHandled = {
+                            (topBarState as? TopBarState.TaskRecurrenceForm)?.copy(action = null)
+                                ?.let {
+                                    topBarState = it
+                                }
+                        },
+                        taskFormViewModel = hiltViewModel(parentEntry),
+                    )
+                }
             }
         }
     }

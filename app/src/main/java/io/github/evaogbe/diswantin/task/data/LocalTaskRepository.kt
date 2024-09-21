@@ -19,9 +19,10 @@ class LocalTaskRepository @Inject constructor(
 ) : TaskRepository {
     override fun getCurrentTask(params: CurrentTaskParams) =
         taskDao.getTaskPriorities(
-            scheduledDateBefore = params.scheduledDateBefore,
+            today = params.today,
             scheduledTimeBefore = params.scheduledTimeBefore,
             doneBefore = params.doneBefore,
+            week = params.week,
         )
             .map { priorities ->
                 priorities.sortedWith(
@@ -71,6 +72,9 @@ class LocalTaskRepository @Inject constructor(
     private fun escapeSql(str: String) =
         str.replace("'", "''").replace("\"", "\"\"")
 
+    override fun getTaskRecurrencesByTaskId(taskId: Long) =
+        taskDao.getTaskRecurrencesByTaskId(taskId).flowOn(ioDispatcher)
+
     override fun getCount(excludeDone: Boolean) =
         if (excludeDone) {
             taskDao.getUndoneCount(ZonedDateTime.now(clock).with(LocalTime.MIN).toInstant())
@@ -82,19 +86,13 @@ class LocalTaskRepository @Inject constructor(
     override suspend fun create(form: NewTaskForm): Task {
         val task = form.newTask
         return withContext(ioDispatcher) {
-            task.copy(id = taskDao.insertWithParent(task, form.parentTaskId))
+            task.copy(id = taskDao.insert(form))
         }
     }
 
     override suspend fun update(form: EditTaskForm) =
         withContext(ioDispatcher) {
-            when (form.parentUpdateType) {
-                is PathUpdateType.Keep -> taskDao.update(form.updatedTask)
-                is PathUpdateType.Remove -> taskDao.updateWithoutParent(form.updatedTask)
-                is PathUpdateType.Replace -> {
-                    taskDao.updateWithParent(form.updatedTask, form.parentUpdateType.id)
-                }
-            }
+            taskDao.update(form)
             form.updatedTask
         }
 

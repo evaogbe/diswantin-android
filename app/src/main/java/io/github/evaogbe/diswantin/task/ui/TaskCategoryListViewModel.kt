@@ -18,7 +18,7 @@ class TaskCategoryListViewModel @Inject constructor(
     taskCategoryRepository: TaskCategoryRepository,
 ) : ViewModel() {
     val uiState =
-        taskCategoryRepository.categoryListStream
+        taskCategoryRepository.categoriesStream
             .map<List<TaskCategory>, TaskCategoryListUiState> {
                 TaskCategoryListUiState.Success(categories = it.toImmutableList())
             }

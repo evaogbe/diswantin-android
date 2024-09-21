@@ -46,7 +46,7 @@ class TaskCategoryDetailViewModelTest {
         assertThat(viewModel.uiState.value).isEqualTo(
             TaskCategoryDetailUiState.Success(
                 category = categoryWithTasks.category,
-                tasks = categoryWithTasks.tasks.map { it.toTaskItemState() }.toImmutableList(),
+                tasks = categoryWithTasks.tasks.map { it.toTaskItemUiState() }.toImmutableList(),
                 userMessage = null,
             )
         )
@@ -97,7 +97,7 @@ class TaskCategoryDetailViewModelTest {
         assertThat(viewModel.uiState.value).isEqualTo(
             TaskCategoryDetailUiState.Success(
                 category = categoryWithTasks.category,
-                tasks = categoryWithTasks.tasks.map { it.toTaskItemState() }.toImmutableList(),
+                tasks = categoryWithTasks.tasks.map { it.toTaskItemUiState() }.toImmutableList(),
                 userMessage = null,
             )
         )
@@ -126,18 +126,14 @@ class TaskCategoryDetailViewModelTest {
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskCategoryDetailUiState.Success(
                     category = categoryWithTasks.category,
-                    tasks = categoryWithTasks.tasks.map { it.toTaskItemState() }.toImmutableList(),
+                    tasks = categoryWithTasks.tasks.map { it.toTaskItemUiState() }
+                        .toImmutableList(),
                     userMessage = R.string.task_category_detail_delete_error,
                 )
             )
         }
 
-    private fun Task.toTaskItemState() = TaskItemState(
-        id = id,
-        name = name,
-        recurring = recurring,
-        isDone = false,
-    )
+    private fun Task.toTaskItemUiState() = TaskItemUiState(id = id, name = name, isDone = false)
 
     private fun genTaskCategoryWithTasks() = TaskCategoryWithTasks(
         TaskCategory(id = 1L, name = loremFaker.lorem.words()),

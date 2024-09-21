@@ -21,8 +21,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -38,9 +36,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,6 +51,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.ui.components.AutoFocusTextField
+import io.github.evaogbe.diswantin.ui.components.ButtonWithIcon
 import io.github.evaogbe.diswantin.ui.components.LoadFailureLayout
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.evaogbe.diswantin.ui.theme.IconSizeLg
@@ -77,18 +74,20 @@ import kotlin.time.Duration.Companion.milliseconds
 fun TaskSearchTopBar(
     uiState: TaskSearchTopBarState,
     onBackClick: () -> Unit,
+    onQueryChange: (String) -> Unit,
+    onSearch: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     TopAppBar(
         title = {
             AutoFocusTextField(
                 value = uiState.query,
-                onValueChange = uiState.onQueryChange,
+                onValueChange = onQueryChange,
                 modifier = Modifier.fillMaxWidth(),
                 placeholder = { Text(stringResource(R.string.task_search_title)) },
                 trailingIcon = if (uiState.query.isNotEmpty()) {
                     {
-                        IconButton(onClick = { uiState.onQueryChange("") }) {
+                        IconButton(onClick = { onQueryChange("") }) {
                             Icon(
                                 imageVector = Icons.Default.Clear,
                                 contentDescription = stringResource(R.string.clear_button)
@@ -99,7 +98,7 @@ fun TaskSearchTopBar(
                     null
                 },
                 keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
-                keyboardActions = KeyboardActions(onSearch = { uiState.onSearch(uiState.query) }),
+                keyboardActions = KeyboardActions(onSearch = { onSearch() }),
                 singleLine = true,
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = Color.Transparent,
@@ -122,13 +121,14 @@ fun TaskSearchTopBar(
 @OptIn(FlowPreview::class)
 @Composable
 fun TaskSearchScreen(
-    setTopBarState: (TaskSearchTopBarState) -> Unit,
+    query: String,
+    topBarAction: TaskSearchTopBarAction?,
+    topBarActionHandled: () -> Unit,
     onAddTask: (String) -> Unit,
     onSelectSearchResult: (Long) -> Unit,
     taskSearchViewModel: TaskSearchViewModel = hiltViewModel(),
 ) {
     val uiState by taskSearchViewModel.uiState.collectAsStateWithLifecycle()
-    val (query, setQuery) = rememberSaveable { mutableStateOf("") }
     val currentQuery by rememberUpdatedState(query)
 
     LaunchedEffect(taskSearchViewModel) {
@@ -140,14 +140,14 @@ fun TaskSearchScreen(
             }
     }
 
-    LaunchedEffect(setTopBarState, query, setQuery, taskSearchViewModel) {
-        setTopBarState(
-            TaskSearchTopBarState(
-                query = query,
-                onQueryChange = setQuery,
-                onSearch = taskSearchViewModel::searchTasks,
-            )
-        )
+    LaunchedEffect(topBarAction, taskSearchViewModel) {
+        when (topBarAction) {
+            null -> {}
+            TaskSearchTopBarAction.Search -> {
+                taskSearchViewModel.searchTasks(query)
+                topBarActionHandled()
+            }
+        }
     }
 
     when (val state = uiState) {
@@ -239,18 +239,11 @@ fun EmptyTaskSearchLayout(onAddTask: () -> Unit, modifier: Modifier = Modifier) 
                 style = typography.headlineLarge
             )
             Spacer(Modifier.size(SpaceLg))
-            Button(
+            ButtonWithIcon(
                 onClick = onAddTask,
-                contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = null,
-                    modifier = Modifier.size(ButtonDefaults.IconSize),
-                )
-                Spacer(Modifier.size(ButtonDefaults.IconSpacing))
-                Text(stringResource(R.string.add_task_button))
-            }
+                imageVector = Icons.Default.Add,
+                text = stringResource(R.string.add_task_button),
+            )
         }
     }
 }
@@ -270,8 +263,10 @@ private fun TaskSearchScreenPreview_Present() {
     DiswantinTheme {
         Scaffold(topBar = {
             TaskSearchTopBar(
-                uiState = TaskSearchTopBarState(query = "Bru", onQueryChange = {}, onSearch = {}),
+                uiState = TaskSearchTopBarState(query = "Bru"),
                 onBackClick = {},
+                onQueryChange = {},
+                onSearch = {},
             )
         }) { innerPadding ->
             TaskSearchLayout(
@@ -294,8 +289,10 @@ private fun TaskSearchScreenPreview_Empty() {
     DiswantinTheme {
         Scaffold(topBar = {
             TaskSearchTopBar(
-                uiState = TaskSearchTopBarState(query = "Bru", onQueryChange = {}, onSearch = {}),
+                uiState = TaskSearchTopBarState(query = "Bru"),
                 onBackClick = {},
+                onQueryChange = {},
+                onSearch = {},
             )
         }) { innerPadding ->
             EmptyTaskSearchLayout(onAddTask = {}, modifier = Modifier.padding(innerPadding))
@@ -309,8 +306,10 @@ private fun TaskSearchScreenPreview_Initial() {
     DiswantinTheme {
         Scaffold(topBar = {
             TaskSearchTopBar(
-                uiState = TaskSearchTopBarState(query = "", onQueryChange = {}, onSearch = {}),
+                uiState = TaskSearchTopBarState(query = ""),
                 onBackClick = {},
+                onQueryChange = {},
+                onSearch = {},
             )
         }) { innerPadding ->
             InitialTaskSearchLayout(modifier = Modifier.padding(innerPadding))

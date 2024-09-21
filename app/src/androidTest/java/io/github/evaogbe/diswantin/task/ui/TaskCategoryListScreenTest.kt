@@ -66,7 +66,7 @@ class TaskCategoryListScreenTest {
     @Test
     fun displaysErrorMessage_withFailureUi() {
         val taskCategoryRepository = FakeTaskCategoryRepository()
-        taskCategoryRepository.setThrows(taskCategoryRepository::categoryListStream, true)
+        taskCategoryRepository.setThrows(taskCategoryRepository::categoriesStream, true)
 
         val viewModel = TaskCategoryListViewModel(taskCategoryRepository)
 

@@ -62,9 +62,10 @@ class CurrentTaskViewModelTest {
                     deadlineTime = task1.deadlineTime,
                     scheduledDate = task1.scheduledDate,
                     scheduledTime = task1.scheduledTime,
-                    recurring = task1.recurring,
+                    recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task1,
+                    existingRecurrences = emptyList(),
                 )
             )
 

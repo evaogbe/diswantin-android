@@ -40,7 +40,8 @@ class TaskCategoryDetailScreenTest {
             DiswantinTheme {
                 TaskCategoryDetailScreen(
                     onPopBackStack = {},
-                    setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
                     setUserMessage = {},
                     onSelectTask = {},
                     taskCategoryDetailViewModel = viewModel,
@@ -63,7 +64,8 @@ class TaskCategoryDetailScreenTest {
             DiswantinTheme {
                 TaskCategoryDetailScreen(
                     onPopBackStack = {},
-                    setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
                     setUserMessage = {},
                     onSelectTask = {},
                     taskCategoryDetailViewModel = viewModel,
@@ -86,7 +88,8 @@ class TaskCategoryDetailScreenTest {
             DiswantinTheme {
                 TaskCategoryDetailScreen(
                     onPopBackStack = { onPopBackStackClicked = true },
-                    setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
                     setUserMessage = {},
                     onSelectTask = {},
                     taskCategoryDetailViewModel = viewModel,
@@ -107,11 +110,14 @@ class TaskCategoryDetailScreenTest {
         val taskCategoryRepository = FakeTaskCategoryRepository.withCategories(categoryWithTasks)
         val viewModel = createTaskCategoryDetailViewModel(taskCategoryRepository)
 
+        taskCategoryRepository.setThrows(taskCategoryRepository::delete, true)
+
         composeTestRule.setContent {
             DiswantinTheme {
                 TaskCategoryDetailScreen(
                     onPopBackStack = {},
-                    setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
                     setUserMessage = { userMessage = it },
                     onSelectTask = {},
                     taskCategoryDetailViewModel = viewModel,
@@ -119,7 +125,6 @@ class TaskCategoryDetailScreenTest {
             }
         }
 
-        taskCategoryRepository.setThrows(taskCategoryRepository::delete, true)
         viewModel.deleteCategory()
 
         composeTestRule.waitUntil {

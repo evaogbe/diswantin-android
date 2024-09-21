@@ -22,9 +22,9 @@ class FakeTaskCategoryRepository(private val db: FakeDatabase = FakeDatabase()) 
     val taskCategories
         get() = db.taskCategoryTable.value.values
 
-    override val categoryListStream: Flow<List<TaskCategory>> =
+    override val categoriesStream: Flow<List<TaskCategory>> =
         combine(throwingMethods, db.taskCategoryTable) { throwingMethods, taskCategories ->
-            if (::categoryListStream::get in throwingMethods) {
+            if (::categoriesStream::get in throwingMethods) {
                 throw RuntimeException("Test")
             }
 
@@ -53,7 +53,8 @@ class FakeTaskCategoryRepository(private val db: FakeDatabase = FakeDatabase()) 
             db.taskCategoryTable,
             db.taskTable,
             db.taskCompletionTable,
-        ) { throwingMethods, taskCategories, tasks, taskCompletions ->
+            db.taskRecurrenceTable,
+        ) { throwingMethods, taskCategories, tasks, taskCompletions, taskRecurrences ->
             if (::getCategoryWithTaskItemsById in throwingMethods) {
                 throw RuntimeException("Test")
             }
@@ -65,7 +66,7 @@ class FakeTaskCategoryRepository(private val db: FakeDatabase = FakeDatabase()) 
                         TaskItem(
                             id = task.id,
                             name = task.name,
-                            recurring = task.recurring,
+                            recurring = taskRecurrences.values.any { it.taskId == task.id },
                             doneAt = taskCompletions.values
                                 .filter { it.taskId == task.id }
                                 .maxOfOrNull { it.doneAt },

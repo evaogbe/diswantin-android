@@ -56,6 +56,8 @@ class TaskCategoryFormScreenTest {
                 TaskCategoryFormScreen(
                     onPopBackStack = {},
                     setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
                     setUserMessage = {},
                     onSelectTaskType = {},
                     taskCategoryFormViewModel = viewModel,
@@ -64,6 +66,7 @@ class TaskCategoryFormScreenTest {
         }
 
         composeTestRule.onNodeWithText(stringResource(R.string.task_category_form_fetch_error))
+            .assertIsDisplayed()
     }
 
     @Test
@@ -89,6 +92,8 @@ class TaskCategoryFormScreenTest {
                 TaskCategoryFormScreen(
                     onPopBackStack = {},
                     setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
                     setUserMessage = {},
                     onSelectTaskType = {},
                     taskCategoryFormViewModel = viewModel,
@@ -124,6 +129,8 @@ class TaskCategoryFormScreenTest {
                 TaskCategoryFormScreen(
                     onPopBackStack = {},
                     setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
                     setUserMessage = { userMessage = it },
                     onSelectTaskType = {},
                     taskCategoryFormViewModel = viewModel,
@@ -169,6 +176,8 @@ class TaskCategoryFormScreenTest {
                 TaskCategoryFormScreen(
                     onPopBackStack = { onPopBackStackCalled = true },
                     setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
                     setUserMessage = {},
                     onSelectTaskType = {},
                     taskCategoryFormViewModel = viewModel,
@@ -213,6 +222,8 @@ class TaskCategoryFormScreenTest {
                 TaskCategoryFormScreen(
                     onPopBackStack = {},
                     setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
                     setUserMessage = {},
                     onSelectTaskType = {},
                     taskCategoryFormViewModel = viewModel,
@@ -254,6 +265,8 @@ class TaskCategoryFormScreenTest {
                 TaskCategoryFormScreen(
                     onPopBackStack = { onPopBackStackCalled = true },
                     setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
                     setUserMessage = {},
                     onSelectTaskType = {},
                     taskCategoryFormViewModel = viewModel,
@@ -290,6 +303,8 @@ class TaskCategoryFormScreenTest {
                 TaskCategoryFormScreen(
                     onPopBackStack = {},
                     setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
                     setUserMessage = {},
                     onSelectTaskType = {},
                     taskCategoryFormViewModel = viewModel,
