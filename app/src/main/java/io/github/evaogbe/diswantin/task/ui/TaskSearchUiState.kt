@@ -1,11 +1,6 @@
 package io.github.evaogbe.diswantin.task.ui
 
-import android.os.Parcelable
 import kotlinx.collections.immutable.ImmutableList
-import kotlinx.parcelize.Parcelize
-
-@Parcelize
-data class TaskSearchTopBarState(val query: String) : Parcelable
 
 enum class TaskSearchTopBarAction {
     Search

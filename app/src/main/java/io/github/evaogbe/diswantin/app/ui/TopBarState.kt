@@ -11,15 +11,17 @@ import io.github.evaogbe.diswantin.task.ui.TaskFormTopBarAction
 import io.github.evaogbe.diswantin.task.ui.TaskFormTopBarState
 import io.github.evaogbe.diswantin.task.ui.TaskRecurrenceFormTopBarAction
 import io.github.evaogbe.diswantin.task.ui.TaskSearchTopBarAction
-import io.github.evaogbe.diswantin.task.ui.TaskSearchTopBarState
 import kotlinx.parcelize.Parcelize
 
 sealed interface TopBarState : Parcelable {
     @Parcelize
+    data object CurrentTask : TopBarState
+
+    @Parcelize
     data object Advice : TopBarState
 
     @Parcelize
-    data object CurrentTask : TopBarState
+    data object TaskCategoryList : TopBarState
 
     @Parcelize
     data class TaskDetail(val uiState: TaskDetailTopBarState, val action: TaskDetailTopBarAction?) :
@@ -42,12 +44,8 @@ sealed interface TopBarState : Parcelable {
     ) : TopBarState
 
     @Parcelize
-    data object TaskCategoryList : TopBarState
-
-    @Parcelize
     data class TaskRecurrenceForm(val action: TaskRecurrenceFormTopBarAction?) : TopBarState
 
     @Parcelize
-    data class TaskSearch(val uiState: TaskSearchTopBarState, val action: TaskSearchTopBarAction?) :
-        TopBarState
+    data class TaskSearch(val action: TaskSearchTopBarAction?) : TopBarState
 }

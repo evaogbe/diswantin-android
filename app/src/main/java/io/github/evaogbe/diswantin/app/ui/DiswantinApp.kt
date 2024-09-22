@@ -68,7 +68,6 @@ import io.github.evaogbe.diswantin.task.ui.TaskRecurrentFormScreen
 import io.github.evaogbe.diswantin.task.ui.TaskSearchScreen
 import io.github.evaogbe.diswantin.task.ui.TaskSearchTopBar
 import io.github.evaogbe.diswantin.task.ui.TaskSearchTopBarAction
-import io.github.evaogbe.diswantin.task.ui.TaskSearchTopBarState
 import io.github.evaogbe.diswantin.ui.navigation.NavArguments
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
@@ -79,6 +78,7 @@ fun DiswantinApp() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
+    var query by rememberSaveable { mutableStateOf("") }
     var topBarState by rememberSaveable { mutableStateOf<TopBarState>(TopBarState.CurrentTask) }
 
     var userMessage by remember { mutableStateOf<String?>(null) }
@@ -98,17 +98,28 @@ fun DiswantinApp() {
     Scaffold(
         topBar = {
             when (val state = topBarState) {
-                is TopBarState.Advice -> {
-                    AdviceTopBar(
+                is TopBarState.CurrentTask -> {
+                    CurrentTaskTopBar(
                         onSearch = {
+                            query = ""
                             navController.navigate(route = MainDestination.TaskSearch.route)
                         },
                     )
                 }
 
-                is TopBarState.CurrentTask -> {
-                    CurrentTaskTopBar(
+                is TopBarState.Advice -> {
+                    AdviceTopBar(
                         onSearch = {
+                            query = ""
+                            navController.navigate(route = MainDestination.TaskSearch.route)
+                        },
+                    )
+                }
+
+                is TopBarState.TaskCategoryList -> {
+                    TaskCategoryListTopBar(
+                        onSearch = {
+                            query = ""
                             navController.navigate(route = MainDestination.TaskSearch.route)
                         },
                     )
@@ -176,23 +187,11 @@ fun DiswantinApp() {
                     )
                 }
 
-                is TopBarState.TaskCategoryList -> {
-                    TaskCategoryListTopBar(
-                        onSearch = {
-                            navController.navigate(route = MainDestination.TaskSearch.route)
-                        },
-                    )
-                }
-
                 is TopBarState.TaskSearch -> {
                     TaskSearchTopBar(
-                        uiState = state.uiState,
+                        query = query,
+                        onQueryChange = { query = it },
                         onBackClick = navController::popBackStack,
-                        onQueryChange = { query ->
-                            (topBarState as? TopBarState.TaskSearch)?.let {
-                                topBarState = it.copy(uiState = state.uiState.copy(query = query))
-                            }
-                        },
                         onSearch = {
                             topBarState = state.copy(action = TaskSearchTopBarAction.Search)
                         }
@@ -236,13 +235,6 @@ fun DiswantinApp() {
             startDestination = BottomBarDestination.CurrentTask.route,
             modifier = Modifier.padding(innerPadding),
         ) {
-            composable(BottomBarDestination.Advice.route) {
-                LaunchedEffect(Unit) {
-                    topBarState = TopBarState.Advice
-                }
-
-                AdviceScreen()
-            }
             composable(BottomBarDestination.CurrentTask.route) {
                 LaunchedEffect(Unit) {
                     topBarState = TopBarState.CurrentTask
@@ -258,6 +250,31 @@ fun DiswantinApp() {
                     onNavigateToTask = {
                         navController.navigate(route = MainDestination.TaskDetail(id = it).route)
                     }
+                )
+            }
+            composable(BottomBarDestination.Advice.route) {
+                LaunchedEffect(Unit) {
+                    topBarState = TopBarState.Advice
+                }
+
+                AdviceScreen()
+            }
+            composable(BottomBarDestination.TaskCategoryList.route) {
+                LaunchedEffect(Unit) {
+                    topBarState = TopBarState.TaskCategoryList
+                }
+
+                TaskCategoryListScreen(
+                    onAddCategory = {
+                        navController.navigate(
+                            route = MainDestination.NewTaskCategoryForm(name = null).route,
+                        )
+                    },
+                    onSelectCategory = {
+                        navController.navigate(
+                            route = MainDestination.TaskCategoryDetail(id = it).route,
+                        )
+                    },
                 )
             }
             composable(
@@ -376,36 +393,15 @@ fun DiswantinApp() {
                     onSelectTaskType = {},
                 )
             }
-            composable(BottomBarDestination.TaskCategoryList.route) {
-                LaunchedEffect(Unit) {
-                    topBarState = TopBarState.TaskCategoryList
-                }
-
-                TaskCategoryListScreen(
-                    onAddCategory = {
-                        navController.navigate(
-                            route = MainDestination.NewTaskCategoryForm(name = null).route,
-                        )
-                    },
-                    onSelectCategory = {
-                        navController.navigate(
-                            route = MainDestination.TaskCategoryDetail(id = it).route,
-                        )
-                    },
-                )
-            }
             composable(MainDestination.TaskSearch.route) {
                 LaunchedEffect(Unit) {
                     if (topBarState !is TopBarState.TaskSearch) {
-                        topBarState = TopBarState.TaskSearch(
-                            uiState = TaskSearchTopBarState(query = ""),
-                            action = null,
-                        )
+                        topBarState = TopBarState.TaskSearch(action = null)
                     }
                 }
 
                 TaskSearchScreen(
-                    query = (topBarState as? TopBarState.TaskSearch)?.uiState?.query ?: "",
+                    query = query,
                     topBarAction = (topBarState as? TopBarState.TaskSearch)?.action,
                     topBarActionHandled = {
                         (topBarState as? TopBarState.TaskSearch)?.copy(action = null)?.let {

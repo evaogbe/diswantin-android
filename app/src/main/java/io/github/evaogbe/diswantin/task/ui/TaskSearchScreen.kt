@@ -74,20 +74,20 @@ import kotlin.time.Duration.Companion.milliseconds
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskSearchTopBar(
-    uiState: TaskSearchTopBarState,
-    onBackClick: () -> Unit,
+    query: String,
     onQueryChange: (String) -> Unit,
+    onBackClick: () -> Unit,
     onSearch: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     TopAppBar(
         title = {
             AutoFocusTextField(
-                value = uiState.query,
+                value = query,
                 onValueChange = onQueryChange,
                 modifier = Modifier.fillMaxWidth(),
                 placeholder = { Text(stringResource(R.string.task_search_title)) },
-                trailingIcon = if (uiState.query.isNotEmpty()) {
+                trailingIcon = if (query.isNotEmpty()) {
                     {
                         IconButton(onClick = { onQueryChange("") }) {
                             Icon(
@@ -285,14 +285,11 @@ fun InitialTaskSearchLayout(modifier: Modifier = Modifier) {
 @Composable
 private fun TaskSearchScreenPreview_Present() {
     DiswantinTheme {
-        Scaffold(topBar = {
-            TaskSearchTopBar(
-                uiState = TaskSearchTopBarState(query = "Bru"),
-                onBackClick = {},
-                onQueryChange = {},
-                onSearch = {},
-            )
-        }) { innerPadding ->
+        Scaffold(
+            topBar = {
+                TaskSearchTopBar(query = "Bru", onQueryChange = {}, onBackClick = {}, onSearch = {})
+            },
+        ) { innerPadding ->
             TaskSearchLayout(
                 query = "Bru",
                 searchResults = persistentListOf(
@@ -311,14 +308,11 @@ private fun TaskSearchScreenPreview_Present() {
 @Composable
 private fun TaskSearchScreenPreview_Empty() {
     DiswantinTheme {
-        Scaffold(topBar = {
-            TaskSearchTopBar(
-                uiState = TaskSearchTopBarState(query = "Bru"),
-                onBackClick = {},
-                onQueryChange = {},
-                onSearch = {},
-            )
-        }) { innerPadding ->
+        Scaffold(
+            topBar = {
+                TaskSearchTopBar(query = "Bru", onQueryChange = {}, onBackClick = {}, onSearch = {})
+            },
+        ) { innerPadding ->
             EmptyTaskSearchLayout(onAddTask = {}, modifier = Modifier.padding(innerPadding))
         }
     }
@@ -328,14 +322,11 @@ private fun TaskSearchScreenPreview_Empty() {
 @Composable
 private fun TaskSearchScreenPreview_Initial() {
     DiswantinTheme {
-        Scaffold(topBar = {
-            TaskSearchTopBar(
-                uiState = TaskSearchTopBarState(query = ""),
-                onBackClick = {},
-                onQueryChange = {},
-                onSearch = {},
-            )
-        }) { innerPadding ->
+        Scaffold(
+            topBar = {
+                TaskSearchTopBar(query = "", onQueryChange = {}, onBackClick = {}, onSearch = {})
+            },
+        ) { innerPadding ->
             InitialTaskSearchLayout(modifier = Modifier.padding(innerPadding))
         }
     }
