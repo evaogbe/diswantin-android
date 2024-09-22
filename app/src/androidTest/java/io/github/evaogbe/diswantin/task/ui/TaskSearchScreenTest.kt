@@ -5,6 +5,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.Task
+import io.github.evaogbe.diswantin.task.data.TaskRepository
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.stringResource
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
@@ -15,6 +16,7 @@ import io.mockk.spyk
 import kotlinx.coroutines.flow.flow
 import org.junit.Rule
 import org.junit.Test
+import java.time.Clock
 
 class TaskSearchScreenTest {
     @get:Rule
@@ -35,7 +37,7 @@ class TaskSearchScreenTest {
             )
         }
         val taskRepository = FakeTaskRepository.withTasks(tasks)
-        val viewModel = TaskSearchViewModel(taskRepository)
+        val viewModel = createTaskSearchViewModel(taskRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -59,7 +61,7 @@ class TaskSearchScreenTest {
     fun displaysEmptyMessage_withoutSearchResults() {
         val query = loremFaker.verbs.base()
         val taskRepository = FakeTaskRepository()
-        val viewModel = TaskSearchViewModel(taskRepository)
+        val viewModel = createTaskSearchViewModel(taskRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -82,9 +84,11 @@ class TaskSearchScreenTest {
     fun displayErrorMessage_withFailureUi() {
         val query = loremFaker.verbs.base()
         val taskRepository = spyk<FakeTaskRepository>()
-        every { taskRepository.search(any()) } returns flow { throw RuntimeException("Test") }
+        every { taskRepository.searchTaskItems(any()) } returns flow {
+            throw RuntimeException("Test")
+        }
 
-        val viewModel = TaskSearchViewModel(taskRepository)
+        val viewModel = createTaskSearchViewModel(taskRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -102,4 +106,7 @@ class TaskSearchScreenTest {
         composeTestRule.onNodeWithText(stringResource(R.string.task_search_error))
             .assertIsDisplayed()
     }
+
+    private fun createTaskSearchViewModel(taskRepository: TaskRepository) =
+        TaskSearchViewModel(taskRepository, Clock.systemDefaultZone())
 }

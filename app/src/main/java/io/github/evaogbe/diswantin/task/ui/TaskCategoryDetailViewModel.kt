@@ -42,19 +42,11 @@ class TaskCategoryDetailViewModel @Inject constructor(
         ) { initialized, categoryWithTasks, userMessage ->
             when {
                 categoryWithTasks != null -> {
-                    val midnight = ZonedDateTime.now(clock).with(LocalTime.MIN).toInstant()
+                    val doneBefore = ZonedDateTime.now(clock).with(LocalTime.MIN).toInstant()
                     TaskCategoryDetailUiState.Success(
                         category = categoryWithTasks.category,
                         tasks = categoryWithTasks.tasks.map { task ->
-                            TaskItemUiState(
-                                id = task.id,
-                                name = task.name,
-                                isDone = if (task.recurring) {
-                                    task.doneAt?.let { it < midnight } == false
-                                } else {
-                                    task.doneAt != null
-                                },
-                            )
+                            TaskItemUiState.fromTaskItem(task, doneBefore)
                         }.toImmutableList(),
                         userMessage = userMessage,
                     )

@@ -13,6 +13,8 @@ interface TaskRepository {
 
     fun search(query: String): Flow<List<Task>>
 
+    fun searchTaskItems(query: String): Flow<List<TaskItem>>
+
     fun getTaskRecurrencesByTaskId(taskId: Long): Flow<List<TaskRecurrence>>
 
     fun getCount(): Flow<Long>

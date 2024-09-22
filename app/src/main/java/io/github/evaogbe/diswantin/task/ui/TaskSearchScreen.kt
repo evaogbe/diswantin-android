@@ -41,15 +41,18 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.evaogbe.diswantin.R
-import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.ui.components.AutoFocusTextField
 import io.github.evaogbe.diswantin.ui.components.ButtonWithIcon
 import io.github.evaogbe.diswantin.ui.components.LoadFailureLayout
@@ -66,7 +69,6 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
-import java.time.Instant
 import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -164,7 +166,7 @@ fun TaskSearchScreen(
                 TaskSearchLayout(
                     query = query,
                     searchResults = state.searchResults,
-                    onSelectSearchResult = { onSelectSearchResult(it.id) },
+                    onSelectSearchResult = onSelectSearchResult,
                 )
             }
         }
@@ -174,10 +176,12 @@ fun TaskSearchScreen(
 @Composable
 fun TaskSearchLayout(
     query: String,
-    searchResults: ImmutableList<Task>,
-    onSelectSearchResult: (Task) -> Unit,
+    searchResults: ImmutableList<TaskItemUiState>,
+    onSelectSearchResult: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val resources = LocalContext.current.resources
+
     Box(
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.TopCenter
@@ -187,24 +191,44 @@ fun TaskSearchLayout(
                 .widthIn(max = ScreenLg)
                 .fillMaxSize(),
         ) {
-            items(searchResults, key = Task::id) { searchResult ->
+            items(searchResults, key = TaskItemUiState::id) { searchResult ->
                 ListItem(
                     headlineContent = {
-                        Text(text = buildAnnotatedString {
-                            append(searchResult.name)
-                            searchResult.name.findOccurrences(query).forEach {
-                                addStyle(
-                                    SpanStyle(
-                                        color = colorScheme.onTertiary,
-                                        background = colorScheme.tertiary
-                                    ),
-                                    it.first,
-                                    it.last + 1
-                                )
-                            }
-                        })
+                        Text(
+                            text = buildAnnotatedString {
+                                append(searchResult.name)
+                                searchResult.name.findOccurrences(query).forEach {
+                                    addStyle(
+                                        SpanStyle(
+                                            color = colorScheme.onTertiary,
+                                            background = colorScheme.tertiary
+                                        ),
+                                        it.first,
+                                        it.last + 1
+                                    )
+                                }
+
+                                if (searchResult.isDone) {
+                                    addStyle(
+                                        SpanStyle(textDecoration = TextDecoration.LineThrough),
+                                        0,
+                                        searchResult.name.length,
+                                    )
+                                }
+                            },
+                            modifier = if (searchResult.isDone) {
+                                Modifier.semantics {
+                                    contentDescription = resources.getString(
+                                        R.string.task_name_done,
+                                        searchResult.name,
+                                    )
+                                }
+                            } else {
+                                Modifier
+                            },
+                        )
                     },
-                    modifier = Modifier.clickable { onSelectSearchResult(searchResult) }
+                    modifier = Modifier.clickable { onSelectSearchResult(searchResult.id) }
                 )
                 HorizontalDivider()
             }
@@ -272,9 +296,9 @@ private fun TaskSearchScreenPreview_Present() {
             TaskSearchLayout(
                 query = "Bru",
                 searchResults = persistentListOf(
-                    Task(id = 1L, createdAt = Instant.now(), name = "Brush teeth"),
-                    Task(id = 2L, createdAt = Instant.now(), name = "Brush hair"),
-                    Task(id = 3L, createdAt = Instant.now(), name = "Eat brunch"),
+                    TaskItemUiState(id = 1L, name = "Brush teeth", isDone = true),
+                    TaskItemUiState(id = 2L, name = "Brush hair", isDone = false),
+                    TaskItemUiState(id = 3L, name = "Eat brunch", isDone = false),
                 ),
                 onSelectSearchResult = {},
                 modifier = Modifier.padding(innerPadding),

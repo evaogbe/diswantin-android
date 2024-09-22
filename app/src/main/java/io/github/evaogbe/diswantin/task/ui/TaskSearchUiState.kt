@@ -1,7 +1,6 @@
 package io.github.evaogbe.diswantin.task.ui
 
 import android.os.Parcelable
-import io.github.evaogbe.diswantin.task.data.Task
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.parcelize.Parcelize
 
@@ -17,5 +16,5 @@ sealed interface TaskSearchUiState {
 
     data object Failure : TaskSearchUiState
 
-    data class Success(val searchResults: ImmutableList<Task>) : TaskSearchUiState
+    data class Success(val searchResults: ImmutableList<TaskItemUiState>) : TaskSearchUiState
 }

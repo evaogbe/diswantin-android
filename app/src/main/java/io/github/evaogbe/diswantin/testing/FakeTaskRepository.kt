@@ -8,6 +8,7 @@ import io.github.evaogbe.diswantin.task.data.RecurrenceType
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskCompletion
 import io.github.evaogbe.diswantin.task.data.TaskDetail
+import io.github.evaogbe.diswantin.task.data.TaskItem
 import io.github.evaogbe.diswantin.task.data.TaskRecurrence
 import io.github.evaogbe.diswantin.task.data.TaskRepository
 import kotlinx.coroutines.flow.Flow
@@ -193,6 +194,24 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
     override fun search(query: String) =
         db.taskTable.map { tasks ->
             tasks.values.filter { it.name.contains(query, ignoreCase = true) }
+        }
+
+    override fun searchTaskItems(query: String) =
+        combine(
+            db.taskTable,
+            db.taskCompletionTable,
+            db.taskRecurrenceTable,
+        ) { tasks, taskCompletions, taskRecurrences ->
+            tasks.values.filter { it.name.contains(query, ignoreCase = true) }.map { task ->
+                TaskItem(
+                    id = task.id,
+                    name = task.name,
+                    recurring = taskRecurrences.values.any { it.taskId == task.id },
+                    doneAt = taskCompletions.values
+                        .filter { it.taskId == task.id }
+                        .maxOfOrNull { it.doneAt },
+                )
+            }
         }
 
     override fun getTaskRecurrencesByTaskId(taskId: Long) =

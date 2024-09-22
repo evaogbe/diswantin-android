@@ -3,12 +3,13 @@ package io.github.evaogbe.diswantin.task.ui
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import io.github.evaogbe.diswantin.task.data.Task
+import io.github.evaogbe.diswantin.task.data.TaskRepository
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.MainDispatcherRule
 import io.github.serpro69.kfaker.Faker
 import io.mockk.every
 import io.mockk.spyk
-import kotlinx.collections.immutable.toPersistentList
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
@@ -17,6 +18,7 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
+import java.time.Clock
 import java.util.regex.Pattern
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -31,7 +33,7 @@ class TaskSearchViewModelTest {
         runTest(mainDispatcherRule.testDispatcher) {
             val blankQuery = faker.string.regexify(""" *""")
             val query = faker.string.regexify("""\S+""")
-            val tasks = List(faker.random.nextInt(bound = 5)) {
+            val tasks = List(3) {
                 Task(
                     id = it + 1L,
                     createdAt = faker.random.randomPastDate().toInstant(),
@@ -42,7 +44,7 @@ class TaskSearchViewModelTest {
                 )
             }
             val taskRepository = FakeTaskRepository.withTasks(tasks)
-            val viewModel = TaskSearchViewModel(taskRepository)
+            val viewModel = createTaskSearchViewModel(taskRepository)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -56,8 +58,15 @@ class TaskSearchViewModelTest {
 
             viewModel.searchTasks(query)
 
-            assertThat(viewModel.uiState.value)
-                .isEqualTo(TaskSearchUiState.Success(searchResults = tasks.toPersistentList()))
+            assertThat(viewModel.uiState.value).isEqualTo(
+                TaskSearchUiState.Success(
+                    searchResults = persistentListOf(
+                        TaskItemUiState(id = tasks[0].id, name = tasks[0].name, isDone = false),
+                        TaskItemUiState(id = tasks[1].id, name = tasks[1].name, isDone = false),
+                        TaskItemUiState(id = tasks[2].id, name = tasks[2].name, isDone = false),
+                    ),
+                )
+            )
 
             viewModel.searchTasks(blankQuery)
 
@@ -69,9 +78,11 @@ class TaskSearchViewModelTest {
         runTest(mainDispatcherRule.testDispatcher) {
             val query = faker.string.regexify("""\S+""")
             val taskRepository = spyk<FakeTaskRepository>()
-            every { taskRepository.search(any()) } returns flow { throw RuntimeException("Test") }
+            every { taskRepository.searchTaskItems(any()) } returns flow {
+                throw RuntimeException("Test")
+            }
 
-            val viewModel = TaskSearchViewModel(taskRepository)
+            val viewModel = createTaskSearchViewModel(taskRepository)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -81,4 +92,7 @@ class TaskSearchViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(TaskSearchUiState.Failure)
         }
+
+    private fun createTaskSearchViewModel(taskRepository: TaskRepository) =
+        TaskSearchViewModel(taskRepository, Clock.systemDefaultZone())
 }

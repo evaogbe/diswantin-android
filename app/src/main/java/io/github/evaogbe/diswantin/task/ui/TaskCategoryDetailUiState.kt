@@ -13,8 +13,6 @@ enum class TaskCategoryDetailTopBarAction {
     Delete
 }
 
-data class TaskItemUiState(val id: Long, val name: String, val isDone: Boolean)
-
 sealed interface TaskCategoryDetailUiState {
     data object Pending : TaskCategoryDetailUiState
 

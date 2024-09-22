@@ -204,6 +204,21 @@ interface TaskDao {
     )
     fun search(query: String): Flow<List<Task>>
 
+    @Query(
+        """SELECT DISTINCT t.id, t.name, r.task_id IS NOT NULL AS recurring, c.done_at
+        FROM task t
+        JOIN task_fts ON task_fts.name = t.name
+        LEFT JOIN (
+            SELECT task_id, MAX(done_at) AS done_at
+            FROM task_completion
+            GROUP BY task_id
+        ) c ON c.task_id = t.id
+        LEFT JOIN (SELECT DISTINCT task_id FROM task_recurrence) r ON r.task_id = t.id
+        WHERE task_fts MATCH :query || '*'
+        LIMIT 20"""
+    )
+    fun searchTaskItems(query: String): Flow<List<TaskItem>>
+
     @Query("SELECT * FROM task_recurrence WHERE task_id = :taskId ORDER BY start")
     fun getTaskRecurrencesByTaskId(taskId: Long): Flow<List<TaskRecurrence>>
 
