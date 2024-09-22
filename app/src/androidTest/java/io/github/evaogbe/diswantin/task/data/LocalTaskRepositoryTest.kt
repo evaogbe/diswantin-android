@@ -766,6 +766,10 @@ class LocalTaskRepositoryTest {
                     )
                 )
 
+                assertThat(awaitItem())
+                    .isNotNull()
+                    .isDataClassEqualTo(task2)
+
                 taskRepository.markDone(task2.id)
 
                 assertThat(awaitItem())
