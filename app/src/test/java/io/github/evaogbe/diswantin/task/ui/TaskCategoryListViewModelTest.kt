@@ -8,9 +8,12 @@ import io.github.evaogbe.diswantin.testing.FakeTaskCategoryRepository
 import io.github.evaogbe.diswantin.testing.MainDispatcherRule
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
+import io.mockk.every
+import io.mockk.spyk
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
@@ -47,8 +50,10 @@ class TaskCategoryListViewModelTest {
     @Test
     fun `uiState emits failure when repository throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
-            val taskCategoryRepository = FakeTaskCategoryRepository()
-            taskCategoryRepository.setThrows(taskCategoryRepository::categoriesStream, true)
+            val taskCategoryRepository = spyk<FakeTaskCategoryRepository>()
+            every { taskCategoryRepository.categoriesStream } returns flow {
+                throw RuntimeException("Test")
+            }
 
             val viewModel = TaskCategoryListViewModel(taskCategoryRepository)
 

@@ -10,6 +10,9 @@ import io.github.evaogbe.diswantin.testing.stringResource
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
+import io.mockk.every
+import io.mockk.spyk
+import kotlinx.coroutines.flow.flow
 import org.junit.Rule
 import org.junit.Test
 
@@ -78,10 +81,10 @@ class TaskSearchScreenTest {
     @Test
     fun displayErrorMessage_withFailureUi() {
         val query = loremFaker.verbs.base()
-        val taskRepository = FakeTaskRepository()
-        val viewModel = TaskSearchViewModel(taskRepository)
+        val taskRepository = spyk<FakeTaskRepository>()
+        every { taskRepository.search(any()) } returns flow { throw RuntimeException("Test") }
 
-        taskRepository.setThrows(taskRepository::search, true)
+        val viewModel = TaskSearchViewModel(taskRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {

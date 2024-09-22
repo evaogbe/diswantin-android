@@ -17,6 +17,10 @@ import io.github.evaogbe.diswantin.ui.navigation.NavArguments
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
+import io.mockk.coEvery
+import io.mockk.every
+import io.mockk.spyk
+import kotlinx.coroutines.flow.flow
 import org.junit.Rule
 import org.junit.Test
 import java.time.Clock
@@ -66,8 +70,10 @@ class TaskDetailScreenTest {
 
     @Test
     fun displaysErrorMessage_withFailureUi() {
-        val taskRepository = FakeTaskRepository()
-        taskRepository.setThrows(taskRepository::getTaskDetailById, true)
+        val taskRepository = spyk<FakeTaskRepository>()
+        every { taskRepository.getTaskDetailById(any()) } returns flow {
+            throw RuntimeException("Test")
+        }
 
         val viewModel = createTaskDetailViewModel(taskRepository)
 
@@ -120,10 +126,10 @@ class TaskDetailScreenTest {
     fun displaysErrorMessage_whenDeleteTaskFailed() {
         var userMessage: String? = null
         val task = genTask()
-        val taskRepository = FakeTaskRepository.withTasks(task)
-        val viewModel = createTaskDetailViewModel(taskRepository)
+        val taskRepository = spyk(FakeTaskRepository.withTasks(task))
+        coEvery { taskRepository.delete(any()) } throws RuntimeException("Test")
 
-        taskRepository.setThrows(taskRepository::delete, true)
+        val viewModel = createTaskDetailViewModel(taskRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {

@@ -17,6 +17,10 @@ import io.github.evaogbe.diswantin.testing.stringResource
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
+import io.mockk.coEvery
+import io.mockk.every
+import io.mockk.spyk
+import kotlinx.coroutines.flow.flow
 import org.junit.Rule
 import org.junit.Test
 import java.time.Clock
@@ -73,8 +77,10 @@ class CurrentTaskScreenTest {
     @Test
     fun displayErrorMessage_withFailureUi() {
         val task = genTasks(1).single()
-        val taskRepository = FakeTaskRepository.withTasks(task)
-        taskRepository.setThrows(taskRepository::getCurrentTask, true)
+        val taskRepository = spyk(FakeTaskRepository.withTasks(task))
+        every { taskRepository.getCurrentTask(any()) } returns flow {
+            throw RuntimeException("Test")
+        }
 
         val viewModel = createCurrentTaskViewModel(taskRepository)
 
@@ -165,7 +171,9 @@ class CurrentTaskScreenTest {
     @Test
     fun displaysErrorMessage_whenSearchTasksFailed() {
         val query = loremFaker.verbs.base()
-        val taskRepository = FakeTaskRepository.withTasks(genTasks(2))
+        val taskRepository = spyk(FakeTaskRepository.withTasks(genTasks(2)))
+        every { taskRepository.search(any()) } returns flow { throw RuntimeException("Test") }
+
         val viewModel = createCurrentTaskViewModel(taskRepository)
 
         composeTestRule.setContent {
@@ -179,7 +187,6 @@ class CurrentTaskScreenTest {
             }
         }
 
-        taskRepository.setThrows(taskRepository::search, true)
         composeTestRule.onNodeWithText(stringResource(R.string.skip_button)).performClick()
         composeTestRule.onNodeWithText(
             stringResource(R.string.parent_task_label),
@@ -237,7 +244,9 @@ class CurrentTaskScreenTest {
     fun displaysErrorMessage_whenAddParentTaskFailed() {
         var userMessage: String? = null
         val (task1, task2) = genTasks(2)
-        val taskRepository = FakeTaskRepository.withTasks(task1, task2)
+        val taskRepository = spyk(FakeTaskRepository.withTasks(task1, task2))
+        coEvery { taskRepository.addParent(any(), any()) } throws RuntimeException("Test")
+
         val viewModel = createCurrentTaskViewModel(taskRepository)
 
         composeTestRule.setContent {
@@ -251,7 +260,6 @@ class CurrentTaskScreenTest {
             }
         }
 
-        taskRepository.setThrows(taskRepository::addParent, true)
         composeTestRule.onNodeWithText(stringResource(R.string.skip_button)).performClick()
         composeTestRule.onNodeWithText(
             stringResource(R.string.parent_task_label),
@@ -296,7 +304,9 @@ class CurrentTaskScreenTest {
     fun displaysErrorMessage_whenMarkDoneFailed() {
         var userMessage: String? = null
         val task = genTasks(1).single()
-        val taskRepository = FakeTaskRepository.withTasks(task)
+        val taskRepository = spyk(FakeTaskRepository.withTasks(task))
+        coEvery { taskRepository.markDone(any()) } throws RuntimeException("Test")
+
         val viewModel = createCurrentTaskViewModel(taskRepository)
 
         composeTestRule.setContent {
@@ -310,7 +320,6 @@ class CurrentTaskScreenTest {
             }
         }
 
-        taskRepository.setThrows(taskRepository::markDone, true)
         composeTestRule.onNodeWithText(stringResource(R.string.mark_done_button)).performClick()
         composeTestRule.waitForIdle()
 

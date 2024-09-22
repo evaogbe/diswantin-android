@@ -14,10 +14,14 @@ import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.MainDispatcherRule
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
+import io.mockk.coEvery
+import io.mockk.every
+import io.mockk.spyk
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
@@ -83,8 +87,10 @@ class CurrentTaskViewModelTest {
     fun `uiState emits failure when fetch current task fails`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val task = genTasks(1).single()
-            val taskRepository = FakeTaskRepository.withTasks(task)
-            taskRepository.setThrows(taskRepository::getCurrentTask, true)
+            val taskRepository = spyk(FakeTaskRepository.withTasks(task))
+            every { taskRepository.getCurrentTask(any()) } returns flow {
+                throw RuntimeException("Test")
+            }
 
             val viewModel = createCurrentTaskViewModel(taskRepository)
 
@@ -140,8 +146,10 @@ class CurrentTaskViewModelTest {
     fun `uiState disables skip when fetch task count fails`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val (task1, task2) = genTasks(2)
-            val taskRepository = FakeTaskRepository.withTasks(task1, task2)
-            taskRepository.setThrows(taskRepository::getCount, true)
+            val taskRepository = spyk(FakeTaskRepository.withTasks(task1, task2))
+            every { taskRepository.getCount(excludeDone = true) } returns flow {
+                throw RuntimeException("Test")
+            }
 
             val viewModel = createCurrentTaskViewModel(taskRepository)
 
@@ -200,14 +208,16 @@ class CurrentTaskViewModelTest {
         runTest(mainDispatcherRule.testDispatcher) {
             val query = loremFaker.verbs.base()
             val (task1, task2) = genTasks(2)
-            val taskRepository = FakeTaskRepository.withTasks(task1, task2)
+            val taskRepository = spyk(FakeTaskRepository.withTasks(task1, task2))
+
+            every { taskRepository.search(any()) } returns flow { throw RuntimeException("Test") }
+
             val viewModel = createCurrentTaskViewModel(taskRepository)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
             }
 
-            taskRepository.setThrows(taskRepository::search, true)
             viewModel.searchTasks(query)
 
             assertThat(viewModel.uiState.value).isEqualTo(
@@ -256,14 +266,15 @@ class CurrentTaskViewModelTest {
     fun `selectParentTask shows error message when repository throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val (task1, task2) = genTasks(2)
-            val taskRepository = FakeTaskRepository.withTasks(task1, task2)
+            val taskRepository = spyk(FakeTaskRepository.withTasks(task1, task2))
+            coEvery { taskRepository.addParent(any(), any()) } throws RuntimeException("Test")
+
             val viewModel = createCurrentTaskViewModel(taskRepository)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
             }
 
-            taskRepository.setThrows(taskRepository::addParent, true)
             viewModel.selectParentTask(task2)
 
             assertThat(viewModel.uiState.value).isEqualTo(
@@ -316,7 +327,10 @@ class CurrentTaskViewModelTest {
     fun `markCurrentTaskDone shows error message when repository throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val task = genTasks(1).single()
-            val taskRepository = FakeTaskRepository.withTasks(task)
+            val taskRepository = spyk(FakeTaskRepository.withTasks(task))
+
+            coEvery { taskRepository.markDone(any()) } throws RuntimeException("Test")
+
             val viewModel = createCurrentTaskViewModel(taskRepository)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
@@ -333,7 +347,6 @@ class CurrentTaskViewModelTest {
                     )
                 )
 
-            taskRepository.setThrows(taskRepository::markDone, true)
             viewModel.markCurrentTaskDone()
 
             assertThat(viewModel.uiState.value).isEqualTo(

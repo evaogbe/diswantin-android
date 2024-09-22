@@ -11,9 +11,8 @@ import io.github.evaogbe.diswantin.task.data.TaskDetail
 import io.github.evaogbe.diswantin.task.data.TaskRecurrence
 import io.github.evaogbe.diswantin.task.data.TaskRepository
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.map
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
@@ -21,26 +20,18 @@ import java.time.Month
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
-import kotlin.reflect.KFunction
 
 class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRepository {
-    private val throwingMethods = MutableStateFlow(setOf<KFunction<*>>())
-
     val tasks
         get() = db.taskTable.value.values
 
     override fun getCurrentTask(params: CurrentTaskParams): Flow<Task?> =
         combine(
-            throwingMethods,
             db.taskTable,
             db.taskPathTable,
             db.taskCompletionTable,
             db.taskRecurrenceTable,
-        ) { throwingMethods, tasks, taskPaths, taskCompletions, taskRecurrences ->
-            if (::getCurrentTask in throwingMethods) {
-                throw RuntimeException("Test")
-            }
-
+        ) { tasks, taskPaths, taskCompletions, taskRecurrences ->
             tasks.values
                 .sortedWith(
                     compareBy<Task, ZonedDateTime?>(nullsLast()) {
@@ -162,27 +153,15 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
         }
     }
 
-    override fun getById(id: Long): Flow<Task> =
-        combine(throwingMethods, db.taskTable) { throwingMethods, tasks ->
-            if (::getById in throwingMethods) {
-                throw RuntimeException("Test")
-            }
-
-            checkNotNull(tasks[id])
-        }
+    override fun getById(id: Long) = db.taskTable.map { checkNotNull(it[id]) }
 
     override fun getTaskDetailById(id: Long): Flow<TaskDetail?> =
         combine(
-            throwingMethods,
             db.taskCategoryTable,
             db.taskTable,
             db.taskCompletionTable,
             db.taskPathTable,
-        ) { throwingMethods, taskCategories, tasks, taskCompletions, taskPaths ->
-            if (::getTaskDetailById in throwingMethods) {
-                throw RuntimeException("Test")
-            }
-
+        ) { taskCategories, tasks, taskCompletions, taskPaths ->
             val parentId =
                 taskPaths.values.firstOrNull { it.descendant == id && it.depth == 1 }?.ancestor
             tasks[id]?.let { task ->
@@ -204,52 +183,29 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
             }
         }
 
-    override fun getParent(id: Long): Flow<Task?> =
-        combine(
-            throwingMethods,
-            db.taskTable,
-            db.taskPathTable
-        ) { throwingMethods, tasks, taskPaths ->
-            if (::getParent in throwingMethods) {
-                throw RuntimeException("Test")
-            }
-
+    override fun getParent(id: Long) =
+        combine(db.taskTable, db.taskPathTable) { tasks, taskPaths ->
             taskPaths.values.firstOrNull { it.descendant == id && it.depth == 1 }?.let {
                 tasks[it.ancestor]
             }
         }
 
-    override fun search(query: String): Flow<List<Task>> =
-        combine(throwingMethods, db.taskTable) { throwingMethods, tasks ->
-            if (::search in throwingMethods) {
-                throw RuntimeException("Test")
-            }
-
-            tasks.values.filter {
-                it.name.contains(query, ignoreCase = true)
-            }
+    override fun search(query: String) =
+        db.taskTable.map { tasks ->
+            tasks.values.filter { it.name.contains(query, ignoreCase = true) }
         }
 
-    override fun getTaskRecurrencesByTaskId(taskId: Long): Flow<List<TaskRecurrence>> =
-        combine(throwingMethods, db.taskRecurrenceTable) { throwingMethods, taskRecurrences ->
-            if (::getTaskRecurrencesByTaskId in throwingMethods) {
-                throw RuntimeException("Test")
-            }
-
+    override fun getTaskRecurrencesByTaskId(taskId: Long) =
+        db.taskRecurrenceTable.map { taskRecurrences ->
             taskRecurrences.values.filter { it.taskId == taskId }.sortedBy { it.start }
         }
 
-    override fun getCount(excludeDone: Boolean): Flow<Long> =
+    override fun getCount(excludeDone: Boolean) =
         combine(
-            throwingMethods,
             db.taskTable,
             db.taskCompletionTable,
             db.taskRecurrenceTable,
-        ) { throwingMethods, tasks, taskCompletions, taskRecurrences ->
-            if (::getCount in throwingMethods) {
-                throw RuntimeException("Test")
-            }
-
+        ) { tasks, taskCompletions, taskRecurrences ->
             if (excludeDone) {
                 val doneBefore = ZonedDateTime.now().with(LocalTime.MIN).toInstant()
                 tasks.filterValues { task ->
@@ -266,10 +222,6 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
         }
 
     override suspend fun create(form: NewTaskForm): Task {
-        if (::create in throwingMethods.value) {
-            throw RuntimeException("Test")
-        }
-
         val task = db.insertTask(form.newTask)
         form.recurrences.forEach { db.insertTaskRecurrence(it.copy(taskId = task.id)) }
 
@@ -281,10 +233,6 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
     }
 
     override suspend fun update(form: EditTaskForm): Task {
-        if (::update in throwingMethods.value) {
-            throw RuntimeException("Test")
-        }
-
         db.updateTask(form.updatedTask)
         form.recurrencesToRemove.forEach { db.deleteTaskRecurrence(it.id) }
         form.recurrencesToAdd.forEach(db::insertTaskRecurrence)
@@ -307,35 +255,15 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
     }
 
     override suspend fun delete(id: Long) {
-        if (::delete in throwingMethods.value) {
-            throw RuntimeException("Test")
-        }
-
         db.deleteTask(id)
     }
 
     override suspend fun markDone(id: Long) {
-        if (::markDone in throwingMethods.value) {
-            throw RuntimeException("Test")
-        }
-
         db.insertTaskCompletion(TaskCompletion(taskId = id, doneAt = Instant.now()))
     }
 
     override suspend fun addParent(id: Long, parentId: Long) {
-        if (::addParent in throwingMethods.value) {
-            throw RuntimeException("Test")
-        }
-
         db.connectTaskPath(parentId = parentId, childId = id)
-    }
-
-    fun setThrows(method: KFunction<*>, shouldThrow: Boolean) {
-        if (shouldThrow) {
-            throwingMethods.update { it + method }
-        } else {
-            throwingMethods.update { it - method }
-        }
     }
 
     companion object {

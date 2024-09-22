@@ -18,11 +18,15 @@ import io.github.evaogbe.diswantin.testing.MainDispatcherRule
 import io.github.evaogbe.diswantin.ui.navigation.NavArguments
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
+import io.mockk.coEvery
+import io.mockk.every
+import io.mockk.spyk
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
@@ -101,13 +105,15 @@ class TaskCategoryFormViewModelTest {
         runTest(mainDispatcherRule.testDispatcher) {
             val db = FakeDatabase()
             val taskRepository = FakeTaskRepository(db)
-            val taskCategoryRepository = FakeTaskCategoryRepository(db)
-            taskCategoryRepository.setThrows(taskCategoryRepository::getCategoryWithTasksById, true)
+            val taskCategoryRepository = spyk(FakeTaskCategoryRepository(db))
+            every { taskCategoryRepository.getCategoryWithTasksById(any()) } returns flow {
+                throw RuntimeException("Test")
+            }
 
             val viewModel = TaskCategoryFormViewModel(
                 createSavedStateHandleForEdit(),
                 taskCategoryRepository,
-                taskRepository
+                taskRepository,
             )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
@@ -158,20 +164,20 @@ class TaskCategoryFormViewModelTest {
         runTest(mainDispatcherRule.testDispatcher) {
             val query = loremFaker.verbs.base()
             val db = FakeDatabase()
-            val taskRepository = FakeTaskRepository(db)
+            val taskRepository = spyk(FakeTaskRepository(db))
+            every { taskRepository.search(any()) } returns flow { throw RuntimeException("Test") }
+
             val taskCategoryRepository = FakeTaskCategoryRepository(db)
-            val viewModel =
-                TaskCategoryFormViewModel(
-                    SavedStateHandle(),
-                    taskCategoryRepository,
-                    taskRepository
-                )
+            val viewModel = TaskCategoryFormViewModel(
+                SavedStateHandle(),
+                taskCategoryRepository,
+                taskRepository,
+            )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
             }
 
-            taskRepository.setThrows(taskRepository::search, true)
             viewModel.searchTasks(query)
 
             assertThat(viewModel.uiState.value).isEqualTo(
@@ -195,12 +201,11 @@ class TaskCategoryFormViewModelTest {
             }
             val taskRepository = FakeTaskRepository(db)
             val taskCategoryRepository = FakeTaskCategoryRepository(db)
-            val viewModel =
-                TaskCategoryFormViewModel(
-                    SavedStateHandle(),
-                    taskCategoryRepository,
-                    taskRepository
-                )
+            val viewModel = TaskCategoryFormViewModel(
+                SavedStateHandle(),
+                taskCategoryRepository,
+                taskRepository,
+            )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -237,19 +242,19 @@ class TaskCategoryFormViewModelTest {
             val name = loremFaker.lorem.words()
             val db = FakeDatabase()
             val taskRepository = FakeTaskRepository(db)
-            val taskCategoryRepository = FakeTaskCategoryRepository(db)
-            val viewModel =
-                TaskCategoryFormViewModel(
-                    SavedStateHandle(),
-                    taskCategoryRepository,
-                    taskRepository
-                )
+            val taskCategoryRepository = spyk(FakeTaskCategoryRepository(db))
+            coEvery { taskCategoryRepository.create(any()) } throws RuntimeException("Test")
+
+            val viewModel = TaskCategoryFormViewModel(
+                SavedStateHandle(),
+                taskCategoryRepository,
+                taskRepository,
+            )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
             }
 
-            taskCategoryRepository.setThrows(taskCategoryRepository::create, true)
             viewModel.updateNameInput(name)
             viewModel.saveCategory()
 
@@ -316,7 +321,9 @@ class TaskCategoryFormViewModelTest {
                 insertTaskCategory(category, tasks.map(Task::id).toSet())
             }
             val taskRepository = FakeTaskRepository(db)
-            val taskCategoryRepository = FakeTaskCategoryRepository(db)
+            val taskCategoryRepository = spyk(FakeTaskCategoryRepository(db))
+            coEvery { taskCategoryRepository.update(any()) } throws RuntimeException("Test")
+
             val viewModel = TaskCategoryFormViewModel(
                 createSavedStateHandleForEdit(),
                 taskCategoryRepository,
@@ -327,7 +334,6 @@ class TaskCategoryFormViewModelTest {
                 viewModel.uiState.collect()
             }
 
-            taskCategoryRepository.setThrows(taskCategoryRepository::update, true)
             viewModel.updateNameInput(name)
             viewModel.saveCategory()
 

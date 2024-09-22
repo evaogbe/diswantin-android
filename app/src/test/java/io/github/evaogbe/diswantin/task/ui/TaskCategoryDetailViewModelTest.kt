@@ -13,9 +13,13 @@ import io.github.evaogbe.diswantin.testing.MainDispatcherRule
 import io.github.evaogbe.diswantin.ui.navigation.NavArguments
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
+import io.mockk.coEvery
+import io.mockk.every
+import io.mockk.spyk
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
@@ -68,11 +72,10 @@ class TaskCategoryDetailViewModelTest {
     @Test
     fun `uiState emits failure when repository throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
-            val taskCategoryRepository = FakeTaskCategoryRepository()
-            taskCategoryRepository.setThrows(
-                taskCategoryRepository::getCategoryWithTaskItemsById,
-                true
-            )
+            val taskCategoryRepository = spyk<FakeTaskCategoryRepository>()
+            every { taskCategoryRepository.getCategoryWithTasksById(any()) } returns flow {
+                throw RuntimeException("Test")
+            }
 
             val viewModel = createTaskCategoryDetailViewModel(taskCategoryRepository)
 
@@ -113,14 +116,15 @@ class TaskCategoryDetailViewModelTest {
         runTest(mainDispatcherRule.testDispatcher) {
             val categoryWithTasks = genTaskCategoryWithTasks()
             val taskCategoryRepository =
-                FakeTaskCategoryRepository.withCategories(categoryWithTasks)
+                spyk(FakeTaskCategoryRepository.withCategories(categoryWithTasks))
+            coEvery { taskCategoryRepository.delete(any()) } throws RuntimeException("Test")
+
             val viewModel = createTaskCategoryDetailViewModel(taskCategoryRepository)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
             }
 
-            taskCategoryRepository.setThrows(taskCategoryRepository::delete, true)
             viewModel.deleteCategory()
 
             assertThat(viewModel.uiState.value).isEqualTo(

@@ -18,6 +18,8 @@ import io.github.evaogbe.diswantin.ui.navigation.NavArguments
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
+import io.mockk.coEvery
+import io.mockk.spyk
 import org.junit.Rule
 import org.junit.Test
 import java.time.Clock
@@ -107,10 +109,11 @@ class TaskCategoryDetailScreenTest {
     fun displaysErrorMessage_whenDeleteCategoryFailed() {
         var userMessage: String? = null
         val categoryWithTasks = genTaskCategoryWithTasks()
-        val taskCategoryRepository = FakeTaskCategoryRepository.withCategories(categoryWithTasks)
-        val viewModel = createTaskCategoryDetailViewModel(taskCategoryRepository)
+        val taskCategoryRepository =
+            spyk(FakeTaskCategoryRepository.withCategories(categoryWithTasks))
+        coEvery { taskCategoryRepository.delete(any()) } throws RuntimeException("Test")
 
-        taskCategoryRepository.setThrows(taskCategoryRepository::delete, true)
+        val viewModel = createTaskCategoryDetailViewModel(taskCategoryRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {

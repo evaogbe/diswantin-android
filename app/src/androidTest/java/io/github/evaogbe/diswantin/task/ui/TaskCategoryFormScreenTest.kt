@@ -25,6 +25,10 @@ import io.github.evaogbe.diswantin.ui.navigation.NavArguments
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
+import io.mockk.coEvery
+import io.mockk.every
+import io.mockk.spyk
+import kotlinx.coroutines.flow.flow
 import org.junit.Rule
 import org.junit.Test
 import timber.log.Timber
@@ -42,13 +46,15 @@ class TaskCategoryFormScreenTest {
     fun displaysErrorMessage_withFailureUi() {
         val db = FakeDatabase()
         val taskRepository = FakeTaskRepository(db)
-        val taskCategoryRepository = FakeTaskCategoryRepository(db)
-        taskCategoryRepository.setThrows(taskCategoryRepository::getCategoryWithTasksById, true)
+        val taskCategoryRepository = spyk(FakeTaskCategoryRepository(db))
+        every { taskCategoryRepository.getCategoryWithTasksById(any()) } returns flow {
+            throw RuntimeException("Test")
+        }
 
         val viewModel = TaskCategoryFormViewModel(
             createSavedStateHandleForEdit(),
             taskCategoryRepository,
-            taskRepository
+            taskRepository,
         )
 
         composeTestRule.setContent {
@@ -119,7 +125,9 @@ class TaskCategoryFormScreenTest {
         var userMessage: String? = null
         val query = loremFaker.verbs.base()
         val db = FakeDatabase()
-        val taskRepository = FakeTaskRepository(db)
+        val taskRepository = spyk(FakeTaskRepository(db))
+        every { taskRepository.search(any()) } returns flow { throw RuntimeException("Test") }
+
         val taskCategoryRepository = FakeTaskCategoryRepository(db)
         val viewModel =
             TaskCategoryFormViewModel(SavedStateHandle(), taskCategoryRepository, taskRepository)
@@ -138,7 +146,6 @@ class TaskCategoryFormScreenTest {
             }
         }
 
-        taskRepository.setThrows(taskRepository::search, true)
         composeTestRule.onNodeWithText(
             stringResource(R.string.task_name_label),
             useUnmergedTree = true
@@ -213,7 +220,9 @@ class TaskCategoryFormScreenTest {
         val name = loremFaker.lorem.words()
         val db = FakeDatabase()
         val taskRepository = FakeTaskRepository(db)
-        val taskCategoryRepository = FakeTaskCategoryRepository(db)
+        val taskCategoryRepository = spyk(FakeTaskCategoryRepository(db))
+        coEvery { taskCategoryRepository.create(any()) } throws RuntimeException("Test")
+
         val viewModel =
             TaskCategoryFormViewModel(SavedStateHandle(), taskCategoryRepository, taskRepository)
 
@@ -234,7 +243,6 @@ class TaskCategoryFormScreenTest {
         composeTestRule.onNodeWithText(stringResource(R.string.task_category_form_save_error_new))
             .assertDoesNotExist()
 
-        taskCategoryRepository.setThrows(taskCategoryRepository::create, true)
         composeTestRule.onNodeWithText(stringResource(R.string.name_label), useUnmergedTree = true)
             .onParent()
             .performTextInput(name)
@@ -291,7 +299,9 @@ class TaskCategoryFormScreenTest {
             insertTaskCategory(category, emptySet())
         }
         val taskRepository = FakeTaskRepository(db)
-        val taskCategoryRepository = FakeTaskCategoryRepository(db)
+        val taskCategoryRepository = spyk(FakeTaskCategoryRepository(db))
+        coEvery { taskCategoryRepository.update(any()) } throws RuntimeException("Test")
+
         val viewModel = TaskCategoryFormViewModel(
             createSavedStateHandleForEdit(),
             taskCategoryRepository,
@@ -315,7 +325,6 @@ class TaskCategoryFormScreenTest {
         composeTestRule.onNodeWithText(stringResource(R.string.task_category_form_save_error_edit))
             .assertDoesNotExist()
 
-        taskCategoryRepository.setThrows(taskCategoryRepository::update, true)
         composeTestRule.onNodeWithText(stringResource(R.string.name_label), useUnmergedTree = true)
             .onParent()
             .performTextReplacement(name)

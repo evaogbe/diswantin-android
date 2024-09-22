@@ -6,9 +6,12 @@ import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.MainDispatcherRule
 import io.github.serpro69.kfaker.Faker
+import io.mockk.every
+import io.mockk.spyk
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
@@ -65,14 +68,15 @@ class TaskSearchViewModelTest {
     fun `uiState emits failure when repository throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val query = faker.string.regexify("""\S+""")
-            val taskRepository = FakeTaskRepository()
+            val taskRepository = spyk<FakeTaskRepository>()
+            every { taskRepository.search(any()) } returns flow { throw RuntimeException("Test") }
+
             val viewModel = TaskSearchViewModel(taskRepository)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
             }
 
-            taskRepository.setThrows(taskRepository::search, true)
             viewModel.searchTasks(query)
 
             assertThat(viewModel.uiState.value).isEqualTo(TaskSearchUiState.Failure)

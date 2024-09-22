@@ -11,8 +11,12 @@ import io.github.evaogbe.diswantin.testing.MainDispatcherRule
 import io.github.evaogbe.diswantin.ui.navigation.NavArguments
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
+import io.mockk.coEvery
+import io.mockk.every
+import io.mockk.spyk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
@@ -71,8 +75,10 @@ class TaskDetailViewModelTest {
     fun `uiState emits failure when fetch task detail throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val clock = createClock()
-            val taskRepository = FakeTaskRepository()
-            taskRepository.setThrows(taskRepository::getTaskDetailById, true)
+            val taskRepository = spyk<FakeTaskRepository>()
+            every { taskRepository.getTaskDetailById(any()) } returns flow {
+                throw RuntimeException("Test")
+            }
 
             val viewModel =
                 TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock, Locale.US)
@@ -89,8 +95,10 @@ class TaskDetailViewModelTest {
         runTest(mainDispatcherRule.testDispatcher) {
             val task = genTask()
             val clock = createClock()
-            val taskRepository = FakeTaskRepository.withTasks(task)
-            taskRepository.setThrows(taskRepository::getTaskRecurrencesByTaskId, true)
+            val taskRepository = spyk(FakeTaskRepository.withTasks(task))
+            every { taskRepository.getTaskRecurrencesByTaskId(any()) } returns flow {
+                throw RuntimeException("Test")
+            }
 
             val viewModel =
                 TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock, Locale.US)
@@ -133,7 +141,9 @@ class TaskDetailViewModelTest {
         runTest(mainDispatcherRule.testDispatcher) {
             val task = genTask()
             val clock = createClock()
-            val taskRepository = FakeTaskRepository.withTasks(task)
+            val taskRepository = spyk(FakeTaskRepository.withTasks(task))
+            coEvery { taskRepository.delete(any()) } throws RuntimeException("Test")
+
             val viewModel =
                 TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock, Locale.US)
 
@@ -141,7 +151,6 @@ class TaskDetailViewModelTest {
                 viewModel.uiState.collect()
             }
 
-            taskRepository.setThrows(taskRepository::delete, true)
             viewModel.deleteTask()
 
             assertThat(viewModel.uiState.value).isEqualTo(

@@ -46,7 +46,7 @@ android {
     }
     packaging {
         resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1,LICENSE.adoc}"
+            excludes += "/META-INF/{AL2.0,LGPL2.1,LICENSE.adoc,LICENSE.md,LICENSE-notice.md}"
         }
     }
 
@@ -83,6 +83,8 @@ dependencies {
     testImplementation(platform(libs.kotlin.faker.bom))
     testImplementation(libs.kotlin.faker)
     testImplementation(libs.kotlin.faker.lorem)
+    testImplementation(libs.mockk.android)
+    testImplementation(libs.mockk.agent)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
@@ -93,6 +95,8 @@ dependencies {
     androidTestImplementation(libs.kotlin.faker)
     androidTestImplementation(libs.kotlin.faker.lorem)
     androidTestImplementation(libs.turbine)
+    androidTestImplementation(libs.mockk.android)
+    androidTestImplementation(libs.mockk.agent)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 }

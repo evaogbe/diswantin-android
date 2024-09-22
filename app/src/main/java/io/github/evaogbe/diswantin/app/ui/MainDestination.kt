@@ -58,20 +58,20 @@ sealed interface MainDestination {
 
     data class NewTaskCategoryForm(private val name: String?) : MainDestination {
         override val route = name?.let {
-            "taskCategoryForm?${NavArguments.NAME_KEY}=$name"
-        } ?: "taskCategoryForm"
+            "taskCategoryForm/new?${NavArguments.NAME_KEY}=$it"
+        } ?: "taskCategoryForm/new"
 
         companion object : MainDestination {
             override val route =
-                "taskCategoryForm?${NavArguments.NAME_KEY}={${NavArguments.NAME_KEY}}"
+                "taskCategoryForm/new?${NavArguments.NAME_KEY}={${NavArguments.NAME_KEY}}"
         }
     }
 
     data class EditTaskCategoryForm(private val id: Long) : MainDestination {
-        override val route = "taskCategoryForm/$id"
+        override val route = "taskCategoryForm/edit/$id"
 
         companion object : MainDestination {
-            override val route = "taskCategoryForm/{${NavArguments.ID_KEY}}"
+            override val route = "taskCategoryForm/edit/{${NavArguments.ID_KEY}}"
         }
     }
 

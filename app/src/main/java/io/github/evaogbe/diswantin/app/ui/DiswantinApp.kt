@@ -32,6 +32,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -77,7 +78,7 @@ import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
 fun DiswantinApp() {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route
+    val currentDestination = navBackStackEntry?.destination
 
     var topBarState by rememberSaveable {
         mutableStateOf<TopBarState>(
@@ -95,7 +96,7 @@ fun DiswantinApp() {
         }
     }
 
-    LaunchedEffect(currentRoute) {
+    LaunchedEffect(currentDestination) {
         snackbarHostState.currentSnackbarData?.dismiss()
     }
 
@@ -116,7 +117,7 @@ fun DiswantinApp() {
                         },
                         onEditTask = {
                             navController.navigate(
-                                route = MainDestination.EditTaskForm.Main(it).route
+                                route = MainDestination.EditTaskForm.Main(id = it).route,
                             )
                         },
                     )
@@ -128,7 +129,7 @@ fun DiswantinApp() {
                         onBackClick = navController::popBackStack,
                         onEditTask = {
                             navController.navigate(
-                                route = MainDestination.EditTaskForm.Main(it).route
+                                route = MainDestination.EditTaskForm.Main(id = it).route,
                             )
                         },
                         onDeleteTask = {
@@ -165,7 +166,7 @@ fun DiswantinApp() {
                         onBackClick = navController::popBackStack,
                         onEditCategory = {
                             navController.navigate(
-                                route = MainDestination.EditTaskCategoryForm(it).route
+                                route = MainDestination.EditTaskCategoryForm(id = it).route,
                             )
                         },
                         onDeleteCategory = {
@@ -207,9 +208,11 @@ fun DiswantinApp() {
             }
         },
         bottomBar = {
-            if (currentRoute in BottomBarDestination.entries.map(BottomBarDestination::route)) {
+            if (currentDestination?.route in BottomBarDestination.entries.map { it.route }) {
                 DiswantinBottomBar(
-                    isCurrentRoute = { currentRoute == it.route },
+                    isCurrentRoute = { dest ->
+                        currentDestination?.hierarchy.orEmpty().any { it.route == dest.route }
+                    },
                     navigate = {
                         navController.navigate(it.route) {
                             popUpTo(navController.graph.findStartDestination().id) {
@@ -226,10 +229,10 @@ fun DiswantinApp() {
             SnackbarHost(hostState = snackbarHostState, modifier = Modifier.imePadding())
         },
         floatingActionButton = {
-            if (currentRoute in BottomBarDestination.entries.map(BottomBarDestination::route)) {
+            if (currentDestination?.route in BottomBarDestination.entries.map { it.route }) {
                 DiswantinFab(onClick = {
                     navController.navigate(
-                        route = MainDestination.NewTaskForm.Main(name = null).route
+                        route = MainDestination.NewTaskForm.Main(name = null).route,
                     )
                 })
             }
@@ -253,7 +256,7 @@ fun DiswantinApp() {
                     setUserMessage = { userMessage = it },
                     onAddTask = {
                         navController.navigate(
-                            route = MainDestination.NewTaskForm.Main(name = null).route
+                            route = MainDestination.NewTaskForm.Main(name = null).route,
                         )
                     },
                 )
@@ -268,7 +271,7 @@ fun DiswantinApp() {
                     topBarState = TopBarState.TaskDetail(
                         uiState = TaskDetailTopBarState(
                             taskId = requireNotNull(backStackEntry.arguments)
-                                .getLong(NavArguments.ID_KEY)
+                                .getLong(NavArguments.ID_KEY),
                         ),
                         action = null,
                     )
@@ -284,11 +287,11 @@ fun DiswantinApp() {
                     },
                     setUserMessage = { userMessage = it },
                     onNavigateToTask = {
-                        navController.navigate(route = MainDestination.TaskDetail(it).route)
+                        navController.navigate(route = MainDestination.TaskDetail(id = it).route)
                     },
                     onNavigateToCategory = {
                         navController.navigate(
-                            route = MainDestination.TaskCategoryDetail(it).route
+                            route = MainDestination.TaskCategoryDetail(id = it).route,
                         )
                     },
                 )
@@ -303,7 +306,7 @@ fun DiswantinApp() {
                     topBarState = TopBarState.TaskCategoryDetail(
                         uiState = TaskCategoryDetailTopBarState(
                             categoryId = requireNotNull(backStackEntry.arguments)
-                                .getLong(NavArguments.ID_KEY)
+                                .getLong(NavArguments.ID_KEY),
                         ),
                         action = null,
                     )
@@ -319,7 +322,7 @@ fun DiswantinApp() {
                     },
                     setUserMessage = { userMessage = it },
                     onSelectTask = {
-                        navController.navigate(route = MainDestination.TaskDetail(it).route)
+                        navController.navigate(route = MainDestination.TaskDetail(id = it).route)
                     },
                 )
             }
@@ -344,7 +347,7 @@ fun DiswantinApp() {
                     setUserMessage = { userMessage = it },
                     onSelectTaskType = {
                         navController.navigate(
-                            route = MainDestination.NewTaskForm.Main(name = it).route
+                            route = MainDestination.NewTaskForm.Main(name = it).route,
                         ) {
                             popUpTo(backStackEntry.destination.id) {
                                 inclusive = true
@@ -382,12 +385,12 @@ fun DiswantinApp() {
                 TaskCategoryListScreen(
                     onAddCategory = {
                         navController.navigate(
-                            route = MainDestination.NewTaskCategoryForm(name = null).route
+                            route = MainDestination.NewTaskCategoryForm(name = null).route,
                         )
                     },
                     onSelectCategory = {
                         navController.navigate(
-                            route = MainDestination.TaskCategoryDetail(it).route
+                            route = MainDestination.TaskCategoryDetail(id = it).route,
                         )
                     },
                 )
@@ -412,17 +415,17 @@ fun DiswantinApp() {
                     },
                     onAddTask = {
                         navController.navigate(
-                            route = MainDestination.NewTaskForm.Main(name = it).route
+                            route = MainDestination.NewTaskForm.Main(name = it).route,
                         )
                     },
                     onSelectSearchResult = {
-                        navController.navigate(route = MainDestination.TaskDetail(it).route)
+                        navController.navigate(route = MainDestination.TaskDetail(id = it).route)
                     },
                 )
             }
             navigation(
-                startDestination = MainDestination.NewTaskForm.Main.route,
                 route = MainDestination.NewTaskForm.route,
+                startDestination = MainDestination.NewTaskForm.Main.route,
             ) {
                 composable(
                     MainDestination.NewTaskForm.Main.route,
@@ -449,7 +452,7 @@ fun DiswantinApp() {
                         setUserMessage = { userMessage = it },
                         onSelectCategoryType = {
                             navController.navigate(
-                                route = MainDestination.NewTaskCategoryForm(name = it).route
+                                route = MainDestination.NewTaskCategoryForm(name = it).route,
                             ) {
                                 popUpTo(backStackEntry.destination.id) {
                                     inclusive = true
@@ -458,14 +461,14 @@ fun DiswantinApp() {
                         },
                         onEditRecurrence = {
                             navController.navigate(
-                                route = MainDestination.NewTaskForm.Recurrence.route
+                                route = MainDestination.NewTaskForm.Recurrence.route,
                             )
                         },
                         taskFormViewModel = hiltViewModel(parentEntry),
                     )
                 }
-                composable(MainDestination.NewTaskForm.Recurrence.route) {
-                    val parentEntry = remember(it) {
+                composable(MainDestination.NewTaskForm.Recurrence.route) { backStackEntry ->
+                    val parentEntry = remember(backStackEntry) {
                         navController.getBackStackEntry(MainDestination.NewTaskForm.route)
                     }
 
@@ -486,16 +489,16 @@ fun DiswantinApp() {
                 }
             }
             navigation(
-                startDestination = MainDestination.EditTaskForm.Main.route,
                 route = MainDestination.EditTaskForm.route,
+                startDestination = MainDestination.EditTaskForm.Main.route,
             ) {
                 composable(
                     MainDestination.EditTaskForm.Main.route,
                     arguments = listOf(navArgument(NavArguments.ID_KEY) {
                         type = NavType.LongType
                     }),
-                ) {
-                    val parentEntry = remember(it) {
+                ) { backStackEntry ->
+                    val parentEntry = remember(backStackEntry) {
                         navController.getBackStackEntry(MainDestination.EditTaskForm.route)
                     }
 
@@ -514,14 +517,14 @@ fun DiswantinApp() {
                         onSelectCategoryType = {},
                         onEditRecurrence = {
                             navController.navigate(
-                                route = MainDestination.EditTaskForm.Recurrence.route
+                                route = MainDestination.EditTaskForm.Recurrence.route,
                             )
                         },
                         taskFormViewModel = hiltViewModel(parentEntry),
                     )
                 }
-                composable(MainDestination.EditTaskForm.Recurrence.route) {
-                    val parentEntry = remember(it) {
+                composable(MainDestination.EditTaskForm.Recurrence.route) { backStackEntry ->
+                    val parentEntry = remember(backStackEntry) {
                         navController.getBackStackEntry(MainDestination.EditTaskForm.route)
                     }
 

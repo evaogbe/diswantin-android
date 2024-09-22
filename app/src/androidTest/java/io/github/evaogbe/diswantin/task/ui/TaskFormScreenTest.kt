@@ -24,6 +24,10 @@ import io.github.evaogbe.diswantin.ui.navigation.NavArguments
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
+import io.mockk.coEvery
+import io.mockk.every
+import io.mockk.spyk
+import kotlinx.coroutines.flow.flow
 import org.junit.Rule
 import org.junit.Test
 import java.time.Clock
@@ -184,7 +188,9 @@ class TaskFormScreenTest {
     fun displaysErrorMessage_whenSearchTasksFailed() {
         var userMessage: String? = null
         val query = loremFaker.verbs.base()
-        val taskRepository = FakeTaskRepository.withTasks(genTask())
+        val taskRepository = spyk(FakeTaskRepository.withTasks(genTask()))
+        every { taskRepository.search(any()) } returns flow { throw RuntimeException("Test") }
+
         val viewModel = createTaskFormViewModelForNew(taskRepository)
 
         composeTestRule.setContent {
@@ -202,7 +208,6 @@ class TaskFormScreenTest {
             }
         }
 
-        taskRepository.setThrows(taskRepository::search, true)
         composeTestRule.onNodeWithText(
             stringResource(R.string.parent_task_label),
             useUnmergedTree = true
@@ -259,7 +264,9 @@ class TaskFormScreenTest {
     @Test
     fun displaysErrorMessage_withSaveErrorForNew() {
         val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
-        val taskRepository = FakeTaskRepository()
+        val taskRepository = spyk<FakeTaskRepository>()
+        coEvery { taskRepository.create(any()) } throws RuntimeException("Test")
+
         val viewModel = createTaskFormViewModelForNew(taskRepository)
 
         composeTestRule.setContent {
@@ -280,7 +287,6 @@ class TaskFormScreenTest {
         composeTestRule.onNodeWithText(stringResource(R.string.task_form_save_error_new))
             .assertDoesNotExist()
 
-        taskRepository.setThrows(taskRepository::create, true)
         composeTestRule.onNodeWithText(stringResource(R.string.name_label), useUnmergedTree = true)
             .onParent()
             .performTextInput(name)
@@ -342,7 +348,9 @@ class TaskFormScreenTest {
     fun displaysErrorMessage_withSaveErrorForEdit() {
         val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
         val task = genTask()
-        val taskRepository = FakeTaskRepository.withTasks(task)
+        val taskRepository = spyk(FakeTaskRepository.withTasks(task))
+        coEvery { taskRepository.update(any()) } throws RuntimeException("Test")
+
         val viewModel = createTaskFormViewModelForEdit(taskRepository)
 
         composeTestRule.setContent {
@@ -363,7 +371,6 @@ class TaskFormScreenTest {
         composeTestRule.onNodeWithText(stringResource(R.string.task_form_save_error_edit))
             .assertDoesNotExist()
 
-        taskRepository.setThrows(taskRepository::update, true)
         composeTestRule.onNodeWithText(stringResource(R.string.name_label), useUnmergedTree = true)
             .onParent()
             .performTextReplacement(name)

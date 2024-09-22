@@ -10,6 +10,9 @@ import io.github.evaogbe.diswantin.testing.FakeTaskCategoryRepository
 import io.github.evaogbe.diswantin.testing.stringResource
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.serpro69.kfaker.lorem.LoremFaker
+import io.mockk.every
+import io.mockk.spyk
+import kotlinx.coroutines.flow.flow
 import org.junit.Rule
 import org.junit.Test
 
@@ -65,8 +68,10 @@ class TaskCategoryListScreenTest {
 
     @Test
     fun displaysErrorMessage_withFailureUi() {
-        val taskCategoryRepository = FakeTaskCategoryRepository()
-        taskCategoryRepository.setThrows(taskCategoryRepository::categoriesStream, true)
+        val taskCategoryRepository = spyk<FakeTaskCategoryRepository>()
+        every { taskCategoryRepository.categoriesStream } returns flow {
+            throw RuntimeException("Test")
+        }
 
         val viewModel = TaskCategoryListViewModel(taskCategoryRepository)
 

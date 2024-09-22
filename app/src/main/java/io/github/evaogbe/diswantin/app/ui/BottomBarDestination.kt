@@ -14,6 +14,6 @@ enum class BottomBarDestination(
     TaskCategoryList(
         "taskCategoryList",
         R.string.task_category_list_title,
-        R.drawable.baseline_list_alt_24
-    )
+        R.drawable.baseline_list_alt_24,
+    ),
 }
