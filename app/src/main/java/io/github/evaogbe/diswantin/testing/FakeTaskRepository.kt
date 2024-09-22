@@ -200,26 +200,7 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
             taskRecurrences.values.filter { it.taskId == taskId }.sortedBy { it.start }
         }
 
-    override fun getCount(excludeDone: Boolean) =
-        combine(
-            db.taskTable,
-            db.taskCompletionTable,
-            db.taskRecurrenceTable,
-        ) { tasks, taskCompletions, taskRecurrences ->
-            if (excludeDone) {
-                val doneBefore = ZonedDateTime.now().with(LocalTime.MIN).toInstant()
-                tasks.filterValues { task ->
-                    val doneAt = taskCompletions.values
-                        .filter { it.taskId == task.id }
-                        .maxOfOrNull { it.doneAt }
-                    doneAt == null ||
-                            (taskRecurrences.values.any { it.taskId == task.id } &&
-                                    doneAt < doneBefore)
-                }.size.toLong()
-            } else {
-                tasks.size.toLong()
-            }
-        }
+    override fun getCount() = db.taskTable.map { it.size.toLong() }
 
     override suspend fun create(form: NewTaskForm): Task {
         val task = db.insertTask(form.newTask)

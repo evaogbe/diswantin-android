@@ -14,7 +14,6 @@
     <string name="cancel_button">Cancel</string>
     <string name="clear_button">Clear</string>
     <string name="close_button">Close</string>
-    <string name="confirm_button">Confirm</string>
     <string name="current_task_add_parent_error">Something went wrong adding the previous to-do</string>
     <string name="current_task_empty">No upcoming to-dos</string>
     <string name="current_task_fetch_error">Something went wrong loading the current to-do</string>
@@ -101,8 +100,6 @@
     <string name="scheduled_time_label">Scheduled time</string>
     <string name="search_tasks_button">Search to-dos</string>
     <string name="search_task_options_error">Something went wrong loading to-dos</string>
-    <string name="skip_button">Skip</string>
-    <string name="skip_dialog_title">What should be done earlier?</string>
     <string name="start_date_label">Start date</string>
     <string name="suggestion_item_break_down_task"><![CDATA[Be <b>flexible</b> about how much of the task needs to be completed. Do just the first <b>2 minutes</b>]]></string>
     <string name="suggestion_item_check_the_facts"><![CDATA[<b>Check the Facts</b>]]></string>
@@ -160,6 +157,7 @@
     <string name="time_picker_dialog_title">Select time</string>
     <string name="time_picker_switch_to_dial_mode">Switch to clock input mode</string>
     <string name="time_picker_switch_to_input_mode">Switch to text input mode</string>
+    <string name="view_details_button">Details</string>
     <string name="view_task_button">View to-do</string>
     <string name="view_task_category_button">View category</string>
 </resources>

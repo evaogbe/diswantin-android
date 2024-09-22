@@ -1,7 +1,6 @@
 package io.github.evaogbe.diswantin.app.ui
 
 import android.os.Parcelable
-import io.github.evaogbe.diswantin.task.ui.CurrentTaskTopBarState
 import io.github.evaogbe.diswantin.task.ui.TaskCategoryDetailTopBarAction
 import io.github.evaogbe.diswantin.task.ui.TaskCategoryDetailTopBarState
 import io.github.evaogbe.diswantin.task.ui.TaskCategoryFormTopBarAction
@@ -20,7 +19,7 @@ sealed interface TopBarState : Parcelable {
     data object Advice : TopBarState
 
     @Parcelize
-    data class CurrentTask(val uiState: CurrentTaskTopBarState) : TopBarState
+    data object CurrentTask : TopBarState
 
     @Parcelize
     data class TaskDetail(val uiState: TaskDetailTopBarState, val action: TaskDetailTopBarAction?) :

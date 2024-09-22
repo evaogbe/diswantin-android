@@ -15,9 +15,7 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Done
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -26,14 +24,10 @@ import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -45,10 +39,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.flowWithLifecycle
 import io.github.evaogbe.diswantin.R
-import io.github.evaogbe.diswantin.data.Result
-import io.github.evaogbe.diswantin.data.getOrDefault
 import io.github.evaogbe.diswantin.task.data.Task
-import io.github.evaogbe.diswantin.ui.components.AutocompleteField
 import io.github.evaogbe.diswantin.ui.components.ButtonWithIcon
 import io.github.evaogbe.diswantin.ui.components.FilledTonalButtonWithIcon
 import io.github.evaogbe.diswantin.ui.components.LoadFailureLayout
@@ -61,7 +52,6 @@ import io.github.evaogbe.diswantin.ui.theme.SpaceLg
 import io.github.evaogbe.diswantin.ui.theme.SpaceMd
 import io.github.evaogbe.diswantin.ui.theme.SpaceXl
 import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
-import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.flow
@@ -70,12 +60,7 @@ import kotlin.time.Duration.Companion.hours
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CurrentTaskTopBar(
-    uiState: CurrentTaskTopBarState,
-    onSearch: () -> Unit,
-    onEditTask: (Long) -> Unit,
-    modifier: Modifier = Modifier,
-) {
+fun CurrentTaskTopBar(onSearch: () -> Unit, modifier: Modifier = Modifier) {
     TopAppBar(
         title = {},
         modifier = modifier,
@@ -86,24 +71,15 @@ fun CurrentTaskTopBar(
                     contentDescription = stringResource(R.string.search_tasks_button),
                 )
             }
-
-            if (uiState.taskId != null) {
-                IconButton(onClick = { onEditTask(uiState.taskId) }) {
-                    Icon(
-                        imageVector = Icons.Default.Edit,
-                        contentDescription = stringResource(R.string.edit_button),
-                    )
-                }
-            }
         },
     )
 }
 
 @Composable
 fun CurrentTaskScreen(
-    setTopBarState: (CurrentTaskTopBarState) -> Unit,
     setUserMessage: (String) -> Unit,
     onAddTask: () -> Unit,
+    onNavigateToTask: (Long) -> Unit,
     currentTaskViewModel: CurrentTaskViewModel = hiltViewModel(),
 ) {
     val uiState by currentTaskViewModel.uiState.collectAsStateWithLifecycle()
@@ -126,14 +102,6 @@ fun CurrentTaskScreen(
             }
     }
 
-    LaunchedEffect(uiState, setTopBarState) {
-        setTopBarState(
-            CurrentTaskTopBarState(
-                taskId = (uiState as? CurrentTaskUiState.Present)?.currentTask?.id,
-            )
-        )
-    }
-
     (uiState as? CurrentTaskUiState.Present)?.userMessage?.let { message ->
         LaunchedEffect(message, setUserMessage) {
             setUserMessage(resources.getString(message))
@@ -151,9 +119,8 @@ fun CurrentTaskScreen(
         is CurrentTaskUiState.Present -> {
             CurrentTaskLayout(
                 uiState = state,
+                onNavigateToTask = onNavigateToTask,
                 onMarkTaskDone = currentTaskViewModel::markCurrentTaskDone,
-                onSelectParentTask = currentTaskViewModel::selectParentTask,
-                onSearchTasks = currentTaskViewModel::searchTasks,
             )
         }
     }
@@ -162,13 +129,10 @@ fun CurrentTaskScreen(
 @Composable
 fun CurrentTaskLayout(
     uiState: CurrentTaskUiState.Present,
+    onNavigateToTask: (Long) -> Unit,
     onMarkTaskDone: () -> Unit,
-    onSelectParentTask: (Task) -> Unit,
-    onSearchTasks: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var showSkipDialog by rememberSaveable { mutableStateOf(false) }
-
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         Column(
             modifier = Modifier
@@ -186,10 +150,9 @@ fun CurrentTaskLayout(
                 horizontalArrangement = Arrangement.SpaceAround,
             ) {
                 OutlinedButtonWithIcon(
-                    onClick = { showSkipDialog = true },
-                    enabled = uiState.canSkip,
-                    painter = painterResource(R.drawable.baseline_skip_next_24),
-                    text = stringResource(R.string.skip_button),
+                    onClick = { onNavigateToTask(uiState.currentTask.id) },
+                    painter = painterResource(R.drawable.baseline_details_24),
+                    text = stringResource(R.string.view_details_button),
                 )
                 FilledTonalButtonWithIcon(
                     onClick = onMarkTaskDone,
@@ -198,62 +161,6 @@ fun CurrentTaskLayout(
                 )
             }
         }
-    }
-
-    if (showSkipDialog) {
-        var parentTask by rememberSaveable { mutableStateOf<Task?>(null) }
-
-        AlertDialog(
-            onDismissRequest = { showSkipDialog = false },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showSkipDialog = false
-                        parentTask?.let(onSelectParentTask)
-                    },
-                    enabled = parentTask != null,
-                ) {
-                    Text(stringResource(R.string.confirm_button))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showSkipDialog = false }) {
-                    Text(stringResource(R.string.cancel_button))
-                }
-            },
-            title = { Text(stringResource(R.string.skip_dialog_title)) },
-            text = {
-                var query by rememberSaveable { mutableStateOf("") }
-
-                Column {
-                    if (uiState.parentTaskOptions is Result.Failure) {
-                        SelectionContainer {
-                            Text(
-                                text = stringResource(R.string.search_task_options_error),
-                                color = colorScheme.error,
-                                style = typography.titleSmall,
-                            )
-                        }
-                        Spacer(Modifier.size(SpaceMd))
-                    }
-
-                    AutocompleteField(
-                        query = query,
-                        onQueryChange = { query = it },
-                        label = { Text(stringResource(R.string.parent_task_label)) },
-                        onSearch = onSearchTasks,
-                        options = uiState.parentTaskOptions.getOrDefault(persistentListOf()),
-                        formatOption = Task::name,
-                        onSelectOption = {
-                            parentTask = it
-                            query = it.name
-                        },
-                        autoFocus = true,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-            },
-        )
     }
 }
 
@@ -292,13 +199,7 @@ fun EmptyCurrentTaskLayout(onAddTask: () -> Unit, modifier: Modifier = Modifier)
 @Composable
 private fun CurrentTaskScreenPreview_Present() {
     DiswantinTheme {
-        Scaffold(topBar = {
-            CurrentTaskTopBar(
-                uiState = CurrentTaskTopBarState(taskId = 1L),
-                onSearch = {},
-                onEditTask = {},
-            )
-        }) { innerPadding ->
+        Scaffold(topBar = { CurrentTaskTopBar(onSearch = {}) }) { innerPadding ->
             CurrentTaskLayout(
                 uiState = CurrentTaskUiState.Present(
                     currentTask = Task(
@@ -306,13 +207,10 @@ private fun CurrentTaskScreenPreview_Present() {
                         createdAt = Instant.now(),
                         name = "Brush teeth",
                     ),
-                    canSkip = true,
-                    parentTaskOptions = Result.Success(persistentListOf()),
                     userMessage = null,
                 ),
+                onNavigateToTask = {},
                 onMarkTaskDone = {},
-                onSelectParentTask = {},
-                onSearchTasks = {},
                 modifier = Modifier.padding(innerPadding),
             )
         }
@@ -323,13 +221,7 @@ private fun CurrentTaskScreenPreview_Present() {
 @Composable
 private fun CurrentTaskScreenPreview_Empty() {
     DiswantinTheme {
-        Scaffold(topBar = {
-            CurrentTaskTopBar(
-                uiState = CurrentTaskTopBarState(taskId = null),
-                onSearch = {},
-                onEditTask = {},
-            )
-        }) { innerPadding ->
+        Scaffold(topBar = { CurrentTaskTopBar(onSearch = {}) }) { innerPadding ->
             EmptyCurrentTaskLayout(onAddTask = {}, modifier = Modifier.padding(innerPadding))
         }
     }

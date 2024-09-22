@@ -210,19 +210,6 @@ interface TaskDao {
     @Query("SELECT COUNT(*) FROM task")
     fun getCount(): Flow<Long>
 
-    @Query(
-        """SELECT COUNT(t.id)
-        FROM task t
-        LEFT JOIN (
-            SELECT task_id, MAX(done_at) AS done_at
-            FROM task_completion
-            GROUP BY task_id
-        ) c ON c.task_id = t.id
-        LEFT JOIN (SELECT DISTINCT task_id FROM task_recurrence) r ON r.task_id = t.id
-        WHERE c.done_at IS NULL OR (r.task_id IS NOT NULL AND c.done_at < :doneBefore)"""
-    )
-    fun getUndoneCount(doneBefore: Instant): Flow<Long>
-
     @Insert
     suspend fun insert(task: Task): Long
 

@@ -46,7 +46,6 @@ import io.github.evaogbe.diswantin.task.ui.AdviceScreen
 import io.github.evaogbe.diswantin.task.ui.AdviceTopBar
 import io.github.evaogbe.diswantin.task.ui.CurrentTaskScreen
 import io.github.evaogbe.diswantin.task.ui.CurrentTaskTopBar
-import io.github.evaogbe.diswantin.task.ui.CurrentTaskTopBarState
 import io.github.evaogbe.diswantin.task.ui.TaskCategoryDetailScreen
 import io.github.evaogbe.diswantin.task.ui.TaskCategoryDetailTopBar
 import io.github.evaogbe.diswantin.task.ui.TaskCategoryDetailTopBarAction
@@ -80,11 +79,7 @@ fun DiswantinApp() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
-    var topBarState by rememberSaveable {
-        mutableStateOf<TopBarState>(
-            TopBarState.CurrentTask(uiState = CurrentTaskTopBarState(taskId = null))
-        )
-    }
+    var topBarState by rememberSaveable { mutableStateOf<TopBarState>(TopBarState.CurrentTask) }
 
     var userMessage by remember { mutableStateOf<String?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
@@ -104,21 +99,17 @@ fun DiswantinApp() {
         topBar = {
             when (val state = topBarState) {
                 is TopBarState.Advice -> {
-                    AdviceTopBar(onSearch = {
-                        navController.navigate(route = MainDestination.TaskSearch.route)
-                    })
+                    AdviceTopBar(
+                        onSearch = {
+                            navController.navigate(route = MainDestination.TaskSearch.route)
+                        },
+                    )
                 }
 
                 is TopBarState.CurrentTask -> {
                     CurrentTaskTopBar(
-                        uiState = state.uiState,
                         onSearch = {
                             navController.navigate(route = MainDestination.TaskSearch.route)
-                        },
-                        onEditTask = {
-                            navController.navigate(
-                                route = MainDestination.EditTaskForm.Main(id = it).route,
-                            )
                         },
                     )
                 }
@@ -186,9 +177,11 @@ fun DiswantinApp() {
                 }
 
                 is TopBarState.TaskCategoryList -> {
-                    TaskCategoryListTopBar(onSearch = {
-                        navController.navigate(route = MainDestination.TaskSearch.route)
-                    })
+                    TaskCategoryListTopBar(
+                        onSearch = {
+                            navController.navigate(route = MainDestination.TaskSearch.route)
+                        },
+                    )
                 }
 
                 is TopBarState.TaskSearch -> {
@@ -251,14 +244,20 @@ fun DiswantinApp() {
                 AdviceScreen()
             }
             composable(BottomBarDestination.CurrentTask.route) {
+                LaunchedEffect(Unit) {
+                    topBarState = TopBarState.CurrentTask
+                }
+
                 CurrentTaskScreen(
-                    setTopBarState = { topBarState = TopBarState.CurrentTask(uiState = it) },
                     setUserMessage = { userMessage = it },
                     onAddTask = {
                         navController.navigate(
                             route = MainDestination.NewTaskForm.Main(name = null).route,
                         )
                     },
+                    onNavigateToTask = {
+                        navController.navigate(route = MainDestination.TaskDetail(id = it).route)
+                    }
                 )
             }
             composable(
