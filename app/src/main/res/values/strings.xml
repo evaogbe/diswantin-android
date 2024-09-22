@@ -113,7 +113,6 @@
     </string-array>
     <string name="suggestion_item_day_off"><![CDATA[Plan a <b>day off</b>]]></string>
     <string name="suggestion_item_friend"><![CDATA[Call/text/video chat/visit a <b>friend</b>. Try to brighten their day or ask them if you can vent]]></string>
-    <string name="suggestion_item_imagine"><![CDATA[<b>Imagine</b> yourself completing the task]]></string>
     <string name="suggestion_item_journal"><![CDATA[Write in a <b>journal</b>]]></string>
     <string name="suggestion_item_meditate"><![CDATA[<b>Meditate</b> for 1 minute. Focus on your surroundings, breathing, urges, body sensations, feelings, worries, or thoughts]]></string>
     <string name="suggestion_item_meds"><![CDATA[Talk to your doctor about a <b>medication</b> adjustment]]></string>
@@ -128,7 +127,7 @@
         <item>go to the library</item>
     </string-array>
     <string name="suggestion_item_snack"><![CDATA[Hungry? Grab a <b>snack</b>]]></string>
-    <string name="suggestion_item_stop"><![CDATA[<b>STOP</b>. Take a deep breath. Observe your SUDS, body sensations, thoughts, and feelings. Ask your Wise Mind how to proceed]]></string>
+    <string name="suggestion_item_stop"><![CDATA[<b>STOP</b>. Take a deep breath. Observe your distress level, body sensations, thoughts, and feelings. Ask your Wise Mind how to proceed]]></string>
     <string name="task_category_detail_delete_error">Something went wrong deleting the category</string>
     <string name="task_category_detail_fetch_error">Something went wrong loading the category</string>
     <string name="task_category_form_fetch_error">Something went wrong loading the category</string>

@@ -79,7 +79,6 @@ fun AdviceScreen(modifier: Modifier = Modifier) {
                             )
                         }.toImmutableList()
                     ),
-                    BulletedItem(annotatedStringResource(R.string.suggestion_item_imagine)),
                     BulletedItem(annotatedStringResource(R.string.suggestion_item_journal)),
                     BulletedItem(
                         annotatedStringResource(R.string.suggestion_item_move),
