@@ -410,11 +410,7 @@ fun TaskFormLayout(
             }
 
             if (uiState.showParentTaskField) {
-                ClearableLayout(
-                    onClear = { onParentTaskChange(null) },
-                    invert = true,
-                    canClear = uiState.parentTask != null,
-                ) {
+                if (parentTask == null) {
                     AutocompleteField(
                         query = parentTaskQuery,
                         onQueryChange = setParentTaskQuery,
@@ -424,11 +420,47 @@ fun TaskFormLayout(
                         formatOption = Task::name,
                         onSelectOption = onParentTaskChange,
                         autoFocus = false,
-                        modifier = Modifier.weight(1f),
                     )
+                } else {
+                    var isEditingParent by rememberSaveable { mutableStateOf(false) }
+
+                    if (isEditingParent) {
+                        ClearableLayout(onClear = { onParentTaskChange(null) }, invert = true) {
+                            AutocompleteField(
+                                query = parentTaskQuery,
+                                onQueryChange = setParentTaskQuery,
+                                label = { Text(stringResource(R.string.parent_task_label)) },
+                                onSearch = onTaskSearch,
+                                options = uiState.parentTaskOptions,
+                                formatOption = Task::name,
+                                onSelectOption = {
+                                    onParentTaskChange(it)
+                                    isEditingParent = false
+                                },
+                                autoFocus = false,
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
+                    } else {
+                        Column {
+                            Text(
+                                text = stringResource(R.string.parent_task_label),
+                                style = typography.bodyLarge,
+                            )
+                            Spacer(Modifier.size(SpaceSm))
+                            ClearableLayout(
+                                onClear = { onParentTaskChange(null) },
+                                invert = false,
+                            ) {
+                                EditFieldButton(
+                                    onClick = { isEditingParent = true },
+                                    text = parentTask.name,
+                                )
+                            }
+                        }
+                    }
                 }
             }
-
         }
     }
 
