@@ -188,13 +188,6 @@ class FakeTaskRepository(
             }
         }
 
-    override fun getParent(id: Long) =
-        combine(db.taskTable, db.taskPathTable) { tasks, taskPaths ->
-            taskPaths.values.firstOrNull { it.descendant == id && it.depth == 1 }?.let {
-                tasks[it.ancestor]
-            }
-        }
-
     override fun search(query: String) =
         db.taskTable.map { tasks ->
             tasks.values.filter { it.name.contains(query, ignoreCase = true) }
@@ -216,6 +209,35 @@ class FakeTaskRepository(
                         .maxOfOrNull { it.doneAt },
                 )
             }
+        }
+
+    override fun getParent(id: Long) =
+        combine(db.taskTable, db.taskPathTable) { tasks, taskPaths ->
+            taskPaths.values.firstOrNull { it.descendant == id && it.depth == 1 }?.let {
+                tasks[it.ancestor]
+            }
+        }
+
+    override fun getChildren(id: Long) =
+        combine(
+            db.taskTable,
+            db.taskPathTable,
+            db.taskRecurrenceTable
+        ) { tasks, taskPaths, taskRecurrences ->
+            taskPaths.values
+                .filter { it.ancestor == id && it.depth == 1 }
+                .mapNotNull { tasks[it.descendant] }
+                .sortedWith(
+                    compareBy(nullsLast(), Task::scheduledDate)
+                        .thenComparing(Task::scheduledTime, nullsLast())
+                        .thenComparing { task ->
+                            !taskRecurrences.values.any { it.taskId == task.id }
+                        }
+                        .thenComparing(Task::deadlineDate, nullsLast())
+                        .thenComparing(Task::deadlineTime, nullsLast())
+                        .thenComparing(Task::createdAt)
+                        .thenComparing(Task::id)
+                )
         }
 
     override fun getTaskRecurrencesByTaskId(taskId: Long) =

@@ -6,10 +6,12 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.data.Result
+import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskDetail
 import io.github.evaogbe.diswantin.task.data.TaskRecurrence
 import io.github.evaogbe.diswantin.task.data.TaskRepository
 import io.github.evaogbe.diswantin.ui.navigation.NavArguments
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -58,14 +60,25 @@ class TaskDetailViewModel @Inject constructor(
                     Timber.e(e, "Failed to fetch task recurrences by task id: %d", taskId)
                     emit(Result.Failure)
                 },
+            taskRepository.getChildren(taskId)
+                .map<List<Task>, Result<List<Task>>> { Result.Success(it) }
+                .catch { e ->
+                    Timber.e(e, "Failed to fetch task children by id: %d", taskId)
+                    emit(Result.Failure)
+                },
             userMessage,
-        ) { initialized, task, recurrence, userMessage ->
-            if (task is Result.Success && recurrence is Result.Success) {
+        ) { initialized, task, recurrence, childTasks, userMessage ->
+            if (
+                task is Result.Success &&
+                recurrence is Result.Success &&
+                childTasks is Result.Success
+            ) {
                 when {
                     task.value != null -> {
                         TaskDetailUiState.Success(
                             task = task.value,
                             recurrence = recurrence.value,
+                            childTasks = childTasks.value.toImmutableList(),
                             userMessage = userMessage,
                             clock = clock,
                         )

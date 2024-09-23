@@ -1,16 +1,16 @@
 package io.github.evaogbe.diswantin.task.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
@@ -20,9 +20,11 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -47,13 +49,16 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.RecurrenceType
+import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskDetail
 import io.github.evaogbe.diswantin.ui.components.LoadFailureLayout
 import io.github.evaogbe.diswantin.ui.components.PendingLayout
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.evaogbe.diswantin.ui.theme.ScreenLg
 import io.github.evaogbe.diswantin.ui.theme.SpaceMd
+import io.github.evaogbe.diswantin.ui.theme.SpaceSm
 import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
 import java.time.Clock
 import java.time.Instant
@@ -216,93 +221,124 @@ fun TaskDetailLayout(
     val resources = LocalContext.current.resources
 
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .widthIn(max = ScreenLg)
                 .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
                 .padding(vertical = SpaceMd)
         ) {
-            SelectionContainer(modifier = Modifier.padding(horizontal = SpaceMd)) {
-                if (uiState.isDone) {
-                    Text(
-                        text = uiState.task.name,
-                        modifier = Modifier.semantics {
-                            contentDescription =
-                                resources.getString(R.string.task_name_done, uiState.task.name)
-                        },
-                        textDecoration = TextDecoration.LineThrough,
-                        style = typography.displaySmall,
-                    )
-                } else {
-                    Text(text = uiState.task.name, style = typography.displaySmall)
+            item {
+                SelectionContainer(modifier = Modifier.padding(horizontal = SpaceMd)) {
+                    if (uiState.isDone) {
+                        Text(
+                            text = uiState.task.name,
+                            modifier = Modifier.semantics {
+                                contentDescription =
+                                    resources.getString(R.string.task_name_done, uiState.task.name)
+                            },
+                            textDecoration = TextDecoration.LineThrough,
+                            style = typography.displaySmall,
+                        )
+                    } else {
+                        Text(text = uiState.task.name, style = typography.displaySmall)
+                    }
                 }
+                Spacer(Modifier.size(SpaceMd))
             }
-            Spacer(Modifier.size(SpaceMd))
 
             if (uiState.formattedDeadline != null) {
-                ListItem(
-                    headlineContent = {
-                        SelectionContainer {
-                            Text(text = uiState.formattedDeadline)
-                        }
-                    },
-                    overlineContent = { Text(stringResource(R.string.deadline_label)) }
-                )
+                item {
+                    ListItem(
+                        headlineContent = {
+                            SelectionContainer {
+                                Text(text = uiState.formattedDeadline)
+                            }
+                        },
+                        overlineContent = { Text(stringResource(R.string.deadline_label)) }
+                    )
+                }
             }
 
             if (uiState.formattedScheduledAt != null) {
-                ListItem(
-                    headlineContent = {
-                        SelectionContainer {
-                            Text(text = uiState.formattedScheduledAt)
-                        }
-                    },
-                    overlineContent = { Text(stringResource(R.string.scheduled_at_label)) }
-                )
+                item {
+                    ListItem(
+                        headlineContent = {
+                            SelectionContainer {
+                                Text(text = uiState.formattedScheduledAt)
+                            }
+                        },
+                        overlineContent = { Text(stringResource(R.string.scheduled_at_label)) }
+                    )
+                }
             }
 
             if (uiState.recurrence != null) {
-                ListItem(
-                    headlineContent = {
-                        SelectionContainer {
-                            Text(text = taskRecurrenceText(uiState.recurrence))
-                        }
-                    },
-                    overlineContent = { Text(stringResource(R.string.recurrence_label)) },
-                )
-            }
-
-            if (uiState.task.parentId != null && uiState.task.parentName != null) {
-                ListItem(
-                    headlineContent = {
-                        SelectionContainer {
-                            Text(text = uiState.task.parentName)
-                        }
-                    },
-                    overlineContent = { Text(stringResource(R.string.parent_task_label)) },
-                    supportingContent = {
-                        TextButton(onClick = { onNavigateToTask(uiState.task.parentId) }) {
-                            Text(stringResource(R.string.view_task_button))
-                        }
-                    }
-                )
+                item {
+                    ListItem(
+                        headlineContent = {
+                            SelectionContainer {
+                                Text(text = taskRecurrenceText(uiState.recurrence))
+                            }
+                        },
+                        overlineContent = { Text(stringResource(R.string.recurrence_label)) },
+                    )
+                }
             }
 
             if (uiState.task.categoryId != null && uiState.task.categoryName != null) {
-                ListItem(
-                    headlineContent = {
-                        SelectionContainer {
-                            Text(text = uiState.task.categoryName)
+                item {
+                    ListItem(
+                        headlineContent = {
+                            SelectionContainer {
+                                Text(text = uiState.task.categoryName)
+                            }
+                        },
+                        overlineContent = { Text(stringResource(R.string.task_category_label)) },
+                        supportingContent = {
+                            TextButton(onClick = { onNavigateToCategory(uiState.task.categoryId) }) {
+                                Text(stringResource(R.string.view_task_category_button))
+                            }
                         }
-                    },
-                    overlineContent = { Text(stringResource(R.string.task_category_label)) },
-                    supportingContent = {
-                        TextButton(onClick = { onNavigateToCategory(uiState.task.categoryId) }) {
-                            Text(stringResource(R.string.view_task_category_button))
+                    )
+                }
+            }
+
+            if (uiState.task.parentId != null && uiState.task.parentName != null) {
+                item {
+                    ListItem(
+                        headlineContent = {
+                            SelectionContainer {
+                                Text(text = uiState.task.parentName)
+                            }
+                        },
+                        overlineContent = { Text(stringResource(R.string.parent_task_label)) },
+                        supportingContent = {
+                            TextButton(onClick = { onNavigateToTask(uiState.task.parentId) }) {
+                                Text(stringResource(R.string.view_task_button))
+                            }
                         }
-                    }
-                )
+                    )
+                }
+            }
+
+            if (uiState.childTasks.isNotEmpty()) {
+                item {
+                    Spacer(Modifier.size(SpaceSm))
+                    Text(
+                        stringResource(R.string.child_tasks_label),
+                        modifier = Modifier.padding(horizontal = SpaceMd),
+                        color = colorScheme.onSurfaceVariant,
+                        style = typography.labelSmall,
+                    )
+                }
+
+                items(uiState.childTasks, key = Task::id) { task ->
+                    ListItem(
+                        headlineContent = { Text(text = task.name) },
+                        modifier = Modifier.clickable { onNavigateToTask(task.id) },
+                    )
+                    HorizontalDivider()
+                }
             }
         }
     }
@@ -315,7 +351,7 @@ private fun TaskDetailScreenPreview_Minimal() {
         Scaffold(
             topBar = {
                 TaskDetailTopBar(
-                    uiState = TaskDetailTopBarState(taskId = 1L, isDone = false),
+                    uiState = TaskDetailTopBarState(taskId = 2L, isDone = false),
                     onBackClick = {},
                     onEditTask = {},
                     onDeleteTask = {},
@@ -340,6 +376,7 @@ private fun TaskDetailScreenPreview_Minimal() {
                         parentName = null,
                     ),
                     recurrence = null,
+                    childTasks = persistentListOf(),
                     userMessage = null,
                     clock = Clock.systemDefaultZone(),
                 ),
@@ -358,7 +395,7 @@ private fun TaskDetailScreenPreview_Detailed() {
         Scaffold(
             topBar = {
                 TaskDetailTopBar(
-                    uiState = TaskDetailTopBarState(taskId = 1L, isDone = true),
+                    uiState = TaskDetailTopBarState(taskId = 2L, isDone = true),
                     onBackClick = {},
                     onEditTask = {},
                     onDeleteTask = {},
@@ -379,10 +416,14 @@ private fun TaskDetailScreenPreview_Detailed() {
                         doneAt = Instant.now(),
                         categoryId = 1L,
                         categoryName = "Morning Routine",
-                        parentId = 2L,
+                        parentId = 1L,
                         parentName = "Brush teeth",
                     ),
                     recurrence = null,
+                    childTasks = persistentListOf(
+                        Task(id = 3L, createdAt = Instant.now(), name = "Eat breakfast"),
+                        Task(id = 4L, createdAt = Instant.now(), name = "Go to work"),
+                    ),
                     userMessage = null,
                     clock = Clock.systemDefaultZone(),
                 ),
@@ -421,6 +462,7 @@ private fun TaskDetailLayoutPreview() {
                         weekdays = persistentSetOf(),
                         locale = Locale.getDefault(),
                     ),
+                    childTasks = persistentListOf(),
                     userMessage = null,
                     clock = Clock.systemDefaultZone(),
                 ),

@@ -7,13 +7,15 @@ interface TaskRepository {
 
     fun getById(id: Long): Flow<Task>
 
-    fun getParent(id: Long): Flow<Task?>
-
     fun getTaskDetailById(id: Long): Flow<TaskDetail?>
 
     fun search(query: String): Flow<List<Task>>
 
     fun searchTaskItems(query: String): Flow<List<TaskItem>>
+
+    fun getParent(id: Long): Flow<Task?>
+
+    fun getChildren(id: Long): Flow<List<Task>>
 
     fun getTaskRecurrencesByTaskId(taskId: Long): Flow<List<TaskRecurrence>>
 

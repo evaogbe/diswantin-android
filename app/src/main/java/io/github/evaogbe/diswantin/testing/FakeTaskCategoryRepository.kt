@@ -37,16 +37,30 @@ class FakeTaskCategoryRepository(private val db: FakeDatabase = FakeDatabase()) 
             taskCategories[id]?.let { taskCategory ->
                 TaskCategoryWithTaskItems(
                     taskCategory,
-                    tasks.values.filter { it.categoryId == id }.map { task ->
-                        TaskItem(
-                            id = task.id,
-                            name = task.name,
-                            recurring = taskRecurrences.values.any { it.taskId == task.id },
-                            doneAt = taskCompletions.values
-                                .filter { it.taskId == task.id }
-                                .maxOfOrNull { it.doneAt },
-                        )
-                    }.sortedWith(compareBy(TaskItem::doneAt).thenComparing(TaskItem::name))
+                    tasks.values
+                        .filter { it.categoryId == id }
+                        .sortedWith(compareBy<Task> { task ->
+                            taskCompletions.values.any { it.taskId == task.id }
+                        }
+                            .thenComparing(Task::scheduledDate, nullsLast())
+                            .thenComparing(Task::scheduledTime, nullsLast())
+                            .thenComparing { task ->
+                                !taskRecurrences.values.any { it.taskId == task.id }
+                            }
+                            .thenComparing(Task::deadlineDate, nullsLast())
+                            .thenComparing(Task::deadlineTime, nullsLast())
+                            .thenComparing(Task::createdAt)
+                            .thenComparing(Task::id))
+                        .map { task ->
+                            TaskItem(
+                                id = task.id,
+                                name = task.name,
+                                recurring = taskRecurrences.values.any { it.taskId == task.id },
+                                doneAt = taskCompletions.values
+                                    .filter { it.taskId == task.id }
+                                    .maxOfOrNull { it.doneAt },
+                            )
+                        }
                 )
             }
         }

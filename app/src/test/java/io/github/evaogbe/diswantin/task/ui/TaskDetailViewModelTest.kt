@@ -4,8 +4,10 @@ import androidx.lifecycle.SavedStateHandle
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import io.github.evaogbe.diswantin.R
+import io.github.evaogbe.diswantin.task.data.RecurrenceType
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskDetail
+import io.github.evaogbe.diswantin.task.data.TaskRecurrence
 import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.MainDispatcherRule
@@ -15,6 +17,8 @@ import io.github.serpro69.kfaker.lorem.LoremFaker
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.spyk
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
@@ -25,6 +29,7 @@ import org.junit.Rule
 import org.junit.Test
 import java.time.Clock
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 import java.util.Locale
 
@@ -40,13 +45,31 @@ class TaskDetailViewModelTest {
     @Test
     fun `uiState fetches task by id`() = runTest(mainDispatcherRule.testDispatcher) {
         val clock = createClock()
-        val task = genTask()
+        val locale = Locale.US
+        val (task1, task2) = List(2) {
+            Task(
+                id = it + 1L,
+                createdAt = faker.random.randomPastDate().toInstant(),
+                name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
+            )
+        }
         val db = FakeDatabase().apply {
-            insertTask(task)
+            insertTask(task1)
+            insertTask(task2)
+            insertTaskRecurrence(
+                TaskRecurrence(
+                    taskId = task1.id,
+                    start = LocalDate.parse("2024-08-22"),
+                    type = RecurrenceType.Day,
+                    step = 1,
+                    week = 4,
+                ),
+            )
+            insertChain(parentId = task1.id, childId = task2.id)
         }
         val taskRepository = FakeTaskRepository(db, clock)
         val viewModel =
-            TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock, Locale.US)
+            TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock, locale)
 
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect()
@@ -54,8 +77,15 @@ class TaskDetailViewModelTest {
 
         assertThat(viewModel.uiState.value).isEqualTo(
             TaskDetailUiState.Success(
-                task = task.toTaskDetail(),
-                recurrence = null,
+                task = task1.toTaskDetail(),
+                recurrence = TaskRecurrenceUiState(
+                    start = LocalDate.parse("2024-08-22"),
+                    type = RecurrenceType.Day,
+                    step = 1,
+                    weekdays = persistentSetOf(),
+                    locale = locale,
+                ),
+                childTasks = persistentListOf(task2),
                 userMessage = null,
                 clock = clock,
             )
@@ -122,6 +152,29 @@ class TaskDetailViewModelTest {
         }
 
     @Test
+    fun `uiState emits failure when fetch child tasks throws`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val clock = createClock()
+            val task = genTask()
+            val db = FakeDatabase().apply {
+                insertTask(task)
+            }
+            val taskRepository = spyk(FakeTaskRepository(db, clock))
+            every { taskRepository.getChildren(any()) } returns flow {
+                throw RuntimeException("Test")
+            }
+
+            val viewModel =
+                TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock, Locale.US)
+
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect()
+            }
+
+            assertThat(viewModel.uiState.value).isEqualTo(TaskDetailUiState.Failure)
+        }
+
+    @Test
     fun `can toggle task done`() = runTest(mainDispatcherRule.testDispatcher) {
         val clock =
             Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
@@ -153,6 +206,7 @@ class TaskDetailViewModelTest {
                     parentName = null,
                 ),
                 recurrence = null,
+                childTasks = persistentListOf(),
                 userMessage = null,
                 clock = clock,
             )
@@ -176,6 +230,7 @@ class TaskDetailViewModelTest {
                     parentName = null,
                 ),
                 recurrence = null,
+                childTasks = persistentListOf(),
                 userMessage = null,
                 clock = clock,
             )
@@ -199,6 +254,7 @@ class TaskDetailViewModelTest {
                     parentName = null,
                 ),
                 recurrence = null,
+                childTasks = persistentListOf(),
                 userMessage = null,
                 clock = clock,
             )
@@ -241,6 +297,7 @@ class TaskDetailViewModelTest {
                         parentName = null,
                     ),
                     recurrence = null,
+                    childTasks = persistentListOf(),
                     userMessage = R.string.task_detail_mark_done_error,
                     clock = clock,
                 )
@@ -285,6 +342,7 @@ class TaskDetailViewModelTest {
                         parentName = null,
                     ),
                     recurrence = null,
+                    childTasks = persistentListOf(),
                     userMessage = R.string.task_detail_unmark_done_error,
                     clock = clock,
                 )
@@ -310,6 +368,7 @@ class TaskDetailViewModelTest {
             TaskDetailUiState.Success(
                 task = task.toTaskDetail(),
                 recurrence = null,
+                childTasks = persistentListOf(),
                 userMessage = null,
                 clock = clock,
             )
@@ -344,6 +403,7 @@ class TaskDetailViewModelTest {
                 TaskDetailUiState.Success(
                     task = task.toTaskDetail(),
                     recurrence = null,
+                    childTasks = persistentListOf(),
                     userMessage = R.string.task_detail_delete_error,
                     clock = clock,
                 )
@@ -358,7 +418,8 @@ class TaskDetailViewModelTest {
 
     private fun createSavedStateHandle() = SavedStateHandle(mapOf(NavArguments.ID_KEY to 1L))
 
-    private fun createClock() = Clock.systemDefaultZone()
+    private fun createClock() =
+        Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
 
     private fun Task.toTaskDetail() = TaskDetail(
         id = id,

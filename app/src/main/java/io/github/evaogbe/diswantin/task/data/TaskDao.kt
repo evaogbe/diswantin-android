@@ -168,15 +168,6 @@ interface TaskDao {
     )
     fun getTaskDetailById(id: Long): Flow<TaskDetail?>
 
-    @Query(
-        """SELECT t.*
-        FROM task t
-        JOIN task_path p ON p.ancestor = t.id
-        WHERE p.descendant = :id AND p.depth = 1
-        LIMIT 1"""
-    )
-    fun getParent(id: Long): Flow<Task?>
-
     @Query("SELECT * FROM task WHERE category_id = :categoryId ORDER BY name LIMIT 20")
     fun getTasksByCategoryId(categoryId: Long): Flow<List<Task>>
 
@@ -190,7 +181,19 @@ interface TaskDao {
         ) c ON c.task_id = t.id
         LEFT JOIN (SELECT DISTINCT task_id FROM task_recurrence) r ON r.task_id = t.id
         WHERE t.category_id = :categoryId
-        ORDER BY c.done_at, t.name
+        ORDER BY 
+            c.done_at,
+            t.scheduled_date IS NULL,
+            t.scheduled_date,
+            t.scheduled_time IS NULL,
+            t.scheduled_time,
+            r.task_id IS NULL,
+            t.deadline_date IS NULL,
+            t.deadline_date,
+            t.deadline_time IS NULL,
+            t.deadline_time,
+            t.created_at,
+            t.id
         LIMIT 20"""
     )
     fun getTaskItemsByCategoryId(categoryId: Long): Flow<List<TaskItem>>
@@ -218,6 +221,37 @@ interface TaskDao {
         LIMIT 20"""
     )
     fun searchTaskItems(query: String): Flow<List<TaskItem>>
+
+    @Query(
+        """SELECT t.*
+        FROM task t
+        JOIN task_path p ON p.ancestor = t.id
+        WHERE p.descendant = :id AND p.depth = 1
+        LIMIT 1"""
+    )
+    fun getParent(id: Long): Flow<Task?>
+
+    @Query(
+        """SELECT t.*
+        FROM task t
+        JOIN task_path p ON p.descendant = t.id
+        LEFT JOIN (SELECT DISTINCT task_id FROM task_recurrence) r ON r.task_id = t.id
+        WHERE p.ancestor = :id AND p.depth = 1
+        ORDER BY
+            t.scheduled_date IS NULL,
+            t.scheduled_date,
+            t.scheduled_time IS NULL,
+            t.scheduled_time,
+            r.task_id IS NULL,
+            t.deadline_date IS NULL,
+            t.deadline_date,
+            t.deadline_time IS NULL,
+            t.deadline_time,
+            t.created_at,
+            t.id
+        LIMIT 20"""
+    )
+    fun getChildren(id: Long): Flow<List<Task>>
 
     @Query("SELECT * FROM task_recurrence WHERE task_id = :taskId ORDER BY start")
     fun getTaskRecurrencesByTaskId(taskId: Long): Flow<List<TaskRecurrence>>

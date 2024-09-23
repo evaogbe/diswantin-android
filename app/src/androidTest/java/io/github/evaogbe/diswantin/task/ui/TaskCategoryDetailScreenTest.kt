@@ -137,14 +137,21 @@ class TaskCategoryDetailScreenTest {
 
     private fun genTaskCategoryWithTasks() = TaskCategoryWithTasks(
         TaskCategory(id = 1L, name = loremFaker.lorem.words()),
-        List(3) {
+        generateSequence(
             Task(
-                id = it + 1L,
+                id = 1L,
                 createdAt = faker.random.randomPastDate().toInstant(),
                 name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
                 categoryId = 1L,
             )
-        },
+        ) {
+            Task(
+                id = it.id + 1L,
+                createdAt = faker.random.randomPastDate(min = it.createdAt).toInstant(),
+                name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                categoryId = 1L,
+            )
+        }.take(3).toList(),
     )
 
     private fun createTaskCategoryDetailViewModel(

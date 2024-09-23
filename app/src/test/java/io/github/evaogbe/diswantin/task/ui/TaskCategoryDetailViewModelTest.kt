@@ -141,14 +141,21 @@ class TaskCategoryDetailViewModelTest {
 
     private fun genTaskCategoryWithTasks() = TaskCategoryWithTasks(
         TaskCategory(id = 1L, name = loremFaker.lorem.words()),
-        List(faker.random.nextInt(bound = 5)) {
+        generateSequence(
             Task(
-                id = it + 1L,
+                id = 1L,
                 createdAt = faker.random.randomPastDate().toInstant(),
-                name = "${it + 1}. ${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
                 categoryId = 1L,
             )
-        },
+        ) {
+            Task(
+                id = it.id + 1L,
+                createdAt = faker.random.randomPastDate(min = it.createdAt).toInstant(),
+                name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                categoryId = 1L,
+            )
+        }.take(faker.random.nextInt(bound = 5)).toList(),
     )
 
     private fun createTaskCategoryDetailViewModel(

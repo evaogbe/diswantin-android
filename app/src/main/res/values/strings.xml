@@ -12,6 +12,7 @@
     <string name="back_button">Back</string>
     <string name="boolean_yes">Yes</string>
     <string name="cancel_button">Cancel</string>
+    <string name="child_tasks_label">Next to-dos</string>
     <string name="clear_button">Clear</string>
     <string name="close_button">Close</string>
     <string name="current_task_add_parent_error">Something went wrong adding the previous to-do</string>

@@ -2,7 +2,9 @@ package io.github.evaogbe.diswantin.task.ui
 
 import android.os.Parcelable
 import androidx.annotation.StringRes
+import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskDetail
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.parcelize.Parcelize
 import java.time.Clock
 import java.time.LocalDate
@@ -26,6 +28,7 @@ sealed interface TaskDetailUiState {
     data class Success(
         val task: TaskDetail,
         val recurrence: TaskRecurrenceUiState?,
+        val childTasks: ImmutableList<Task>,
         @StringRes val userMessage: Int?,
         private val clock: Clock,
     ) : TaskDetailUiState {

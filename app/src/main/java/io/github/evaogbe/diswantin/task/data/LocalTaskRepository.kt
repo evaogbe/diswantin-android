@@ -65,8 +65,6 @@ class LocalTaskRepository @Inject constructor(
     override fun getTaskDetailById(id: Long) =
         taskDao.getTaskDetailById(id).flowOn(ioDispatcher)
 
-    override fun getParent(id: Long) = taskDao.getParent(id).flowOn(ioDispatcher)
-
     override fun search(query: String) = taskDao.search(escapeSql(query)).flowOn(ioDispatcher)
 
     override fun searchTaskItems(query: String) =
@@ -74,6 +72,10 @@ class LocalTaskRepository @Inject constructor(
 
     private fun escapeSql(str: String) =
         str.replace("'", "''").replace("\"", "\"\"")
+
+    override fun getParent(id: Long) = taskDao.getParent(id).flowOn(ioDispatcher)
+
+    override fun getChildren(id: Long) = taskDao.getChildren(id).flowOn(ioDispatcher)
 
     override fun getTaskRecurrencesByTaskId(taskId: Long) =
         taskDao.getTaskRecurrencesByTaskId(taskId).flowOn(ioDispatcher)
