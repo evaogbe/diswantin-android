@@ -14,6 +14,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DropdownMenu
@@ -37,6 +38,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -65,6 +67,8 @@ fun TaskDetailTopBar(
     onBackClick: () -> Unit,
     onEditTask: (Long) -> Unit,
     onDeleteTask: () -> Unit,
+    onMarkTaskDone: () -> Unit,
+    onUnmarkTaskDone: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
@@ -87,6 +91,22 @@ fun TaskDetailTopBar(
                         imageVector = Icons.Default.Edit,
                         contentDescription = stringResource(R.string.edit_button),
                     )
+                }
+
+                if (uiState.isDone) {
+                    IconButton(onClick = onUnmarkTaskDone) {
+                        Icon(
+                            painter = painterResource(R.drawable.baseline_remove_done_24),
+                            contentDescription = stringResource(R.string.unmark_done_button)
+                        )
+                    }
+                } else {
+                    IconButton(onClick = onMarkTaskDone) {
+                        Icon(
+                            imageVector = Icons.Default.Done,
+                            contentDescription = stringResource(R.string.mark_done_button),
+                        )
+                    }
                 }
 
                 IconButton(onClick = { menuExpanded = !menuExpanded }) {
@@ -113,6 +133,7 @@ fun TaskDetailTopBar(
 @Composable
 fun TaskDetailScreen(
     onPopBackStack: () -> Unit,
+    setTopBarState: (TaskDetailTopBarState) -> Unit,
     topBarAction: TaskDetailTopBarAction?,
     topBarActionHandled: () -> Unit,
     setUserMessage: (String) -> Unit,
@@ -129,9 +150,28 @@ fun TaskDetailScreen(
         }
     }
 
+    LaunchedEffect(setTopBarState, uiState) {
+        setTopBarState(
+            TaskDetailTopBarState(
+                taskId = (uiState as? TaskDetailUiState.Success)?.task?.id,
+                isDone = (uiState as? TaskDetailUiState.Success)?.isDone == true,
+            ),
+        )
+    }
+
     LaunchedEffect(topBarAction, taskDetailViewModel) {
         when (topBarAction) {
             null -> {}
+            TaskDetailTopBarAction.MarkDone -> {
+                taskDetailViewModel.markTaskDone()
+                topBarActionHandled()
+            }
+
+            TaskDetailTopBarAction.UnmarkDone -> {
+                taskDetailViewModel.unmarkTaskDone()
+                topBarActionHandled()
+            }
+
             TaskDetailTopBarAction.Delete -> {
                 taskDetailViewModel.deleteTask()
                 topBarActionHandled()
@@ -270,16 +310,20 @@ fun TaskDetailLayout(
 
 @DevicePreviews
 @Composable
-private fun TaskDetailScreenPreview() {
+private fun TaskDetailScreenPreview_Minimal() {
     DiswantinTheme {
-        Scaffold(topBar = {
-            TaskDetailTopBar(
-                uiState = TaskDetailTopBarState(taskId = 1L),
-                onBackClick = {},
-                onEditTask = {},
-                onDeleteTask = {},
-            )
-        }) { innerPadding ->
+        Scaffold(
+            topBar = {
+                TaskDetailTopBar(
+                    uiState = TaskDetailTopBarState(taskId = 1L, isDone = false),
+                    onBackClick = {},
+                    onEditTask = {},
+                    onDeleteTask = {},
+                    onMarkTaskDone = {},
+                    onUnmarkTaskDone = {},
+                )
+            },
+        ) { innerPadding ->
             TaskDetailLayout(
                 uiState = TaskDetailUiState.Success(
                     task = TaskDetail(
@@ -309,9 +353,20 @@ private fun TaskDetailScreenPreview() {
 
 @DevicePreviews
 @Composable
-private fun TaskDetailLayoutPreview_WithoutRecurrence() {
+private fun TaskDetailScreenPreview_Detailed() {
     DiswantinTheme {
-        Surface {
+        Scaffold(
+            topBar = {
+                TaskDetailTopBar(
+                    uiState = TaskDetailTopBarState(taskId = 1L, isDone = true),
+                    onBackClick = {},
+                    onEditTask = {},
+                    onDeleteTask = {},
+                    onMarkTaskDone = {},
+                    onUnmarkTaskDone = {},
+                )
+            },
+        ) { innerPadding ->
             TaskDetailLayout(
                 uiState = TaskDetailUiState.Success(
                     task = TaskDetail(
@@ -333,6 +388,7 @@ private fun TaskDetailLayoutPreview_WithoutRecurrence() {
                 ),
                 onNavigateToTask = {},
                 onNavigateToCategory = {},
+                modifier = Modifier.padding(innerPadding),
             )
         }
     }
@@ -340,7 +396,7 @@ private fun TaskDetailLayoutPreview_WithoutRecurrence() {
 
 @DevicePreviews
 @Composable
-private fun TaskDetailLayoutPreview_WithRecurrence() {
+private fun TaskDetailLayoutPreview() {
     DiswantinTheme {
         Surface {
             TaskDetailLayout(

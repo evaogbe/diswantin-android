@@ -6,10 +6,11 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.lifecycle.SavedStateHandle
 import assertk.assertThat
+import assertk.assertions.isEqualTo
 import assertk.assertions.isTrue
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.Task
-import io.github.evaogbe.diswantin.task.data.TaskRepository
+import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.stringResource
 import io.github.evaogbe.diswantin.ui.components.PendingLayoutTestTag
@@ -40,13 +41,16 @@ class TaskDetailScreenTest {
 
     @Test
     fun displaysTask() {
+        val clock =
+            Clock.fixed(Instant.parse("2024-08-23T21:00:00Z"), ZoneId.of("America/New_York"))
         val task = genTask().copy(
             deadlineDate = LocalDate.parse("2024-08-23"),
             deadlineTime = LocalTime.parse("17:00"),
         )
-        val clock =
-            Clock.fixed(Instant.parse("2024-08-23T21:00:00Z"), ZoneId.of("America/New_York"))
-        val taskRepository = FakeTaskRepository.withTasks(task)
+        val db = FakeDatabase().apply {
+            insertTask(task)
+        }
+        val taskRepository = FakeTaskRepository(db, clock)
         val viewModel =
             TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock, Locale.US)
 
@@ -54,6 +58,7 @@ class TaskDetailScreenTest {
             DiswantinTheme {
                 TaskDetailScreen(
                     onPopBackStack = {},
+                    setTopBarState = {},
                     topBarAction = null,
                     topBarActionHandled = {},
                     setUserMessage = {},
@@ -70,17 +75,25 @@ class TaskDetailScreenTest {
 
     @Test
     fun displaysErrorMessage_withFailureUi() {
-        val taskRepository = spyk<FakeTaskRepository>()
+        val clock = createClock()
+        val db = FakeDatabase()
+        val taskRepository = spyk(FakeTaskRepository(db, clock))
         every { taskRepository.getTaskDetailById(any()) } returns flow {
             throw RuntimeException("Test")
         }
 
-        val viewModel = createTaskDetailViewModel(taskRepository)
+        val viewModel = TaskDetailViewModel(
+            createSavedStateHandle(),
+            taskRepository,
+            clock,
+            Locale.getDefault(),
+        )
 
         composeTestRule.setContent {
             DiswantinTheme {
                 TaskDetailScreen(
                     onPopBackStack = {},
+                    setTopBarState = {},
                     topBarAction = null,
                     topBarActionHandled = {},
                     setUserMessage = {},
@@ -96,16 +109,153 @@ class TaskDetailScreenTest {
     }
 
     @Test
-    fun popsBackStack_whenTaskDeleted() {
+    fun togglesTaskDone() {
+        var topBarState: TaskDetailTopBarState? = null
+        val clock = createClock()
         val task = genTask()
+        val db = FakeDatabase().apply {
+            insertTask(task)
+        }
+        val taskRepository = FakeTaskRepository(db, clock)
+        val viewModel = TaskDetailViewModel(
+            createSavedStateHandle(),
+            taskRepository,
+            clock,
+            Locale.getDefault(),
+        )
+
+        composeTestRule.setContent {
+            DiswantinTheme {
+                TaskDetailScreen(
+                    onPopBackStack = {},
+                    setTopBarState = { topBarState = it },
+                    topBarAction = null,
+                    topBarActionHandled = {},
+                    setUserMessage = {},
+                    onNavigateToTask = {},
+                    onNavigateToCategory = {},
+                    taskDetailViewModel = viewModel,
+                )
+            }
+        }
+
+        assertThat(topBarState).isEqualTo(TaskDetailTopBarState(taskId = task.id, isDone = false))
+
+        viewModel.markTaskDone()
+
+        composeTestRule.waitUntil {
+            topBarState == TaskDetailTopBarState(taskId = task.id, isDone = true)
+        }
+
+        viewModel.unmarkTaskDone()
+
+        composeTestRule.waitUntil {
+            topBarState == TaskDetailTopBarState(taskId = task.id, isDone = false)
+        }
+    }
+
+    @Test
+    fun displaysErrorMessage_whenMarkTaskDoneFailed() {
+        var userMessage: String? = null
+        val clock = createClock()
+        val task = genTask()
+        val db = FakeDatabase().apply {
+            insertTask(task)
+        }
+        val taskRepository = spyk(FakeTaskRepository(db, clock))
+        coEvery { taskRepository.markDone(any()) } throws RuntimeException("Test")
+
+        val viewModel = TaskDetailViewModel(
+            createSavedStateHandle(),
+            taskRepository,
+            clock,
+            Locale.getDefault(),
+        )
+
+        composeTestRule.setContent {
+            DiswantinTheme {
+                TaskDetailScreen(
+                    onPopBackStack = {},
+                    setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
+                    setUserMessage = { userMessage = it },
+                    onNavigateToTask = {},
+                    onNavigateToCategory = {},
+                    taskDetailViewModel = viewModel,
+                )
+            }
+        }
+
+        viewModel.markTaskDone()
+
+        composeTestRule.waitUntil {
+            userMessage == stringResource(R.string.task_detail_mark_done_error)
+        }
+    }
+
+    @Test
+    fun displaysErrorMessage_whenUnmarkTaskDoneFailed() {
+        var userMessage: String? = null
+        val clock = createClock()
+        val task = genTask()
+        val db = FakeDatabase().apply {
+            insertTask(task)
+        }
+        val taskRepository = spyk(FakeTaskRepository(db, clock))
+        coEvery { taskRepository.unmarkDone(any()) } throws RuntimeException("Test")
+
+        val viewModel = TaskDetailViewModel(
+            createSavedStateHandle(),
+            taskRepository,
+            clock,
+            Locale.getDefault(),
+        )
+        viewModel.markTaskDone()
+
+        composeTestRule.setContent {
+            DiswantinTheme {
+                TaskDetailScreen(
+                    onPopBackStack = {},
+                    setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
+                    setUserMessage = { userMessage = it },
+                    onNavigateToTask = {},
+                    onNavigateToCategory = {},
+                    taskDetailViewModel = viewModel,
+                )
+            }
+        }
+
+        viewModel.unmarkTaskDone()
+
+        composeTestRule.waitUntil {
+            userMessage == stringResource(R.string.task_detail_unmark_done_error)
+        }
+    }
+
+    @Test
+    fun popsBackStack_whenTaskDeleted() {
         var onPopBackStackCalled = false
-        val taskRepository = FakeTaskRepository.withTasks(task)
-        val viewModel = createTaskDetailViewModel(taskRepository)
+        val clock = createClock()
+        val task = genTask()
+        val db = FakeDatabase().apply {
+            insertTask(task)
+        }
+        val taskRepository = FakeTaskRepository(db, clock)
+        val viewModel = TaskDetailViewModel(
+            createSavedStateHandle(),
+            taskRepository,
+            clock,
+            Locale.getDefault(),
+        )
 
         composeTestRule.setContent {
             DiswantinTheme {
                 TaskDetailScreen(
                     onPopBackStack = { onPopBackStackCalled = true },
+                    setTopBarState = {},
                     topBarAction = null,
                     topBarActionHandled = {},
                     setUserMessage = {},
@@ -125,16 +275,26 @@ class TaskDetailScreenTest {
     @Test
     fun displaysErrorMessage_whenDeleteTaskFailed() {
         var userMessage: String? = null
+        val clock = createClock()
         val task = genTask()
-        val taskRepository = spyk(FakeTaskRepository.withTasks(task))
+        val db = FakeDatabase().apply {
+            insertTask(task)
+        }
+        val taskRepository = spyk(FakeTaskRepository(db, clock))
         coEvery { taskRepository.delete(any()) } throws RuntimeException("Test")
 
-        val viewModel = createTaskDetailViewModel(taskRepository)
+        val viewModel = TaskDetailViewModel(
+            createSavedStateHandle(),
+            taskRepository,
+            clock,
+            Locale.getDefault(),
+        )
 
         composeTestRule.setContent {
             DiswantinTheme {
                 TaskDetailScreen(
                     onPopBackStack = {},
+                    setTopBarState = {},
                     topBarAction = null,
                     topBarActionHandled = {},
                     setUserMessage = { userMessage = it },
@@ -160,11 +320,5 @@ class TaskDetailScreenTest {
 
     private fun createSavedStateHandle() = SavedStateHandle(mapOf(NavArguments.ID_KEY to 1L))
 
-    private fun createTaskDetailViewModel(taskRepository: TaskRepository) =
-        TaskDetailViewModel(
-            createSavedStateHandle(),
-            taskRepository,
-            Clock.systemDefaultZone(),
-            Locale.getDefault(),
-        )
+    private fun createClock() = Clock.systemDefaultZone()
 }

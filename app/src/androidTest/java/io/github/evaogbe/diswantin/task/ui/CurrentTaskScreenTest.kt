@@ -8,6 +8,7 @@ import assertk.assertThat
 import assertk.assertions.isTrue
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.Task
+import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.stringResource
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
@@ -31,9 +32,13 @@ class CurrentTaskScreenTest {
 
     @Test
     fun displaysCurrentTaskName_withCurrentTask() {
+        val clock = createClock()
         val task = genTasks(1).single()
-        val taskRepository = FakeTaskRepository.withTasks(task)
-        val viewModel = createCurrentTaskViewModel(taskRepository)
+        val db = FakeDatabase().apply {
+            insertTask(task)
+        }
+        val taskRepository = FakeTaskRepository(db, clock)
+        val viewModel = CurrentTaskViewModel(taskRepository, clock)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -51,8 +56,10 @@ class CurrentTaskScreenTest {
 
     @Test
     fun displaysEmptyMessage_withoutCurrentTask() {
-        val taskRepository = FakeTaskRepository()
-        val viewModel = createCurrentTaskViewModel(taskRepository)
+        val clock = createClock()
+        val db = FakeDatabase()
+        val taskRepository = FakeTaskRepository(db, clock)
+        val viewModel = CurrentTaskViewModel(taskRepository, clock)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -71,13 +78,17 @@ class CurrentTaskScreenTest {
 
     @Test
     fun displayErrorMessage_withFailureUi() {
+        val clock = createClock()
         val task = genTasks(1).single()
-        val taskRepository = spyk(FakeTaskRepository.withTasks(task))
+        val db = FakeDatabase().apply {
+            insertTask(task)
+        }
+        val taskRepository = spyk(FakeTaskRepository(db, clock))
         every { taskRepository.getCurrentTask(any()) } returns flow {
             throw RuntimeException("Test")
         }
 
-        val viewModel = createCurrentTaskViewModel(taskRepository)
+        val viewModel = CurrentTaskViewModel(taskRepository, clock)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -97,8 +108,10 @@ class CurrentTaskScreenTest {
     @Test
     fun callsOnAddTask_whenAddTaskClicked() {
         var onAddTaskCalled = false
-        val taskRepository = FakeTaskRepository()
-        val viewModel = createCurrentTaskViewModel(taskRepository)
+        val clock = createClock()
+        val db = FakeDatabase()
+        val taskRepository = FakeTaskRepository(db, clock)
+        val viewModel = CurrentTaskViewModel(taskRepository, clock)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -119,9 +132,14 @@ class CurrentTaskScreenTest {
 
     @Test
     fun displaysNextTaskName_whenMarkDoneClicked() {
+        val clock = createClock()
         val (task1, task2) = genTasks(2)
-        val taskRepository = FakeTaskRepository.withTasks(task1, task2)
-        val viewModel = createCurrentTaskViewModel(taskRepository)
+        val db = FakeDatabase().apply {
+            insertTask(task1)
+            insertTask(task2)
+        }
+        val taskRepository = FakeTaskRepository(db, clock)
+        val viewModel = CurrentTaskViewModel(taskRepository, clock)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -136,7 +154,8 @@ class CurrentTaskScreenTest {
 
         composeTestRule.onNodeWithText(task1.name).assertIsDisplayed()
 
-        composeTestRule.onNodeWithText(stringResource(R.string.mark_done_button)).performClick()
+        composeTestRule.onNodeWithText(stringResource(R.string.current_task_mark_done_button))
+            .performClick()
 
         composeTestRule.onNodeWithText(task2.name).assertIsDisplayed()
     }
@@ -144,11 +163,15 @@ class CurrentTaskScreenTest {
     @Test
     fun displaysErrorMessage_whenMarkDoneFailed() {
         var userMessage: String? = null
+        val clock = createClock()
         val task = genTasks(1).single()
-        val taskRepository = spyk(FakeTaskRepository.withTasks(task))
+        val db = FakeDatabase().apply {
+            insertTask(task)
+        }
+        val taskRepository = spyk(FakeTaskRepository(db, clock))
         coEvery { taskRepository.markDone(any()) } throws RuntimeException("Test")
 
-        val viewModel = createCurrentTaskViewModel(taskRepository)
+        val viewModel = CurrentTaskViewModel(taskRepository, clock)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -161,7 +184,8 @@ class CurrentTaskScreenTest {
             }
         }
 
-        composeTestRule.onNodeWithText(stringResource(R.string.mark_done_button)).performClick()
+        composeTestRule.onNodeWithText(stringResource(R.string.current_task_mark_done_button))
+            .performClick()
         composeTestRule.waitForIdle()
 
         composeTestRule.waitUntil {
@@ -183,6 +207,5 @@ class CurrentTaskScreenTest {
         )
     }.take(count).toList()
 
-    private fun createCurrentTaskViewModel(taskRepository: FakeTaskRepository) =
-        CurrentTaskViewModel(taskRepository, Clock.systemDefaultZone())
+    private fun createClock() = Clock.systemDefaultZone()
 }

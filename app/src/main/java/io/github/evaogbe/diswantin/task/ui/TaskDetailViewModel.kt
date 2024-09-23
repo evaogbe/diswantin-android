@@ -83,6 +83,36 @@ class TaskDetailViewModel @Inject constructor(
             initialValue = TaskDetailUiState.Pending
         )
 
+    fun markTaskDone() {
+        val task = (uiState.value as? TaskDetailUiState.Success)?.task ?: return
+
+        viewModelScope.launch {
+            try {
+                taskRepository.markDone(task.id)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to mark task done: %s", task)
+                userMessage.value = R.string.task_detail_mark_done_error
+            }
+        }
+    }
+
+    fun unmarkTaskDone() {
+        val task = (uiState.value as? TaskDetailUiState.Success)?.task ?: return
+
+        viewModelScope.launch {
+            try {
+                taskRepository.unmarkDone(task.id)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to unmark task done: %s", task)
+                userMessage.value = R.string.task_detail_unmark_done_error
+            }
+        }
+    }
+
     fun deleteTask() {
         val task = (uiState.value as? TaskDetailUiState.Success)?.task ?: return
 

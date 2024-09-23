@@ -126,6 +126,17 @@ class FakeDatabase {
         _taskRecurrenceTable.update { it - id }
     }
 
+    fun deleteLatestTaskCompletionByTaskId(taskId: Long) {
+        _taskCompletionTable.update { taskCompletionTable ->
+            taskCompletionTable.values
+                .filter { it.taskId == taskId }
+                .maxByOrNull { it.doneAt }
+                ?.id
+                ?.let { taskCompletionTable - it }
+                ?: taskCompletionTable
+        }
+    }
+
     fun insertChain(parentId: Long, childId: Long) {
         _taskPathTable.update { it + createTaskPathChain(parentId = parentId, childId = childId) }
     }

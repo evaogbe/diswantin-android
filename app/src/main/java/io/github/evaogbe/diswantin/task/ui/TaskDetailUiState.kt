@@ -12,10 +12,10 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
 @Parcelize
-data class TaskDetailTopBarState(val taskId: Long?) : Parcelable
+data class TaskDetailTopBarState(val taskId: Long?, val isDone: Boolean) : Parcelable
 
 enum class TaskDetailTopBarAction {
-    Delete
+    MarkDone, UnmarkDone, Delete
 }
 
 sealed interface TaskDetailUiState {

@@ -9,6 +9,7 @@ import io.github.evaogbe.diswantin.task.data.EditTaskForm
 import io.github.evaogbe.diswantin.task.data.PathUpdateType
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskDetail
+import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.MainDispatcherRule
 import io.github.serpro69.kfaker.Faker
@@ -39,10 +40,15 @@ class CurrentTaskViewModelTest {
     @Test
     fun `uiState fetches current task from repository`() =
         runTest(mainDispatcherRule.testDispatcher) {
-            val (task1, task2) = genTasks(2)
             val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
-            val taskRepository = FakeTaskRepository.withTasks(task1, task2)
-            val viewModel = createCurrentTaskViewModel(taskRepository)
+            val clock = createClock()
+            val (task1, task2) = genTasks(2)
+            val db = FakeDatabase().apply {
+                insertTask(task1)
+                insertTask(task2)
+            }
+            val taskRepository = FakeTaskRepository(db, clock)
+            val viewModel = CurrentTaskViewModel(taskRepository, clock)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -80,13 +86,17 @@ class CurrentTaskViewModelTest {
     @Test
     fun `uiState emits failure when fetch current task fails`() =
         runTest(mainDispatcherRule.testDispatcher) {
+            val clock = createClock()
             val task = genTasks(1).single()
-            val taskRepository = spyk(FakeTaskRepository.withTasks(task))
+            val db = FakeDatabase().apply {
+                insertTask(task)
+            }
+            val taskRepository = spyk(FakeTaskRepository(db, clock))
             every { taskRepository.getCurrentTask(any()) } returns flow {
                 throw RuntimeException("Test")
             }
 
-            val viewModel = createCurrentTaskViewModel(taskRepository)
+            val viewModel = CurrentTaskViewModel(taskRepository, clock)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -98,9 +108,14 @@ class CurrentTaskViewModelTest {
     @Test
     fun `markCurrentTaskDone sets current task doneAt`() =
         runTest(mainDispatcherRule.testDispatcher) {
+            val clock = createClock()
             val (task1, task2) = genTasks(2)
-            val taskRepository = FakeTaskRepository.withTasks(task1, task2)
-            val viewModel = createCurrentTaskViewModel(taskRepository)
+            val db = FakeDatabase().apply {
+                insertTask(task1)
+                insertTask(task2)
+            }
+            val taskRepository = FakeTaskRepository(db, clock)
+            val viewModel = CurrentTaskViewModel(taskRepository, clock)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -130,12 +145,16 @@ class CurrentTaskViewModelTest {
     @Test
     fun `markCurrentTaskDone shows error message when repository throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
+            val clock = createClock()
             val task = genTasks(1).single()
-            val taskRepository = spyk(FakeTaskRepository.withTasks(task))
+            val db = FakeDatabase().apply {
+                insertTask(task)
+            }
+            val taskRepository = spyk(FakeTaskRepository(db, clock))
 
             coEvery { taskRepository.markDone(any()) } throws RuntimeException("Test")
 
-            val viewModel = createCurrentTaskViewModel(taskRepository)
+            val viewModel = CurrentTaskViewModel(taskRepository, clock)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -173,6 +192,5 @@ class CurrentTaskViewModelTest {
         )
     }.take(count).toList()
 
-    private fun createCurrentTaskViewModel(taskRepository: FakeTaskRepository) =
-        CurrentTaskViewModel(taskRepository, Clock.systemDefaultZone())
+    private fun createClock() = Clock.systemDefaultZone()
 }

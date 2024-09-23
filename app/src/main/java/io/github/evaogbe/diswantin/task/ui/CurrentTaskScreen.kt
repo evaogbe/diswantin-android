@@ -152,12 +152,12 @@ fun CurrentTaskLayout(
                 OutlinedButtonWithIcon(
                     onClick = { onNavigateToTask(uiState.currentTask.id) },
                     painter = painterResource(R.drawable.baseline_details_24),
-                    text = stringResource(R.string.view_details_button),
+                    text = stringResource(R.string.current_task_view_details_button),
                 )
                 FilledTonalButtonWithIcon(
                     onClick = onMarkTaskDone,
                     imageVector = Icons.Default.Done,
-                    text = stringResource(R.string.mark_done_button),
+                    text = stringResource(R.string.current_task_mark_done_button),
                 )
             }
         }

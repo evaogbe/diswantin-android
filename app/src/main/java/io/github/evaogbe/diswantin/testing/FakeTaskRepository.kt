@@ -14,6 +14,7 @@ import io.github.evaogbe.diswantin.task.data.TaskRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
@@ -22,7 +23,10 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 
-class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRepository {
+class FakeTaskRepository(
+    private val db: FakeDatabase = FakeDatabase(),
+    private val clock: Clock = Clock.systemDefaultZone(),
+) : TaskRepository {
     val tasks
         get() = db.taskTable.value.values
 
@@ -99,7 +103,7 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
         defaultTime: LocalTime,
     ) = when {
         date != null -> date.atTime(time ?: defaultTime).atZone(ZoneId.systemDefault())
-        time != null -> ZonedDateTime.now().with(time)
+        time != null -> ZonedDateTime.now(clock).with(time)
         else -> null
     }
 
@@ -259,7 +263,11 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
     }
 
     override suspend fun markDone(id: Long) {
-        db.insertTaskCompletion(TaskCompletion(taskId = id, doneAt = Instant.now()))
+        db.insertTaskCompletion(TaskCompletion(taskId = id, doneAt = Instant.now(clock)))
+    }
+
+    override suspend fun unmarkDone(id: Long) {
+        db.deleteLatestTaskCompletionByTaskId(id)
     }
 
     override suspend fun addParent(id: Long, parentId: Long) {

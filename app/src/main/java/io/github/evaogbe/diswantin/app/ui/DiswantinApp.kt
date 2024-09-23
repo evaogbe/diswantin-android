@@ -58,7 +58,6 @@ import io.github.evaogbe.diswantin.task.ui.TaskCategoryListTopBar
 import io.github.evaogbe.diswantin.task.ui.TaskDetailScreen
 import io.github.evaogbe.diswantin.task.ui.TaskDetailTopBar
 import io.github.evaogbe.diswantin.task.ui.TaskDetailTopBarAction
-import io.github.evaogbe.diswantin.task.ui.TaskDetailTopBarState
 import io.github.evaogbe.diswantin.task.ui.TaskFormScreen
 import io.github.evaogbe.diswantin.task.ui.TaskFormTopBar
 import io.github.evaogbe.diswantin.task.ui.TaskFormTopBarAction
@@ -136,7 +135,13 @@ fun DiswantinApp() {
                         },
                         onDeleteTask = {
                             topBarState = state.copy(action = TaskDetailTopBarAction.Delete)
-                        }
+                        },
+                        onMarkTaskDone = {
+                            topBarState = state.copy(action = TaskDetailTopBarAction.MarkDone)
+                        },
+                        onUnmarkTaskDone = {
+                            topBarState = state.copy(action = TaskDetailTopBarAction.UnmarkDone)
+                        },
                     )
                 }
 
@@ -282,19 +287,12 @@ fun DiswantinApp() {
                 arguments = listOf(navArgument(NavArguments.ID_KEY) {
                     type = NavType.LongType
                 }),
-            ) { backStackEntry ->
-                LaunchedEffect(backStackEntry) {
-                    topBarState = TopBarState.TaskDetail(
-                        uiState = TaskDetailTopBarState(
-                            taskId = requireNotNull(backStackEntry.arguments)
-                                .getLong(NavArguments.ID_KEY),
-                        ),
-                        action = null,
-                    )
-                }
-
+            ) {
                 TaskDetailScreen(
                     onPopBackStack = navController::popBackStack,
+                    setTopBarState = {
+                        topBarState = TopBarState.TaskDetail(uiState = it, action = null)
+                    },
                     topBarAction = (topBarState as? TopBarState.TaskDetail)?.action,
                     topBarActionHandled = {
                         (topBarState as? TopBarState.TaskDetail)?.copy(action = null)?.let {

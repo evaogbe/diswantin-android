@@ -106,6 +106,12 @@ class LocalTaskRepository @Inject constructor(
         }
     }
 
+    override suspend fun unmarkDone(id: Long) {
+        withContext(ioDispatcher) {
+            taskDao.deleteLatestTaskCompletionByTaskId(id)
+        }
+    }
+
     override suspend fun addParent(id: Long, parentId: Long) {
         withContext(ioDispatcher) {
             taskDao.connectPath(parentId = parentId, childId = id)

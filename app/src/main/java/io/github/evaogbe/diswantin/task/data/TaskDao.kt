@@ -351,4 +351,15 @@ interface TaskDao {
             decrementDepth(parentId = parentId, childIds = childIds)
         }
     }
+
+    @Query(
+        """DELETE FROM task_completion
+        WHERE task_id = :taskId 
+            AND done_at IN (
+                SELECT MAX(done_at) AS done_at
+                FROM task_completion
+                WHERE task_id = :taskId
+            )"""
+    )
+    suspend fun deleteLatestTaskCompletionByTaskId(taskId: Long)
 }
