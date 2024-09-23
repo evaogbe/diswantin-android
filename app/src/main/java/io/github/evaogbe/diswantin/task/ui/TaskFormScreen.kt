@@ -46,6 +46,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.RecurrenceType
 import io.github.evaogbe.diswantin.task.data.Task
+import io.github.evaogbe.diswantin.task.data.TaskCategory
 import io.github.evaogbe.diswantin.ui.components.AutocompleteField
 import io.github.evaogbe.diswantin.ui.components.ClearableLayout
 import io.github.evaogbe.diswantin.ui.components.DiswantinDatePickerDialog
@@ -59,6 +60,7 @@ import io.github.evaogbe.diswantin.ui.theme.ScreenLg
 import io.github.evaogbe.diswantin.ui.theme.SpaceMd
 import io.github.evaogbe.diswantin.ui.theme.SpaceSm
 import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
 import java.time.Instant
@@ -181,6 +183,8 @@ fun TaskFormScreen(
                 onScheduledTimeChange = taskFormViewModel::updateScheduledTime,
                 onEditRecurrence = onEditRecurrence,
                 onClearRecurrence = { taskFormViewModel.updateRecurrence(null) },
+                onCategoryChange = taskFormViewModel::updateCategory,
+                onCategorySearch = taskFormViewModel::searchCategories,
                 onParentTaskChange = taskFormViewModel::updateParentTask,
                 onTaskSearch = taskFormViewModel::searchTasks,
             )
@@ -205,17 +209,13 @@ fun TaskFormLayout(
     onScheduledTimeChange: (LocalTime?) -> Unit,
     onEditRecurrence: () -> Unit,
     onClearRecurrence: () -> Unit,
+    onCategoryChange: (TaskCategory?) -> Unit,
+    onCategorySearch: (String) -> Unit,
     onParentTaskChange: (Task?) -> Unit,
     onTaskSearch: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var dialogType by rememberSaveable {
-        mutableStateOf<FieldDialogType?>(null)
-    }
-    val parentTask = uiState.parentTask
-    val (parentTaskQuery, setParentTaskQuery) = rememberSaveable(parentTask) {
-        mutableStateOf(parentTask?.name ?: "")
-    }
+    var dialogType by rememberSaveable { mutableStateOf<FieldDialogType?>(null) }
 
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         Column(
@@ -409,57 +409,26 @@ fun TaskFormLayout(
                 }
             }
 
-            if (uiState.showParentTaskField) {
-                if (parentTask == null) {
-                    AutocompleteField(
-                        query = parentTaskQuery,
-                        onQueryChange = setParentTaskQuery,
-                        label = { Text(stringResource(R.string.parent_task_label)) },
-                        onSearch = onTaskSearch,
-                        options = uiState.parentTaskOptions,
-                        formatOption = Task::name,
-                        onSelectOption = onParentTaskChange,
-                        autoFocus = false,
-                    )
-                } else {
-                    var isEditingParent by rememberSaveable { mutableStateOf(false) }
+            if (uiState.showCategoryField) {
+                SelectableAutocompleteField(
+                    selectedOption = uiState.category,
+                    label = stringResource(R.string.task_category_label),
+                    onSearch = onCategorySearch,
+                    options = uiState.categoryOptions,
+                    formatOption = TaskCategory::name,
+                    onSelectOption = onCategoryChange,
+                )
+            }
 
-                    if (isEditingParent) {
-                        ClearableLayout(onClear = { onParentTaskChange(null) }, invert = true) {
-                            AutocompleteField(
-                                query = parentTaskQuery,
-                                onQueryChange = setParentTaskQuery,
-                                label = { Text(stringResource(R.string.parent_task_label)) },
-                                onSearch = onTaskSearch,
-                                options = uiState.parentTaskOptions,
-                                formatOption = Task::name,
-                                onSelectOption = {
-                                    onParentTaskChange(it)
-                                    isEditingParent = false
-                                },
-                                autoFocus = false,
-                                modifier = Modifier.weight(1f),
-                            )
-                        }
-                    } else {
-                        Column {
-                            Text(
-                                text = stringResource(R.string.parent_task_label),
-                                style = typography.bodyLarge,
-                            )
-                            Spacer(Modifier.size(SpaceSm))
-                            ClearableLayout(
-                                onClear = { onParentTaskChange(null) },
-                                invert = false,
-                            ) {
-                                EditFieldButton(
-                                    onClick = { isEditingParent = true },
-                                    text = parentTask.name,
-                                )
-                            }
-                        }
-                    }
-                }
+            if (uiState.showParentTaskField) {
+                SelectableAutocompleteField(
+                    selectedOption = uiState.parentTask,
+                    label = stringResource(R.string.parent_task_label),
+                    onSearch = onTaskSearch,
+                    options = uiState.parentTaskOptions,
+                    formatOption = Task::name,
+                    onSelectOption = onParentTaskChange,
+                )
             }
         }
     }
@@ -516,6 +485,68 @@ fun TaskFormLayout(
     }
 }
 
+@Composable
+fun <T : Any> SelectableAutocompleteField(
+    selectedOption: T?,
+    label: String,
+    onSearch: (String) -> Unit,
+    options: ImmutableList<T>,
+    formatOption: (T) -> String,
+    onSelectOption: (T?) -> Unit,
+) {
+    var query by rememberSaveable(selectedOption) {
+        mutableStateOf(selectedOption?.let(formatOption) ?: "")
+    }
+
+    if (selectedOption == null) {
+        AutocompleteField(
+            query = query,
+            onQueryChange = { query = it },
+            label = { Text(text = label) },
+            onSearch = onSearch,
+            options = options,
+            formatOption = formatOption,
+            onSelectOption = onSelectOption,
+            autoFocus = false,
+        )
+    } else {
+        var isEditing by rememberSaveable { mutableStateOf(false) }
+
+        if (isEditing) {
+            ClearableLayout(onClear = { isEditing = false }, invert = true) {
+                AutocompleteField(
+                    query = query,
+                    onQueryChange = { query = it },
+                    label = { Text(text = label) },
+                    onSearch = onSearch,
+                    options = options,
+                    formatOption = formatOption,
+                    onSelectOption = {
+                        onSelectOption(it)
+                        isEditing = false
+                    },
+                    autoFocus = false,
+                    modifier = Modifier.weight(1f),
+                )
+            }
+        } else {
+            Column {
+                Text(text = label, style = typography.bodyLarge)
+                Spacer(Modifier.size(SpaceSm))
+                ClearableLayout(onClear = { onSelectOption(null) }, invert = false) {
+                    EditFieldButton(
+                        onClick = {
+                            query = formatOption(selectedOption)
+                            isEditing = true
+                        },
+                        text = formatOption(selectedOption),
+                    )
+                }
+            }
+        }
+    }
+}
+
 @DevicePreviews
 @Composable
 private fun TaskFormScreenPreview_New() {
@@ -535,6 +566,9 @@ private fun TaskFormScreenPreview_New() {
                     scheduledDate = null,
                     scheduledTime = null,
                     recurrence = null,
+                    showCategoryField = false,
+                    category = null,
+                    categoryOptions = persistentListOf(),
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
@@ -550,6 +584,8 @@ private fun TaskFormScreenPreview_New() {
                 onScheduledTimeChange = {},
                 onEditRecurrence = {},
                 onClearRecurrence = {},
+                onCategoryChange = {},
+                onCategorySearch = {},
                 onParentTaskChange = {},
                 onTaskSearch = {},
                 modifier = Modifier.padding(innerPadding),
@@ -583,6 +619,9 @@ private fun TaskFormScreenPreview_Edit() {
                         weekdays = persistentSetOf(),
                         locale = Locale.getDefault(),
                     ),
+                    showCategoryField = true,
+                    category = TaskCategory(id = 1L, name = "Morning routine"),
+                    categoryOptions = persistentListOf(),
                     showParentTaskField = true,
                     parentTask = Task(id = 1L, createdAt = Instant.now(), name = "Brush teeth"),
                     parentTaskOptions = persistentListOf(),
@@ -598,6 +637,8 @@ private fun TaskFormScreenPreview_Edit() {
                 onScheduledTimeChange = {},
                 onEditRecurrence = {},
                 onClearRecurrence = {},
+                onCategoryChange = {},
+                onCategorySearch = {},
                 onParentTaskChange = {},
                 onTaskSearch = {},
                 modifier = Modifier.padding(innerPadding),
@@ -619,6 +660,9 @@ private fun TaskFormLayoutPreview_ScheduledAt() {
                     scheduledDate = LocalDate.now(),
                     scheduledTime = LocalTime.now(),
                     recurrence = null,
+                    showCategoryField = true,
+                    category = null,
+                    categoryOptions = persistentListOf(),
                     showParentTaskField = true,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
@@ -634,6 +678,8 @@ private fun TaskFormLayoutPreview_ScheduledAt() {
                 onScheduledTimeChange = {},
                 onEditRecurrence = {},
                 onClearRecurrence = {},
+                onCategoryChange = {},
+                onCategorySearch = {},
                 onParentTaskChange = {},
                 onTaskSearch = {},
             )
@@ -660,6 +706,9 @@ private fun TaskFormLayoutPreview_ScheduledTime() {
                         weekdays = persistentSetOf(LocalDate.now().dayOfWeek),
                         locale = Locale.getDefault(),
                     ),
+                    showCategoryField = false,
+                    category = null,
+                    categoryOptions = persistentListOf(),
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
@@ -675,6 +724,8 @@ private fun TaskFormLayoutPreview_ScheduledTime() {
                 onScheduledTimeChange = {},
                 onEditRecurrence = {},
                 onClearRecurrence = {},
+                onCategoryChange = {},
+                onCategorySearch = {},
                 onParentTaskChange = {},
                 onTaskSearch = {},
             )

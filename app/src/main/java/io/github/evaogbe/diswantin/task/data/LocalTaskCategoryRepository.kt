@@ -14,6 +14,11 @@ class LocalTaskCategoryRepository @Inject constructor(
 ) : TaskCategoryRepository {
     override val categoriesStream = taskCategoryDao.getTaskCategories().flowOn(ioDispatcher)
 
+    override val hasCategoriesStream = taskCategoryDao.hasCategories().flowOn(ioDispatcher)
+
+    override fun getByTaskId(taskId: Long) =
+        taskCategoryDao.getByTaskId(taskId).flowOn(ioDispatcher)
+
     override fun getCategoryWithTasksById(id: Long) =
         combine(taskCategoryDao.getById(id), taskDao.getTasksByCategoryId(id)) { category, tasks ->
             TaskCategoryWithTasks(checkNotNull(category), tasks)
@@ -26,6 +31,11 @@ class LocalTaskCategoryRepository @Inject constructor(
         ) { category, tasks ->
             category?.let { TaskCategoryWithTaskItems(it, tasks) }
         }.flowOn(ioDispatcher)
+
+    override fun search(query: String) =
+        taskCategoryDao.search(escapeSql(query)).flowOn(ioDispatcher)
+
+    private fun escapeSql(str: String) = str.replace("'", "''").replace("\"", "\"\"")
 
     override suspend fun create(form: NewTaskCategoryForm) = withContext(ioDispatcher) {
         val id = taskCategoryDao.insertWithTasks(

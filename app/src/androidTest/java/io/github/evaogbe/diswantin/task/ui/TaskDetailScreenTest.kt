@@ -155,7 +155,7 @@ class TaskDetailScreenTest {
     }
 
     @Test
-    fun displaysErrorMessage_whenMarkTaskDoneFailed() {
+    fun displaysErrorMessage_whenMarkTaskDoneFails() {
         var userMessage: String? = null
         val clock = createClock()
         val task = genTask()
@@ -195,7 +195,7 @@ class TaskDetailScreenTest {
     }
 
     @Test
-    fun displaysErrorMessage_whenUnmarkTaskDoneFailed() {
+    fun displaysErrorMessage_whenUnmarkTaskDoneFails() {
         var userMessage: String? = null
         val clock = createClock()
         val task = genTask()
@@ -273,7 +273,7 @@ class TaskDetailScreenTest {
     }
 
     @Test
-    fun displaysErrorMessage_whenDeleteTaskFailed() {
+    fun displaysErrorMessage_whenDeleteTaskFails() {
         var userMessage: String? = null
         val clock = createClock()
         val task = genTask()

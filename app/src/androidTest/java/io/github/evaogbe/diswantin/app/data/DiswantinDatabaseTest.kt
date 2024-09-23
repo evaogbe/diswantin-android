@@ -379,4 +379,25 @@ class DiswantinDatabaseTest {
         }
         migratedDb.close()
     }
+
+    fun testMigration_24_25() {
+        val categoryName = loremFaker.lorem.words()
+
+        val initialDb = migrationTestHelper.createDatabase(DiswantinDatabase.DB_NAME, 24)
+        initialDb.execSQL("INSERT INTO `task_category` (`name`) VALUES (?)", arrayOf(categoryName))
+        initialDb.close()
+
+        val migratedDb =
+            migrationTestHelper.runMigrationsAndValidate(
+                DiswantinDatabase.DB_NAME,
+                25,
+                true,
+                DiswantinDatabase.MIGRATION_24_25,
+            )
+        migratedDb.query("SELECT * FROM `task_category_fts`").use { stmt ->
+            assertThat(stmt.moveToFirst()).isTrue()
+            assertThat(stmt.getString(0)).isEqualTo(categoryName)
+        }
+        migratedDb.close()
+    }
 }

@@ -3,6 +3,7 @@ package io.github.evaogbe.diswantin.task.ui
 import android.os.Parcelable
 import androidx.annotation.StringRes
 import io.github.evaogbe.diswantin.task.data.Task
+import io.github.evaogbe.diswantin.task.data.TaskCategory
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.parcelize.Parcelize
 import java.time.LocalDate
@@ -30,6 +31,9 @@ sealed interface TaskFormUiState {
         val scheduledDate: LocalDate?,
         val scheduledTime: LocalTime?,
         val recurrence: TaskRecurrenceUiState?,
+        val showCategoryField: Boolean,
+        val category: TaskCategory?,
+        val categoryOptions: ImmutableList<TaskCategory>,
         val showParentTaskField: Boolean,
         val parentTask: Task?,
         val parentTaskOptions: ImmutableList<Task>,

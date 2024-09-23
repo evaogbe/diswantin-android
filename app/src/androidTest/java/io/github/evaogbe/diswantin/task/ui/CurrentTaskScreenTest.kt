@@ -161,7 +161,7 @@ class CurrentTaskScreenTest {
     }
 
     @Test
-    fun displaysErrorMessage_whenMarkDoneFailed() {
+    fun displaysErrorMessage_whenMarkDoneFails() {
         var userMessage: String? = null
         val clock = createClock()
         val task = genTasks(1).single()

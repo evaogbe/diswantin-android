@@ -16,6 +16,27 @@ interface TaskCategoryDao {
     @Query("SELECT * FROM task_category WHERE id = :id LIMIT 1")
     fun getById(id: Long): Flow<TaskCategory?>
 
+    @Query(
+        """SELECT c.*
+        FROM task_category c
+        JOIN task t ON t.category_id = c.id
+        WHERE t.id = :taskId
+        LIMIT 1"""
+    )
+    fun getByTaskId(taskId: Long): Flow<TaskCategory?>
+
+    @Query(
+        """SELECT c.*
+        FROM task_category c
+        JOIN task_category_fts cf ON cf.name = c.name
+        WHERE task_category_fts MATCH :query || '*'
+        LIMIT 20"""
+    )
+    fun search(query: String): Flow<List<TaskCategory>>
+
+    @Query("SELECT EXISTS(SELECT * FROM task_category)")
+    fun hasCategories(): Flow<Boolean>
+
     @Insert
     suspend fun insert(category: TaskCategory): Long
 

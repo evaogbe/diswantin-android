@@ -91,7 +91,7 @@ class TaskCategoryFormViewModel @Inject constructor(
         val existingCategoryWithTasks = args[0] as Result<TaskCategoryWithTasks?>
         val tasks = args[1] as ImmutableList<Task>
         val editingTaskIndex = args[2] as Int?
-        val taskQuery = args[3] as String
+        val taskQuery = (args[3] as String).trim()
         val taskSearchResults = args[4] as List<Task>
         val saveResult = args[5] as Result<Unit>?
         val userMessage = args[6] as Int?
@@ -99,18 +99,22 @@ class TaskCategoryFormViewModel @Inject constructor(
         when {
             saveResult is Result.Success -> TaskCategoryFormUiState.Saved
             existingCategoryWithTasks is Result.Success -> {
-                val taskOptions = taskSearchResults.filter { option ->
-                    (option.categoryId == null ||
-                            option.categoryId == existingCategoryWithTasks.value?.category?.id) &&
-                            option !in tasks
-                }
+                val editingTask = editingTaskIndex?.let(tasks::getOrNull)
                 TaskCategoryFormUiState.Success(
                     tasks = tasks,
                     editingTaskIndex = editingTaskIndex,
-                    taskOptions = if (taskOptions.singleOrNull()?.name == taskQuery.trim()) {
+                    taskOptions = if (
+                        taskQuery == editingTask?.name &&
+                        taskQuery == taskSearchResults.singleOrNull<Task>()?.name
+                    ) {
                         persistentListOf()
                     } else {
-                        taskOptions.toImmutableList()
+                        val existingCategoryId = existingCategoryWithTasks.value?.category?.id
+                        taskSearchResults.filter<Task> { option ->
+                            (option.categoryId == null ||
+                                    option.categoryId == existingCategoryId) &&
+                                    option !in tasks
+                        }.toImmutableList<Task>()
                     },
                     hasSaveError = saveResult is Result.Failure,
                     userMessage = userMessage,

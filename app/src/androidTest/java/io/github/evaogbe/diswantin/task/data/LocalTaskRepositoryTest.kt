@@ -70,6 +70,7 @@ class LocalTaskRepositoryTest {
                             deadlineTime = null,
                             scheduledDate = null,
                             scheduledTime = null,
+                            categoryId = null,
                             recurrences = emptyList(),
                             parentTaskId = null,
                             clock = clock,
@@ -88,6 +89,7 @@ class LocalTaskRepositoryTest {
                             deadlineTime = null,
                             scheduledDate = null,
                             scheduledTime = null,
+                            categoryId = null,
                             recurrences = emptyList(),
                             parentTaskId = null,
                             clock = clock,
@@ -103,6 +105,7 @@ class LocalTaskRepositoryTest {
                         deadlineTime = LocalTime.parse("00:00"),
                         scheduledDate = null,
                         scheduledTime = null,
+                        categoryId = null,
                         recurrences = emptyList(),
                         parentUpdateType = PathUpdateType.Keep,
                         existingTask = task2,
@@ -119,6 +122,7 @@ class LocalTaskRepositoryTest {
                         name = task1.name,
                         deadlineDate = null,
                         deadlineTime = null,
+                        categoryId = null,
                         scheduledDate = LocalDate.parse("2024-08-23"),
                         scheduledTime = LocalTime.parse("14:00"),
                         recurrences = emptyList(),
@@ -137,6 +141,7 @@ class LocalTaskRepositoryTest {
                         name = updatedTask1.name,
                         deadlineDate = null,
                         deadlineTime = null,
+                        categoryId = null,
                         scheduledDate = LocalDate.parse("2024-08-23"),
                         scheduledTime = LocalTime.parse("15:00"),
                         recurrences = emptyList(),
@@ -158,6 +163,7 @@ class LocalTaskRepositoryTest {
                             deadlineTime = null,
                             scheduledDate = null,
                             scheduledTime = null,
+                            categoryId = null,
                             recurrences = emptyList(),
                             parentTaskId = null,
                             clock = clock,
@@ -185,6 +191,7 @@ class LocalTaskRepositoryTest {
                         deadlineTime = null,
                         scheduledDate = null,
                         scheduledTime = null,
+                        categoryId = null,
                         recurrences = emptyList(),
                         parentUpdateType = PathUpdateType.Keep,
                         existingTask = updatedTask1,
@@ -203,6 +210,7 @@ class LocalTaskRepositoryTest {
                         deadlineTime = null,
                         scheduledDate = null,
                         scheduledTime = null,
+                        categoryId = null,
                         recurrences = listOf(
                             TaskRecurrence(
                                 taskId = 0L,
@@ -228,6 +236,7 @@ class LocalTaskRepositoryTest {
                         deadlineTime = LocalTime.parse("23:00"),
                         scheduledDate = null,
                         scheduledTime = null,
+                        categoryId = null,
                         recurrences = emptyList(),
                         parentUpdateType = PathUpdateType.Keep,
                         existingTask = updatedTask2,
@@ -247,6 +256,7 @@ class LocalTaskRepositoryTest {
                         deadlineTime = LocalTime.parse("23:00"),
                         scheduledDate = null,
                         scheduledTime = null,
+                        categoryId = null,
                         recurrences = taskRecurrences4,
                         parentUpdateType = PathUpdateType.Keep,
                         existingTask = task4,
@@ -265,6 +275,7 @@ class LocalTaskRepositoryTest {
                         deadlineTime = updatedTask4.deadlineTime,
                         scheduledDate = updatedTask4.scheduledDate,
                         scheduledTime = updatedTask4.scheduledTime,
+                        categoryId = null,
                         recurrences = listOf(
                             TaskRecurrence(
                                 taskId = updatedTask4.id,
@@ -291,6 +302,7 @@ class LocalTaskRepositoryTest {
                         deadlineTime = updatedTask4.deadlineTime,
                         scheduledDate = updatedTask4.scheduledDate,
                         scheduledTime = updatedTask4.scheduledTime,
+                        categoryId = null,
                         recurrences = listOf(
                             TaskRecurrence(
                                 taskId = updatedTask4.id,
@@ -317,6 +329,7 @@ class LocalTaskRepositoryTest {
                         deadlineTime = updatedTask4.deadlineTime,
                         scheduledDate = updatedTask4.scheduledDate,
                         scheduledTime = updatedTask4.scheduledTime,
+                        categoryId = null,
                         recurrences = listOf(
                             TaskRecurrence(
                                 taskId = updatedTask4.id,
@@ -352,6 +365,7 @@ class LocalTaskRepositoryTest {
                         deadlineTime = updatedTask4.deadlineTime,
                         scheduledDate = updatedTask4.scheduledDate,
                         scheduledTime = updatedTask4.scheduledTime,
+                        categoryId = null,
                         recurrences = listOf(
                             TaskRecurrence(
                                 taskId = updatedTask4.id,
@@ -387,6 +401,7 @@ class LocalTaskRepositoryTest {
                         deadlineTime = updatedTask4.deadlineTime,
                         scheduledDate = updatedTask4.scheduledDate,
                         scheduledTime = updatedTask4.scheduledTime,
+                        categoryId = null,
                         recurrences = listOf(
                             TaskRecurrence(
                                 taskId = updatedTask4.id,
@@ -415,6 +430,7 @@ class LocalTaskRepositoryTest {
                         deadlineTime = updatedTask4.deadlineTime,
                         scheduledDate = updatedTask4.scheduledDate,
                         scheduledTime = updatedTask4.scheduledTime,
+                        categoryId = null,
                         recurrences = listOf(
                             TaskRecurrence(
                                 taskId = updatedTask4.id,
@@ -443,6 +459,7 @@ class LocalTaskRepositoryTest {
                         deadlineTime = updatedTask4.deadlineTime,
                         scheduledDate = updatedTask4.scheduledDate,
                         scheduledTime = updatedTask4.scheduledTime,
+                        categoryId = null,
                         recurrences = listOf(
                             TaskRecurrence(
                                 taskId = updatedTask4.id,
@@ -471,6 +488,7 @@ class LocalTaskRepositoryTest {
                         deadlineTime = updatedTask4.deadlineTime,
                         scheduledDate = updatedTask4.scheduledDate,
                         scheduledTime = updatedTask4.scheduledTime,
+                        categoryId = null,
                         recurrences = listOf(
                             TaskRecurrence(
                                 taskId = updatedTask4.id,
@@ -500,6 +518,7 @@ class LocalTaskRepositoryTest {
                         deadlineTime = updatedTask4.deadlineTime,
                         scheduledDate = updatedTask4.scheduledDate,
                         scheduledTime = updatedTask4.scheduledTime,
+                        categoryId = null,
                         recurrences = listOf(
                             TaskRecurrence(
                                 taskId = updatedTask4.id,
@@ -528,6 +547,7 @@ class LocalTaskRepositoryTest {
                         deadlineTime = updatedTask4.deadlineTime,
                         scheduledDate = updatedTask4.scheduledDate,
                         scheduledTime = updatedTask4.scheduledTime,
+                        categoryId = null,
                         recurrences = listOf(
                             TaskRecurrence(
                                 taskId = updatedTask4.id,
@@ -557,6 +577,7 @@ class LocalTaskRepositoryTest {
                         deadlineTime = updatedTask4.deadlineTime,
                         scheduledDate = updatedTask4.scheduledDate,
                         scheduledTime = updatedTask4.scheduledTime,
+                        categoryId = null,
                         recurrences = listOf(
                             TaskRecurrence(
                                 taskId = updatedTask4.id,
@@ -585,6 +606,7 @@ class LocalTaskRepositoryTest {
                         deadlineTime = updatedTask4.deadlineTime,
                         scheduledDate = updatedTask4.scheduledDate,
                         scheduledTime = updatedTask4.scheduledTime,
+                        categoryId = null,
                         recurrences = listOf(
                             TaskRecurrence(
                                 taskId = updatedTask4.id,
@@ -639,6 +661,7 @@ class LocalTaskRepositoryTest {
                         deadlineTime = null,
                         scheduledDate = null,
                         scheduledTime = null,
+                        categoryId = null,
                         recurrences = emptyList(),
                         parentTaskId = null,
                         clock = clock,
@@ -656,6 +679,7 @@ class LocalTaskRepositoryTest {
                         deadlineTime = null,
                         scheduledDate = null,
                         scheduledTime = null,
+                        categoryId = null,
                         recurrences = emptyList(),
                         parentTaskId = null,
                         clock = clock,
@@ -679,6 +703,7 @@ class LocalTaskRepositoryTest {
                         deadlineTime = null,
                         scheduledDate = null,
                         scheduledTime = null,
+                        categoryId = null,
                         recurrences = emptyList(),
                         parentTaskId = null,
                         clock = clock,
@@ -696,6 +721,7 @@ class LocalTaskRepositoryTest {
                         deadlineTime = null,
                         scheduledDate = null,
                         scheduledTime = null,
+                        categoryId = null,
                         recurrences = emptyList(),
                         parentUpdateType = PathUpdateType.Replace(task3.id),
                         existingTask = task1,
@@ -714,6 +740,7 @@ class LocalTaskRepositoryTest {
                         deadlineTime = null,
                         scheduledDate = null,
                         scheduledTime = null,
+                        categoryId = null,
                         recurrences = listOf(
                             TaskRecurrence(
                                 taskId = task1.id,
@@ -740,6 +767,7 @@ class LocalTaskRepositoryTest {
                         deadlineTime = null,
                         scheduledDate = null,
                         scheduledTime = null,
+                        categoryId = null,
                         recurrences = emptyList(),
                         parentUpdateType = PathUpdateType.Remove,
                         existingTask = task1,
@@ -759,6 +787,7 @@ class LocalTaskRepositoryTest {
                         deadlineTime = null,
                         scheduledDate = null,
                         scheduledTime = null,
+                        categoryId = null,
                         recurrences = emptyList(),
                         parentUpdateType = PathUpdateType.Replace(task1.id),
                         existingTask = task3,
@@ -801,6 +830,7 @@ class LocalTaskRepositoryTest {
                         deadlineTime = null,
                         scheduledDate = null,
                         scheduledTime = null,
+                        categoryId = null,
                         recurrences = listOf(
                             TaskRecurrence(
                                 taskId = 0L,
@@ -839,6 +869,7 @@ class LocalTaskRepositoryTest {
                             deadlineTime = task.deadlineTime,
                             scheduledDate = task.scheduledDate,
                             scheduledTime = task.scheduledTime,
+                            categoryId = null,
                             recurrences = listOf(
                                 TaskRecurrence(
                                     taskId = task.id,
@@ -885,6 +916,7 @@ class LocalTaskRepositoryTest {
                         deadlineTime = null,
                         scheduledDate = null,
                         scheduledTime = null,
+                        categoryId = null,
                         recurrences = listOf(
                             TaskRecurrence(
                                 taskId = 0L,
@@ -922,6 +954,7 @@ class LocalTaskRepositoryTest {
                             deadlineTime = task.deadlineTime,
                             scheduledDate = task.scheduledDate,
                             scheduledTime = task.scheduledTime,
+                            categoryId = null,
                             recurrences = listOf(
                                 TaskRecurrence(
                                     taskId = task.id,
@@ -968,6 +1001,7 @@ class LocalTaskRepositoryTest {
                         deadlineTime = null,
                         scheduledDate = null,
                         scheduledTime = null,
+                        categoryId = null,
                         recurrences = listOf(
                             TaskRecurrence(
                                 taskId = 0L,
@@ -1005,6 +1039,7 @@ class LocalTaskRepositoryTest {
                             deadlineTime = task.deadlineTime,
                             scheduledDate = task.scheduledDate,
                             scheduledTime = task.scheduledTime,
+                            categoryId = null,
                             recurrences = listOf(
                                 TaskRecurrence(
                                     taskId = task.id,
@@ -1051,6 +1086,7 @@ class LocalTaskRepositoryTest {
                         deadlineTime = null,
                         scheduledDate = null,
                         scheduledTime = null,
+                        categoryId = null,
                         recurrences = listOf(
                             TaskRecurrence(
                                 taskId = 0L,
@@ -1088,6 +1124,7 @@ class LocalTaskRepositoryTest {
                             deadlineTime = task.deadlineTime,
                             scheduledDate = task.scheduledDate,
                             scheduledTime = task.scheduledTime,
+                            categoryId = null,
                             recurrences = listOf(
                                 TaskRecurrence(
                                     taskId = task.id,
@@ -1134,6 +1171,7 @@ class LocalTaskRepositoryTest {
                         deadlineTime = null,
                         scheduledDate = null,
                         scheduledTime = null,
+                        categoryId = null,
                         recurrences = listOf(
                             TaskRecurrence(
                                 taskId = 0L,
@@ -1171,6 +1209,7 @@ class LocalTaskRepositoryTest {
                             deadlineTime = task.deadlineTime,
                             scheduledDate = task.scheduledDate,
                             scheduledTime = task.scheduledTime,
+                            categoryId = null,
                             recurrences = listOf(
                                 TaskRecurrence(
                                     taskId = task.id,
@@ -1217,6 +1256,7 @@ class LocalTaskRepositoryTest {
                         deadlineTime = null,
                         scheduledDate = null,
                         scheduledTime = null,
+                        categoryId = null,
                         recurrences = listOf(
                             TaskRecurrence(
                                 taskId = 0L,
@@ -1256,6 +1296,7 @@ class LocalTaskRepositoryTest {
                             deadlineTime = task.deadlineTime,
                             scheduledDate = task.scheduledDate,
                             scheduledTime = task.scheduledTime,
+                            categoryId = null,
                             recurrences = listOf(
                                 TaskRecurrence(
                                     taskId = task.id,
@@ -1284,6 +1325,7 @@ class LocalTaskRepositoryTest {
                         deadlineTime = task.deadlineTime,
                         scheduledDate = task.scheduledDate,
                         scheduledTime = task.scheduledTime,
+                        categoryId = null,
                         recurrences = listOf(
                             TaskRecurrence(
                                 taskId = task.id,
@@ -1323,6 +1365,7 @@ class LocalTaskRepositoryTest {
                 deadlineTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
+                categoryId = null,
                 recurrences = emptyList(),
                 parentTaskId = null,
                 clock = clock,
@@ -1335,6 +1378,7 @@ class LocalTaskRepositoryTest {
                 deadlineTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
+                categoryId = null,
                 recurrences = emptyList(),
                 parentTaskId = task1.id,
                 clock = clock,
@@ -1347,6 +1391,7 @@ class LocalTaskRepositoryTest {
                 deadlineTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
+                categoryId = null,
                 recurrences = emptyList(),
                 parentTaskId = null,
                 clock = clock,
@@ -1360,6 +1405,7 @@ class LocalTaskRepositoryTest {
                 deadlineTime = task2.deadlineTime,
                 scheduledDate = task2.scheduledDate,
                 scheduledTime = task2.scheduledTime,
+                categoryId = null,
                 recurrences = emptyList(),
                 parentUpdateType = PathUpdateType.Keep,
                 existingTask = task2,
@@ -1390,6 +1436,7 @@ class LocalTaskRepositoryTest {
                 deadlineTime = task3.deadlineTime,
                 scheduledDate = task3.scheduledDate,
                 scheduledTime = task3.scheduledTime,
+                categoryId = null,
                 recurrences = emptyList(),
                 parentUpdateType = PathUpdateType.Replace(updatedTask2.id),
                 existingTask = task3,
@@ -1420,6 +1467,7 @@ class LocalTaskRepositoryTest {
                 deadlineTime = updatedTask2.deadlineTime,
                 scheduledDate = updatedTask2.scheduledDate,
                 scheduledTime = updatedTask2.scheduledTime,
+                categoryId = null,
                 recurrences = emptyList(),
                 parentUpdateType = PathUpdateType.Remove,
                 existingTask = updatedTask2,
@@ -1450,6 +1498,7 @@ class LocalTaskRepositoryTest {
                 deadlineTime = task3.deadlineTime,
                 scheduledDate = task3.scheduledDate,
                 scheduledTime = task3.scheduledTime,
+                categoryId = null,
                 recurrences = emptyList(),
                 parentUpdateType = PathUpdateType.Replace(task1.id),
                 existingTask = task3,
@@ -1480,6 +1529,7 @@ class LocalTaskRepositoryTest {
                 deadlineTime = task1.deadlineTime,
                 scheduledDate = task1.scheduledDate,
                 scheduledTime = task1.scheduledTime,
+                categoryId = null,
                 recurrences = emptyList(),
                 parentUpdateType = PathUpdateType.Replace(task3.id),
                 existingTask = task1,
@@ -1525,6 +1575,7 @@ class LocalTaskRepositoryTest {
                 deadlineTime = task3.deadlineTime,
                 scheduledDate = task3.scheduledDate,
                 scheduledTime = task3.scheduledTime,
+                categoryId = null,
                 recurrences = emptyList(),
                 parentUpdateType = PathUpdateType.Replace(updatedTask2.id),
                 existingTask = task3,
@@ -1555,6 +1606,7 @@ class LocalTaskRepositoryTest {
                 deadlineTime = task1.deadlineTime,
                 scheduledDate = task1.scheduledDate,
                 scheduledTime = task1.scheduledTime,
+                categoryId = null,
                 recurrences = emptyList(),
                 parentUpdateType = PathUpdateType.Replace(updatedTask2.id),
                 existingTask = task1,
@@ -1612,6 +1664,7 @@ class LocalTaskRepositoryTest {
                     deadlineTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
+                    categoryId = null,
                     recurrences = emptyList(),
                     parentTaskId = null,
                     clock = clock,

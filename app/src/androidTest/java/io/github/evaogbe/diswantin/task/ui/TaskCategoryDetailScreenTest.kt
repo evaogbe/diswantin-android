@@ -106,7 +106,7 @@ class TaskCategoryDetailScreenTest {
     }
 
     @Test
-    fun displaysErrorMessage_whenDeleteCategoryFailed() {
+    fun displaysErrorMessage_whenDeleteCategoryFails() {
         var userMessage: String? = null
         val categoryWithTasks = genTaskCategoryWithTasks()
         val taskCategoryRepository =

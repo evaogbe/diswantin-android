@@ -17,6 +17,7 @@ data class EditTaskForm(
     private val deadlineTime: LocalTime?,
     private val scheduledDate: LocalDate?,
     private val scheduledTime: LocalTime?,
+    private val categoryId: Long?,
     private val recurrences: Collection<TaskRecurrence>,
     val parentUpdateType: PathUpdateType,
     private val existingTask: Task,
@@ -54,5 +55,6 @@ data class EditTaskForm(
         deadlineTime = deadlineTime,
         scheduledDate = scheduledDate,
         scheduledTime = scheduledTime,
+        categoryId = categoryId,
     )
 }

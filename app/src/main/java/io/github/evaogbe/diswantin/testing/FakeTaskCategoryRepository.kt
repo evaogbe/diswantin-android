@@ -19,6 +19,13 @@ class FakeTaskCategoryRepository(private val db: FakeDatabase = FakeDatabase()) 
     override val categoriesStream =
         db.taskCategoryTable.map { it.values.sortedBy(TaskCategory::name) }
 
+    override val hasCategoriesStream = db.taskCategoryTable.map { it.isNotEmpty() }
+
+    override fun getByTaskId(taskId: Long) =
+        combine(db.taskCategoryTable, db.taskTable) { taskCategories, tasks ->
+            tasks[taskId]?.categoryId?.let { taskCategories[it] }
+        }
+
     override fun getCategoryWithTasksById(id: Long) =
         combine(db.taskCategoryTable, db.taskTable) { taskCategories, tasks ->
             TaskCategoryWithTasks(
@@ -63,6 +70,11 @@ class FakeTaskCategoryRepository(private val db: FakeDatabase = FakeDatabase()) 
                         }
                 )
             }
+        }
+
+    override fun search(query: String) =
+        db.taskCategoryTable.map { taskCategories ->
+            taskCategories.values.filter { it.name.contains(query, ignoreCase = true) }
         }
 
     override suspend fun create(form: NewTaskCategoryForm): TaskCategoryWithTasks {

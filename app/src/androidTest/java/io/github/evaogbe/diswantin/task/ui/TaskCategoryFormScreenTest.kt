@@ -121,7 +121,7 @@ class TaskCategoryFormScreenTest {
     }
 
     @Test
-    fun displaysErrorMessage_whenSearchTasksFailed() {
+    fun displaysErrorMessage_whenSearchTasksFails() {
         var userMessage: String? = null
         val query = loremFaker.verbs.base()
         val db = FakeDatabase()

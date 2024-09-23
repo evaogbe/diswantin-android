@@ -201,7 +201,7 @@ interface TaskDao {
     @Query(
         """SELECT DISTINCT task.*
         FROM task
-        JOIN task_fts ON task_fts.name = task.name
+        JOIN task_fts tf ON tf.name = task.name
         WHERE task_fts MATCH :query || '*'
         LIMIT 20"""
     )
