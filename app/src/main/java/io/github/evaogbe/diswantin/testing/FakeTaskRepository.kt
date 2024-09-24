@@ -292,13 +292,7 @@ class FakeTaskRepository(
         db.deleteLatestTaskCompletionByTaskId(id)
     }
 
-    override suspend fun addParent(id: Long, parentId: Long) {
-        db.connectTaskPath(parentId = parentId, childId = id)
-    }
-
     companion object {
-        fun withTasks(vararg initialTasks: Task) = withTasks(initialTasks.toSet())
-
         fun withTasks(initialTasks: Iterable<Task>): FakeTaskRepository {
             val db = FakeDatabase()
             initialTasks.forEach(db::insertTask)

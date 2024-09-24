@@ -333,23 +333,6 @@ interface TaskDao {
     suspend fun deleteAncestors(id: Long)
 
     @Transaction
-    suspend fun connectPath(parentId: Long, childId: Long) {
-        if (hasPath(ancestor = childId, descendant = parentId)) {
-            val existingParentId = getParent(childId).first()?.id
-            val existingChildIds = getChildIds(childId)
-            if (existingParentId != null && existingChildIds.isNotEmpty()) {
-                decrementDepth(parentId = existingParentId, childIds = existingChildIds)
-            }
-
-            deletePathsByTaskId(childId)
-        } else {
-            deleteAncestors(childId)
-        }
-
-        insertChain(parentId = parentId, childId = childId)
-    }
-
-    @Transaction
     suspend fun update(form: EditTaskForm) {
         update(form.updatedTask)
 
@@ -368,7 +351,23 @@ interface TaskDao {
             }
 
             is PathUpdateType.Replace -> {
-                connectPath(parentId = form.parentUpdateType.id, childId = form.updatedTask.id)
+                if (hasPath(
+                        ancestor = form.updatedTask.id,
+                        descendant = form.parentUpdateType.id
+                    )
+                ) {
+                    val existingParentId = getParent(form.updatedTask.id).first()?.id
+                    val existingChildIds = getChildIds(form.updatedTask.id)
+                    if (existingParentId != null && existingChildIds.isNotEmpty()) {
+                        decrementDepth(parentId = existingParentId, childIds = existingChildIds)
+                    }
+
+                    deletePathsByTaskId(form.updatedTask.id)
+                } else {
+                    deleteAncestors(form.updatedTask.id)
+                }
+
+                insertChain(parentId = form.parentUpdateType.id, childId = form.updatedTask.id)
             }
         }
     }
