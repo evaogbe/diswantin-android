@@ -43,7 +43,7 @@ class TaskSearchViewModel @Inject constructor(
                     )
                 }.catch { e ->
                     Timber.e(e, "Failed to search for tasks by query: %s", query)
-                    emit(TaskSearchUiState.Failure)
+                    emit(TaskSearchUiState.Failure(e))
                 }
         }
     }.stateIn(

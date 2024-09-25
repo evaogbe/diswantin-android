@@ -23,7 +23,7 @@ enum class TaskFormTopBarAction {
 sealed interface TaskFormUiState {
     data object Pending : TaskFormUiState
 
-    data object Failure : TaskFormUiState
+    data class Failure(val exception: Throwable) : TaskFormUiState
 
     data class Success(
         val deadlineDate: LocalDate?,

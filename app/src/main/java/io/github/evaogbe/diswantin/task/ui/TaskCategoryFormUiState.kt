@@ -20,7 +20,7 @@ enum class TaskCategoryFormTopBarAction {
 sealed interface TaskCategoryFormUiState {
     data object Pending : TaskCategoryFormUiState
 
-    data object Failure : TaskCategoryFormUiState
+    data class Failure(val exception: Throwable) : TaskCategoryFormUiState
 
     data class Success(
         val tasks: ImmutableList<Task>,

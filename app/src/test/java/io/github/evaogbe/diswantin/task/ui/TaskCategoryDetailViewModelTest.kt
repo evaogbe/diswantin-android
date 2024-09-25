@@ -4,6 +4,8 @@ import androidx.lifecycle.SavedStateHandle
 import assertk.assertThat
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
+import assertk.assertions.isInstanceOf
+import assertk.assertions.prop
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskCategory
@@ -66,15 +68,21 @@ class TaskCategoryDetailViewModelTest {
                 viewModel.uiState.collect()
             }
 
-            assertThat(viewModel.uiState.value).isEqualTo(TaskCategoryDetailUiState.Failure)
+            assertThat(viewModel.uiState.value)
+                .isInstanceOf<TaskCategoryDetailUiState.Failure>()
+                .prop(TaskCategoryDetailUiState.Failure::exception)
+                .isInstanceOf<NullPointerException>()
         }
 
     @Test
     fun `uiState emits failure when repository throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
-            val taskCategoryRepository = spyk<FakeTaskCategoryRepository>()
-            every { taskCategoryRepository.getCategoryWithTasksById(any()) } returns flow {
-                throw RuntimeException("Test")
+            val exception = RuntimeException("Test")
+            val categoryWithTasks = genTaskCategoryWithTasks()
+            val taskCategoryRepository =
+                spyk(FakeTaskCategoryRepository.withCategories(categoryWithTasks))
+            every { taskCategoryRepository.getCategoryWithTaskItemsById(any()) } returns flow {
+                throw exception
             }
 
             val viewModel = createTaskCategoryDetailViewModel(taskCategoryRepository)
@@ -83,7 +91,8 @@ class TaskCategoryDetailViewModelTest {
                 viewModel.uiState.collect()
             }
 
-            assertThat(viewModel.uiState.value).isEqualTo(TaskCategoryDetailUiState.Failure)
+            assertThat(viewModel.uiState.value)
+                .isEqualTo(TaskCategoryDetailUiState.Failure(exception))
         }
 
     @Test

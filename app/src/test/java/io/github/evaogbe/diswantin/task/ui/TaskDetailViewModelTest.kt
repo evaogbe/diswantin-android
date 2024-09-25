@@ -3,6 +3,8 @@ package io.github.evaogbe.diswantin.task.ui
 import androidx.lifecycle.SavedStateHandle
 import assertk.assertThat
 import assertk.assertions.isEqualTo
+import assertk.assertions.isInstanceOf
+import assertk.assertions.prop
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.RecurrenceType
 import io.github.evaogbe.diswantin.task.data.Task
@@ -105,18 +107,22 @@ class TaskDetailViewModelTest {
                 viewModel.uiState.collect()
             }
 
-            assertThat(viewModel.uiState.value).isEqualTo(TaskDetailUiState.Failure)
+            assertThat(viewModel.uiState.value)
+                .isInstanceOf<TaskDetailUiState.Failure>()
+                .prop(TaskDetailUiState.Failure::exception)
+                .isInstanceOf<NullPointerException>()
         }
 
     @Test
     fun `uiState emits failure when fetch task detail throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val clock = createClock()
-            val db = FakeDatabase()
-            val taskRepository = spyk(FakeTaskRepository(db, clock))
-            every { taskRepository.getTaskDetailById(any()) } returns flow {
-                throw RuntimeException("Test")
+            val exception = RuntimeException("Test")
+            val db = FakeDatabase().apply {
+                insertTask(genTask())
             }
+            val taskRepository = spyk(FakeTaskRepository(db, clock))
+            every { taskRepository.getTaskDetailById(any()) } returns flow { throw exception }
 
             val viewModel =
                 TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock, Locale.US)
@@ -125,20 +131,21 @@ class TaskDetailViewModelTest {
                 viewModel.uiState.collect()
             }
 
-            assertThat(viewModel.uiState.value).isEqualTo(TaskDetailUiState.Failure)
+            assertThat(viewModel.uiState.value).isEqualTo(TaskDetailUiState.Failure(exception))
         }
 
     @Test
     fun `uiState emits failure when fetch task recurrences throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val clock = createClock()
+            val exception = RuntimeException("Test")
             val task = genTask()
             val db = FakeDatabase().apply {
                 insertTask(task)
             }
             val taskRepository = spyk(FakeTaskRepository(db, clock))
             every { taskRepository.getTaskRecurrencesByTaskId(any()) } returns flow {
-                throw RuntimeException("Test")
+                throw exception
             }
 
             val viewModel =
@@ -148,21 +155,20 @@ class TaskDetailViewModelTest {
                 viewModel.uiState.collect()
             }
 
-            assertThat(viewModel.uiState.value).isEqualTo(TaskDetailUiState.Failure)
+            assertThat(viewModel.uiState.value).isEqualTo(TaskDetailUiState.Failure(exception))
         }
 
     @Test
     fun `uiState emits failure when fetch child tasks throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val clock = createClock()
+            val exception = RuntimeException("Test")
             val task = genTask()
             val db = FakeDatabase().apply {
                 insertTask(task)
             }
             val taskRepository = spyk(FakeTaskRepository(db, clock))
-            every { taskRepository.getChildren(any()) } returns flow {
-                throw RuntimeException("Test")
-            }
+            every { taskRepository.getChildren(any()) } returns flow { throw exception }
 
             val viewModel =
                 TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock, Locale.US)
@@ -171,7 +177,7 @@ class TaskDetailViewModelTest {
                 viewModel.uiState.collect()
             }
 
-            assertThat(viewModel.uiState.value).isEqualTo(TaskDetailUiState.Failure)
+            assertThat(viewModel.uiState.value).isEqualTo(TaskDetailUiState.Failure(exception))
         }
 
     @Test

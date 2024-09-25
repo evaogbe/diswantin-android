@@ -2,6 +2,7 @@ package io.github.evaogbe.diswantin.task.ui
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
+import assertk.assertions.isInstanceOf
 import assertk.assertions.isNotNull
 import assertk.assertions.prop
 import io.github.evaogbe.diswantin.R
@@ -103,7 +104,7 @@ class CurrentTaskViewModelTest {
                 viewModel.uiState.collect()
             }
 
-            assertThat(viewModel.uiState.value).isEqualTo(CurrentTaskUiState.Failure)
+            assertThat(viewModel.uiState.value).isInstanceOf<CurrentTaskUiState.Failure>()
         }
 
     @Test

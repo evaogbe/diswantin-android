@@ -77,10 +77,9 @@ class TaskSearchViewModelTest {
     fun `uiState emits failure when repository throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val query = faker.string.regexify("""\S+""")
+            val exception = RuntimeException("Test")
             val taskRepository = spyk<FakeTaskRepository>()
-            every { taskRepository.searchTaskItems(any()) } returns flow {
-                throw RuntimeException("Test")
-            }
+            every { taskRepository.searchTaskItems(any()) } returns flow { throw exception }
 
             val viewModel = createTaskSearchViewModel(taskRepository)
 
@@ -90,7 +89,7 @@ class TaskSearchViewModelTest {
 
             viewModel.searchTasks(query)
 
-            assertThat(viewModel.uiState.value).isEqualTo(TaskSearchUiState.Failure)
+            assertThat(viewModel.uiState.value).isEqualTo(TaskSearchUiState.Failure(exception))
         }
 
     private fun createTaskSearchViewModel(taskRepository: TaskRepository) =

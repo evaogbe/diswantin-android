@@ -5,7 +5,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.evaogbe.diswantin.R
+import io.github.evaogbe.diswantin.data.Result
 import io.github.evaogbe.diswantin.task.data.TaskCategoryRepository
+import io.github.evaogbe.diswantin.task.data.TaskCategoryWithTaskItems
 import io.github.evaogbe.diswantin.ui.navigation.NavArguments
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CancellationException
@@ -13,6 +15,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -37,31 +40,46 @@ class TaskCategoryDetailViewModel @Inject constructor(
     val uiState =
         combine(
             initialized,
-            taskCategoryRepository.getCategoryWithTaskItemsById(categoryId),
-            userMessage,
-        ) { initialized, categoryWithTasks, userMessage ->
-            when {
-                categoryWithTasks != null -> {
-                    val doneBefore = ZonedDateTime.now(clock).with(LocalTime.MIN).toInstant()
-                    TaskCategoryDetailUiState.Success(
-                        category = categoryWithTasks.category,
-                        tasks = categoryWithTasks.tasks.map { task ->
-                            TaskItemUiState.fromTaskItem(task, doneBefore)
-                        }.toImmutableList(),
-                        userMessage = userMessage,
-                    )
+            taskCategoryRepository.getCategoryWithTaskItemsById(categoryId)
+                .onEach {
+                    if (it != null) {
+                        initialized.value = true
+                    }
                 }
+                .map<TaskCategoryWithTaskItems?, Result<TaskCategoryWithTaskItems?>> {
+                    Result.Success(it)
+                }
+                .catch { e ->
+                    Timber.e(e, "Failed to fetch task category by id: %d", categoryId)
+                    emit(Result.Failure(e))
+                },
+            userMessage,
+        ) { initialized, categoryWithTasksResults, userMessage ->
+            categoryWithTasksResults.fold(
+                onSuccess = { categoryWithTasks ->
+                    when {
+                        categoryWithTasks != null -> {
+                            val doneBefore =
+                                ZonedDateTime.now(clock).with(LocalTime.MIN).toInstant()
+                            TaskCategoryDetailUiState.Success(
+                                category = categoryWithTasks.category,
+                                tasks = categoryWithTasks.tasks.map { task ->
+                                    TaskItemUiState.fromTaskItem(task, doneBefore)
+                                }.toImmutableList(),
+                                userMessage = userMessage,
+                            )
+                        }
 
-                initialized -> TaskCategoryDetailUiState.Deleted
-                else -> TaskCategoryDetailUiState.Failure
-            }
-        }.onEach {
-            if (it is TaskCategoryDetailUiState.Success) {
-                initialized.value = true
-            }
-        }.catch { e ->
-            Timber.e(e, "Failed to fetch task category by id: %d", categoryId)
-            emit(TaskCategoryDetailUiState.Failure)
+                        initialized -> TaskCategoryDetailUiState.Deleted
+                        else -> {
+                            TaskCategoryDetailUiState.Failure(
+                                NullPointerException("Category with id $categoryId not found"),
+                            )
+                        }
+                    }
+                },
+                onFailure = TaskCategoryDetailUiState::Failure,
+            )
         }.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000L),

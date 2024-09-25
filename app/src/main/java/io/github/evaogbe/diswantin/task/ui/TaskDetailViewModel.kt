@@ -51,45 +51,43 @@ class TaskDetailViewModel @Inject constructor(
                 .map<TaskDetail?, Result<TaskDetail?>> { Result.Success(it) }
                 .catch { e ->
                     Timber.e(e, "Failed to fetch task by id: %d", taskId)
-                    emit(Result.Failure)
+                    emit(Result.Failure(e))
                 },
             taskRepository.getTaskRecurrencesByTaskId(taskId)
                 .map<List<TaskRecurrence>, Result<TaskRecurrenceUiState?>> {
                     Result.Success(TaskRecurrenceUiState.tryFromEntities(it, locale))
                 }.catch { e ->
                     Timber.e(e, "Failed to fetch task recurrences by task id: %d", taskId)
-                    emit(Result.Failure)
+                    emit(Result.Failure(e))
                 },
             taskRepository.getChildren(taskId)
                 .map<List<Task>, Result<List<Task>>> { Result.Success(it) }
                 .catch { e ->
                     Timber.e(e, "Failed to fetch task children by id: %d", taskId)
-                    emit(Result.Failure)
+                    emit(Result.Failure(e))
                 },
             userMessage,
-        ) { initialized, task, recurrence, childTasks, userMessage ->
-            if (
-                task is Result.Success &&
-                recurrence is Result.Success &&
-                childTasks is Result.Success
-            ) {
+        ) { initialized, taskResult, recurrenceResult, childTasksResult, userMessage ->
+            taskResult.andThen { task ->
                 when {
-                    task.value != null -> {
-                        TaskDetailUiState.Success(
-                            task = task.value,
-                            recurrence = recurrence.value,
-                            childTasks = childTasks.value.toImmutableList(),
-                            userMessage = userMessage,
-                            clock = clock,
-                        )
+                    task != null -> {
+                        recurrenceResult.andThen { recurrence ->
+                            childTasksResult.map { childTasks ->
+                                TaskDetailUiState.Success(
+                                    task = task,
+                                    recurrence = recurrence,
+                                    childTasks = childTasks.toImmutableList(),
+                                    userMessage = userMessage,
+                                    clock = clock,
+                                )
+                            }
+                        }
                     }
 
-                    initialized -> TaskDetailUiState.Deleted
-                    else -> TaskDetailUiState.Failure
+                    initialized -> Result.Success(TaskDetailUiState.Deleted)
+                    else -> Result.Failure(NullPointerException("Task with id $taskId not found"))
                 }
-            } else {
-                TaskDetailUiState.Failure
-            }
+            }.fold(onSuccess = { it }, onFailure = TaskDetailUiState::Failure)
         }.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000L),

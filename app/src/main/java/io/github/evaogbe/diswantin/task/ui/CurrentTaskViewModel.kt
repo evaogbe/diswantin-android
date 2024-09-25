@@ -38,24 +38,20 @@ class CurrentTaskViewModel @Inject constructor(
             .map<Task?, Result<Task?>> { Result.Success(it) }
             .catch { e ->
                 Timber.e(e, "Failed to fetch current task")
-                emit(Result.Failure)
+                emit(Result.Failure(e))
             },
         userMessage,
-    ) { currentTask, userMessage ->
-        when (currentTask) {
-            is Result.Success -> {
-                if (currentTask.value == null) {
+    ) { currentTaskResult, userMessage ->
+        currentTaskResult.fold(
+            onSuccess = { currentTask ->
+                if (currentTask == null) {
                     CurrentTaskUiState.Empty
                 } else {
-                    CurrentTaskUiState.Present(
-                        currentTask = currentTask.value,
-                        userMessage = userMessage,
-                    )
+                    CurrentTaskUiState.Present(currentTask = currentTask, userMessage = userMessage)
                 }
-            }
-
-            is Result.Failure -> CurrentTaskUiState.Failure
-        }
+            },
+            onFailure = CurrentTaskUiState::Failure,
+        )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000L),

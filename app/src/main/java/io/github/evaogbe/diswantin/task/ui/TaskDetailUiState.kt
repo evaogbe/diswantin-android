@@ -23,7 +23,7 @@ enum class TaskDetailTopBarAction {
 sealed interface TaskDetailUiState {
     data object Pending : TaskDetailUiState
 
-    data object Failure : TaskDetailUiState
+    data class Failure(val exception: Throwable) : TaskDetailUiState
 
     data class Success(
         val task: TaskDetail,

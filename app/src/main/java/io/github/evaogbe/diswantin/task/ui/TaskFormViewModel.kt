@@ -84,14 +84,14 @@ class TaskFormViewModel @Inject constructor(
         .map<Boolean, Result<Boolean>> { Result.Success(it) }
         .catch { e ->
             Timber.e(e, "Failed to query has categories")
-            emit(Result.Failure)
+            emit(Result.Failure(e))
         }
 
     private val taskCountStream = taskRepository.getCount()
         .map<Long, Result<Long>> { Result.Success(it) }
         .catch { e ->
             Timber.e(e, "Failed to fetch task count")
-            emit(Result.Failure)
+            emit(Result.Failure(e))
         }
 
     private val existingTaskStream = taskId?.let { id ->
@@ -99,7 +99,7 @@ class TaskFormViewModel @Inject constructor(
             .map<Task, Result<Task>> { Result.Success(it) }
             .catch { e ->
                 Timber.e(e, "Failed to fetch task by id: %d", id)
-                emit(Result.Failure)
+                emit(Result.Failure(e))
             }
     } ?: flowOf(Result.Success(null))
 
@@ -108,7 +108,7 @@ class TaskFormViewModel @Inject constructor(
             .map<List<TaskRecurrence>, Result<List<TaskRecurrence>>> { Result.Success(it) }
             .catch { e ->
                 Timber.e(e, "Failed to fetch task recurrences by task id: %d", id)
-                emit(Result.Failure)
+                emit(Result.Failure(e))
             }
     } ?: flowOf(Result.Success(emptyList()))
 
@@ -117,7 +117,7 @@ class TaskFormViewModel @Inject constructor(
             .map<TaskCategory?, Result<TaskCategory?>> { Result.Success(it) }
             .catch { e ->
                 Timber.e(e, "Failed to fetch task category by task id: %d", id)
-                emit(Result.Failure)
+                emit(Result.Failure(e))
             }
     } ?: flowOf(Result.Success(null))
 
@@ -126,7 +126,7 @@ class TaskFormViewModel @Inject constructor(
             .map<Task?, Result<Task?>> { Result.Success(it) }
             .catch { e ->
                 Timber.e(e, "Failed to fetch parent task by child id: %d", id)
-                emit(Result.Failure)
+                emit(Result.Failure(e))
             }
     } ?: flowOf(Result.Success(null))
 
@@ -176,58 +176,60 @@ class TaskFormViewModel @Inject constructor(
         val scheduledDate = args[2] as LocalDate?
         val scheduledTime = args[3] as LocalTime?
         val recurrenceUiState = args[4] as TaskRecurrenceUiState?
-        val hasCategories = args[5] as Result<Boolean>
+        val hasCategoriesResult = args[5] as Result<Boolean>
         val category = args[6] as TaskCategory?
         val categoryQuery = (args[7] as String).trim()
         val categoryOptions = args[8] as List<TaskCategory>
-        val taskCount = args[9] as Result<Long>
+        val taskCountResult = args[9] as Result<Long>
         val parentTask = args[10] as Task?
         val parentTaskQuery = (args[11] as String).trim()
         val parentTaskOptions = args[12] as List<Task>
         val saveResult = args[13] as Result<Unit>?
         val userMessage = args[14] as Int?
-        val existingTask = args[15] as Result<Task?>
-        val existingRecurrences = args[16] as Result<List<TaskRecurrence>>
-        val existingCategory = args[17] as Result<TaskCategory?>
-        val existingParentTask = args[18] as Result<Task?>
+        val existingTaskResult = args[15] as Result<Task?>
+        val existingRecurrencesResult = args[16] as Result<List<TaskRecurrence>>
+        val existingCategoryResult = args[17] as Result<TaskCategory?>
+        val existingParentTaskResult = args[18] as Result<Task?>
 
-        when {
-            saveResult is Result.Success -> TaskFormUiState.Saved
-            existingTask is Result.Success && existingRecurrences is Result.Success -> {
-                TaskFormUiState.Success(
-                    deadlineDate = deadlineDate,
-                    deadlineTime = deadlineTime,
-                    scheduledDate = scheduledDate,
-                    scheduledTime = scheduledTime,
-                    recurrence = recurrenceUiState,
-                    showCategoryField = existingCategory is Result.Success &&
-                            hasCategories.getOrDefault(false),
-                    category = category,
-                    categoryOptions = if (
-                        categoryQuery == category?.name &&
-                        categoryQuery == categoryOptions.singleOrNull()?.name
-                    ) {
-                        persistentListOf()
-                    } else {
-                        categoryOptions.toPersistentList()
-                    },
-                    showParentTaskField = existingParentTask is Result.Success &&
-                            taskCount.getOrDefault(0L) > if (taskId == null) 0L else 1L,
-                    parentTask = parentTask,
-                    parentTaskOptions = if (
-                        parentTaskQuery == parentTask?.name &&
-                        parentTaskQuery == parentTaskOptions.singleOrNull()?.name
-                    ) {
-                        persistentListOf()
-                    } else {
-                        parentTaskOptions.toPersistentList()
-                    },
-                    hasSaveError = saveResult is Result.Failure,
-                    userMessage = userMessage,
-                )
-            }
-
-            else -> TaskFormUiState.Failure
+        if (saveResult?.isSuccess == true) {
+            TaskFormUiState.Saved
+        } else {
+            existingTaskResult.andThen { existingRecurrencesResult }.fold(
+                onSuccess = {
+                    TaskFormUiState.Success(
+                        deadlineDate = deadlineDate,
+                        deadlineTime = deadlineTime,
+                        scheduledDate = scheduledDate,
+                        scheduledTime = scheduledTime,
+                        recurrence = recurrenceUiState,
+                        showCategoryField = existingCategoryResult.isSuccess &&
+                                hasCategoriesResult.getOrDefault(false),
+                        category = category,
+                        categoryOptions = if (
+                            categoryQuery == category?.name &&
+                            categoryQuery == categoryOptions.singleOrNull()?.name
+                        ) {
+                            persistentListOf()
+                        } else {
+                            categoryOptions.toPersistentList()
+                        },
+                        showParentTaskField = existingParentTaskResult.isSuccess &&
+                                taskCountResult.getOrDefault(0L) > if (taskId == null) 0L else 1L,
+                        parentTask = parentTask,
+                        parentTaskOptions = if (
+                            parentTaskQuery == parentTask?.name &&
+                            parentTaskQuery == parentTaskOptions.singleOrNull()?.name
+                        ) {
+                            persistentListOf()
+                        } else {
+                            parentTaskOptions.toPersistentList()
+                        },
+                        hasSaveError = saveResult?.isFailure == true,
+                        userMessage = userMessage,
+                    )
+                },
+                onFailure = TaskFormUiState::Failure,
+            )
         }
     }.stateIn(
         scope = viewModelScope,
@@ -396,7 +398,7 @@ class TaskFormViewModel @Inject constructor(
                     throw e
                 } catch (e: Exception) {
                     Timber.e(e, "Failed to create task with form: %s", form)
-                    saveResult.value = Result.Failure
+                    saveResult.value = Result.Failure(e)
                 }
             }
         } else {
@@ -417,8 +419,8 @@ class TaskFormViewModel @Inject constructor(
                             scheduledDate = scheduledDate,
                             scheduledTime = state.scheduledTime,
                             categoryId = if (
-                                existingCategory is Result.Success &&
-                                hasCategories is Result.Success
+                                existingCategory.isSuccess &&
+                                hasCategories.isSuccess
                             ) {
                                 state.category?.id
                             } else {
@@ -426,12 +428,12 @@ class TaskFormViewModel @Inject constructor(
                             },
                             recurrences = recurrences,
                             parentUpdateType = when {
-                                taskCount is Result.Failure -> PathUpdateType.Keep
+                                taskCount.isFailure -> PathUpdateType.Keep
                                 existingParent is Result.Success &&
                                         state.parentTask == existingParent.value ->
                                     PathUpdateType.Keep
 
-                                existingParent is Result.Failure -> PathUpdateType.Keep
+                                existingParent.isFailure -> PathUpdateType.Keep
                                 state.parentTask == null -> PathUpdateType.Remove
                                 else -> PathUpdateType.Replace(state.parentTask.id)
                             },
@@ -444,7 +446,7 @@ class TaskFormViewModel @Inject constructor(
                     throw e
                 } catch (e: Exception) {
                     Timber.e(e, "Failed to update task with id: %d", taskId)
-                    saveResult.value = Result.Failure
+                    saveResult.value = Result.Failure(e)
                 }
             }
         }

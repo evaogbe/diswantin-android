@@ -6,7 +6,7 @@ import kotlinx.collections.immutable.ImmutableList
 sealed interface TaskCategoryListUiState {
     data object Pending : TaskCategoryListUiState
 
-    data object Failure : TaskCategoryListUiState
+    data class Failure(val exception: Throwable) : TaskCategoryListUiState
 
     data class Success(val categories: ImmutableList<TaskCategory>) : TaskCategoryListUiState
 }

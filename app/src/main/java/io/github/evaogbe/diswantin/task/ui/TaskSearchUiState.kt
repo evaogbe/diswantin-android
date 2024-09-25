@@ -9,7 +9,7 @@ enum class TaskSearchTopBarAction {
 sealed interface TaskSearchUiState {
     data object Initial : TaskSearchUiState
 
-    data object Failure : TaskSearchUiState
+    data class Failure(val exception: Throwable) : TaskSearchUiState
 
     data class Success(val searchResults: ImmutableList<TaskItemUiState>) : TaskSearchUiState
 }

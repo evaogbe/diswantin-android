@@ -157,13 +157,14 @@ class TaskFormViewModelTest {
     @Test
     fun `uiState emits failure when fetch existing task fails`() =
         runTest(mainDispatcherRule.testDispatcher) {
+            val exception = RuntimeException("Test")
             val task = genTask()
             val db = FakeDatabase().apply {
                 insertTask(task)
             }
             val taskRepository = spyk(FakeTaskRepository(db))
             val taskCategoryRepository = FakeTaskCategoryRepository(db)
-            every { taskRepository.getById(any()) } returns flow { throw RuntimeException("Test") }
+            every { taskRepository.getById(any()) } returns flow { throw exception }
 
             val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
 
@@ -172,19 +173,20 @@ class TaskFormViewModelTest {
             }
 
             assertThat(viewModel.isNew).isFalse()
-            assertThat(viewModel.uiState.value).isEqualTo(TaskFormUiState.Failure)
+            assertThat(viewModel.uiState.value).isEqualTo(TaskFormUiState.Failure(exception))
         }
 
     @Test
     fun `uiState emits failure when fetch existing task recurrences fails`() =
         runTest(mainDispatcherRule.testDispatcher) {
+            val exception = RuntimeException("Test")
             val task = genTask()
             val db = FakeDatabase().apply {
                 insertTask(task)
             }
             val taskRepository = spyk(FakeTaskRepository(db))
             every { taskRepository.getTaskRecurrencesByTaskId(any()) } returns flow {
-                throw RuntimeException("Test")
+                throw exception
             }
 
             val taskCategoryRepository = FakeTaskCategoryRepository(db)
@@ -195,7 +197,7 @@ class TaskFormViewModelTest {
             }
 
             assertThat(viewModel.isNew).isFalse()
-            assertThat(viewModel.uiState.value).isEqualTo(TaskFormUiState.Failure)
+            assertThat(viewModel.uiState.value).isEqualTo(TaskFormUiState.Failure(exception))
         }
 
     @Test

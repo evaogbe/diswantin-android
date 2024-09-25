@@ -6,7 +6,7 @@ import io.github.evaogbe.diswantin.task.data.Task
 sealed interface CurrentTaskUiState {
     data object Pending : CurrentTaskUiState
 
-    data object Failure : CurrentTaskUiState
+    data class Failure(val exception: Throwable) : CurrentTaskUiState
 
     data object Empty : CurrentTaskUiState
 

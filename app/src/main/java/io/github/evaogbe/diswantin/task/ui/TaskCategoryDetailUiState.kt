@@ -16,7 +16,7 @@ enum class TaskCategoryDetailTopBarAction {
 sealed interface TaskCategoryDetailUiState {
     data object Pending : TaskCategoryDetailUiState
 
-    data object Failure : TaskCategoryDetailUiState
+    data class Failure(val exception: Throwable) : TaskCategoryDetailUiState
 
     data class Success(
         val category: TaskCategory,

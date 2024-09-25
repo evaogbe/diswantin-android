@@ -50,10 +50,9 @@ class TaskCategoryListViewModelTest {
     @Test
     fun `uiState emits failure when repository throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
+            val exception = RuntimeException("Test")
             val taskCategoryRepository = spyk<FakeTaskCategoryRepository>()
-            every { taskCategoryRepository.categoriesStream } returns flow {
-                throw RuntimeException("Test")
-            }
+            every { taskCategoryRepository.categoriesStream } returns flow { throw exception }
 
             val viewModel = TaskCategoryListViewModel(taskCategoryRepository)
 
@@ -61,6 +60,7 @@ class TaskCategoryListViewModelTest {
                 viewModel.uiState.collect()
             }
 
-            assertThat(viewModel.uiState.value).isEqualTo(TaskCategoryListUiState.Failure)
+            assertThat(viewModel.uiState.value)
+                .isEqualTo(TaskCategoryListUiState.Failure(exception))
         }
 }

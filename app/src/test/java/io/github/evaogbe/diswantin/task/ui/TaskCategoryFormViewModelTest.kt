@@ -103,11 +103,12 @@ class TaskCategoryFormViewModelTest {
     @Test
     fun `uiState emits failure when repository throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
+            val exception = RuntimeException("Test")
             val db = FakeDatabase()
             val taskRepository = FakeTaskRepository(db)
             val taskCategoryRepository = spyk(FakeTaskCategoryRepository(db))
             every { taskCategoryRepository.getCategoryWithTasksById(any()) } returns flow {
-                throw RuntimeException("Test")
+                throw exception
             }
 
             val viewModel = TaskCategoryFormViewModel(
@@ -121,7 +122,8 @@ class TaskCategoryFormViewModelTest {
             }
 
             assertThat(viewModel.isNew).isFalse()
-            assertThat(viewModel.uiState.value).isEqualTo(TaskCategoryFormUiState.Failure)
+            assertThat(viewModel.uiState.value)
+                .isEqualTo(TaskCategoryFormUiState.Failure(exception))
         }
 
     @Test

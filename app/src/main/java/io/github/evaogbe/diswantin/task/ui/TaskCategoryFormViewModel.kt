@@ -64,7 +64,7 @@ class TaskCategoryFormViewModel @Inject constructor(
             .map<TaskCategoryWithTasks, Result<TaskCategoryWithTasks>> { Result.Success(it) }
             .catch { e ->
                 Timber.e(e, "Failed to fetch task category by id: %d", id)
-                emit(Result.Failure)
+                emit(Result.Failure(e))
             }
     } ?: flowOf(Result.Success(null))
 
@@ -88,7 +88,7 @@ class TaskCategoryFormViewModel @Inject constructor(
         saveResult,
         userMessage,
     ) { args ->
-        val existingCategoryWithTasks = args[0] as Result<TaskCategoryWithTasks?>
+        val existingCategoryWithTasksResult = args[0] as Result<TaskCategoryWithTasks?>
         val tasks = args[1] as ImmutableList<Task>
         val editingTaskIndex = args[2] as Int?
         val taskQuery = (args[3] as String).trim()
@@ -96,32 +96,34 @@ class TaskCategoryFormViewModel @Inject constructor(
         val saveResult = args[5] as Result<Unit>?
         val userMessage = args[6] as Int?
 
-        when {
-            saveResult is Result.Success -> TaskCategoryFormUiState.Saved
-            existingCategoryWithTasks is Result.Success -> {
-                val editingTask = editingTaskIndex?.let(tasks::getOrNull)
-                TaskCategoryFormUiState.Success(
-                    tasks = tasks,
-                    editingTaskIndex = editingTaskIndex,
-                    taskOptions = if (
-                        taskQuery == editingTask?.name &&
-                        taskQuery == taskSearchResults.singleOrNull<Task>()?.name
-                    ) {
-                        persistentListOf()
-                    } else {
-                        val existingCategoryId = existingCategoryWithTasks.value?.category?.id
-                        taskSearchResults.filter<Task> { option ->
-                            (option.categoryId == null ||
-                                    option.categoryId == existingCategoryId) &&
-                                    option !in tasks
-                        }.toImmutableList<Task>()
-                    },
-                    hasSaveError = saveResult is Result.Failure,
-                    userMessage = userMessage,
-                )
-            }
-
-            else -> TaskCategoryFormUiState.Failure
+        if (saveResult?.isSuccess == true) {
+            TaskCategoryFormUiState.Saved
+        } else {
+            existingCategoryWithTasksResult.fold(
+                onSuccess = { existingCategoryWithTasks ->
+                    val editingTask = editingTaskIndex?.let(tasks::getOrNull)
+                    TaskCategoryFormUiState.Success(
+                        tasks = tasks,
+                        editingTaskIndex = editingTaskIndex,
+                        taskOptions = if (
+                            taskQuery == editingTask?.name &&
+                            taskQuery == taskSearchResults.singleOrNull<Task>()?.name
+                        ) {
+                            persistentListOf()
+                        } else {
+                            val existingCategoryId = existingCategoryWithTasks?.category?.id
+                            taskSearchResults.filter<Task> { option ->
+                                (option.categoryId == null ||
+                                        option.categoryId == existingCategoryId) &&
+                                        option !in tasks
+                            }.toImmutableList<Task>()
+                        },
+                        hasSaveError = saveResult?.isFailure == true,
+                        userMessage = userMessage,
+                    )
+                },
+                onFailure = TaskCategoryFormUiState::Failure,
+            )
         }
     }.stateIn(
         scope = viewModelScope,
@@ -186,7 +188,7 @@ class TaskCategoryFormViewModel @Inject constructor(
                     throw e
                 } catch (e: Exception) {
                     Timber.e(e, "Failed to create task category with form: %s", form)
-                    saveResult.value = Result.Failure
+                    saveResult.value = Result.Failure(e)
                 }
             }
         } else {
@@ -206,7 +208,7 @@ class TaskCategoryFormViewModel @Inject constructor(
                     throw e
                 } catch (e: Exception) {
                     Timber.e(e, "Failed to update task category with id: %s", categoryId)
-                    saveResult.value = Result.Failure
+                    saveResult.value = Result.Failure(e)
                 }
             }
         }

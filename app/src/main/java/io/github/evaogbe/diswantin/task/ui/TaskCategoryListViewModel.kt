@@ -24,7 +24,7 @@ class TaskCategoryListViewModel @Inject constructor(
             }
             .catch { e ->
                 Timber.e(e, "Failed to fetch task categories")
-                emit(TaskCategoryListUiState.Failure)
+                emit(TaskCategoryListUiState.Failure(e))
             }
             .stateIn(
                 scope = viewModelScope,
