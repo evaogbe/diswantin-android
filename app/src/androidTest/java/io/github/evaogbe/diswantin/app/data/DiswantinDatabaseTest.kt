@@ -349,6 +349,7 @@ class DiswantinDatabaseTest {
         migratedDb.close()
     }
 
+    @Test
     fun testMigration22to23() {
         val taskId = faker.random.nextLong(min = 1, max = Long.MAX_VALUE)
         val taskCreatedAt = faker.random.randomPastDate().toInstant().toEpochMilli()
@@ -376,27 +377,6 @@ class DiswantinDatabaseTest {
             assertThat(stmt.getInt(3)).isEqualTo(0)
             assertThat(stmt.getInt(4)).isEqualTo(1)
             assertThat(stmt.getInt(5)).isEqualTo(2)
-        }
-        migratedDb.close()
-    }
-
-    fun testMigration_24_25() {
-        val categoryName = loremFaker.lorem.words()
-
-        val initialDb = migrationTestHelper.createDatabase(DiswantinDatabase.DB_NAME, 24)
-        initialDb.execSQL("INSERT INTO `task_category` (`name`) VALUES (?)", arrayOf(categoryName))
-        initialDb.close()
-
-        val migratedDb =
-            migrationTestHelper.runMigrationsAndValidate(
-                DiswantinDatabase.DB_NAME,
-                25,
-                true,
-                DiswantinDatabase.MIGRATION_24_25,
-            )
-        migratedDb.query("SELECT * FROM `task_category_fts`").use { stmt ->
-            assertThat(stmt.moveToFirst()).isTrue()
-            assertThat(stmt.getString(0)).isEqualTo(categoryName)
         }
         migratedDb.close()
     }

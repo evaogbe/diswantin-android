@@ -57,6 +57,7 @@ import java.util.Locale
         AutoMigration(from = 19, to = 20, spec = DiswantinDatabase.Migration19to20::class),
         AutoMigration(from = 21, to = 22, spec = DiswantinDatabase.Migration21to22::class),
         AutoMigration(from = 23, to = 24, spec = DiswantinDatabase.Migration23to24::class),
+        AutoMigration(from = 24, to = 25),
     ]
 )
 @TypeConverters(Converters::class)
@@ -318,48 +319,6 @@ abstract class DiswantinDatabase : RoomDatabase() {
             }
         }
 
-        val MIGRATION_24_25 = object : Migration(24, 25) {
-            override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL(
-                    """CREATE VIRTUAL TABLE IF NOT EXISTS `task_category_fts`
-                    USING FTS4(`name` TEXT NOT NULL, content=`task_category`)"""
-                )
-                db.execSQL(
-                    """CREATE TRIGGER IF NOT EXISTS
-                        room_fts_content_sync_task_category_fts_BEFORE_UPDATE
-                    BEFORE UPDATE ON `task_category`
-                    BEGIN DELETE FROM `task_category_fts` WHERE `docid`=OLD.`rowid`; END"""
-                )
-                db.execSQL(
-                    """CREATE TRIGGER IF NOT EXISTS
-                        room_fts_content_sync_task_category_fts_BEFORE_DELETE
-                    BEFORE DELETE ON `task_category`
-                    BEGIN DELETE FROM `task_category_fts` WHERE `docid`=OLD.`rowid`; END"""
-                )
-                db.execSQL(
-                    """CREATE TRIGGER IF NOT EXISTS
-                        room_fts_content_sync_task_category_fts_AFTER_UPDATE
-                    AFTER UPDATE ON `task_category`
-                    BEGIN INSERT INTO `task_category_fts`(`docid`, `name`)
-                        VALUES (NEW.`rowid`, NEW.`name`);
-                        END"""
-                )
-                db.execSQL(
-                    """CREATE TRIGGER IF NOT EXISTS
-                        room_fts_content_sync_task_category_fts_AFTER_INSERT
-                    AFTER INSERT ON `task_category`
-                    BEGIN INSERT INTO `task_category_fts`(`docid`, `name`)
-                        VALUES (NEW.`rowid`, NEW.`name`);
-                        END"""
-                )
-                db.execSQL(
-                    """INSERT INTO `task_category_fts` (`name`)
-                    SELECT `name`
-                    FROM `task_category`"""
-                )
-            }
-        }
-
         fun createDatabase(context: Context) =
             Room.databaseBuilder(
                 context.applicationContext,
@@ -374,7 +333,6 @@ abstract class DiswantinDatabase : RoomDatabase() {
                 getMigration17to18(),
                 getMigration20to21(),
                 getMigration22To23(),
-                MIGRATION_24_25,
             ).build()
     }
 }
