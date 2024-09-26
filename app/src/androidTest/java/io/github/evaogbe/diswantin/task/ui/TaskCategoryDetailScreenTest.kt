@@ -107,7 +107,7 @@ class TaskCategoryDetailScreenTest {
 
     @Test
     fun displaysErrorMessage_whenDeleteCategoryFails() {
-        var userMessage: String? = null
+        var userMessage: Int? = null
         val categoryWithTasks = genTaskCategoryWithTasks()
         val taskCategoryRepository =
             spyk(FakeTaskCategoryRepository.withCategories(categoryWithTasks))
@@ -131,7 +131,7 @@ class TaskCategoryDetailScreenTest {
         viewModel.deleteCategory()
 
         composeTestRule.waitUntil {
-            userMessage == stringResource(R.string.task_category_detail_delete_error)
+            userMessage == R.string.task_category_detail_delete_error
         }
     }
 

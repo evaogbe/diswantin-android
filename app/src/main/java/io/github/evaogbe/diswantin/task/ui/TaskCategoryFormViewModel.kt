@@ -55,7 +55,7 @@ class TaskCategoryFormViewModel @Inject constructor(
 
     private val taskQuery = MutableStateFlow("")
 
-    private val saveResult = MutableStateFlow<Result<Unit>?>(null)
+    private val isSaved = MutableStateFlow(false)
 
     private val userMessage = MutableStateFlow<Int?>(null)
 
@@ -85,7 +85,7 @@ class TaskCategoryFormViewModel @Inject constructor(
                 }
             }
         },
-        saveResult,
+        isSaved,
         userMessage,
     ) { args ->
         val existingCategoryWithTasksResult = args[0] as Result<TaskCategoryWithTasks?>
@@ -93,10 +93,10 @@ class TaskCategoryFormViewModel @Inject constructor(
         val editingTaskIndex = args[2] as Int?
         val taskQuery = (args[3] as String).trim()
         val taskSearchResults = args[4] as List<Task>
-        val saveResult = args[5] as Result<Unit>?
+        val isSaved = args[5] as Boolean
         val userMessage = args[6] as Int?
 
-        if (saveResult?.isSuccess == true) {
+        if (isSaved) {
             TaskCategoryFormUiState.Saved
         } else {
             existingCategoryWithTasksResult.fold(
@@ -118,7 +118,6 @@ class TaskCategoryFormViewModel @Inject constructor(
                                         option !in tasks
                             }.toImmutableList<Task>()
                         },
-                        hasSaveError = saveResult?.isFailure == true,
                         userMessage = userMessage,
                     )
                 },
@@ -183,12 +182,12 @@ class TaskCategoryFormViewModel @Inject constructor(
             viewModelScope.launch {
                 try {
                     taskCategoryRepository.create(form)
-                    saveResult.value = Result.Success(Unit)
+                    isSaved.value = true
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
                     Timber.e(e, "Failed to create task category with form: %s", form)
-                    saveResult.value = Result.Failure(e)
+                    userMessage.value = R.string.task_category_form_save_error_new
                 }
             }
         } else {
@@ -203,12 +202,12 @@ class TaskCategoryFormViewModel @Inject constructor(
                             existingCategoryWithTasks = existingCategoryWithTasks,
                         )
                     )
-                    saveResult.value = Result.Success(Unit)
+                    isSaved.value = true
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
                     Timber.e(e, "Failed to update task category with id: %s", categoryId)
-                    saveResult.value = Result.Failure(e)
+                    userMessage.value = R.string.task_category_form_save_error_edit
                 }
             }
         }

@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -21,7 +20,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -36,7 +34,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -117,7 +114,7 @@ fun TaskFormScreen(
     setTopBarState: (TaskFormTopBarState) -> Unit,
     topBarAction: TaskFormTopBarAction?,
     topBarActionHandled: () -> Unit,
-    setUserMessage: (String) -> Unit,
+    setUserMessage: (Int) -> Unit,
     onSelectCategoryType: (String) -> Unit,
     onEditRecurrence: () -> Unit,
     taskFormViewModel: TaskFormViewModel = hiltViewModel(),
@@ -125,7 +122,6 @@ fun TaskFormScreen(
     val uiState by taskFormViewModel.uiState.collectAsStateWithLifecycle()
     val isNew = taskFormViewModel.isNew
     val nameInput = taskFormViewModel.nameInput
-    val resources = LocalContext.current.resources
 
     if (uiState is TaskFormUiState.Saved) {
         LaunchedEffect(onPopBackStack) {
@@ -155,7 +151,7 @@ fun TaskFormScreen(
 
     (uiState as? TaskFormUiState.Success)?.userMessage?.let { message ->
         LaunchedEffect(message, setUserMessage) {
-            setUserMessage(resources.getString(message))
+            setUserMessage(message)
             taskFormViewModel.userMessageShown()
         }
     }
@@ -225,20 +221,6 @@ fun TaskFormLayout(
                 .padding(SpaceMd),
             verticalArrangement = Arrangement.spacedBy(SpaceMd),
         ) {
-            if (uiState.hasSaveError) {
-                SelectionContainer {
-                    Text(
-                        text = if (isNew) {
-                            stringResource(R.string.task_form_save_error_new)
-                        } else {
-                            stringResource(R.string.task_form_save_error_edit)
-                        },
-                        color = colorScheme.error,
-                        style = typography.titleSmall,
-                    )
-                }
-            }
-
             OutlinedTextField(
                 value = name,
                 onValueChange = onNameChange,
@@ -572,7 +554,6 @@ private fun TaskFormScreenPreview_New() {
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
-                    hasSaveError = false,
                     userMessage = null,
                 ),
                 name = "",
@@ -625,7 +606,6 @@ private fun TaskFormScreenPreview_Edit() {
                     showParentTaskField = true,
                     parentTask = Task(id = 1L, createdAt = Instant.now(), name = "Brush teeth"),
                     parentTaskOptions = persistentListOf(),
-                    hasSaveError = true,
                     userMessage = null,
                 ),
                 name = "Shower",
@@ -666,7 +646,6 @@ private fun TaskFormLayoutPreview_ScheduledAt() {
                     showParentTaskField = true,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
-                    hasSaveError = true,
                     userMessage = null,
                 ),
                 name = "Shower",
@@ -712,7 +691,6 @@ private fun TaskFormLayoutPreview_ScheduledTime() {
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
-                    hasSaveError = false,
                     userMessage = null,
                 ),
                 name = "",

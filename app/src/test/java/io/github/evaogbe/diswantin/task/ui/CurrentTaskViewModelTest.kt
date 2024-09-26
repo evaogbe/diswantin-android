@@ -175,7 +175,7 @@ class CurrentTaskViewModelTest {
             assertThat(viewModel.uiState.value).isEqualTo(
                 CurrentTaskUiState.Present(
                     currentTask = task,
-                    userMessage = R.string.current_task_mark_done_error
+                    userMessage = R.string.current_task_mark_done_error,
                 )
             )
         }

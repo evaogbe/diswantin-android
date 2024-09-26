@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
@@ -42,7 +41,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
@@ -111,14 +109,13 @@ fun TaskCategoryFormScreen(
     setTopBarState: (TaskCategoryFormTopBarState) -> Unit,
     topBarAction: TaskCategoryFormTopBarAction?,
     topBarActionHandled: () -> Unit,
-    setUserMessage: (String) -> Unit,
+    setUserMessage: (Int) -> Unit,
     onSelectTaskType: (String) -> Unit,
     taskCategoryFormViewModel: TaskCategoryFormViewModel = hiltViewModel(),
 ) {
     val uiState by taskCategoryFormViewModel.uiState.collectAsStateWithLifecycle()
     val isNew = taskCategoryFormViewModel.isNew
     val nameInput = taskCategoryFormViewModel.nameInput
-    val resources = LocalContext.current.resources
 
     if (uiState is TaskCategoryFormUiState.Saved) {
         LaunchedEffect(onPopBackStack) {
@@ -148,7 +145,7 @@ fun TaskCategoryFormScreen(
 
     (uiState as? TaskCategoryFormUiState.Success)?.userMessage?.let { message ->
         LaunchedEffect(message, setUserMessage) {
-            setUserMessage(resources.getString(message))
+            setUserMessage(message)
             taskCategoryFormViewModel.userMessageShown()
         }
     }
@@ -205,23 +202,6 @@ fun TaskCategoryFormLayout(
                 .widthIn(max = ScreenLg)
                 .padding(SpaceMd),
         ) {
-            if (uiState.hasSaveError) {
-                item {
-                    SelectionContainer {
-                        Text(
-                            text = if (isNew) {
-                                stringResource(R.string.task_category_form_save_error_new)
-                            } else {
-                                stringResource(R.string.task_category_form_save_error_edit)
-                            },
-                            color = colorScheme.error,
-                            style = typography.titleSmall
-                        )
-                    }
-                    Spacer(Modifier.size(SpaceMd))
-                }
-            }
-
             item {
                 OutlinedTextField(
                     value = name,
@@ -354,7 +334,6 @@ private fun TaskCategoryFormScreenPreview_New() {
                     tasks = persistentListOf(),
                     editingTaskIndex = 0,
                     taskOptions = persistentListOf(),
-                    hasSaveError = false,
                     userMessage = null,
                 ),
                 name = "",
@@ -408,7 +387,6 @@ private fun TaskCategoryFormScreenPreview_Edit() {
                     ),
                     editingTaskIndex = null,
                     taskOptions = persistentListOf(),
-                    hasSaveError = true,
                     userMessage = null,
                 ),
                 name = "Morning routine",
@@ -442,7 +420,6 @@ private fun TaskCategoryFormLayoutPreview() {
                     ),
                     editingTaskIndex = 0,
                     taskOptions = persistentListOf(),
-                    hasSaveError = false,
                     userMessage = null,
                 ),
                 name = "",

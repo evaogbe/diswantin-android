@@ -37,7 +37,6 @@ sealed interface TaskFormUiState {
         val showParentTaskField: Boolean,
         val parentTask: Task?,
         val parentTaskOptions: ImmutableList<Task>,
-        val hasSaveError: Boolean,
         @StringRes val userMessage: Int?,
     ) : TaskFormUiState
 

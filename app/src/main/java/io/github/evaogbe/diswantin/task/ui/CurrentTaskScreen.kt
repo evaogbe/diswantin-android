@@ -30,7 +30,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -77,13 +76,12 @@ fun CurrentTaskTopBar(onSearch: () -> Unit, modifier: Modifier = Modifier) {
 
 @Composable
 fun CurrentTaskScreen(
-    setUserMessage: (String) -> Unit,
+    setUserMessage: (Int) -> Unit,
     onAddTask: () -> Unit,
     onNavigateToTask: (Long) -> Unit,
     currentTaskViewModel: CurrentTaskViewModel = hiltViewModel(),
 ) {
     val uiState by currentTaskViewModel.uiState.collectAsStateWithLifecycle()
-    val resources = LocalContext.current.resources
     val lifecycleOwner = LocalLifecycleOwner.current
 
     LaunchedEffect(currentTaskViewModel) {
@@ -104,7 +102,7 @@ fun CurrentTaskScreen(
 
     (uiState as? CurrentTaskUiState.Present)?.userMessage?.let { message ->
         LaunchedEffect(message, setUserMessage) {
-            setUserMessage(resources.getString(message))
+            setUserMessage(message)
             currentTaskViewModel.userMessageShown()
         }
     }

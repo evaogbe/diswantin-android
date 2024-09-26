@@ -162,7 +162,7 @@ class CurrentTaskScreenTest {
 
     @Test
     fun displaysErrorMessage_whenMarkDoneFails() {
-        var userMessage: String? = null
+        var userMessage: Int? = null
         val clock = createClock()
         val task = genTasks(1).single()
         val db = FakeDatabase().apply {
@@ -189,7 +189,7 @@ class CurrentTaskScreenTest {
         composeTestRule.waitForIdle()
 
         composeTestRule.waitUntil {
-            userMessage == stringResource(R.string.current_task_mark_done_error)
+            userMessage == R.string.current_task_mark_done_error
         }
     }
 

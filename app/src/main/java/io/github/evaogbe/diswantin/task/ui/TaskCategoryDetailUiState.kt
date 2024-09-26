@@ -21,7 +21,7 @@ sealed interface TaskCategoryDetailUiState {
     data class Success(
         val category: TaskCategory,
         val tasks: ImmutableList<TaskItemUiState>,
-        @StringRes val userMessage: Int?
+        @StringRes val userMessage: Int?,
     ) : TaskCategoryDetailUiState
 
     data object Deleted : TaskCategoryDetailUiState

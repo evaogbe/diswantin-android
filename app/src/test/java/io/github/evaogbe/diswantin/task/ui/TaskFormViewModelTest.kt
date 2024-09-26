@@ -82,7 +82,6 @@ class TaskFormViewModelTest {
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
-                    hasSaveError = false,
                     userMessage = null,
                 )
             )
@@ -147,7 +146,6 @@ class TaskFormViewModelTest {
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
-                    hasSaveError = false,
                     userMessage = null,
                 )
             )
@@ -228,7 +226,6 @@ class TaskFormViewModelTest {
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
-                    hasSaveError = false,
                     userMessage = null,
                 )
             )
@@ -259,7 +256,6 @@ class TaskFormViewModelTest {
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
-                    hasSaveError = false,
                     userMessage = null,
                 )
             )
@@ -297,8 +293,7 @@ class TaskFormViewModelTest {
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
-                    hasSaveError = false,
-                    userMessage = null,
+                    userMessage = R.string.task_form_fetch_category_error,
                 )
             )
         }
@@ -337,8 +332,7 @@ class TaskFormViewModelTest {
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
-                    hasSaveError = false,
-                    userMessage = null,
+                    userMessage = R.string.task_form_fetch_category_error,
                 )
             )
         }
@@ -370,7 +364,6 @@ class TaskFormViewModelTest {
                     showParentTaskField = true,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
-                    hasSaveError = false,
                     userMessage = null,
                 )
             )
@@ -405,7 +398,6 @@ class TaskFormViewModelTest {
                     showParentTaskField = true,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
-                    hasSaveError = false,
                     userMessage = null,
                 )
             )
@@ -440,8 +432,7 @@ class TaskFormViewModelTest {
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
-                    hasSaveError = false,
-                    userMessage = null,
+                    userMessage = R.string.task_form_fetch_parent_task_error,
                 )
             )
         }
@@ -478,8 +469,7 @@ class TaskFormViewModelTest {
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
-                    hasSaveError = false,
-                    userMessage = null,
+                    userMessage = R.string.task_form_fetch_parent_task_error,
                 )
             )
         }
@@ -516,7 +506,6 @@ class TaskFormViewModelTest {
                 showParentTaskField = false,
                 parentTask = null,
                 parentTaskOptions = persistentListOf(),
-                hasSaveError = false,
                 userMessage = null,
             )
         )
@@ -557,7 +546,6 @@ class TaskFormViewModelTest {
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
-                    hasSaveError = false,
                     userMessage = R.string.search_task_category_options_error,
                 )
             )
@@ -599,7 +587,6 @@ class TaskFormViewModelTest {
                 showParentTaskField = true,
                 parentTask = null,
                 parentTaskOptions = tasks.toPersistentList(),
-                hasSaveError = false,
                 userMessage = null,
             )
         )
@@ -637,7 +624,6 @@ class TaskFormViewModelTest {
                     showParentTaskField = true,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
-                    hasSaveError = false,
                     userMessage = R.string.search_task_options_error,
                 )
             )
@@ -678,7 +664,6 @@ class TaskFormViewModelTest {
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
-                    hasSaveError = false,
                     userMessage = null,
                 )
             )
@@ -752,8 +737,7 @@ class TaskFormViewModelTest {
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
-                    hasSaveError = true,
-                    userMessage = null,
+                    userMessage = R.string.task_form_save_error_new,
                 )
             )
         }
@@ -801,7 +785,6 @@ class TaskFormViewModelTest {
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
-                    hasSaveError = false,
                     userMessage = null,
                 )
             )
@@ -889,8 +872,7 @@ class TaskFormViewModelTest {
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
-                    hasSaveError = true,
-                    userMessage = null,
+                    userMessage = R.string.task_form_save_error_edit,
                 )
             )
         }
@@ -930,8 +912,7 @@ class TaskFormViewModelTest {
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
-                    hasSaveError = false,
-                    userMessage = null,
+                    userMessage = R.string.task_form_fetch_category_error,
                 )
             )
 
@@ -985,8 +966,7 @@ class TaskFormViewModelTest {
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
-                    hasSaveError = false,
-                    userMessage = null,
+                    userMessage = R.string.task_form_fetch_category_error,
                 )
             )
 
@@ -1039,8 +1019,7 @@ class TaskFormViewModelTest {
                     showParentTaskField = false,
                     parentTask = parentTask,
                     parentTaskOptions = persistentListOf(),
-                    hasSaveError = false,
-                    userMessage = null,
+                    userMessage = R.string.task_form_fetch_parent_task_error,
                 )
             )
 
@@ -1086,8 +1065,7 @@ class TaskFormViewModelTest {
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
-                    hasSaveError = false,
-                    userMessage = null,
+                    userMessage = R.string.task_form_fetch_parent_task_error,
                 )
             )
 

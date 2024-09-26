@@ -122,7 +122,7 @@ class TaskCategoryFormScreenTest {
 
     @Test
     fun displaysErrorMessage_whenSearchTasksFails() {
-        var userMessage: String? = null
+        var userMessage: Int? = null
         val query = loremFaker.verbs.base()
         val db = FakeDatabase()
         val taskRepository = spyk(FakeTaskRepository(db))
@@ -154,7 +154,7 @@ class TaskCategoryFormScreenTest {
             .performTextInput(query)
 
         composeTestRule.waitUntil {
-            userMessage == stringResource(R.string.search_task_options_error)
+            userMessage == R.string.search_task_options_error
         }
     }
 
@@ -217,6 +217,7 @@ class TaskCategoryFormScreenTest {
 
     @Test
     fun displaysErrorMessage_withSaveErrorForNew() {
+        var userMessage: Int? = null
         val name = loremFaker.lorem.words()
         val db = FakeDatabase()
         val taskRepository = FakeTaskRepository(db)
@@ -233,7 +234,7 @@ class TaskCategoryFormScreenTest {
                     setTopBarState = {},
                     topBarAction = null,
                     topBarActionHandled = {},
-                    setUserMessage = {},
+                    setUserMessage = { userMessage = it },
                     onSelectTaskType = {},
                     taskCategoryFormViewModel = viewModel,
                 )
@@ -248,8 +249,9 @@ class TaskCategoryFormScreenTest {
             .performTextInput(name)
         viewModel.saveCategory()
 
-        composeTestRule.onNodeWithText(stringResource(R.string.task_category_form_save_error_new))
-            .assertIsDisplayed()
+        composeTestRule.waitUntil {
+            userMessage == R.string.task_category_form_save_error_new
+        }
     }
 
     @Test
@@ -293,6 +295,7 @@ class TaskCategoryFormScreenTest {
 
     @Test
     fun displaysErrorMessage_withSaveErrorForEdit() {
+        var userMessage: Int? = null
         val name = loremFaker.lorem.words()
         val category = genTaskCategory()
         val db = FakeDatabase().apply {
@@ -315,7 +318,7 @@ class TaskCategoryFormScreenTest {
                     setTopBarState = {},
                     topBarAction = null,
                     topBarActionHandled = {},
-                    setUserMessage = {},
+                    setUserMessage = { userMessage = it },
                     onSelectTaskType = {},
                     taskCategoryFormViewModel = viewModel,
                 )
@@ -330,8 +333,9 @@ class TaskCategoryFormScreenTest {
             .performTextReplacement(name)
         viewModel.saveCategory()
 
-        composeTestRule.onNodeWithText(stringResource(R.string.task_category_form_save_error_edit))
-            .assertIsDisplayed()
+        composeTestRule.waitUntil {
+            userMessage == R.string.task_category_form_save_error_edit
+        }
     }
 
     private fun genTaskCategory() = TaskCategory(id = 1L, name = loremFaker.lorem.words())

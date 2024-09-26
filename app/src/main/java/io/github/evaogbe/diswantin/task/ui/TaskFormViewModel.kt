@@ -76,7 +76,7 @@ class TaskFormViewModel @Inject constructor(
 
     private val parentTaskQuery = MutableStateFlow("")
 
-    private val saveResult = MutableStateFlow<Result<Unit>?>(null)
+    private val isSaved = MutableStateFlow(false)
 
     private val userMessage = MutableStateFlow<Int?>(null)
 
@@ -84,6 +84,7 @@ class TaskFormViewModel @Inject constructor(
         .map<Boolean, Result<Boolean>> { Result.Success(it) }
         .catch { e ->
             Timber.e(e, "Failed to query has categories")
+            userMessage.value = R.string.task_form_fetch_category_error
             emit(Result.Failure(e))
         }
 
@@ -91,6 +92,7 @@ class TaskFormViewModel @Inject constructor(
         .map<Long, Result<Long>> { Result.Success(it) }
         .catch { e ->
             Timber.e(e, "Failed to fetch task count")
+            userMessage.value = R.string.task_form_fetch_parent_task_error
             emit(Result.Failure(e))
         }
 
@@ -117,6 +119,7 @@ class TaskFormViewModel @Inject constructor(
             .map<TaskCategory?, Result<TaskCategory?>> { Result.Success(it) }
             .catch { e ->
                 Timber.e(e, "Failed to fetch task category by task id: %d", id)
+                userMessage.value = R.string.task_form_fetch_category_error
                 emit(Result.Failure(e))
             }
     } ?: flowOf(Result.Success(null))
@@ -126,6 +129,7 @@ class TaskFormViewModel @Inject constructor(
             .map<Task?, Result<Task?>> { Result.Success(it) }
             .catch { e ->
                 Timber.e(e, "Failed to fetch parent task by child id: %d", id)
+                userMessage.value = R.string.task_form_fetch_parent_task_error
                 emit(Result.Failure(e))
             }
     } ?: flowOf(Result.Success(null))
@@ -164,7 +168,7 @@ class TaskFormViewModel @Inject constructor(
                 }
             }
         },
-        saveResult,
+        isSaved,
         userMessage,
         existingTaskStream,
         existingRecurrencesStream,
@@ -184,14 +188,14 @@ class TaskFormViewModel @Inject constructor(
         val parentTask = args[10] as Task?
         val parentTaskQuery = (args[11] as String).trim()
         val parentTaskOptions = args[12] as List<Task>
-        val saveResult = args[13] as Result<Unit>?
+        val isSaved = args[13] as Boolean
         val userMessage = args[14] as Int?
         val existingTaskResult = args[15] as Result<Task?>
         val existingRecurrencesResult = args[16] as Result<List<TaskRecurrence>>
         val existingCategoryResult = args[17] as Result<TaskCategory?>
         val existingParentTaskResult = args[18] as Result<Task?>
 
-        if (saveResult?.isSuccess == true) {
+        if (isSaved) {
             TaskFormUiState.Saved
         } else {
             existingTaskResult.andThen { existingRecurrencesResult }.fold(
@@ -224,7 +228,6 @@ class TaskFormViewModel @Inject constructor(
                         } else {
                             parentTaskOptions.toPersistentList()
                         },
-                        hasSaveError = saveResult?.isFailure == true,
                         userMessage = userMessage,
                     )
                 },
@@ -393,12 +396,12 @@ class TaskFormViewModel @Inject constructor(
             viewModelScope.launch {
                 try {
                     taskRepository.create(form)
-                    saveResult.value = Result.Success(Unit)
+                    isSaved.value = true
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
                     Timber.e(e, "Failed to create task with form: %s", form)
-                    saveResult.value = Result.Failure(e)
+                    userMessage.value = R.string.task_form_save_error_new
                 }
             }
         } else {
@@ -441,12 +444,12 @@ class TaskFormViewModel @Inject constructor(
                             existingRecurrences = existingRecurrences,
                         )
                     )
-                    saveResult.value = Result.Success(Unit)
+                    isSaved.value = true
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
                     Timber.e(e, "Failed to update task with id: %d", taskId)
-                    saveResult.value = Result.Failure(e)
+                    userMessage.value = R.string.task_form_save_error_edit
                 }
             }
         }

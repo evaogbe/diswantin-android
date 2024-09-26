@@ -60,7 +60,6 @@ class TaskCategoryFormViewModelTest {
                 tasks = persistentListOf(),
                 editingTaskIndex = 0,
                 taskOptions = persistentListOf(),
-                hasSaveError = false,
                 userMessage = null,
             )
         )
@@ -93,7 +92,6 @@ class TaskCategoryFormViewModelTest {
                 tasks = tasks.toImmutableList(),
                 editingTaskIndex = null,
                 taskOptions = persistentListOf(),
-                hasSaveError = false,
                 userMessage = null,
             )
         )
@@ -155,7 +153,6 @@ class TaskCategoryFormViewModelTest {
                 tasks = persistentListOf(),
                 editingTaskIndex = 0,
                 taskOptions = tasks.toImmutableList(),
-                hasSaveError = false,
                 userMessage = null,
             )
         )
@@ -187,7 +184,6 @@ class TaskCategoryFormViewModelTest {
                     tasks = persistentListOf(),
                     editingTaskIndex = 0,
                     taskOptions = persistentListOf(),
-                    hasSaveError = false,
                     userMessage = R.string.search_task_options_error,
                 )
             )
@@ -218,7 +214,6 @@ class TaskCategoryFormViewModelTest {
                     tasks = persistentListOf(),
                     editingTaskIndex = 0,
                     taskOptions = persistentListOf(),
-                    hasSaveError = false,
                     userMessage = null,
                 )
             )
@@ -265,8 +260,7 @@ class TaskCategoryFormViewModelTest {
                     tasks = persistentListOf(),
                     editingTaskIndex = 0,
                     taskOptions = persistentListOf(),
-                    hasSaveError = true,
-                    userMessage = null,
+                    userMessage = R.string.task_category_form_save_error_new,
                 )
             )
         }
@@ -298,7 +292,6 @@ class TaskCategoryFormViewModelTest {
                     tasks = tasks.toImmutableList(),
                     editingTaskIndex = null,
                     taskOptions = persistentListOf(),
-                    hasSaveError = false,
                     userMessage = null,
                 )
             )
@@ -344,8 +337,7 @@ class TaskCategoryFormViewModelTest {
                     tasks = tasks.toImmutableList(),
                     editingTaskIndex = null,
                     taskOptions = persistentListOf(),
-                    hasSaveError = true,
-                    userMessage = null,
+                    userMessage = R.string.task_category_form_save_error_edit,
                 )
             )
         }

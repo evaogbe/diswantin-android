@@ -156,7 +156,7 @@ class TaskDetailScreenTest {
 
     @Test
     fun displaysErrorMessage_whenMarkTaskDoneFails() {
-        var userMessage: String? = null
+        var userMessage: Int? = null
         val clock = createClock()
         val task = genTask()
         val db = FakeDatabase().apply {
@@ -190,13 +190,13 @@ class TaskDetailScreenTest {
         viewModel.markTaskDone()
 
         composeTestRule.waitUntil {
-            userMessage == stringResource(R.string.task_detail_mark_done_error)
+            userMessage == R.string.task_detail_mark_done_error
         }
     }
 
     @Test
     fun displaysErrorMessage_whenUnmarkTaskDoneFails() {
-        var userMessage: String? = null
+        var userMessage: Int? = null
         val clock = createClock()
         val task = genTask()
         val db = FakeDatabase().apply {
@@ -231,7 +231,7 @@ class TaskDetailScreenTest {
         viewModel.unmarkTaskDone()
 
         composeTestRule.waitUntil {
-            userMessage == stringResource(R.string.task_detail_unmark_done_error)
+            userMessage == R.string.task_detail_unmark_done_error
         }
     }
 
@@ -274,7 +274,7 @@ class TaskDetailScreenTest {
 
     @Test
     fun displaysErrorMessage_whenDeleteTaskFails() {
-        var userMessage: String? = null
+        var userMessage: Int? = null
         val clock = createClock()
         val task = genTask()
         val db = FakeDatabase().apply {
@@ -308,7 +308,7 @@ class TaskDetailScreenTest {
         viewModel.deleteTask()
 
         composeTestRule.waitUntil {
-            userMessage == stringResource(R.string.task_detail_delete_error)
+            userMessage == R.string.task_detail_delete_error
         }
     }
 

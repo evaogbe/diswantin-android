@@ -26,7 +26,6 @@ sealed interface TaskCategoryFormUiState {
         val tasks: ImmutableList<Task>,
         val editingTaskIndex: Int?,
         val taskOptions: ImmutableList<Task>,
-        val hasSaveError: Boolean,
         @StringRes val userMessage: Int?,
     ) : TaskCategoryFormUiState
 

@@ -141,13 +141,12 @@ fun TaskDetailScreen(
     setTopBarState: (TaskDetailTopBarState) -> Unit,
     topBarAction: TaskDetailTopBarAction?,
     topBarActionHandled: () -> Unit,
-    setUserMessage: (String) -> Unit,
+    setUserMessage: (Int) -> Unit,
     onNavigateToTask: (Long) -> Unit,
     onNavigateToCategory: (Long) -> Unit,
     taskDetailViewModel: TaskDetailViewModel = hiltViewModel(),
 ) {
     val uiState by taskDetailViewModel.uiState.collectAsStateWithLifecycle()
-    val resources = LocalContext.current.resources
 
     if (uiState is TaskDetailUiState.Deleted) {
         LaunchedEffect(onPopBackStack) {
@@ -186,7 +185,7 @@ fun TaskDetailScreen(
 
     (uiState as? TaskDetailUiState.Success)?.userMessage?.let { message ->
         LaunchedEffect(message, setUserMessage) {
-            setUserMessage(resources.getString(message))
+            setUserMessage(message)
             taskDetailViewModel.userMessageShown()
         }
     }

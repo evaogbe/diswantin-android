@@ -13,6 +13,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.lifecycle.SavedStateHandle
 import assertk.assertThat
+import assertk.assertions.isEqualTo
 import assertk.assertions.isTrue
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.Task
@@ -156,6 +157,212 @@ class TaskFormScreenTest {
     }
 
     @Test
+    fun displaysCategoryField_whenHasCategories() {
+        val db = FakeDatabase().apply {
+            insertTask(genTask())
+            insertTaskCategory(TaskCategory(name = loremFaker.lorem.words()), emptySet())
+        }
+        val taskRepository = FakeTaskRepository(db)
+        val taskCategoryRepository = FakeTaskCategoryRepository(db)
+        val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
+
+        composeTestRule.setContent {
+            DiswantinTheme {
+                TaskFormScreen(
+                    onPopBackStack = {},
+                    setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
+                    setUserMessage = {},
+                    onSelectCategoryType = {},
+                    onEditRecurrence = {},
+                    taskFormViewModel = viewModel,
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(
+            stringResource(R.string.task_category_label),
+            useUnmergedTree = true
+        ).assertIsDisplayed()
+    }
+
+    @Test
+    fun displaysErrorMessage_whenQueryHasCategoryFails() {
+        var userMessage: Int? = null
+        val db = FakeDatabase().apply {
+            insertTask(genTask())
+            insertTaskCategory(TaskCategory(name = loremFaker.lorem.words()), emptySet())
+        }
+        val taskRepository = FakeTaskRepository(db)
+        val taskCategoryRepository = spyk(FakeTaskCategoryRepository(db))
+        every { taskCategoryRepository.hasCategoriesStream } returns flow {
+            throw RuntimeException("Test")
+        }
+
+        val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
+
+        composeTestRule.setContent {
+            DiswantinTheme {
+                TaskFormScreen(
+                    onPopBackStack = {},
+                    setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
+                    setUserMessage = { userMessage = it },
+                    onSelectCategoryType = {},
+                    onEditRecurrence = {},
+                    taskFormViewModel = viewModel,
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(
+            stringResource(R.string.task_category_label),
+            useUnmergedTree = true
+        ).assertDoesNotExist()
+        assertThat(userMessage).isEqualTo(R.string.task_form_fetch_category_error)
+    }
+
+    @Test
+    fun displaysErrorMessage_whenFetchExistingCategoryFails() {
+        var userMessage: Int? = null
+        val db = FakeDatabase().apply {
+            insertTask(genTask())
+            insertTaskCategory(TaskCategory(name = loremFaker.lorem.words()), emptySet())
+        }
+        val taskRepository = FakeTaskRepository(db)
+        val taskCategoryRepository = spyk(FakeTaskCategoryRepository(db))
+        every { taskCategoryRepository.getByTaskId(any()) } returns flow {
+            throw RuntimeException("Test")
+        }
+
+        val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
+
+        composeTestRule.setContent {
+            DiswantinTheme {
+                TaskFormScreen(
+                    onPopBackStack = {},
+                    setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
+                    setUserMessage = { userMessage = it },
+                    onSelectCategoryType = {},
+                    onEditRecurrence = {},
+                    taskFormViewModel = viewModel,
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(
+            stringResource(R.string.task_category_label),
+            useUnmergedTree = true
+        ).assertDoesNotExist()
+        assertThat(userMessage).isEqualTo(R.string.task_form_fetch_category_error)
+    }
+
+    @Test
+    fun displaysParentTaskField_whenHasOtherTasks() {
+        val db = FakeDatabase().apply {
+            insertTask(genTask())
+            insertTask(genTask(id = 2L))
+        }
+        val taskRepository = FakeTaskRepository(db)
+        val taskCategoryRepository = FakeTaskCategoryRepository(db)
+        val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
+
+        composeTestRule.setContent {
+            DiswantinTheme {
+                TaskFormScreen(
+                    onPopBackStack = {},
+                    setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
+                    setUserMessage = {},
+                    onSelectCategoryType = {},
+                    onEditRecurrence = {},
+                    taskFormViewModel = viewModel,
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(
+            stringResource(R.string.parent_task_label),
+            useUnmergedTree = true
+        ).assertIsDisplayed()
+    }
+
+    @Test
+    fun displaysErrorMessage_whenFetchTaskCountFails() {
+        var userMessage: Int? = null
+        val db = FakeDatabase().apply {
+            insertTask(genTask())
+            insertTask(genTask(id = 2L))
+        }
+        val taskRepository = spyk(FakeTaskRepository(db))
+        every { taskRepository.getCount() } returns flow { throw RuntimeException("Test") }
+
+        val taskCategoryRepository = FakeTaskCategoryRepository(db)
+        val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
+
+        composeTestRule.setContent {
+            DiswantinTheme {
+                TaskFormScreen(
+                    onPopBackStack = {},
+                    setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
+                    setUserMessage = { userMessage = it },
+                    onSelectCategoryType = {},
+                    onEditRecurrence = {},
+                    taskFormViewModel = viewModel,
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(
+            stringResource(R.string.parent_task_label),
+            useUnmergedTree = true
+        ).assertDoesNotExist()
+        assertThat(userMessage).isEqualTo(R.string.task_form_fetch_parent_task_error)
+    }
+
+    @Test
+    fun displaysErrorMessage_whenFetchExistingParentTaskFails() {
+        var userMessage: Int? = null
+        val db = FakeDatabase().apply {
+            insertTask(genTask())
+            insertTask(genTask(id = 2L))
+        }
+        val taskRepository = spyk(FakeTaskRepository(db))
+        every { taskRepository.getParent(any()) } returns flow { throw RuntimeException("Test") }
+
+        val taskCategoryRepository = FakeTaskCategoryRepository(db)
+        val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
+
+        composeTestRule.setContent {
+            DiswantinTheme {
+                TaskFormScreen(
+                    onPopBackStack = {},
+                    setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
+                    setUserMessage = { userMessage = it },
+                    onSelectCategoryType = {},
+                    onEditRecurrence = {},
+                    taskFormViewModel = viewModel,
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(
+            stringResource(R.string.parent_task_label),
+            useUnmergedTree = true
+        ).assertDoesNotExist()
+        assertThat(userMessage).isEqualTo(R.string.task_form_fetch_parent_task_error)
+    }
+
+    @Test
     fun displaysMatchingCategoryOptions_whenCategorySearchedFor() {
         val query = loremFaker.verbs.base()
         val categories = List(3) {
@@ -199,7 +406,7 @@ class TaskFormScreenTest {
 
     @Test
     fun displaysErrorMessage_whenSearchCategoriesFails() {
-        var userMessage: String? = null
+        var userMessage: Int? = null
         val query = loremFaker.verbs.base()
         val category = TaskCategory(name = faker.string.regexify("""$query \w+"""))
         val db = FakeDatabase().apply {
@@ -237,7 +444,7 @@ class TaskFormScreenTest {
             .performTextInput(query)
 
         composeTestRule.waitUntil {
-            userMessage == stringResource(R.string.search_task_category_options_error)
+            userMessage == R.string.search_task_category_options_error
         }
     }
 
@@ -288,7 +495,7 @@ class TaskFormScreenTest {
 
     @Test
     fun displaysErrorMessage_whenSearchTasksFails() {
-        var userMessage: String? = null
+        var userMessage: Int? = null
         val query = loremFaker.verbs.base()
         val db = FakeDatabase().apply {
             insertTask(genTask())
@@ -322,7 +529,7 @@ class TaskFormScreenTest {
             .performTextInput(query)
 
         composeTestRule.waitUntil {
-            userMessage == stringResource(R.string.search_task_options_error)
+            userMessage == R.string.search_task_options_error
         }
     }
 
@@ -371,6 +578,7 @@ class TaskFormScreenTest {
 
     @Test
     fun displaysErrorMessage_withSaveErrorForNew() {
+        var userMessage: Int? = null
         val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
         val db = FakeDatabase()
         val taskRepository = spyk(FakeTaskRepository(db))
@@ -386,7 +594,7 @@ class TaskFormScreenTest {
                     setTopBarState = {},
                     topBarAction = null,
                     topBarActionHandled = {},
-                    setUserMessage = {},
+                    setUserMessage = { userMessage = it },
                     onSelectCategoryType = {},
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
@@ -402,8 +610,9 @@ class TaskFormScreenTest {
             .performTextInput(name)
         viewModel.saveTask()
 
-        composeTestRule.onNodeWithText(stringResource(R.string.task_form_save_error_new))
-            .assertIsDisplayed()
+        composeTestRule.waitUntil {
+            userMessage == R.string.task_form_save_error_new
+        }
     }
 
     @Test
@@ -460,6 +669,7 @@ class TaskFormScreenTest {
 
     @Test
     fun displaysErrorMessage_withSaveErrorForEdit() {
+        var userMessage: Int? = null
         val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
         val task = genTask()
         val db = FakeDatabase().apply {
@@ -478,7 +688,7 @@ class TaskFormScreenTest {
                     setTopBarState = {},
                     topBarAction = null,
                     topBarActionHandled = {},
-                    setUserMessage = {},
+                    setUserMessage = { userMessage = it },
                     onSelectCategoryType = {},
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
@@ -494,8 +704,9 @@ class TaskFormScreenTest {
             .performTextReplacement(name)
         viewModel.saveTask()
 
-        composeTestRule.onNodeWithText(stringResource(R.string.task_form_save_error_edit))
-            .assertIsDisplayed()
+        composeTestRule.waitUntil {
+            userMessage == R.string.task_form_save_error_edit
+        }
     }
 
     private fun genTask(id: Long = 1L) = Task(

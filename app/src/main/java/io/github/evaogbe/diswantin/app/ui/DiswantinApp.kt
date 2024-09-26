@@ -28,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -80,12 +81,13 @@ fun DiswantinApp() {
     var query by rememberSaveable { mutableStateOf("") }
     var topBarState by rememberSaveable { mutableStateOf<TopBarState>(TopBarState.CurrentTask) }
 
-    var userMessage by remember { mutableStateOf<String?>(null) }
+    val resources = LocalContext.current.resources
+    var userMessage by remember { mutableStateOf<Int?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
 
     userMessage?.let { message ->
         LaunchedEffect(message, snackbarHostState) {
-            snackbarHostState.showSnackbar(message)
+            snackbarHostState.showSnackbar(resources.getString(message))
             userMessage = null
         }
     }
