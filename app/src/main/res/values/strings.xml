@@ -131,7 +131,7 @@
         <item>go to the library</item>
     </string-array>
     <string name="suggestion_item_snack"><![CDATA[Hungry? Grab a <b>snack</b>]]></string>
-    <string name="suggestion_item_stop"><![CDATA[<b>STOP</b>. Take a deep breath. Observe your distress level, body sensations, thoughts, and feelings. Ask your Wise Mind how to proceed]]></string>
+    <string name="suggestion_item_stop"><![CDATA[<b>STOP</b>. Take a deep breath. Observe your distress level, body sensations, thoughts, and feelings. Proceed honoring your emotions and thoughts]]></string>
     <string name="task_category_detail_delete_error">Something went wrong deleting the category</string>
     <string name="task_category_detail_fetch_error">Something went wrong loading the category</string>
     <string name="task_category_form_fetch_error">Something went wrong loading the category</string>
