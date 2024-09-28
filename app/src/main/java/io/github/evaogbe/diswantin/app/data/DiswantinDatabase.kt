@@ -31,7 +31,7 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 @Database(
-    version = 26,
+    version = 28,
     entities = [
         Task::class,
         TaskFts::class,
@@ -320,6 +320,23 @@ abstract class DiswantinDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_26_27 = object : Migration(26, 27) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """INSERT OR IGNORE INTO `task_category_fts`
+                    (`name`)
+                    SELECT `name`
+                    FROM `task_category`"""
+                )
+            }
+        }
+
+        val MIGRATION_27_28 = object : Migration(27, 28) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("INSERT INTO `task_category_fts`(`task_category_fts`) VALUES('rebuild')")
+            }
+        }
+
         fun createDatabase(context: Context) =
             Room.databaseBuilder(
                 context.applicationContext,
@@ -334,6 +351,8 @@ abstract class DiswantinDatabase : RoomDatabase() {
                 getMigration17to18(),
                 getMigration20to21(),
                 getMigration22To23(),
+                MIGRATION_26_27,
+                MIGRATION_27_28,
             ).build()
     }
 }
