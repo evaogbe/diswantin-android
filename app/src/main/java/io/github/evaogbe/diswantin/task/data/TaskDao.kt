@@ -43,8 +43,8 @@ interface TaskDao {
                 GROUP BY task_id
             ) cd ON cd.task_id = p2.descendant
             LEFT JOIN task_recurrence rd ON rd.task_id = p2.descendant
-            WHERE (ca.done_at IS NULL OR (ra.task_id IS NOT NULL AND ca.done_at < :doneBefore))
-                AND (cd.done_at IS NULL OR (rd.task_id IS NOT NULL AND cd.done_at < :doneBefore))
+            WHERE (ca.done_at IS NULL OR (ra.task_id IS NOT NULL AND ca.done_at < :doneAfter))
+                AND (cd.done_at IS NULL OR (rd.task_id IS NOT NULL AND cd.done_at < :doneAfter))
                 AND (ra.start IS NULL OR ra.start <= :today)
                 AND CASE ra.type
                     WHEN 0 THEN (julianday(:today) - julianday(ra.start)) % ra.step = 0
@@ -117,10 +117,16 @@ interface TaskDao {
         ) leaf ON leaf.descendant = p.descendant AND leaf.depth = p.depth
         JOIN task t2 ON p.descendant = t2.id
         LEFT JOIN (SELECT DISTINCT task_id FROM task_recurrence) r2 ON r2.task_id = t2.id
+        LEFT JOIN (
+            SELECT task_id, MAX(skipped_at) AS skipped_at
+            FROM task_skip
+            GROUP BY task_id
+        ) s ON s.task_id = t.id
         WHERE (t.scheduled_date IS NULL OR t.scheduled_date <= :today)
-            AND (t.scheduled_time IS NULL OR t.scheduled_time <= :scheduledTimeBefore)
+            AND (t.scheduled_time IS NULL OR t.scheduled_time <= :scheduledAfterTime)
             AND (t.start_after_date IS NULL OR t.start_after_date <= :today)
-            AND (t.start_after_time IS NULL OR t.start_after_time <= :startTimeBefore)
+            AND (t.start_after_time IS NULL OR t.start_after_time <= :startAfterTime)
+            AND (s.skipped_at IS NULL OR s.skipped_at < :skippedAfter)
         ORDER BY
             scheduled_date_priority IS NULL,
             scheduled_date_priority,
@@ -139,9 +145,10 @@ interface TaskDao {
     )
     fun getTaskPriorities(
         today: LocalDate,
-        scheduledTimeBefore: LocalTime,
-        startTimeBefore: LocalTime,
-        doneBefore: Instant,
+        scheduledAfterTime: LocalTime,
+        startAfterTime: LocalTime,
+        doneAfter: Instant,
+        skippedAfter: Instant,
         week: Int,
     ): Flow<List<TaskPriority>>
 
@@ -284,6 +291,9 @@ interface TaskDao {
 
     @Insert
     suspend fun insertRecurrences(recurrences: Collection<TaskRecurrence>)
+
+    @Insert
+    suspend fun insertSkip(skip: TaskSkip)
 
     @Update
     suspend fun update(task: Task)

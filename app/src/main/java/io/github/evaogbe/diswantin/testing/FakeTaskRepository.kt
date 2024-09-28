@@ -11,6 +11,7 @@ import io.github.evaogbe.diswantin.task.data.TaskDetail
 import io.github.evaogbe.diswantin.task.data.TaskItem
 import io.github.evaogbe.diswantin.task.data.TaskRecurrence
 import io.github.evaogbe.diswantin.task.data.TaskRepository
+import io.github.evaogbe.diswantin.task.data.TaskSkip
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
@@ -36,7 +37,8 @@ class FakeTaskRepository(
             db.taskPathTable,
             db.taskCompletionTable,
             db.taskRecurrenceTable,
-        ) { tasks, taskPaths, taskCompletions, taskRecurrences ->
+            db.taskSkipTable,
+        ) { tasks, taskPaths, taskCompletions, taskRecurrences, taskSkips ->
             tasks.values
                 .sortedWith(
                     compareBy<Task, ZonedDateTime?>(nullsLast()) {
@@ -76,7 +78,7 @@ class FakeTaskRepository(
                         .maxOfOrNull { it.doneAt }
                     doneAt == null ||
                             (taskRecurrences.values.any { it.taskId == task.id } &&
-                                    doneAt < params.doneBefore)
+                                    doneAt < params.doneAfter)
                 }
                 .mapNotNull { descTask ->
                     taskPaths.values
@@ -92,7 +94,7 @@ class FakeTaskRepository(
                                     doneAt == null
                                 } else {
                                     doesRecurToday(recurrences, params) &&
-                                            (doneAt == null || doneAt < params.doneBefore)
+                                            (doneAt == null || doneAt < params.doneAfter)
                                 }
                             } == true
                         }
@@ -100,9 +102,13 @@ class FakeTaskRepository(
                         ?.let { tasks[it.ancestor] }
                 }.firstOrNull { task ->
                     task.scheduledDate?.let { it <= params.today } != false &&
-                            task.scheduledTime?.let { it <= params.scheduledTimeBefore } != false &&
+                            task.scheduledTime?.let { it <= params.scheduledAfterTime } != false &&
                             task.startAfterDate?.let { it <= params.today } != false &&
-                            task.startAfterTime?.let { it <= params.startTimeBefore } != false
+                            task.startAfterTime?.let { it <= params.startAfterTime } != false &&
+                            taskSkips.values
+                                .filter { it.taskId == task.id }
+                                .maxOfOrNull { it.skippedAt }
+                                ?.let { it < params.skippedAfter } != false
                 }
         }
 
@@ -304,6 +310,10 @@ class FakeTaskRepository(
 
     override suspend fun unmarkDone(id: Long) {
         db.deleteLatestTaskCompletionByTaskId(id)
+    }
+
+    override suspend fun skip(id: Long) {
+        db.insertTaskSkip(TaskSkip(taskId = id, skippedAt = Instant.now(clock)))
     }
 
     companion object {

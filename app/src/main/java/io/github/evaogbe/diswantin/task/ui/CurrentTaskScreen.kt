@@ -17,7 +17,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -26,10 +30,15 @@ import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -61,7 +70,14 @@ import kotlin.time.Duration.Companion.hours
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CurrentTaskTopBar(onSearch: () -> Unit, modifier: Modifier = Modifier) {
+fun CurrentTaskTopBar(
+    uiState: CurrentTaskTopBarState,
+    onSearch: () -> Unit,
+    onSkip: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var menuExpanded by remember { mutableStateOf(false) }
+
     TopAppBar(
         title = {},
         modifier = modifier,
@@ -72,19 +88,49 @@ fun CurrentTaskTopBar(onSearch: () -> Unit, modifier: Modifier = Modifier) {
                     contentDescription = stringResource(R.string.search_tasks_button),
                 )
             }
+
+            if (uiState.canSkip) {
+                IconButton(onClick = { menuExpanded = !menuExpanded }) {
+                    Icon(
+                        imageVector = Icons.Default.MoreVert,
+                        contentDescription = stringResource(R.string.more_actions_button),
+                    )
+                }
+
+                DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.skip_button)) },
+                        onClick = {
+                            onSkip()
+                            menuExpanded = false
+                        },
+                        leadingIcon = {
+                            Icon(
+                                painter = painterResource(R.drawable.baseline_skip_next_24),
+                                contentDescription = null,
+                            )
+                        },
+                    )
+                }
+            }
         },
     )
 }
 
 @Composable
 fun CurrentTaskScreen(
+    setTopBarState: (CurrentTaskTopBarState) -> Unit,
+    topBarAction: CurrentTaskTopBarAction?,
+    topBarActionHandled: () -> Unit,
     setUserMessage: (Int) -> Unit,
+    onNavigateToAdvice: () -> Unit,
     onAddTask: () -> Unit,
     onNavigateToTask: (Long) -> Unit,
     currentTaskViewModel: CurrentTaskViewModel = hiltViewModel(),
 ) {
     val uiState by currentTaskViewModel.uiState.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
+    var showDialog by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(currentTaskViewModel) {
         currentTaskViewModel.refresh()
@@ -100,6 +146,24 @@ fun CurrentTaskScreen(
             .collectLatest {
                 currentTaskViewModel.refresh()
             }
+    }
+
+    LaunchedEffect(setTopBarState, uiState) {
+        setTopBarState(
+            CurrentTaskTopBarState(
+                canSkip = (uiState as? CurrentTaskUiState.Present)?.canSkip == true,
+            ),
+        )
+    }
+
+    LaunchedEffect(topBarAction) {
+        when (topBarAction) {
+            null -> {}
+            CurrentTaskTopBarAction.Skip -> {
+                showDialog = true
+                topBarActionHandled()
+            }
+        }
     }
 
     (uiState as? CurrentTaskUiState.Present)?.userMessage?.let { message ->
@@ -123,6 +187,34 @@ fun CurrentTaskScreen(
                 onMarkTaskDone = currentTaskViewModel::markCurrentTaskDone,
             )
         }
+    }
+
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDialog = false
+                        currentTaskViewModel.skipCurrentTask()
+                    },
+                ) {
+                    Text(stringResource(R.string.skip_dialog_confirm_button))
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showDialog = false
+                        onNavigateToAdvice()
+                    },
+                ) {
+                    Text(stringResource(R.string.skip_dialog_dismiss_button))
+                }
+            },
+            title = { Text(stringResource(R.string.skip_dialog_title)) },
+            text = { Text(stringResource(R.string.skip_dialog_text)) },
+        )
     }
 }
 
@@ -212,7 +304,15 @@ fun EmptyCurrentTaskLayout(onAddTask: () -> Unit, modifier: Modifier = Modifier)
 @Composable
 private fun CurrentTaskScreenPreview_Present() {
     DiswantinTheme {
-        Scaffold(topBar = { CurrentTaskTopBar(onSearch = {}) }) { innerPadding ->
+        Scaffold(
+            topBar = {
+                CurrentTaskTopBar(
+                    uiState = CurrentTaskTopBarState(canSkip = true),
+                    onSearch = {},
+                    onSkip = {},
+                )
+            },
+        ) { innerPadding ->
             CurrentTaskLayout(
                 uiState = CurrentTaskUiState.Present(
                     currentTask = Task(
@@ -220,6 +320,7 @@ private fun CurrentTaskScreenPreview_Present() {
                         createdAt = Instant.now(),
                         name = "Brush teeth",
                     ),
+                    canSkip = true,
                     userMessage = null,
                 ),
                 onNavigateToTask = {},
@@ -234,7 +335,15 @@ private fun CurrentTaskScreenPreview_Present() {
 @Composable
 private fun CurrentTaskScreenPreview_withNote() {
     DiswantinTheme {
-        Scaffold(topBar = { CurrentTaskTopBar(onSearch = {}) }) { innerPadding ->
+        Scaffold(
+            topBar = {
+                CurrentTaskTopBar(
+                    uiState = CurrentTaskTopBarState(canSkip = false),
+                    onSearch = {},
+                    onSkip = {},
+                )
+            },
+        ) { innerPadding ->
             CurrentTaskLayout(
                 uiState = CurrentTaskUiState.Present(
                     currentTask = Task(
@@ -243,6 +352,7 @@ private fun CurrentTaskScreenPreview_withNote() {
                         name = "Brush teeth",
                         note = "Don't forget to floss and rinse with mouthwash",
                     ),
+                    canSkip = false,
                     userMessage = null,
                 ),
                 onNavigateToTask = {},
@@ -257,7 +367,15 @@ private fun CurrentTaskScreenPreview_withNote() {
 @Composable
 private fun CurrentTaskScreenPreview_Empty() {
     DiswantinTheme {
-        Scaffold(topBar = { CurrentTaskTopBar(onSearch = {}) }) { innerPadding ->
+        Scaffold(
+            topBar = {
+                CurrentTaskTopBar(
+                    uiState = CurrentTaskTopBarState(canSkip = false),
+                    onSearch = {},
+                    onSkip = {},
+                )
+            },
+        ) { innerPadding ->
             EmptyCurrentTaskLayout(onAddTask = {}, modifier = Modifier.padding(innerPadding))
         }
     }

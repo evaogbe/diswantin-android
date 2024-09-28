@@ -20,9 +20,10 @@ class LocalTaskRepository @Inject constructor(
     override fun getCurrentTask(params: CurrentTaskParams) =
         taskDao.getTaskPriorities(
             today = params.today,
-            scheduledTimeBefore = params.scheduledTimeBefore,
-            startTimeBefore = params.startTimeBefore,
-            doneBefore = params.doneBefore,
+            scheduledAfterTime = params.scheduledAfterTime,
+            startAfterTime = params.startAfterTime,
+            doneAfter = params.doneAfter,
+            skippedAfter = params.skippedAfter,
             week = params.week,
         )
             .map { priorities ->
@@ -118,6 +119,12 @@ class LocalTaskRepository @Inject constructor(
     override suspend fun unmarkDone(id: Long) {
         withContext(ioDispatcher) {
             taskDao.deleteLatestTaskCompletionByTaskId(id)
+        }
+    }
+
+    override suspend fun skip(id: Long) {
+        withContext(ioDispatcher) {
+            taskDao.insertSkip(TaskSkip(taskId = id, skippedAt = Instant.now(clock)))
         }
     }
 }

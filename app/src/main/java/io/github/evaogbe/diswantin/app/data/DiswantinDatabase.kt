@@ -24,6 +24,7 @@ import io.github.evaogbe.diswantin.task.data.TaskDao
 import io.github.evaogbe.diswantin.task.data.TaskFts
 import io.github.evaogbe.diswantin.task.data.TaskPath
 import io.github.evaogbe.diswantin.task.data.TaskRecurrence
+import io.github.evaogbe.diswantin.task.data.TaskSkip
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -31,7 +32,7 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 @Database(
-    version = 29,
+    version = 30,
     entities = [
         Task::class,
         TaskFts::class,
@@ -40,6 +41,7 @@ import java.util.Locale
         TaskCategoryFts::class,
         TaskCompletion::class,
         TaskRecurrence::class,
+        TaskSkip::class,
     ],
     autoMigrations = [
         AutoMigration(from = 2, to = 3),
@@ -60,6 +62,7 @@ import java.util.Locale
         AutoMigration(from = 24, to = 25),
         AutoMigration(from = 25, to = 26),
         AutoMigration(from = 28, to = 29),
+        AutoMigration(from = 29, to = 30),
     ]
 )
 @TypeConverters(Converters::class)

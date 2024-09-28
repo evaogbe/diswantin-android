@@ -831,6 +831,12 @@ class LocalTaskRepositoryTest {
                 assertThat(awaitItem())
                     .isNotNull()
                     .isDataClassEqualTo(updatedTask4)
+
+                taskRepository.skip(updatedTask4.id)
+
+                assertThat(awaitItem())
+                    .isNotNull()
+                    .isDataClassEqualTo(updatedTask1)
             }
     }
 
@@ -847,9 +853,10 @@ class LocalTaskRepositoryTest {
         taskRepository.getCurrentTask(
             CurrentTaskParams(
                 today = LocalDate.parse("2024-08-23"),
-                scheduledTimeBefore = LocalTime.parse("14:00"),
-                startTimeBefore = LocalTime.parse("13:00"),
-                doneBefore = Instant.parse("2024-08-24T04:00:00Z"),
+                scheduledAfterTime = LocalTime.parse("14:00"),
+                startAfterTime = LocalTime.parse("13:00"),
+                doneAfter = Instant.parse("2024-08-24T04:00:00Z"),
+                skippedAfter = Instant.parse("2024-08-23T04:00:00Z"),
                 recurringDeadline = ZonedDateTime.parse(
                     "2024-08-24T23:59:59.999-04:00[America/New_York]"
                 ),

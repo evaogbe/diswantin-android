@@ -81,7 +81,7 @@ class TaskCategoryDetailScreenTest {
 
     @Test
     fun popsBackStack_whenCategoryDeleted() {
-        var onPopBackStackClicked = false
+        var onPopBackStackCalled = false
         val categoryWithTasks = genTaskCategoryWithTasks()
         val taskCategoryRepository = FakeTaskCategoryRepository.withCategories(categoryWithTasks)
         val viewModel = createTaskCategoryDetailViewModel(taskCategoryRepository)
@@ -89,7 +89,7 @@ class TaskCategoryDetailScreenTest {
         composeTestRule.setContent {
             DiswantinTheme {
                 TaskCategoryDetailScreen(
-                    onPopBackStack = { onPopBackStackClicked = true },
+                    onPopBackStack = { onPopBackStackCalled = true },
                     topBarAction = null,
                     topBarActionHandled = {},
                     setUserMessage = {},
@@ -102,7 +102,7 @@ class TaskCategoryDetailScreenTest {
         viewModel.deleteCategory()
 
         composeTestRule.onNodeWithTag(PendingLayoutTestTag).assertIsDisplayed()
-        assertThat(onPopBackStackClicked).isTrue()
+        assertThat(onPopBackStackCalled).isTrue()
     }
 
     @Test

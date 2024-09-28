@@ -5,9 +5,12 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import assertk.assertThat
+import assertk.assertions.isEqualTo
 import assertk.assertions.isTrue
 import io.github.evaogbe.diswantin.R
+import io.github.evaogbe.diswantin.task.data.RecurrenceType
 import io.github.evaogbe.diswantin.task.data.Task
+import io.github.evaogbe.diswantin.task.data.TaskRecurrence
 import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.stringResource
@@ -21,6 +24,9 @@ import kotlinx.coroutines.flow.flow
 import org.junit.Rule
 import org.junit.Test
 import java.time.Clock
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 
 class CurrentTaskScreenTest {
     @get:Rule
@@ -43,7 +49,11 @@ class CurrentTaskScreenTest {
         composeTestRule.setContent {
             DiswantinTheme {
                 CurrentTaskScreen(
+                    setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
                     setUserMessage = {},
+                    onNavigateToAdvice = {},
                     onAddTask = {},
                     onNavigateToTask = {},
                     currentTaskViewModel = viewModel,
@@ -64,7 +74,11 @@ class CurrentTaskScreenTest {
         composeTestRule.setContent {
             DiswantinTheme {
                 CurrentTaskScreen(
+                    setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
                     setUserMessage = {},
+                    onNavigateToAdvice = {},
                     onAddTask = {},
                     onNavigateToTask = {},
                     currentTaskViewModel = viewModel,
@@ -93,7 +107,11 @@ class CurrentTaskScreenTest {
         composeTestRule.setContent {
             DiswantinTheme {
                 CurrentTaskScreen(
+                    setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
                     setUserMessage = {},
+                    onNavigateToAdvice = {},
                     onAddTask = {},
                     onNavigateToTask = {},
                     currentTaskViewModel = viewModel,
@@ -106,7 +124,7 @@ class CurrentTaskScreenTest {
     }
 
     @Test
-    fun callsOnAddTask_whenAddTaskClicked() {
+    fun callsOnAddTask_whenClickAddTask() {
         var onAddTaskCalled = false
         val clock = createClock()
         val db = FakeDatabase()
@@ -116,7 +134,11 @@ class CurrentTaskScreenTest {
         composeTestRule.setContent {
             DiswantinTheme {
                 CurrentTaskScreen(
+                    setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
                     setUserMessage = {},
+                    onNavigateToAdvice = {},
                     onAddTask = { onAddTaskCalled = true },
                     onNavigateToTask = {},
                     currentTaskViewModel = viewModel,
@@ -131,7 +153,94 @@ class CurrentTaskScreenTest {
     }
 
     @Test
-    fun displaysNextTaskName_whenMarkDoneClicked() {
+    fun displaysNextTaskName_whenClickSkip() {
+        val clock =
+            Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
+        val (task1, task2) = genTasks(2)
+        val db = FakeDatabase().apply {
+            insertTask(task1)
+            insertTask(task2)
+            insertTaskRecurrence(
+                TaskRecurrence(
+                    taskId = task1.id,
+                    start = LocalDate.parse("2024-08-22"),
+                    type = RecurrenceType.Day,
+                    step = 1,
+                    week = 4,
+                )
+            )
+        }
+        val taskRepository = FakeTaskRepository(db, clock)
+        val viewModel = CurrentTaskViewModel(taskRepository, clock)
+
+        composeTestRule.setContent {
+            DiswantinTheme {
+                CurrentTaskScreen(
+                    setTopBarState = {},
+                    topBarAction = CurrentTaskTopBarAction.Skip,
+                    topBarActionHandled = {},
+                    setUserMessage = {},
+                    onNavigateToAdvice = {},
+                    onAddTask = {},
+                    onNavigateToTask = {},
+                    currentTaskViewModel = viewModel,
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(stringResource(R.string.skip_dialog_confirm_button))
+            .performClick()
+
+        composeTestRule.onNodeWithText(task2.name).assertIsDisplayed()
+    }
+
+    @Test
+    fun displaysErrorMessage_whenSkipFails() {
+        var userMessage: Int? = null
+        val clock =
+            Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
+        val task = genTasks(1).single()
+        val db = FakeDatabase().apply {
+            insertTask(task)
+            insertTaskRecurrence(
+                TaskRecurrence(
+                    taskId = task.id,
+                    start = LocalDate.parse("2024-08-22"),
+                    type = RecurrenceType.Day,
+                    step = 1,
+                    week = 4,
+                )
+            )
+        }
+        val taskRepository = spyk(FakeTaskRepository(db, clock))
+        coEvery { taskRepository.skip(any()) } throws RuntimeException("Test")
+
+        val viewModel = CurrentTaskViewModel(taskRepository, clock)
+
+        composeTestRule.setContent {
+            DiswantinTheme {
+                CurrentTaskScreen(
+                    setTopBarState = {},
+                    topBarAction = CurrentTaskTopBarAction.Skip,
+                    topBarActionHandled = {},
+                    setUserMessage = { userMessage = it },
+                    onNavigateToAdvice = {},
+                    onAddTask = {},
+                    onNavigateToTask = {},
+                    currentTaskViewModel = viewModel,
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(stringResource(R.string.skip_dialog_confirm_button))
+            .performClick()
+
+        composeTestRule.onNodeWithText(task.name).assertIsDisplayed()
+        assertThat(userMessage).isEqualTo(R.string.current_task_skip_error)
+    }
+
+    @Test
+    fun displaysNextTaskName_whenClickMarkDone() {
         val clock = createClock()
         val (task1, task2) = genTasks(2)
         val db = FakeDatabase().apply {
@@ -144,7 +253,11 @@ class CurrentTaskScreenTest {
         composeTestRule.setContent {
             DiswantinTheme {
                 CurrentTaskScreen(
+                    setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
                     setUserMessage = {},
+                    onNavigateToAdvice = {},
                     onAddTask = {},
                     onNavigateToTask = {},
                     currentTaskViewModel = viewModel,
@@ -176,17 +289,20 @@ class CurrentTaskScreenTest {
         composeTestRule.setContent {
             DiswantinTheme {
                 CurrentTaskScreen(
+                    setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
                     setUserMessage = { userMessage = it },
+                    onNavigateToAdvice = {},
                     onAddTask = {},
                     onNavigateToTask = {},
-                    currentTaskViewModel = viewModel
+                    currentTaskViewModel = viewModel,
                 )
             }
         }
 
         composeTestRule.onNodeWithText(stringResource(R.string.current_task_mark_done_button))
             .performClick()
-        composeTestRule.waitForIdle()
 
         composeTestRule.waitUntil {
             userMessage == R.string.current_task_mark_done_error
@@ -207,5 +323,6 @@ class CurrentTaskScreenTest {
         )
     }.take(count).toList()
 
-    private fun createClock() = Clock.systemDefaultZone()
+    private fun createClock() =
+        Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
 }

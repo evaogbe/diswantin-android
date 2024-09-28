@@ -8,8 +8,8 @@ import androidx.room.PrimaryKey
 import java.time.Instant
 
 @Entity(
-    tableName = "task_completion",
-    indices = [Index("task_id", "done_at", unique = true)],
+    tableName = "task_skip",
+    indices = [Index("task_id", "skipped_at", unique = true)],
     foreignKeys = [ForeignKey(
         entity = Task::class,
         parentColumns = ["id"],
@@ -18,8 +18,8 @@ import java.time.Instant
         onUpdate = ForeignKey.CASCADE,
     )],
 )
-data class TaskCompletion(
+data class TaskSkip(
     @PrimaryKey(autoGenerate = true) val id: Long = 0L,
     @ColumnInfo("task_id") val taskId: Long,
-    @ColumnInfo("done_at") val doneAt: Instant,
+    @ColumnInfo("skipped_at") val skippedAt: Instant,
 )

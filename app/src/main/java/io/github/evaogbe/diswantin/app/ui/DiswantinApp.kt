@@ -47,6 +47,8 @@ import io.github.evaogbe.diswantin.task.ui.AdviceScreen
 import io.github.evaogbe.diswantin.task.ui.AdviceTopBar
 import io.github.evaogbe.diswantin.task.ui.CurrentTaskScreen
 import io.github.evaogbe.diswantin.task.ui.CurrentTaskTopBar
+import io.github.evaogbe.diswantin.task.ui.CurrentTaskTopBarAction
+import io.github.evaogbe.diswantin.task.ui.CurrentTaskTopBarState
 import io.github.evaogbe.diswantin.task.ui.TaskCategoryDetailScreen
 import io.github.evaogbe.diswantin.task.ui.TaskCategoryDetailTopBar
 import io.github.evaogbe.diswantin.task.ui.TaskCategoryDetailTopBarAction
@@ -79,7 +81,14 @@ fun DiswantinApp() {
     val currentDestination = navBackStackEntry?.destination
 
     var query by rememberSaveable { mutableStateOf("") }
-    var topBarState by rememberSaveable { mutableStateOf<TopBarState>(TopBarState.CurrentTask) }
+    var topBarState by rememberSaveable {
+        mutableStateOf<TopBarState>(
+            TopBarState.CurrentTask(
+                uiState = CurrentTaskTopBarState(canSkip = false),
+                action = null,
+            ),
+        )
+    }
 
     val resources = LocalContext.current.resources
     var userMessage by remember { mutableStateOf<Int?>(null) }
@@ -101,10 +110,14 @@ fun DiswantinApp() {
             when (val state = topBarState) {
                 is TopBarState.CurrentTask -> {
                     CurrentTaskTopBar(
+                        uiState = state.uiState,
                         onSearch = {
                             query = ""
                             navController.navigate(route = MainDestination.TaskSearch.route)
                         },
+                        onSkip = {
+                            topBarState = state.copy(action = CurrentTaskTopBarAction.Skip)
+                        }
                     )
                 }
 
@@ -243,12 +256,26 @@ fun DiswantinApp() {
             modifier = Modifier.padding(innerPadding),
         ) {
             composable(BottomBarDestination.CurrentTask.route) {
-                LaunchedEffect(Unit) {
-                    topBarState = TopBarState.CurrentTask
-                }
-
                 CurrentTaskScreen(
+                    setTopBarState = {
+                        topBarState = TopBarState.CurrentTask(uiState = it, action = null)
+                    },
+                    topBarAction = (topBarState as? TopBarState.CurrentTask)?.action,
+                    topBarActionHandled = {
+                        (topBarState as? TopBarState.CurrentTask)?.copy(action = null)?.let {
+                            topBarState = it
+                        }
+                    },
                     setUserMessage = { userMessage = it },
+                    onNavigateToAdvice = {
+                        navController.navigate(route = BottomBarDestination.Advice.route) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
                     onAddTask = {
                         navController.navigate(
                             route = MainDestination.NewTaskForm.Main(name = null).route,

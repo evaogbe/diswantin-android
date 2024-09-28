@@ -5,6 +5,7 @@ import io.github.evaogbe.diswantin.task.data.TaskCategory
 import io.github.evaogbe.diswantin.task.data.TaskCompletion
 import io.github.evaogbe.diswantin.task.data.TaskPath
 import io.github.evaogbe.diswantin.task.data.TaskRecurrence
+import io.github.evaogbe.diswantin.task.data.TaskSkip
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -39,6 +40,12 @@ class FakeDatabase {
     private val _taskRecurrenceTable = MutableStateFlow(emptyMap<Long, TaskRecurrence>())
 
     val taskRecurrenceTable = _taskRecurrenceTable.asStateFlow()
+
+    private var taskSkipIdGen = 0L
+
+    private val _taskSkipTable = MutableStateFlow(emptyMap<Long, TaskSkip>())
+
+    val taskSkipTable = _taskSkipTable.asStateFlow()
 
     fun insertTaskCategory(taskCategory: TaskCategory, taskIds: Set<Long>): TaskCategory {
         val newTaskCategory = if (taskCategory.id > 0) {
@@ -110,6 +117,9 @@ class FakeDatabase {
         _taskRecurrenceTable.update { taskRecurrenceTable ->
             taskRecurrenceTable.filterValues { it.taskId != id }
         }
+        _taskSkipTable.update { taskSkipTable ->
+            taskSkipTable.filterValues { it.taskId != id }
+        }
     }
 
     fun insertTaskCompletion(taskCompletion: TaskCompletion) {
@@ -124,6 +134,11 @@ class FakeDatabase {
 
     fun deleteTaskRecurrence(id: Long) {
         _taskRecurrenceTable.update { it - id }
+    }
+
+    fun insertTaskSkip(taskSkip: TaskSkip) {
+        val newSkip = taskSkip.copy(id = ++taskSkipIdGen)
+        _taskSkipTable.update { it + (newSkip.id to newSkip) }
     }
 
     fun deleteLatestTaskCompletionByTaskId(taskId: Long) {

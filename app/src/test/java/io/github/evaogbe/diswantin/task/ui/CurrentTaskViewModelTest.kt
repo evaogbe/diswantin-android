@@ -8,8 +8,10 @@ import assertk.assertions.prop
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.EditTaskForm
 import io.github.evaogbe.diswantin.task.data.PathUpdateType
+import io.github.evaogbe.diswantin.task.data.RecurrenceType
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskDetail
+import io.github.evaogbe.diswantin.task.data.TaskRecurrence
 import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.MainDispatcherRule
@@ -28,6 +30,9 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
 import java.time.Clock
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CurrentTaskViewModelTest {
@@ -58,6 +63,7 @@ class CurrentTaskViewModelTest {
             assertThat(viewModel.uiState.value).isEqualTo(
                 CurrentTaskUiState.Present(
                     currentTask = task1,
+                    canSkip = false,
                     userMessage = null,
                 )
             )
@@ -83,6 +89,7 @@ class CurrentTaskViewModelTest {
             assertThat(viewModel.uiState.value).isEqualTo(
                 CurrentTaskUiState.Present(
                     currentTask = task1.copy(name = name),
+                    canSkip = false,
                     userMessage = null,
                 )
             )
@@ -111,6 +118,184 @@ class CurrentTaskViewModelTest {
         }
 
     @Test
+    fun `uiState can skip when recurring task`() = runTest(mainDispatcherRule.testDispatcher) {
+        val clock =
+            Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
+        val task = genTasks(1).single()
+        val db = FakeDatabase().apply {
+            insertTask(task)
+            insertTaskRecurrence(
+                TaskRecurrence(
+                    taskId = task.id,
+                    start = LocalDate.parse("2024-08-22"),
+                    type = RecurrenceType.Day,
+                    step = 1,
+                    week = 4,
+                )
+            )
+        }
+        val taskRepository = FakeTaskRepository(db, clock)
+        val viewModel = CurrentTaskViewModel(taskRepository, clock)
+
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiState.collect()
+        }
+
+        assertThat(viewModel.uiState.value).isEqualTo(
+            CurrentTaskUiState.Present(
+                currentTask = task,
+                canSkip = true,
+                userMessage = null,
+            )
+        )
+    }
+
+    @Test
+    fun `uiState cannot skip when non-recurring task`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val clock = createClock()
+            val task = genTasks(1).single()
+            val db = FakeDatabase().apply {
+                insertTask(task)
+            }
+            val taskRepository = FakeTaskRepository(db, clock)
+            val viewModel = CurrentTaskViewModel(taskRepository, clock)
+
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect()
+            }
+
+            assertThat(viewModel.uiState.value).isEqualTo(
+                CurrentTaskUiState.Present(
+                    currentTask = task,
+                    canSkip = false,
+                    userMessage = null,
+                )
+            )
+        }
+
+    @Test
+    fun `uiState cannot skip when fetch task recurrences fails`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val clock =
+                Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
+            val task = genTasks(1).single()
+            val db = FakeDatabase().apply {
+                insertTask(task)
+                insertTaskRecurrence(
+                    TaskRecurrence(
+                        taskId = task.id,
+                        start = LocalDate.parse("2024-08-22"),
+                        type = RecurrenceType.Day,
+                        step = 1,
+                        week = 4,
+                    )
+                )
+            }
+            val taskRepository = spyk(FakeTaskRepository(db, clock))
+            every { taskRepository.getTaskRecurrencesByTaskId(any()) } returns flow {
+                throw RuntimeException("Test")
+            }
+
+            val viewModel = CurrentTaskViewModel(taskRepository, clock)
+
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect()
+            }
+
+            assertThat(viewModel.uiState.value).isEqualTo(
+                CurrentTaskUiState.Present(
+                    currentTask = task,
+                    canSkip = false,
+                    userMessage = R.string.current_task_fetch_recurrences_error,
+                )
+            )
+        }
+
+    @Test
+    fun `skipCurrentTask replaces current task with next task`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val clock =
+                Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
+            val (task1, task2) = genTasks(2)
+            val db = FakeDatabase().apply {
+                insertTask(task1)
+                insertTask(task2)
+                insertTaskRecurrence(
+                    TaskRecurrence(
+                        taskId = task1.id,
+                        start = LocalDate.parse("2024-08-22"),
+                        type = RecurrenceType.Day,
+                        step = 1,
+                        week = 4,
+                    )
+                )
+            }
+            val taskRepository = FakeTaskRepository(db, clock)
+            val viewModel = CurrentTaskViewModel(taskRepository, clock)
+
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect()
+            }
+
+            assertThat(viewModel.uiState.value).isEqualTo(
+                CurrentTaskUiState.Present(
+                    currentTask = task1,
+                    canSkip = true,
+                    userMessage = null,
+                )
+            )
+
+            viewModel.skipCurrentTask()
+
+            assertThat(viewModel.uiState.value).isEqualTo(
+                CurrentTaskUiState.Present(
+                    currentTask = task2,
+                    canSkip = false,
+                    userMessage = null,
+                )
+            )
+        }
+
+    @Test
+    fun `skipCurrentTask shows error message when repository throws`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val clock =
+                Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
+            val task = genTasks(1).single()
+            val db = FakeDatabase().apply {
+                insertTask(task)
+                insertTaskRecurrence(
+                    TaskRecurrence(
+                        taskId = task.id,
+                        start = LocalDate.parse("2024-08-22"),
+                        type = RecurrenceType.Day,
+                        step = 1,
+                        week = 4,
+                    )
+                )
+            }
+            val taskRepository = spyk(FakeTaskRepository(db, clock))
+            coEvery { taskRepository.skip(any()) } throws RuntimeException("Test")
+
+            val viewModel = CurrentTaskViewModel(taskRepository, clock)
+
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect()
+            }
+
+            viewModel.skipCurrentTask()
+
+            assertThat(viewModel.uiState.value).isEqualTo(
+                CurrentTaskUiState.Present(
+                    currentTask = task,
+                    canSkip = true,
+                    userMessage = R.string.current_task_skip_error,
+                )
+            )
+        }
+
+    @Test
     fun `markCurrentTaskDone sets current task doneAt`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val clock = createClock()
@@ -129,6 +314,7 @@ class CurrentTaskViewModelTest {
             assertThat(viewModel.uiState.value).isEqualTo(
                 CurrentTaskUiState.Present(
                     currentTask = task1,
+                    canSkip = false,
                     userMessage = null,
                 )
             )
@@ -142,6 +328,7 @@ class CurrentTaskViewModelTest {
             assertThat(viewModel.uiState.value).isEqualTo(
                 CurrentTaskUiState.Present(
                     currentTask = task2,
+                    canSkip = false,
                     userMessage = null,
                 )
             )
@@ -169,6 +356,7 @@ class CurrentTaskViewModelTest {
                 .isEqualTo(
                     CurrentTaskUiState.Present(
                         currentTask = task,
+                        canSkip = false,
                         userMessage = null,
                     )
                 )
@@ -178,6 +366,7 @@ class CurrentTaskViewModelTest {
             assertThat(viewModel.uiState.value).isEqualTo(
                 CurrentTaskUiState.Present(
                     currentTask = task,
+                    canSkip = false,
                     userMessage = R.string.current_task_mark_done_error,
                 )
             )
@@ -197,5 +386,6 @@ class CurrentTaskViewModelTest {
         )
     }.take(count).toList()
 
-    private fun createClock() = Clock.systemDefaultZone()
+    private fun createClock() =
+        Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
 }
