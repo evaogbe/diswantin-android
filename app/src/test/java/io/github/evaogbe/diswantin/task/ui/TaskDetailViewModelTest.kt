@@ -201,6 +201,7 @@ class TaskDetailViewModelTest {
                 task = TaskDetail(
                     id = task.id,
                     name = task.name,
+                    note = task.note,
                     deadlineDate = task.deadlineDate,
                     deadlineTime = task.deadlineTime,
                     startAfterDate = task.startAfterDate,
@@ -227,6 +228,7 @@ class TaskDetailViewModelTest {
                 task = TaskDetail(
                     id = task.id,
                     name = task.name,
+                    note = task.note,
                     deadlineDate = task.deadlineDate,
                     deadlineTime = task.deadlineTime,
                     startAfterDate = task.startAfterDate,
@@ -253,6 +255,7 @@ class TaskDetailViewModelTest {
                 task = TaskDetail(
                     id = task.id,
                     name = task.name,
+                    note = task.note,
                     deadlineDate = task.deadlineDate,
                     deadlineTime = task.deadlineTime,
                     startAfterDate = task.startAfterDate,
@@ -298,6 +301,7 @@ class TaskDetailViewModelTest {
                     task = TaskDetail(
                         id = task.id,
                         name = task.name,
+                        note = task.note,
                         deadlineDate = task.deadlineDate,
                         deadlineTime = task.deadlineTime,
                         startAfterDate = task.startAfterDate,
@@ -345,6 +349,7 @@ class TaskDetailViewModelTest {
                     task = TaskDetail(
                         id = task.id,
                         name = task.name,
+                        note = task.note,
                         deadlineDate = task.deadlineDate,
                         deadlineTime = task.deadlineTime,
                         startAfterDate = task.startAfterDate,
@@ -440,6 +445,7 @@ class TaskDetailViewModelTest {
     private fun Task.toTaskDetail() = TaskDetail(
         id = id,
         name = name,
+        note = note,
         deadlineDate = deadlineDate,
         deadlineTime = deadlineTime,
         startAfterDate = startAfterDate,

@@ -182,6 +182,7 @@ class FakeTaskRepository(
                 TaskDetail(
                     id = task.id,
                     name = task.name,
+                    note = task.note,
                     deadlineDate = task.deadlineDate,
                     deadlineTime = task.deadlineTime,
                     startAfterDate = task.startAfterDate,

@@ -35,6 +35,7 @@
     <string name="mark_done_button">Mark done</string>
     <string name="more_actions_button">More actions</string>
     <string name="name_label">Name</string>
+    <string name="note_label">Note</string>
     <string name="ok_button">OK</string>
     <string name="parent_task_label">Previous to-do</string>
     <plurals name="recurrence_daily">

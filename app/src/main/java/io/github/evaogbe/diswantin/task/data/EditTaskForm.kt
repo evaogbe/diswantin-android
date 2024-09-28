@@ -13,6 +13,7 @@ sealed interface PathUpdateType {
 
 data class EditTaskForm(
     private val name: String,
+    private val note: String,
     private val deadlineDate: LocalDate?,
     private val deadlineTime: LocalTime?,
     private val startAfterDate: LocalDate?,
@@ -63,6 +64,7 @@ data class EditTaskForm(
 
     val updatedTask = existingTask.copy(
         name = name.trim(),
+        note = note.trim(),
         deadlineDate = deadlineDate,
         deadlineTime = deadlineTime,
         startAfterDate = startAfterDate,

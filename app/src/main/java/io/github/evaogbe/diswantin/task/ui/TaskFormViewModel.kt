@@ -58,6 +58,9 @@ class TaskFormViewModel @Inject constructor(
     var nameInput by mutableStateOf(savedStateHandle[NavArguments.NAME_KEY] ?: "")
         private set
 
+    var noteInput by mutableStateOf("")
+        private set
+
     private val deadlineDate = MutableStateFlow<LocalDate?>(null)
 
     private val deadlineTime = MutableStateFlow<LocalTime?>(null)
@@ -276,6 +279,7 @@ class TaskFormViewModel @Inject constructor(
         viewModelScope.launch {
             val existingTask = existingTaskStream.first().getOrNull() ?: return@launch
             nameInput = existingTask.name
+            noteInput = existingTask.note
             deadlineDate.value = existingTask.deadlineDate
             deadlineTime.value = existingTask.deadlineTime
             startAfterDate.value = existingTask.startAfterDate
@@ -292,6 +296,10 @@ class TaskFormViewModel @Inject constructor(
 
     fun updateNameInput(value: String) {
         nameInput = value
+    }
+
+    fun updateNoteInput(value: String) {
+        noteInput = value
     }
 
     fun updateDeadlineDate(value: LocalDate?) {
@@ -404,6 +412,7 @@ class TaskFormViewModel @Inject constructor(
         if (taskId == null) {
             val form = NewTaskForm(
                 name = nameInput,
+                note = noteInput,
                 deadlineDate = deadlineDate,
                 deadlineTime = state.deadlineTime,
                 startAfterDate = state.startAfterDate,
@@ -439,6 +448,7 @@ class TaskFormViewModel @Inject constructor(
                     taskRepository.update(
                         EditTaskForm(
                             name = nameInput,
+                            note = noteInput,
                             deadlineDate = deadlineDate,
                             deadlineTime = state.deadlineTime,
                             startAfterDate = state.startAfterDate,

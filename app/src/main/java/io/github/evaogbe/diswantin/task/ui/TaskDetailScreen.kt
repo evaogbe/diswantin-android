@@ -246,6 +246,18 @@ fun TaskDetailLayout(
                 Spacer(Modifier.size(SpaceMd))
             }
 
+            if (uiState.task.note.isNotEmpty()) {
+                item {
+                    SelectionContainer(modifier = Modifier.padding(horizontal = SpaceMd)) {
+                        Text(
+                            text = uiState.task.note,
+                            color = colorScheme.onSurfaceVariant,
+                            style = typography.bodyMedium,
+                        )
+                    }
+                }
+            }
+
             if (uiState.formattedDeadline != null) {
                 item {
                     ListItem(
@@ -378,6 +390,7 @@ private fun TaskDetailScreenPreview_Minimal() {
                     task = TaskDetail(
                         id = 2L,
                         name = "Shower",
+                        note = "",
                         deadlineDate = null,
                         deadlineTime = null,
                         startAfterDate = null,
@@ -424,6 +437,7 @@ private fun TaskDetailScreenPreview_Detailed() {
                     task = TaskDetail(
                         id = 2L,
                         name = "Shower",
+                        note = "Wash hair and deep condition before appointment at hair salon",
                         deadlineDate = LocalDate.now(),
                         deadlineTime = null,
                         startAfterDate = null,
@@ -462,6 +476,7 @@ private fun TaskDetailLayoutPreview() {
                     task = TaskDetail(
                         id = 2L,
                         name = "Shower",
+                        note = "",
                         deadlineDate = null,
                         deadlineTime = null,
                         startAfterDate = null,

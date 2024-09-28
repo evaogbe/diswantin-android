@@ -29,4 +29,5 @@ data class Task(
     @ColumnInfo("scheduled_date") val scheduledDate: LocalDate? = null,
     @ColumnInfo("scheduled_time") val scheduledTime: LocalTime? = null,
     @ColumnInfo("category_id", index = true) val categoryId: Long? = null,
+    @ColumnInfo(defaultValue = "") val note: String = "",
 )

@@ -172,6 +172,8 @@ fun TaskFormScreen(
                 uiState = state,
                 name = nameInput,
                 onNameChange = taskFormViewModel::updateNameInput,
+                note = taskFormViewModel.noteInput,
+                onNoteChange = taskFormViewModel::updateNoteInput,
                 onSelectCategoryType = onSelectCategoryType,
                 onDeadlineDateChange = taskFormViewModel::updateDeadlineDate,
                 onDeadlineTimeChange = taskFormViewModel::updateDeadlineTime,
@@ -200,6 +202,8 @@ fun TaskFormLayout(
     uiState: TaskFormUiState.Success,
     name: String,
     onNameChange: (String) -> Unit,
+    note: String,
+    onNoteChange: (String) -> Unit,
     onSelectCategoryType: (String) -> Unit,
     onDeadlineDateChange: (LocalDate?) -> Unit,
     onDeadlineTimeChange: (LocalTime?) -> Unit,
@@ -245,6 +249,17 @@ fun TaskFormLayout(
                     },
                 )
             }
+
+            OutlinedTextField(
+                value = note,
+                onValueChange = onNoteChange,
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text(stringResource(R.string.note_label)) },
+                keyboardOptions = KeyboardOptions.Default.copy(
+                    capitalization = KeyboardCapitalization.Sentences,
+                ),
+                minLines = 2,
+            )
 
             if (uiState.scheduledTime == null) {
                 if (uiState.deadlineDate == null) {
@@ -484,6 +499,7 @@ fun TaskFormLayout(
                 },
             )
         }
+
         FieldDialogType.StartAfterDate -> {
             DiswantinDatePickerDialog(
                 onDismissRequest = { dialogType = null },
@@ -627,6 +643,8 @@ private fun TaskFormScreenPreview_New() {
                 ),
                 name = "",
                 onNameChange = {},
+                note = "",
+                onNoteChange = {},
                 onSelectCategoryType = {},
                 onDeadlineDateChange = {},
                 onDeadlineTimeChange = {},
@@ -683,6 +701,8 @@ private fun TaskFormScreenPreview_Edit() {
                 ),
                 name = "Shower",
                 onNameChange = {},
+                note = "Wash hair and deep condition before appointment at hair salon",
+                onNoteChange = {},
                 onSelectCategoryType = {},
                 onDeadlineDateChange = {},
                 onDeadlineTimeChange = {},
@@ -727,6 +747,8 @@ private fun TaskFormLayoutPreview_ScheduledAt() {
                 ),
                 name = "Shower",
                 onNameChange = {},
+                note = "",
+                onNoteChange = {},
                 onSelectCategoryType = {},
                 onDeadlineDateChange = {},
                 onDeadlineTimeChange = {},
@@ -776,6 +798,8 @@ private fun TaskFormLayoutPreview_ScheduledTime() {
                 ),
                 name = "",
                 onNameChange = {},
+                note = "",
+                onNoteChange = {},
                 onSelectCategoryType = {},
                 onDeadlineDateChange = {},
                 onDeadlineTimeChange = {},

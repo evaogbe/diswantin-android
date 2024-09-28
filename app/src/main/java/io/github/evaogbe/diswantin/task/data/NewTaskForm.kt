@@ -7,6 +7,7 @@ import java.time.LocalTime
 
 data class NewTaskForm(
     private val name: String,
+    private val note: String,
     private val deadlineDate: LocalDate?,
     private val deadlineTime: LocalTime?,
     private val startAfterDate: LocalDate?,
@@ -48,7 +49,8 @@ data class NewTaskForm(
     val newTask
         get() = Task(
             createdAt = Instant.now(clock),
-            name = name,
+            name = name.trim(),
+            note = note.trim(),
             deadlineDate = deadlineDate,
             deadlineTime = deadlineTime,
             startAfterDate = startAfterDate,

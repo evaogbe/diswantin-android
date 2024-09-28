@@ -8,6 +8,7 @@ import java.time.LocalTime
 data class TaskDetail(
     val id: Long,
     val name: String,
+    val note: String,
     @ColumnInfo("deadline_date") val deadlineDate: LocalDate?,
     @ColumnInfo("deadline_time") val deadlineTime: LocalTime?,
     @ColumnInfo("start_after_date") val startAfterDate: LocalDate?,

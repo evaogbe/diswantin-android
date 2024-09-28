@@ -11,7 +11,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Done
@@ -136,12 +138,25 @@ fun CurrentTaskLayout(
             modifier = Modifier
                 .padding(SpaceMd)
                 .widthIn(max = ScreenLg)
-                .fillMaxHeight(),
+                .fillMaxHeight()
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.SpaceAround,
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             SelectionContainer {
-                Text(text = uiState.currentTask.name, style = typography.displaySmall)
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(text = uiState.currentTask.name, style = typography.displaySmall)
+                    Spacer(Modifier.size(SpaceMd))
+
+                    if (uiState.currentTask.note.isNotEmpty()) {
+                        Text(
+                            text = uiState.currentTask.note,
+                            color = colorScheme.onSurfaceVariant,
+                            style = typography.titleLarge,
+                        )
+                        Spacer(Modifier.size(SpaceMd))
+                    }
+                }
             }
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -204,6 +219,29 @@ private fun CurrentTaskScreenPreview_Present() {
                         id = 1L,
                         createdAt = Instant.now(),
                         name = "Brush teeth",
+                    ),
+                    userMessage = null,
+                ),
+                onNavigateToTask = {},
+                onMarkTaskDone = {},
+                modifier = Modifier.padding(innerPadding),
+            )
+        }
+    }
+}
+
+@DevicePreviews
+@Composable
+private fun CurrentTaskScreenPreview_withNote() {
+    DiswantinTheme {
+        Scaffold(topBar = { CurrentTaskTopBar(onSearch = {}) }) { innerPadding ->
+            CurrentTaskLayout(
+                uiState = CurrentTaskUiState.Present(
+                    currentTask = Task(
+                        id = 1L,
+                        createdAt = Instant.now(),
+                        name = "Brush teeth",
+                        note = "Don't forget to floss and rinse with mouthwash",
                     ),
                     userMessage = null,
                 ),

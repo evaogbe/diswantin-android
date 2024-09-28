@@ -66,6 +66,7 @@ class LocalTaskRepositoryTest {
                     taskRepository.create(
                         NewTaskForm(
                             name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                            note = "",
                             deadlineDate = null,
                             deadlineTime = null,
                             startAfterDate = null,
@@ -86,6 +87,7 @@ class LocalTaskRepositoryTest {
                 var updatedTask1 = taskRepository.update(
                     EditTaskForm(
                         name = task1.name,
+                        note = task1.note,
                         deadlineDate = null,
                         deadlineTime = null,
                         startAfterDate = LocalDate.parse("2024-08-24"),
@@ -105,6 +107,7 @@ class LocalTaskRepositoryTest {
                 updatedTask1 = taskRepository.update(
                     EditTaskForm(
                         name = updatedTask1.name,
+                        note = updatedTask1.note,
                         deadlineDate = updatedTask1.deadlineDate,
                         deadlineTime = updatedTask1.deadlineTime,
                         startAfterDate = LocalDate.parse("2024-08-23"),
@@ -126,6 +129,7 @@ class LocalTaskRepositoryTest {
                 updatedTask1 = taskRepository.update(
                     EditTaskForm(
                         name = updatedTask1.name,
+                        note = updatedTask1.note,
                         deadlineDate = updatedTask1.deadlineDate,
                         deadlineTime = updatedTask1.deadlineTime,
                         startAfterDate = LocalDate.parse("2024-08-23"),
@@ -145,6 +149,7 @@ class LocalTaskRepositoryTest {
                 updatedTask1 = taskRepository.update(
                     EditTaskForm(
                         name = updatedTask1.name,
+                        note = updatedTask1.note,
                         deadlineDate = updatedTask1.deadlineDate,
                         deadlineTime = updatedTask1.deadlineTime,
                         startAfterDate = LocalDate.parse("2024-08-23"),
@@ -167,6 +172,7 @@ class LocalTaskRepositoryTest {
                     taskRepository.create(
                         NewTaskForm(
                             name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                            note = "",
                             deadlineDate = null,
                             deadlineTime = null,
                             startAfterDate = null,
@@ -185,6 +191,7 @@ class LocalTaskRepositoryTest {
                 updatedTask1 = taskRepository.update(
                     EditTaskForm(
                         name = updatedTask1.name,
+                        note = updatedTask1.note,
                         deadlineDate = null,
                         deadlineTime = null,
                         startAfterDate = null,
@@ -206,6 +213,7 @@ class LocalTaskRepositoryTest {
                 val updatedTask2 = taskRepository.update(
                     EditTaskForm(
                         name = task2.name,
+                        note = task2.note,
                         deadlineDate = LocalDate.parse("2024-08-24"),
                         deadlineTime = LocalTime.parse("00:00"),
                         startAfterDate = null,
@@ -227,6 +235,7 @@ class LocalTaskRepositoryTest {
                 updatedTask1 = taskRepository.update(
                     EditTaskForm(
                         name = updatedTask1.name,
+                        note = updatedTask1.note,
                         deadlineDate = null,
                         deadlineTime = null,
                         startAfterDate = null,
@@ -248,6 +257,7 @@ class LocalTaskRepositoryTest {
                 updatedTask1 = taskRepository.update(
                     EditTaskForm(
                         name = updatedTask1.name,
+                        note = updatedTask1.note,
                         deadlineDate = null,
                         deadlineTime = null,
                         startAfterDate = null,
@@ -270,6 +280,7 @@ class LocalTaskRepositoryTest {
                     taskRepository.create(
                         NewTaskForm(
                             name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                            note = "",
                             deadlineDate = null,
                             deadlineTime = null,
                             startAfterDate = null,
@@ -290,6 +301,7 @@ class LocalTaskRepositoryTest {
                 taskRepository.update(
                     EditTaskForm(
                         name = updatedTask2.name,
+                        note = updatedTask2.note,
                         deadlineDate = updatedTask2.deadlineDate,
                         deadlineTime = updatedTask2.deadlineTime,
                         startAfterDate = updatedTask2.startAfterDate,
@@ -311,6 +323,7 @@ class LocalTaskRepositoryTest {
                 taskRepository.update(
                     EditTaskForm(
                         name = task3.name,
+                        note = task3.note,
                         deadlineDate = task3.deadlineDate,
                         deadlineTime = task3.deadlineTime,
                         startAfterDate = task3.startAfterDate,
@@ -330,6 +343,7 @@ class LocalTaskRepositoryTest {
                 updatedTask1 = taskRepository.update(
                     EditTaskForm(
                         name = updatedTask1.name,
+                        note = updatedTask1.note,
                         deadlineDate = null,
                         deadlineTime = null,
                         startAfterDate = null,
@@ -351,6 +365,7 @@ class LocalTaskRepositoryTest {
                 val task4 = taskRepository.create(
                     NewTaskForm(
                         name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                        note = "",
                         deadlineDate = null,
                         deadlineTime = null,
                         startAfterDate = null,
@@ -379,6 +394,7 @@ class LocalTaskRepositoryTest {
                 taskRepository.update(
                     EditTaskForm(
                         name = updatedTask2.name,
+                        note = updatedTask2.note,
                         deadlineDate = LocalDate.parse("2024-08-23"),
                         deadlineTime = LocalTime.parse("23:00"),
                         startAfterDate = null,
@@ -401,6 +417,7 @@ class LocalTaskRepositoryTest {
                 val updatedTask4 = taskRepository.update(
                     EditTaskForm(
                         name = task4.name,
+                        note = task4.note,
                         deadlineDate = null,
                         deadlineTime = LocalTime.parse("23:00"),
                         startAfterDate = null,
@@ -422,6 +439,7 @@ class LocalTaskRepositoryTest {
                 taskRepository.update(
                     EditTaskForm(
                         name = updatedTask4.name,
+                        note = updatedTask4.note,
                         deadlineDate = updatedTask4.deadlineDate,
                         deadlineTime = updatedTask4.deadlineTime,
                         startAfterDate = updatedTask4.startAfterDate,
@@ -451,6 +469,7 @@ class LocalTaskRepositoryTest {
                 taskRepository.update(
                     EditTaskForm(
                         name = updatedTask4.name,
+                        note = updatedTask4.note,
                         deadlineDate = updatedTask4.deadlineDate,
                         deadlineTime = updatedTask4.deadlineTime,
                         startAfterDate = updatedTask4.startAfterDate,
@@ -480,6 +499,7 @@ class LocalTaskRepositoryTest {
                 taskRepository.update(
                     EditTaskForm(
                         name = updatedTask4.name,
+                        note = updatedTask4.note,
                         deadlineDate = updatedTask4.deadlineDate,
                         deadlineTime = updatedTask4.deadlineTime,
                         startAfterDate = updatedTask4.startAfterDate,
@@ -518,6 +538,7 @@ class LocalTaskRepositoryTest {
                 taskRepository.update(
                     EditTaskForm(
                         name = updatedTask4.name,
+                        note = updatedTask4.note,
                         deadlineDate = updatedTask4.deadlineDate,
                         deadlineTime = updatedTask4.deadlineTime,
                         startAfterDate = updatedTask4.startAfterDate,
@@ -556,6 +577,7 @@ class LocalTaskRepositoryTest {
                 taskRepository.update(
                     EditTaskForm(
                         name = updatedTask4.name,
+                        note = updatedTask4.note,
                         deadlineDate = updatedTask4.deadlineDate,
                         deadlineTime = updatedTask4.deadlineTime,
                         startAfterDate = updatedTask4.startAfterDate,
@@ -587,6 +609,7 @@ class LocalTaskRepositoryTest {
                 taskRepository.update(
                     EditTaskForm(
                         name = updatedTask4.name,
+                        note = updatedTask4.note,
                         deadlineDate = updatedTask4.deadlineDate,
                         deadlineTime = updatedTask4.deadlineTime,
                         startAfterDate = updatedTask4.startAfterDate,
@@ -618,6 +641,7 @@ class LocalTaskRepositoryTest {
                 taskRepository.update(
                     EditTaskForm(
                         name = updatedTask4.name,
+                        note = updatedTask4.note,
                         deadlineDate = updatedTask4.deadlineDate,
                         deadlineTime = updatedTask4.deadlineTime,
                         startAfterDate = updatedTask4.startAfterDate,
@@ -649,6 +673,7 @@ class LocalTaskRepositoryTest {
                 taskRepository.update(
                     EditTaskForm(
                         name = updatedTask4.name,
+                        note = updatedTask4.note,
                         deadlineDate = updatedTask4.deadlineDate,
                         deadlineTime = updatedTask4.deadlineTime,
                         startAfterDate = updatedTask4.startAfterDate,
@@ -681,6 +706,7 @@ class LocalTaskRepositoryTest {
                 taskRepository.update(
                     EditTaskForm(
                         name = updatedTask4.name,
+                        note = updatedTask4.note,
                         deadlineDate = updatedTask4.deadlineDate,
                         deadlineTime = updatedTask4.deadlineTime,
                         startAfterDate = updatedTask4.startAfterDate,
@@ -712,6 +738,7 @@ class LocalTaskRepositoryTest {
                 taskRepository.update(
                     EditTaskForm(
                         name = updatedTask4.name,
+                        note = updatedTask4.note,
                         deadlineDate = updatedTask4.deadlineDate,
                         deadlineTime = updatedTask4.deadlineTime,
                         startAfterDate = updatedTask4.startAfterDate,
@@ -744,6 +771,7 @@ class LocalTaskRepositoryTest {
                 taskRepository.update(
                     EditTaskForm(
                         name = updatedTask4.name,
+                        note = updatedTask4.note,
                         deadlineDate = updatedTask4.deadlineDate,
                         deadlineTime = updatedTask4.deadlineTime,
                         startAfterDate = updatedTask4.startAfterDate,
@@ -775,6 +803,7 @@ class LocalTaskRepositoryTest {
                 taskRepository.update(
                     EditTaskForm(
                         name = updatedTask4.name,
+                        note = updatedTask4.note,
                         deadlineDate = updatedTask4.deadlineDate,
                         deadlineTime = updatedTask4.deadlineTime,
                         startAfterDate = updatedTask4.startAfterDate,
@@ -833,6 +862,7 @@ class LocalTaskRepositoryTest {
                 val task1 = taskRepository.create(
                     NewTaskForm(
                         name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                        note = "",
                         deadlineDate = null,
                         deadlineTime = null,
                         startAfterDate = null,
@@ -853,6 +883,7 @@ class LocalTaskRepositoryTest {
                 val task2 = taskRepository.create(
                     NewTaskForm(
                         name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                        note = "",
                         deadlineDate = null,
                         deadlineTime = null,
                         startAfterDate = null,
@@ -879,6 +910,7 @@ class LocalTaskRepositoryTest {
                 val task3 = taskRepository.create(
                     NewTaskForm(
                         name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                        note = "",
                         deadlineDate = null,
                         deadlineTime = null,
                         startAfterDate = null,
@@ -899,6 +931,7 @@ class LocalTaskRepositoryTest {
                 taskRepository.update(
                     EditTaskForm(
                         name = task1.name,
+                        note = task1.note,
                         deadlineDate = null,
                         deadlineTime = null,
                         startAfterDate = null,
@@ -920,6 +953,7 @@ class LocalTaskRepositoryTest {
                 taskRepository.update(
                     EditTaskForm(
                         name = task1.name,
+                        note = task1.note,
                         deadlineDate = null,
                         deadlineTime = null,
                         startAfterDate = null,
@@ -949,6 +983,7 @@ class LocalTaskRepositoryTest {
                 taskRepository.update(
                     EditTaskForm(
                         name = task1.name,
+                        note = task1.note,
                         deadlineDate = null,
                         deadlineTime = null,
                         startAfterDate = null,
@@ -971,6 +1006,7 @@ class LocalTaskRepositoryTest {
                 taskRepository.update(
                     EditTaskForm(
                         name = task3.name,
+                        note = task3.note,
                         deadlineDate = null,
                         deadlineTime = null,
                         startAfterDate = null,
@@ -1016,6 +1052,7 @@ class LocalTaskRepositoryTest {
                 val task = taskRepository.create(
                     NewTaskForm(
                         name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                        note = "",
                         deadlineDate = null,
                         deadlineTime = null,
                         startAfterDate = null,
@@ -1057,6 +1094,7 @@ class LocalTaskRepositoryTest {
                     taskRepository.update(
                         EditTaskForm(
                             name = task.name,
+                            note = task.note,
                             deadlineDate = task.deadlineDate,
                             deadlineTime = task.deadlineTime,
                             startAfterDate = task.startAfterDate,
@@ -1106,6 +1144,7 @@ class LocalTaskRepositoryTest {
                 val task = taskRepository.create(
                     NewTaskForm(
                         name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                        note = "",
                         deadlineDate = null,
                         deadlineTime = null,
                         startAfterDate = null,
@@ -1146,6 +1185,7 @@ class LocalTaskRepositoryTest {
                     taskRepository.update(
                         EditTaskForm(
                             name = task.name,
+                            note = task.note,
                             deadlineDate = task.deadlineDate,
                             deadlineTime = task.deadlineTime,
                             startAfterDate = task.startAfterDate,
@@ -1195,6 +1235,7 @@ class LocalTaskRepositoryTest {
                 val task = taskRepository.create(
                     NewTaskForm(
                         name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                        note = "",
                         deadlineDate = null,
                         deadlineTime = null,
                         startAfterDate = null,
@@ -1235,6 +1276,7 @@ class LocalTaskRepositoryTest {
                     taskRepository.update(
                         EditTaskForm(
                             name = task.name,
+                            note = task.note,
                             deadlineDate = task.deadlineDate,
                             deadlineTime = task.deadlineTime,
                             startAfterDate = task.startAfterDate,
@@ -1284,6 +1326,7 @@ class LocalTaskRepositoryTest {
                 val task = taskRepository.create(
                     NewTaskForm(
                         name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                        note = "",
                         deadlineDate = null,
                         deadlineTime = null,
                         startAfterDate = null,
@@ -1324,6 +1367,7 @@ class LocalTaskRepositoryTest {
                     taskRepository.update(
                         EditTaskForm(
                             name = task.name,
+                            note = task.note,
                             deadlineDate = task.deadlineDate,
                             deadlineTime = task.deadlineTime,
                             startAfterDate = task.startAfterDate,
@@ -1373,6 +1417,7 @@ class LocalTaskRepositoryTest {
                 val task = taskRepository.create(
                     NewTaskForm(
                         name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                        note = "",
                         deadlineDate = null,
                         deadlineTime = null,
                         startAfterDate = null,
@@ -1413,6 +1458,7 @@ class LocalTaskRepositoryTest {
                     taskRepository.update(
                         EditTaskForm(
                             name = task.name,
+                            note = task.note,
                             deadlineDate = task.deadlineDate,
                             deadlineTime = task.deadlineTime,
                             startAfterDate = task.startAfterDate,
@@ -1462,6 +1508,7 @@ class LocalTaskRepositoryTest {
                 val task = taskRepository.create(
                     NewTaskForm(
                         name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                        note = "",
                         deadlineDate = null,
                         deadlineTime = null,
                         startAfterDate = null,
@@ -1504,6 +1551,7 @@ class LocalTaskRepositoryTest {
                     taskRepository.update(
                         EditTaskForm(
                             name = task.name,
+                            note = task.note,
                             deadlineDate = task.deadlineDate,
                             deadlineTime = task.deadlineTime,
                             startAfterDate = task.startAfterDate,
@@ -1535,6 +1583,7 @@ class LocalTaskRepositoryTest {
                 taskRepository.update(
                     EditTaskForm(
                         name = task.name,
+                        note = task.note,
                         deadlineDate = task.deadlineDate,
                         deadlineTime = task.deadlineTime,
                         startAfterDate = task.startAfterDate,
@@ -1577,6 +1626,7 @@ class LocalTaskRepositoryTest {
         val task1 = taskRepository.create(
             NewTaskForm(
                 name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                note = "",
                 deadlineDate = null,
                 deadlineTime = null,
                 startAfterDate = null,
@@ -1592,6 +1642,7 @@ class LocalTaskRepositoryTest {
         val task2 = taskRepository.create(
             NewTaskForm(
                 name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                note = "",
                 deadlineDate = null,
                 deadlineTime = null,
                 startAfterDate = null,
@@ -1607,6 +1658,7 @@ class LocalTaskRepositoryTest {
         val task3 = taskRepository.create(
             NewTaskForm(
                 name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                note = "",
                 deadlineDate = null,
                 deadlineTime = null,
                 startAfterDate = null,
@@ -1623,6 +1675,7 @@ class LocalTaskRepositoryTest {
         val updatedTask2 = taskRepository.update(
             EditTaskForm(
                 name = task2.name,
+                note = task2.note,
                 deadlineDate = LocalDate.parse("2024-08-23"),
                 deadlineTime = task2.deadlineTime,
                 startAfterDate = task2.startAfterDate,
@@ -1641,6 +1694,7 @@ class LocalTaskRepositoryTest {
             TaskDetail(
                 id = updatedTask2.id,
                 name = updatedTask2.name,
+                note = updatedTask2.note,
                 deadlineDate = updatedTask2.deadlineDate,
                 deadlineTime = updatedTask2.deadlineTime,
                 startAfterDate = updatedTask2.startAfterDate,
@@ -1658,6 +1712,7 @@ class LocalTaskRepositoryTest {
         taskRepository.update(
             EditTaskForm(
                 name = task3.name,
+                note = task3.note,
                 deadlineDate = task3.deadlineDate,
                 deadlineTime = task3.deadlineTime,
                 startAfterDate = task3.startAfterDate,
@@ -1676,6 +1731,7 @@ class LocalTaskRepositoryTest {
             TaskDetail(
                 id = task3.id,
                 name = task3.name,
+                note = task3.note,
                 deadlineDate = task3.deadlineDate,
                 deadlineTime = task3.deadlineTime,
                 startAfterDate = task3.startAfterDate,
@@ -1693,6 +1749,7 @@ class LocalTaskRepositoryTest {
         taskRepository.update(
             EditTaskForm(
                 name = updatedTask2.name,
+                note = updatedTask2.note,
                 deadlineDate = updatedTask2.deadlineDate,
                 deadlineTime = updatedTask2.deadlineTime,
                 startAfterDate = updatedTask2.startAfterDate,
@@ -1711,6 +1768,7 @@ class LocalTaskRepositoryTest {
             TaskDetail(
                 id = updatedTask2.id,
                 name = updatedTask2.name,
+                note = updatedTask2.note,
                 deadlineDate = updatedTask2.deadlineDate,
                 deadlineTime = updatedTask2.deadlineTime,
                 startAfterDate = updatedTask2.startAfterDate,
@@ -1728,6 +1786,7 @@ class LocalTaskRepositoryTest {
         taskRepository.update(
             EditTaskForm(
                 name = task3.name,
+                note = task3.note,
                 deadlineDate = task3.deadlineDate,
                 deadlineTime = task3.deadlineTime,
                 startAfterDate = task3.startAfterDate,
@@ -1746,6 +1805,7 @@ class LocalTaskRepositoryTest {
             TaskDetail(
                 id = task3.id,
                 name = task3.name,
+                note = task3.note,
                 deadlineDate = task3.deadlineDate,
                 deadlineTime = task3.deadlineTime,
                 startAfterDate = task3.startAfterDate,
@@ -1763,6 +1823,7 @@ class LocalTaskRepositoryTest {
         taskRepository.update(
             EditTaskForm(
                 name = task1.name,
+                note = task1.note,
                 deadlineDate = task1.deadlineDate,
                 deadlineTime = task1.deadlineTime,
                 startAfterDate = task1.startAfterDate,
@@ -1781,6 +1842,7 @@ class LocalTaskRepositoryTest {
             TaskDetail(
                 id = task1.id,
                 name = task1.name,
+                note = task1.note,
                 deadlineDate = task1.deadlineDate,
                 deadlineTime = task1.deadlineTime,
                 startAfterDate = task1.startAfterDate,
@@ -1798,6 +1860,7 @@ class LocalTaskRepositoryTest {
             TaskDetail(
                 id = task3.id,
                 name = task3.name,
+                note = task3.note,
                 deadlineDate = task3.deadlineDate,
                 deadlineTime = task3.deadlineTime,
                 startAfterDate = task3.startAfterDate,
@@ -1815,6 +1878,7 @@ class LocalTaskRepositoryTest {
         taskRepository.update(
             EditTaskForm(
                 name = task3.name,
+                note = task3.note,
                 deadlineDate = task3.deadlineDate,
                 deadlineTime = task3.deadlineTime,
                 startAfterDate = task3.startAfterDate,
@@ -1833,6 +1897,7 @@ class LocalTaskRepositoryTest {
             TaskDetail(
                 id = task3.id,
                 name = task3.name,
+                note = task3.note,
                 deadlineDate = task3.deadlineDate,
                 deadlineTime = task3.deadlineTime,
                 startAfterDate = task3.startAfterDate,
@@ -1850,6 +1915,7 @@ class LocalTaskRepositoryTest {
         taskRepository.update(
             EditTaskForm(
                 name = task1.name,
+                note = task1.note,
                 deadlineDate = task1.deadlineDate,
                 deadlineTime = task1.deadlineTime,
                 startAfterDate = task1.startAfterDate,
@@ -1868,6 +1934,7 @@ class LocalTaskRepositoryTest {
             TaskDetail(
                 id = task1.id,
                 name = task1.name,
+                note = task1.note,
                 deadlineDate = task1.deadlineDate,
                 deadlineTime = task1.deadlineTime,
                 startAfterDate = task1.startAfterDate,
@@ -1885,6 +1952,7 @@ class LocalTaskRepositoryTest {
             TaskDetail(
                 id = task3.id,
                 name = task3.name,
+                note = task3.note,
                 deadlineDate = task3.deadlineDate,
                 deadlineTime = task3.deadlineTime,
                 startAfterDate = task3.startAfterDate,
@@ -1913,6 +1981,7 @@ class LocalTaskRepositoryTest {
         val task1 = taskRepository.create(
             NewTaskForm(
                 name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                note = "",
                 deadlineDate = null,
                 deadlineTime = null,
                 startAfterDate = null,
@@ -1929,6 +1998,7 @@ class LocalTaskRepositoryTest {
         val task2 = taskRepository.create(
             NewTaskForm(
                 name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                note = "",
                 deadlineDate = null,
                 deadlineTime = null,
                 startAfterDate = null,
@@ -1945,6 +2015,7 @@ class LocalTaskRepositoryTest {
         val task3 = taskRepository.create(
             NewTaskForm(
                 name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                note = "",
                 deadlineDate = null,
                 deadlineTime = null,
                 startAfterDate = null,
@@ -1962,6 +2033,7 @@ class LocalTaskRepositoryTest {
             TaskDetail(
                 id = task1.id,
                 name = task1.name,
+                note = task1.note,
                 deadlineDate = task1.deadlineDate,
                 deadlineTime = task1.deadlineTime,
                 startAfterDate = task1.startAfterDate,
@@ -1979,6 +2051,7 @@ class LocalTaskRepositoryTest {
             TaskDetail(
                 id = task2.id,
                 name = task2.name,
+                note = task2.note,
                 deadlineDate = task2.deadlineDate,
                 deadlineTime = task2.deadlineTime,
                 startAfterDate = task2.startAfterDate,
@@ -1996,6 +2069,7 @@ class LocalTaskRepositoryTest {
             TaskDetail(
                 id = task3.id,
                 name = task3.name,
+                note = task3.note,
                 deadlineDate = task3.deadlineDate,
                 deadlineTime = task3.deadlineTime,
                 startAfterDate = task3.startAfterDate,
@@ -2017,6 +2091,7 @@ class LocalTaskRepositoryTest {
             TaskDetail(
                 id = task1.id,
                 name = task1.name,
+                note = task1.note,
                 deadlineDate = task1.deadlineDate,
                 deadlineTime = task1.deadlineTime,
                 startAfterDate = task1.startAfterDate,
@@ -2034,6 +2109,7 @@ class LocalTaskRepositoryTest {
             TaskDetail(
                 id = task3.id,
                 name = task3.name,
+                note = task3.note,
                 deadlineDate = task3.deadlineDate,
                 deadlineTime = task3.deadlineTime,
                 startAfterDate = task3.startAfterDate,

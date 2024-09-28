@@ -31,7 +31,7 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 @Database(
-    version = 28,
+    version = 29,
     entities = [
         Task::class,
         TaskFts::class,
@@ -59,6 +59,7 @@ import java.util.Locale
         AutoMigration(from = 23, to = 24, spec = DiswantinDatabase.Migration23to24::class),
         AutoMigration(from = 24, to = 25),
         AutoMigration(from = 25, to = 26),
+        AutoMigration(from = 28, to = 29),
     ]
 )
 @TypeConverters(Converters::class)

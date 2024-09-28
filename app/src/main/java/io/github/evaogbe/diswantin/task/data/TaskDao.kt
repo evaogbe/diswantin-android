@@ -152,6 +152,7 @@ interface TaskDao {
         """SELECT
             t.id,
             t.name,
+            t.note,
             t.deadline_date,
             t.deadline_time,
             t.start_after_date,
