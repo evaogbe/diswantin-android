@@ -22,6 +22,8 @@ interface TaskDao {
             t2.deadline_date AS deadline_date_priority,
             t2.deadline_time AS deadline_time_priority,
             r2.task_id IS NOT NULL AS recurring_priority,
+            t2.start_after_date AS start_after_date_priority,
+            t2.start_after_time AS start_after_time_priority,
             t2.created_at AS created_at_priority,
             t2.id AS id_priority
         FROM task t
@@ -117,6 +119,8 @@ interface TaskDao {
         LEFT JOIN (SELECT DISTINCT task_id FROM task_recurrence) r2 ON r2.task_id = t2.id
         WHERE (t.scheduled_date IS NULL OR t.scheduled_date <= :today)
             AND (t.scheduled_time IS NULL OR t.scheduled_time <= :scheduledTimeBefore)
+            AND (t.start_after_date IS NULL OR t.start_after_date <= :today)
+            AND (t.start_after_time IS NULL OR t.start_after_time <= :startTimeBefore)
         ORDER BY
             scheduled_date_priority IS NULL,
             scheduled_date_priority,
@@ -127,6 +131,8 @@ interface TaskDao {
             deadline_date_priority,
             deadline_time_priority IS NULL,
             deadline_time_priority,
+            start_after_date_priority,
+            start_after_time_priority,
             created_at_priority,
             id_priority
         LIMIT 20"""
@@ -134,6 +140,7 @@ interface TaskDao {
     fun getTaskPriorities(
         today: LocalDate,
         scheduledTimeBefore: LocalTime,
+        startTimeBefore: LocalTime,
         doneBefore: Instant,
         week: Int,
     ): Flow<List<TaskPriority>>
@@ -147,6 +154,8 @@ interface TaskDao {
             t.name,
             t.deadline_date,
             t.deadline_time,
+            t.start_after_date,
+            t.start_after_time,
             t.scheduled_date,
             t.scheduled_time,
             com.done_at,
@@ -192,6 +201,8 @@ interface TaskDao {
             t.deadline_date,
             t.deadline_time IS NULL,
             t.deadline_time,
+            t.start_after_date,
+            t.start_after_time,
             t.created_at,
             t.id
         LIMIT 20"""
@@ -247,6 +258,8 @@ interface TaskDao {
             t.deadline_date,
             t.deadline_time IS NULL,
             t.deadline_time,
+            t.start_after_date,
+            t.start_after_time,
             t.created_at,
             t.id
         LIMIT 20"""

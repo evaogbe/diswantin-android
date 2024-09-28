@@ -28,6 +28,8 @@ sealed interface TaskFormUiState {
     data class Success(
         val deadlineDate: LocalDate?,
         val deadlineTime: LocalTime?,
+        val startAfterDate: LocalDate?,
+        val startAfterTime: LocalTime?,
         val scheduledDate: LocalDate?,
         val scheduledTime: LocalTime?,
         val recurrence: TaskRecurrenceUiState?,
@@ -38,7 +40,10 @@ sealed interface TaskFormUiState {
         val parentTask: Task?,
         val parentTaskOptions: ImmutableList<Task>,
         @StringRes val userMessage: Int?,
-    ) : TaskFormUiState
+    ) : TaskFormUiState {
+        val canSchedule =
+            listOf(deadlineDate, deadlineTime, startAfterDate, startAfterTime).all { it == null }
+    }
 
     data object Saved : TaskFormUiState
 }

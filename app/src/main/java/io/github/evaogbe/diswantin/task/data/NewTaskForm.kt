@@ -9,6 +9,8 @@ data class NewTaskForm(
     private val name: String,
     private val deadlineDate: LocalDate?,
     private val deadlineTime: LocalTime?,
+    private val startAfterDate: LocalDate?,
+    private val startAfterTime: LocalTime?,
     private val scheduledDate: LocalDate?,
     private val scheduledTime: LocalTime?,
     private val categoryId: Long?,
@@ -28,6 +30,16 @@ data class NewTaskForm(
                 |scheduledDate: $scheduledDate, and
                 |scheduledTime: $scheduledTime""".trimMargin()
         }
+        require(
+            (startAfterDate == null && startAfterTime == null) ||
+                    (scheduledDate == null && scheduledTime == null)
+        ) {
+            """Must not have both start after fields and scheduled fields, but got 
+                |startAfterDate: $startAfterDate, 
+                |startAfterTime: $startAfterTime, 
+                |scheduledDate: $scheduledDate, and
+                |scheduledTime: $scheduledTime""".trimMargin()
+        }
         require(scheduledTime != null || scheduledDate == null) {
             "Must have scheduledTime if scheduledDate is set, but got scheduledDate: $scheduledDate"
         }
@@ -39,6 +51,8 @@ data class NewTaskForm(
             name = name,
             deadlineDate = deadlineDate,
             deadlineTime = deadlineTime,
+            startAfterDate = startAfterDate,
+            startAfterTime = startAfterTime,
             scheduledDate = scheduledDate,
             scheduledTime = scheduledTime,
             categoryId = categoryId,

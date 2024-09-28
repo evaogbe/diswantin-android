@@ -24,6 +24,8 @@ data class Task(
     val name: String,
     @ColumnInfo("deadline_date") val deadlineDate: LocalDate? = null,
     @ColumnInfo("deadline_time") val deadlineTime: LocalTime? = null,
+    @ColumnInfo("start_after_date") val startAfterDate: LocalDate? = null,
+    @ColumnInfo("start_after_time") val startAfterTime: LocalTime? = null,
     @ColumnInfo("scheduled_date") val scheduledDate: LocalDate? = null,
     @ColumnInfo("scheduled_time") val scheduledTime: LocalTime? = null,
     @ColumnInfo("category_id", index = true) val categoryId: Long? = null,

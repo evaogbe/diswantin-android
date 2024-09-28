@@ -13,6 +13,8 @@ data class TaskPriority(
     @ColumnInfo("deadline_date_priority") val deadlineDatePriority: LocalDate?,
     @ColumnInfo("deadline_time_priority") val deadlineTimePriority: LocalTime?,
     @ColumnInfo("recurring_priority") val recurringPriority: Boolean,
+    @ColumnInfo("start_after_date_priority") val startAfterDatePriority: LocalDate?,
+    @ColumnInfo("start_after_time_priority") val startAfterTimePriority: LocalTime?,
     @ColumnInfo("created_at_priority") val createdAtPriority: Instant,
     @ColumnInfo("id_priority") val idPriority: Long,
 )

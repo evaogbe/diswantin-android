@@ -68,6 +68,8 @@ class LocalTaskRepositoryTest {
                             name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
                             deadlineDate = null,
                             deadlineTime = null,
+                            startAfterDate = null,
+                            startAfterTime = null,
                             scheduledDate = null,
                             scheduledTime = null,
                             categoryId = null,
@@ -81,12 +83,94 @@ class LocalTaskRepositoryTest {
                     .isNotNull()
                     .isDataClassEqualTo(task1)
 
+                var updatedTask1 = taskRepository.update(
+                    EditTaskForm(
+                        name = task1.name,
+                        deadlineDate = null,
+                        deadlineTime = null,
+                        startAfterDate = LocalDate.parse("2024-08-24"),
+                        startAfterTime = null,
+                        categoryId = task1.categoryId,
+                        scheduledDate = null,
+                        scheduledTime = null,
+                        recurrences = emptyList(),
+                        parentUpdateType = PathUpdateType.Keep,
+                        existingTask = task1,
+                        existingRecurrences = emptyList(),
+                    )
+                )
+
+                assertThat(awaitItem()).isNull()
+
+                updatedTask1 = taskRepository.update(
+                    EditTaskForm(
+                        name = updatedTask1.name,
+                        deadlineDate = updatedTask1.deadlineDate,
+                        deadlineTime = updatedTask1.deadlineTime,
+                        startAfterDate = LocalDate.parse("2024-08-23"),
+                        startAfterTime = null,
+                        categoryId = updatedTask1.categoryId,
+                        scheduledDate = null,
+                        scheduledTime = null,
+                        recurrences = emptyList(),
+                        parentUpdateType = PathUpdateType.Keep,
+                        existingTask = updatedTask1,
+                        existingRecurrences = emptyList(),
+                    )
+                )
+
+                assertThat(awaitItem())
+                    .isNotNull()
+                    .isDataClassEqualTo(updatedTask1)
+
+                updatedTask1 = taskRepository.update(
+                    EditTaskForm(
+                        name = updatedTask1.name,
+                        deadlineDate = updatedTask1.deadlineDate,
+                        deadlineTime = updatedTask1.deadlineTime,
+                        startAfterDate = LocalDate.parse("2024-08-23"),
+                        startAfterTime = LocalTime.parse("13:01"),
+                        categoryId = updatedTask1.categoryId,
+                        scheduledDate = null,
+                        scheduledTime = null,
+                        recurrences = emptyList(),
+                        parentUpdateType = PathUpdateType.Keep,
+                        existingTask = updatedTask1,
+                        existingRecurrences = emptyList(),
+                    )
+                )
+
+                assertThat(awaitItem()).isNull()
+
+                updatedTask1 = taskRepository.update(
+                    EditTaskForm(
+                        name = updatedTask1.name,
+                        deadlineDate = updatedTask1.deadlineDate,
+                        deadlineTime = updatedTask1.deadlineTime,
+                        startAfterDate = LocalDate.parse("2024-08-23"),
+                        startAfterTime = LocalTime.parse("13:00"),
+                        categoryId = updatedTask1.categoryId,
+                        scheduledDate = null,
+                        scheduledTime = null,
+                        recurrences = emptyList(),
+                        parentUpdateType = PathUpdateType.Keep,
+                        existingTask = updatedTask1,
+                        existingRecurrences = emptyList(),
+                    )
+                )
+
+                assertThat(awaitItem())
+                    .isNotNull()
+                    .isDataClassEqualTo(updatedTask1)
+
                 val task2 =
                     taskRepository.create(
                         NewTaskForm(
                             name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
                             deadlineDate = null,
                             deadlineTime = null,
+                            startAfterDate = null,
+                            startAfterTime = null,
                             scheduledDate = null,
                             scheduledTime = null,
                             categoryId = null,
@@ -96,16 +180,39 @@ class LocalTaskRepositoryTest {
                         )
                     )
 
-                assertThat(awaitItem()).isEqualTo(task1)
+                assertThat(awaitItem()).isEqualTo(task2)
+
+                updatedTask1 = taskRepository.update(
+                    EditTaskForm(
+                        name = updatedTask1.name,
+                        deadlineDate = null,
+                        deadlineTime = null,
+                        startAfterDate = null,
+                        startAfterTime = null,
+                        categoryId = updatedTask1.categoryId,
+                        scheduledDate = null,
+                        scheduledTime = null,
+                        recurrences = emptyList(),
+                        parentUpdateType = PathUpdateType.Keep,
+                        existingTask = updatedTask1,
+                        existingRecurrences = emptyList(),
+                    )
+                )
+
+                assertThat(awaitItem())
+                    .isNotNull()
+                    .isDataClassEqualTo(updatedTask1)
 
                 val updatedTask2 = taskRepository.update(
                     EditTaskForm(
                         name = task2.name,
                         deadlineDate = LocalDate.parse("2024-08-24"),
                         deadlineTime = LocalTime.parse("00:00"),
+                        startAfterDate = null,
+                        startAfterTime = null,
                         scheduledDate = null,
                         scheduledTime = null,
-                        categoryId = null,
+                        categoryId = task2.categoryId,
                         recurrences = emptyList(),
                         parentUpdateType = PathUpdateType.Keep,
                         existingTask = task2,
@@ -117,17 +224,19 @@ class LocalTaskRepositoryTest {
                     .isNotNull()
                     .isDataClassEqualTo(updatedTask2)
 
-                var updatedTask1 = taskRepository.update(
+                updatedTask1 = taskRepository.update(
                     EditTaskForm(
-                        name = task1.name,
+                        name = updatedTask1.name,
                         deadlineDate = null,
                         deadlineTime = null,
-                        categoryId = null,
+                        startAfterDate = null,
+                        startAfterTime = null,
+                        categoryId = updatedTask1.categoryId,
                         scheduledDate = LocalDate.parse("2024-08-23"),
                         scheduledTime = LocalTime.parse("14:00"),
                         recurrences = emptyList(),
                         parentUpdateType = PathUpdateType.Keep,
-                        existingTask = task1,
+                        existingTask = updatedTask1,
                         existingRecurrences = emptyList(),
                     )
                 )
@@ -141,9 +250,11 @@ class LocalTaskRepositoryTest {
                         name = updatedTask1.name,
                         deadlineDate = null,
                         deadlineTime = null,
-                        categoryId = null,
+                        startAfterDate = null,
+                        startAfterTime = null,
                         scheduledDate = LocalDate.parse("2024-08-23"),
                         scheduledTime = LocalTime.parse("15:00"),
+                        categoryId = updatedTask1.categoryId,
                         recurrences = emptyList(),
                         parentUpdateType = PathUpdateType.Keep,
                         existingTask = updatedTask1,
@@ -161,6 +272,8 @@ class LocalTaskRepositoryTest {
                             name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
                             deadlineDate = null,
                             deadlineTime = null,
+                            startAfterDate = null,
+                            startAfterTime = null,
                             scheduledDate = null,
                             scheduledTime = null,
                             categoryId = null,
@@ -179,6 +292,8 @@ class LocalTaskRepositoryTest {
                         name = updatedTask2.name,
                         deadlineDate = updatedTask2.deadlineDate,
                         deadlineTime = updatedTask2.deadlineTime,
+                        startAfterDate = updatedTask2.startAfterDate,
+                        startAfterTime = updatedTask2.startAfterTime,
                         scheduledDate = updatedTask2.scheduledDate,
                         scheduledTime = updatedTask2.scheduledTime,
                         categoryId = updatedTask2.categoryId,
@@ -198,6 +313,8 @@ class LocalTaskRepositoryTest {
                         name = task3.name,
                         deadlineDate = task3.deadlineDate,
                         deadlineTime = task3.deadlineTime,
+                        startAfterDate = task3.startAfterDate,
+                        startAfterTime = task3.startAfterTime,
                         scheduledDate = task3.scheduledDate,
                         scheduledTime = task3.scheduledTime,
                         categoryId = task3.categoryId,
@@ -215,9 +332,11 @@ class LocalTaskRepositoryTest {
                         name = updatedTask1.name,
                         deadlineDate = null,
                         deadlineTime = null,
+                        startAfterDate = null,
+                        startAfterTime = null,
                         scheduledDate = null,
                         scheduledTime = null,
-                        categoryId = null,
+                        categoryId = updatedTask1.categoryId,
                         recurrences = emptyList(),
                         parentUpdateType = PathUpdateType.Keep,
                         existingTask = updatedTask1,
@@ -234,6 +353,8 @@ class LocalTaskRepositoryTest {
                         name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
                         deadlineDate = null,
                         deadlineTime = null,
+                        startAfterDate = null,
+                        startAfterTime = null,
                         scheduledDate = null,
                         scheduledTime = null,
                         categoryId = null,
@@ -260,9 +381,11 @@ class LocalTaskRepositoryTest {
                         name = updatedTask2.name,
                         deadlineDate = LocalDate.parse("2024-08-23"),
                         deadlineTime = LocalTime.parse("23:00"),
+                        startAfterDate = null,
+                        startAfterTime = null,
                         scheduledDate = null,
                         scheduledTime = null,
-                        categoryId = null,
+                        categoryId = updatedTask2.categoryId,
                         recurrences = emptyList(),
                         parentUpdateType = PathUpdateType.Keep,
                         existingTask = updatedTask2,
@@ -280,9 +403,11 @@ class LocalTaskRepositoryTest {
                         name = task4.name,
                         deadlineDate = null,
                         deadlineTime = LocalTime.parse("23:00"),
+                        startAfterDate = null,
+                        startAfterTime = null,
                         scheduledDate = null,
                         scheduledTime = null,
-                        categoryId = null,
+                        categoryId = task4.categoryId,
                         recurrences = taskRecurrences4,
                         parentUpdateType = PathUpdateType.Keep,
                         existingTask = task4,
@@ -299,9 +424,11 @@ class LocalTaskRepositoryTest {
                         name = updatedTask4.name,
                         deadlineDate = updatedTask4.deadlineDate,
                         deadlineTime = updatedTask4.deadlineTime,
+                        startAfterDate = updatedTask4.startAfterDate,
+                        startAfterTime = updatedTask4.startAfterTime,
                         scheduledDate = updatedTask4.scheduledDate,
                         scheduledTime = updatedTask4.scheduledTime,
-                        categoryId = null,
+                        categoryId = updatedTask4.categoryId,
                         recurrences = listOf(
                             TaskRecurrence(
                                 taskId = updatedTask4.id,
@@ -326,9 +453,11 @@ class LocalTaskRepositoryTest {
                         name = updatedTask4.name,
                         deadlineDate = updatedTask4.deadlineDate,
                         deadlineTime = updatedTask4.deadlineTime,
+                        startAfterDate = updatedTask4.startAfterDate,
+                        startAfterTime = updatedTask4.startAfterTime,
                         scheduledDate = updatedTask4.scheduledDate,
                         scheduledTime = updatedTask4.scheduledTime,
-                        categoryId = null,
+                        categoryId = updatedTask4.categoryId,
                         recurrences = listOf(
                             TaskRecurrence(
                                 taskId = updatedTask4.id,
@@ -353,9 +482,11 @@ class LocalTaskRepositoryTest {
                         name = updatedTask4.name,
                         deadlineDate = updatedTask4.deadlineDate,
                         deadlineTime = updatedTask4.deadlineTime,
+                        startAfterDate = updatedTask4.startAfterDate,
+                        startAfterTime = updatedTask4.startAfterTime,
                         scheduledDate = updatedTask4.scheduledDate,
                         scheduledTime = updatedTask4.scheduledTime,
-                        categoryId = null,
+                        categoryId = updatedTask4.categoryId,
                         recurrences = listOf(
                             TaskRecurrence(
                                 taskId = updatedTask4.id,
@@ -389,9 +520,11 @@ class LocalTaskRepositoryTest {
                         name = updatedTask4.name,
                         deadlineDate = updatedTask4.deadlineDate,
                         deadlineTime = updatedTask4.deadlineTime,
+                        startAfterDate = updatedTask4.startAfterDate,
+                        startAfterTime = updatedTask4.startAfterTime,
                         scheduledDate = updatedTask4.scheduledDate,
                         scheduledTime = updatedTask4.scheduledTime,
-                        categoryId = null,
+                        categoryId = updatedTask4.categoryId,
                         recurrences = listOf(
                             TaskRecurrence(
                                 taskId = updatedTask4.id,
@@ -425,9 +558,11 @@ class LocalTaskRepositoryTest {
                         name = updatedTask4.name,
                         deadlineDate = updatedTask4.deadlineDate,
                         deadlineTime = updatedTask4.deadlineTime,
+                        startAfterDate = updatedTask4.startAfterDate,
+                        startAfterTime = updatedTask4.startAfterTime,
                         scheduledDate = updatedTask4.scheduledDate,
                         scheduledTime = updatedTask4.scheduledTime,
-                        categoryId = null,
+                        categoryId = updatedTask4.categoryId,
                         recurrences = listOf(
                             TaskRecurrence(
                                 taskId = updatedTask4.id,
@@ -454,9 +589,11 @@ class LocalTaskRepositoryTest {
                         name = updatedTask4.name,
                         deadlineDate = updatedTask4.deadlineDate,
                         deadlineTime = updatedTask4.deadlineTime,
+                        startAfterDate = updatedTask4.startAfterDate,
+                        startAfterTime = updatedTask4.startAfterTime,
                         scheduledDate = updatedTask4.scheduledDate,
                         scheduledTime = updatedTask4.scheduledTime,
-                        categoryId = null,
+                        categoryId = updatedTask4.categoryId,
                         recurrences = listOf(
                             TaskRecurrence(
                                 taskId = updatedTask4.id,
@@ -483,9 +620,11 @@ class LocalTaskRepositoryTest {
                         name = updatedTask4.name,
                         deadlineDate = updatedTask4.deadlineDate,
                         deadlineTime = updatedTask4.deadlineTime,
+                        startAfterDate = updatedTask4.startAfterDate,
+                        startAfterTime = updatedTask4.startAfterTime,
                         scheduledDate = updatedTask4.scheduledDate,
                         scheduledTime = updatedTask4.scheduledTime,
-                        categoryId = null,
+                        categoryId = updatedTask4.categoryId,
                         recurrences = listOf(
                             TaskRecurrence(
                                 taskId = updatedTask4.id,
@@ -512,9 +651,11 @@ class LocalTaskRepositoryTest {
                         name = updatedTask4.name,
                         deadlineDate = updatedTask4.deadlineDate,
                         deadlineTime = updatedTask4.deadlineTime,
+                        startAfterDate = updatedTask4.startAfterDate,
+                        startAfterTime = updatedTask4.startAfterTime,
                         scheduledDate = updatedTask4.scheduledDate,
                         scheduledTime = updatedTask4.scheduledTime,
-                        categoryId = null,
+                        categoryId = updatedTask4.categoryId,
                         recurrences = listOf(
                             TaskRecurrence(
                                 taskId = updatedTask4.id,
@@ -542,9 +683,11 @@ class LocalTaskRepositoryTest {
                         name = updatedTask4.name,
                         deadlineDate = updatedTask4.deadlineDate,
                         deadlineTime = updatedTask4.deadlineTime,
+                        startAfterDate = updatedTask4.startAfterDate,
+                        startAfterTime = updatedTask4.startAfterTime,
                         scheduledDate = updatedTask4.scheduledDate,
                         scheduledTime = updatedTask4.scheduledTime,
-                        categoryId = null,
+                        categoryId = updatedTask4.categoryId,
                         recurrences = listOf(
                             TaskRecurrence(
                                 taskId = updatedTask4.id,
@@ -571,9 +714,11 @@ class LocalTaskRepositoryTest {
                         name = updatedTask4.name,
                         deadlineDate = updatedTask4.deadlineDate,
                         deadlineTime = updatedTask4.deadlineTime,
+                        startAfterDate = updatedTask4.startAfterDate,
+                        startAfterTime = updatedTask4.startAfterTime,
                         scheduledDate = updatedTask4.scheduledDate,
                         scheduledTime = updatedTask4.scheduledTime,
-                        categoryId = null,
+                        categoryId = updatedTask4.categoryId,
                         recurrences = listOf(
                             TaskRecurrence(
                                 taskId = updatedTask4.id,
@@ -601,9 +746,11 @@ class LocalTaskRepositoryTest {
                         name = updatedTask4.name,
                         deadlineDate = updatedTask4.deadlineDate,
                         deadlineTime = updatedTask4.deadlineTime,
+                        startAfterDate = updatedTask4.startAfterDate,
+                        startAfterTime = updatedTask4.startAfterTime,
                         scheduledDate = updatedTask4.scheduledDate,
                         scheduledTime = updatedTask4.scheduledTime,
-                        categoryId = null,
+                        categoryId = updatedTask4.categoryId,
                         recurrences = listOf(
                             TaskRecurrence(
                                 taskId = updatedTask4.id,
@@ -630,9 +777,11 @@ class LocalTaskRepositoryTest {
                         name = updatedTask4.name,
                         deadlineDate = updatedTask4.deadlineDate,
                         deadlineTime = updatedTask4.deadlineTime,
+                        startAfterDate = updatedTask4.startAfterDate,
+                        startAfterTime = updatedTask4.startAfterTime,
                         scheduledDate = updatedTask4.scheduledDate,
                         scheduledTime = updatedTask4.scheduledTime,
-                        categoryId = null,
+                        categoryId = updatedTask4.categoryId,
                         recurrences = listOf(
                             TaskRecurrence(
                                 taskId = updatedTask4.id,
@@ -670,6 +819,7 @@ class LocalTaskRepositoryTest {
             CurrentTaskParams(
                 today = LocalDate.parse("2024-08-23"),
                 scheduledTimeBefore = LocalTime.parse("14:00"),
+                startTimeBefore = LocalTime.parse("13:00"),
                 doneBefore = Instant.parse("2024-08-24T04:00:00Z"),
                 recurringDeadline = ZonedDateTime.parse(
                     "2024-08-24T23:59:59.999-04:00[America/New_York]"
@@ -685,6 +835,8 @@ class LocalTaskRepositoryTest {
                         name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
                         deadlineDate = null,
                         deadlineTime = null,
+                        startAfterDate = null,
+                        startAfterTime = null,
                         scheduledDate = null,
                         scheduledTime = null,
                         categoryId = null,
@@ -703,6 +855,8 @@ class LocalTaskRepositoryTest {
                         name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
                         deadlineDate = null,
                         deadlineTime = null,
+                        startAfterDate = null,
+                        startAfterTime = null,
                         scheduledDate = null,
                         scheduledTime = null,
                         categoryId = null,
@@ -727,6 +881,8 @@ class LocalTaskRepositoryTest {
                         name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
                         deadlineDate = null,
                         deadlineTime = null,
+                        startAfterDate = null,
+                        startAfterTime = null,
                         scheduledDate = null,
                         scheduledTime = null,
                         categoryId = null,
@@ -745,9 +901,11 @@ class LocalTaskRepositoryTest {
                         name = task1.name,
                         deadlineDate = null,
                         deadlineTime = null,
+                        startAfterDate = null,
+                        startAfterTime = null,
                         scheduledDate = null,
                         scheduledTime = null,
-                        categoryId = null,
+                        categoryId = task1.categoryId,
                         recurrences = emptyList(),
                         parentUpdateType = PathUpdateType.Replace(task3.id),
                         existingTask = task1,
@@ -764,9 +922,11 @@ class LocalTaskRepositoryTest {
                         name = task1.name,
                         deadlineDate = null,
                         deadlineTime = null,
+                        startAfterDate = null,
+                        startAfterTime = null,
                         scheduledDate = null,
                         scheduledTime = null,
-                        categoryId = null,
+                        categoryId = task1.categoryId,
                         recurrences = listOf(
                             TaskRecurrence(
                                 taskId = task1.id,
@@ -791,9 +951,11 @@ class LocalTaskRepositoryTest {
                         name = task1.name,
                         deadlineDate = null,
                         deadlineTime = null,
+                        startAfterDate = null,
+                        startAfterTime = null,
                         scheduledDate = null,
                         scheduledTime = null,
-                        categoryId = null,
+                        categoryId = task1.categoryId,
                         recurrences = emptyList(),
                         parentUpdateType = PathUpdateType.Remove,
                         existingTask = task1,
@@ -811,9 +973,11 @@ class LocalTaskRepositoryTest {
                         name = task3.name,
                         deadlineDate = null,
                         deadlineTime = null,
+                        startAfterDate = null,
+                        startAfterTime = null,
                         scheduledDate = null,
                         scheduledTime = null,
-                        categoryId = null,
+                        categoryId = task3.categoryId,
                         recurrences = emptyList(),
                         parentUpdateType = PathUpdateType.Replace(task1.id),
                         existingTask = task3,
@@ -854,6 +1018,8 @@ class LocalTaskRepositoryTest {
                         name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
                         deadlineDate = null,
                         deadlineTime = null,
+                        startAfterDate = null,
+                        startAfterTime = null,
                         scheduledDate = null,
                         scheduledTime = null,
                         categoryId = null,
@@ -893,9 +1059,11 @@ class LocalTaskRepositoryTest {
                             name = task.name,
                             deadlineDate = task.deadlineDate,
                             deadlineTime = task.deadlineTime,
+                            startAfterDate = task.startAfterDate,
+                            startAfterTime = task.startAfterTime,
                             scheduledDate = task.scheduledDate,
                             scheduledTime = task.scheduledTime,
-                            categoryId = null,
+                            categoryId = task.categoryId,
                             recurrences = listOf(
                                 TaskRecurrence(
                                     taskId = task.id,
@@ -940,6 +1108,8 @@ class LocalTaskRepositoryTest {
                         name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
                         deadlineDate = null,
                         deadlineTime = null,
+                        startAfterDate = null,
+                        startAfterTime = null,
                         scheduledDate = null,
                         scheduledTime = null,
                         categoryId = null,
@@ -978,9 +1148,11 @@ class LocalTaskRepositoryTest {
                             name = task.name,
                             deadlineDate = task.deadlineDate,
                             deadlineTime = task.deadlineTime,
+                            startAfterDate = task.startAfterDate,
+                            startAfterTime = task.startAfterTime,
                             scheduledDate = task.scheduledDate,
                             scheduledTime = task.scheduledTime,
-                            categoryId = null,
+                            categoryId = task.categoryId,
                             recurrences = listOf(
                                 TaskRecurrence(
                                     taskId = task.id,
@@ -1025,6 +1197,8 @@ class LocalTaskRepositoryTest {
                         name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
                         deadlineDate = null,
                         deadlineTime = null,
+                        startAfterDate = null,
+                        startAfterTime = null,
                         scheduledDate = null,
                         scheduledTime = null,
                         categoryId = null,
@@ -1063,9 +1237,11 @@ class LocalTaskRepositoryTest {
                             name = task.name,
                             deadlineDate = task.deadlineDate,
                             deadlineTime = task.deadlineTime,
+                            startAfterDate = task.startAfterDate,
+                            startAfterTime = task.startAfterTime,
                             scheduledDate = task.scheduledDate,
                             scheduledTime = task.scheduledTime,
-                            categoryId = null,
+                            categoryId = task.categoryId,
                             recurrences = listOf(
                                 TaskRecurrence(
                                     taskId = task.id,
@@ -1110,6 +1286,8 @@ class LocalTaskRepositoryTest {
                         name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
                         deadlineDate = null,
                         deadlineTime = null,
+                        startAfterDate = null,
+                        startAfterTime = null,
                         scheduledDate = null,
                         scheduledTime = null,
                         categoryId = null,
@@ -1148,9 +1326,11 @@ class LocalTaskRepositoryTest {
                             name = task.name,
                             deadlineDate = task.deadlineDate,
                             deadlineTime = task.deadlineTime,
+                            startAfterDate = task.startAfterDate,
+                            startAfterTime = task.startAfterTime,
                             scheduledDate = task.scheduledDate,
                             scheduledTime = task.scheduledTime,
-                            categoryId = null,
+                            categoryId = task.categoryId,
                             recurrences = listOf(
                                 TaskRecurrence(
                                     taskId = task.id,
@@ -1195,6 +1375,8 @@ class LocalTaskRepositoryTest {
                         name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
                         deadlineDate = null,
                         deadlineTime = null,
+                        startAfterDate = null,
+                        startAfterTime = null,
                         scheduledDate = null,
                         scheduledTime = null,
                         categoryId = null,
@@ -1233,9 +1415,11 @@ class LocalTaskRepositoryTest {
                             name = task.name,
                             deadlineDate = task.deadlineDate,
                             deadlineTime = task.deadlineTime,
+                            startAfterDate = task.startAfterDate,
+                            startAfterTime = task.startAfterTime,
                             scheduledDate = task.scheduledDate,
                             scheduledTime = task.scheduledTime,
-                            categoryId = null,
+                            categoryId = task.categoryId,
                             recurrences = listOf(
                                 TaskRecurrence(
                                     taskId = task.id,
@@ -1280,6 +1464,8 @@ class LocalTaskRepositoryTest {
                         name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
                         deadlineDate = null,
                         deadlineTime = null,
+                        startAfterDate = null,
+                        startAfterTime = null,
                         scheduledDate = null,
                         scheduledTime = null,
                         categoryId = null,
@@ -1320,9 +1506,11 @@ class LocalTaskRepositoryTest {
                             name = task.name,
                             deadlineDate = task.deadlineDate,
                             deadlineTime = task.deadlineTime,
+                            startAfterDate = task.startAfterDate,
+                            startAfterTime = task.startAfterTime,
                             scheduledDate = task.scheduledDate,
                             scheduledTime = task.scheduledTime,
-                            categoryId = null,
+                            categoryId = task.categoryId,
                             recurrences = listOf(
                                 TaskRecurrence(
                                     taskId = task.id,
@@ -1349,9 +1537,11 @@ class LocalTaskRepositoryTest {
                         name = task.name,
                         deadlineDate = task.deadlineDate,
                         deadlineTime = task.deadlineTime,
+                        startAfterDate = task.startAfterDate,
+                        startAfterTime = task.startAfterTime,
                         scheduledDate = task.scheduledDate,
                         scheduledTime = task.scheduledTime,
-                        categoryId = null,
+                        categoryId = task.categoryId,
                         recurrences = listOf(
                             TaskRecurrence(
                                 taskId = task.id,
@@ -1389,6 +1579,8 @@ class LocalTaskRepositoryTest {
                 name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
                 deadlineDate = null,
                 deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
                 categoryId = null,
@@ -1402,6 +1594,8 @@ class LocalTaskRepositoryTest {
                 name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
                 deadlineDate = null,
                 deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
                 categoryId = null,
@@ -1415,6 +1609,8 @@ class LocalTaskRepositoryTest {
                 name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
                 deadlineDate = null,
                 deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
                 categoryId = null,
@@ -1429,6 +1625,8 @@ class LocalTaskRepositoryTest {
                 name = task2.name,
                 deadlineDate = LocalDate.parse("2024-08-23"),
                 deadlineTime = task2.deadlineTime,
+                startAfterDate = task2.startAfterDate,
+                startAfterTime = task2.startAfterTime,
                 scheduledDate = task2.scheduledDate,
                 scheduledTime = task2.scheduledTime,
                 categoryId = null,
@@ -1445,6 +1643,8 @@ class LocalTaskRepositoryTest {
                 name = updatedTask2.name,
                 deadlineDate = updatedTask2.deadlineDate,
                 deadlineTime = updatedTask2.deadlineTime,
+                startAfterDate = updatedTask2.startAfterDate,
+                startAfterTime = updatedTask2.startAfterTime,
                 scheduledDate = updatedTask2.scheduledDate,
                 scheduledTime = updatedTask2.scheduledTime,
                 doneAt = null,
@@ -1460,6 +1660,8 @@ class LocalTaskRepositoryTest {
                 name = task3.name,
                 deadlineDate = task3.deadlineDate,
                 deadlineTime = task3.deadlineTime,
+                startAfterDate = task3.startAfterDate,
+                startAfterTime = task3.startAfterTime,
                 scheduledDate = task3.scheduledDate,
                 scheduledTime = task3.scheduledTime,
                 categoryId = null,
@@ -1476,6 +1678,8 @@ class LocalTaskRepositoryTest {
                 name = task3.name,
                 deadlineDate = task3.deadlineDate,
                 deadlineTime = task3.deadlineTime,
+                startAfterDate = task3.startAfterDate,
+                startAfterTime = task3.startAfterTime,
                 scheduledDate = task3.scheduledDate,
                 scheduledTime = task3.scheduledTime,
                 doneAt = null,
@@ -1491,6 +1695,8 @@ class LocalTaskRepositoryTest {
                 name = updatedTask2.name,
                 deadlineDate = updatedTask2.deadlineDate,
                 deadlineTime = updatedTask2.deadlineTime,
+                startAfterDate = updatedTask2.startAfterDate,
+                startAfterTime = updatedTask2.startAfterTime,
                 scheduledDate = updatedTask2.scheduledDate,
                 scheduledTime = updatedTask2.scheduledTime,
                 categoryId = null,
@@ -1507,6 +1713,8 @@ class LocalTaskRepositoryTest {
                 name = updatedTask2.name,
                 deadlineDate = updatedTask2.deadlineDate,
                 deadlineTime = updatedTask2.deadlineTime,
+                startAfterDate = updatedTask2.startAfterDate,
+                startAfterTime = updatedTask2.startAfterTime,
                 scheduledDate = updatedTask2.scheduledDate,
                 scheduledTime = updatedTask2.scheduledTime,
                 doneAt = null,
@@ -1522,6 +1730,8 @@ class LocalTaskRepositoryTest {
                 name = task3.name,
                 deadlineDate = task3.deadlineDate,
                 deadlineTime = task3.deadlineTime,
+                startAfterDate = task3.startAfterDate,
+                startAfterTime = task3.startAfterTime,
                 scheduledDate = task3.scheduledDate,
                 scheduledTime = task3.scheduledTime,
                 categoryId = null,
@@ -1538,6 +1748,8 @@ class LocalTaskRepositoryTest {
                 name = task3.name,
                 deadlineDate = task3.deadlineDate,
                 deadlineTime = task3.deadlineTime,
+                startAfterDate = task3.startAfterDate,
+                startAfterTime = task3.startAfterTime,
                 scheduledDate = task3.scheduledDate,
                 scheduledTime = task3.scheduledTime,
                 doneAt = null,
@@ -1553,6 +1765,8 @@ class LocalTaskRepositoryTest {
                 name = task1.name,
                 deadlineDate = task1.deadlineDate,
                 deadlineTime = task1.deadlineTime,
+                startAfterDate = task1.startAfterDate,
+                startAfterTime = task1.startAfterTime,
                 scheduledDate = task1.scheduledDate,
                 scheduledTime = task1.scheduledTime,
                 categoryId = null,
@@ -1569,6 +1783,8 @@ class LocalTaskRepositoryTest {
                 name = task1.name,
                 deadlineDate = task1.deadlineDate,
                 deadlineTime = task1.deadlineTime,
+                startAfterDate = task1.startAfterDate,
+                startAfterTime = task1.startAfterTime,
                 scheduledDate = task1.scheduledDate,
                 scheduledTime = task1.scheduledTime,
                 doneAt = null,
@@ -1584,6 +1800,8 @@ class LocalTaskRepositoryTest {
                 name = task3.name,
                 deadlineDate = task3.deadlineDate,
                 deadlineTime = task3.deadlineTime,
+                startAfterDate = task3.startAfterDate,
+                startAfterTime = task3.startAfterTime,
                 scheduledDate = task3.scheduledDate,
                 scheduledTime = task3.scheduledTime,
                 doneAt = null,
@@ -1599,6 +1817,8 @@ class LocalTaskRepositoryTest {
                 name = task3.name,
                 deadlineDate = task3.deadlineDate,
                 deadlineTime = task3.deadlineTime,
+                startAfterDate = task3.startAfterDate,
+                startAfterTime = task3.startAfterTime,
                 scheduledDate = task3.scheduledDate,
                 scheduledTime = task3.scheduledTime,
                 categoryId = null,
@@ -1615,6 +1835,8 @@ class LocalTaskRepositoryTest {
                 name = task3.name,
                 deadlineDate = task3.deadlineDate,
                 deadlineTime = task3.deadlineTime,
+                startAfterDate = task3.startAfterDate,
+                startAfterTime = task3.startAfterTime,
                 scheduledDate = task3.scheduledDate,
                 scheduledTime = task3.scheduledTime,
                 doneAt = null,
@@ -1630,6 +1852,8 @@ class LocalTaskRepositoryTest {
                 name = task1.name,
                 deadlineDate = task1.deadlineDate,
                 deadlineTime = task1.deadlineTime,
+                startAfterDate = task1.startAfterDate,
+                startAfterTime = task1.startAfterTime,
                 scheduledDate = task1.scheduledDate,
                 scheduledTime = task1.scheduledTime,
                 categoryId = null,
@@ -1646,6 +1870,8 @@ class LocalTaskRepositoryTest {
                 name = task1.name,
                 deadlineDate = task1.deadlineDate,
                 deadlineTime = task1.deadlineTime,
+                startAfterDate = task1.startAfterDate,
+                startAfterTime = task1.startAfterTime,
                 scheduledDate = task1.scheduledDate,
                 scheduledTime = task1.scheduledTime,
                 doneAt = null,
@@ -1661,6 +1887,8 @@ class LocalTaskRepositoryTest {
                 name = task3.name,
                 deadlineDate = task3.deadlineDate,
                 deadlineTime = task3.deadlineTime,
+                startAfterDate = task3.startAfterDate,
+                startAfterTime = task3.startAfterTime,
                 scheduledDate = task3.scheduledDate,
                 scheduledTime = task3.scheduledTime,
                 doneAt = null,
@@ -1687,6 +1915,8 @@ class LocalTaskRepositoryTest {
                 name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
                 deadlineDate = null,
                 deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
                 categoryId = null,
@@ -1701,6 +1931,8 @@ class LocalTaskRepositoryTest {
                 name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
                 deadlineDate = null,
                 deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
                 categoryId = null,
@@ -1715,6 +1947,8 @@ class LocalTaskRepositoryTest {
                 name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
                 deadlineDate = null,
                 deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
                 categoryId = null,
@@ -1730,6 +1964,8 @@ class LocalTaskRepositoryTest {
                 name = task1.name,
                 deadlineDate = task1.deadlineDate,
                 deadlineTime = task1.deadlineTime,
+                startAfterDate = task1.startAfterDate,
+                startAfterTime = task1.startAfterTime,
                 scheduledDate = task1.scheduledDate,
                 scheduledTime = task1.scheduledTime,
                 doneAt = null,
@@ -1745,6 +1981,8 @@ class LocalTaskRepositoryTest {
                 name = task2.name,
                 deadlineDate = task2.deadlineDate,
                 deadlineTime = task2.deadlineTime,
+                startAfterDate = task2.startAfterDate,
+                startAfterTime = task2.startAfterTime,
                 scheduledDate = task2.scheduledDate,
                 scheduledTime = task2.scheduledTime,
                 doneAt = null,
@@ -1760,6 +1998,8 @@ class LocalTaskRepositoryTest {
                 name = task3.name,
                 deadlineDate = task3.deadlineDate,
                 deadlineTime = task3.deadlineTime,
+                startAfterDate = task3.startAfterDate,
+                startAfterTime = task3.startAfterTime,
                 scheduledDate = task3.scheduledDate,
                 scheduledTime = task3.scheduledTime,
                 doneAt = null,
@@ -1779,6 +2019,8 @@ class LocalTaskRepositoryTest {
                 name = task1.name,
                 deadlineDate = task1.deadlineDate,
                 deadlineTime = task1.deadlineTime,
+                startAfterDate = task1.startAfterDate,
+                startAfterTime = task1.startAfterTime,
                 scheduledDate = task1.scheduledDate,
                 scheduledTime = task1.scheduledTime,
                 doneAt = null,
@@ -1794,6 +2036,8 @@ class LocalTaskRepositoryTest {
                 name = task3.name,
                 deadlineDate = task3.deadlineDate,
                 deadlineTime = task3.deadlineTime,
+                startAfterDate = task3.startAfterDate,
+                startAfterTime = task3.startAfterTime,
                 scheduledDate = task3.scheduledDate,
                 scheduledTime = task3.scheduledTime,
                 doneAt = null,

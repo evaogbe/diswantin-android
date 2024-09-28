@@ -67,6 +67,8 @@ class CurrentTaskViewModelTest {
                     name = name,
                     deadlineDate = task1.deadlineDate,
                     deadlineTime = task1.deadlineTime,
+                    startAfterDate = task1.startAfterDate,
+                    startAfterTime = task1.startAfterTime,
                     scheduledDate = task1.scheduledDate,
                     scheduledTime = task1.scheduledTime,
                     categoryId = null,

@@ -63,6 +63,7 @@ import kotlinx.collections.immutable.persistentSetOf
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalTime
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -253,7 +254,20 @@ fun TaskDetailLayout(
                                 Text(text = uiState.formattedDeadline)
                             }
                         },
-                        overlineContent = { Text(stringResource(R.string.deadline_label)) }
+                        overlineContent = { Text(stringResource(R.string.deadline_label)) },
+                    )
+                }
+            }
+
+            if (uiState.formattedStartAfter != null) {
+                item {
+                    ListItem(
+                        headlineContent = {
+                            SelectionContainer {
+                                Text(text = uiState.formattedStartAfter)
+                            }
+                        },
+                        overlineContent = { Text(stringResource(R.string.start_after_label)) },
                     )
                 }
             }
@@ -266,7 +280,7 @@ fun TaskDetailLayout(
                                 Text(text = uiState.formattedScheduledAt)
                             }
                         },
-                        overlineContent = { Text(stringResource(R.string.scheduled_at_label)) }
+                        overlineContent = { Text(stringResource(R.string.scheduled_at_label)) },
                     )
                 }
             }
@@ -297,7 +311,7 @@ fun TaskDetailLayout(
                             TextButton(onClick = { onNavigateToCategory(uiState.task.categoryId) }) {
                                 Text(stringResource(R.string.view_task_category_button))
                             }
-                        }
+                        },
                     )
                 }
             }
@@ -315,7 +329,7 @@ fun TaskDetailLayout(
                             TextButton(onClick = { onNavigateToTask(uiState.task.parentId) }) {
                                 Text(stringResource(R.string.view_task_button))
                             }
-                        }
+                        },
                     )
                 }
             }
@@ -366,6 +380,8 @@ private fun TaskDetailScreenPreview_Minimal() {
                         name = "Shower",
                         deadlineDate = null,
                         deadlineTime = null,
+                        startAfterDate = null,
+                        startAfterTime = null,
                         scheduledDate = null,
                         scheduledTime = null,
                         doneAt = null,
@@ -410,6 +426,8 @@ private fun TaskDetailScreenPreview_Detailed() {
                         name = "Shower",
                         deadlineDate = LocalDate.now(),
                         deadlineTime = null,
+                        startAfterDate = null,
+                        startAfterTime = LocalTime.now(),
                         scheduledDate = null,
                         scheduledTime = null,
                         doneAt = Instant.now(),
@@ -446,6 +464,8 @@ private fun TaskDetailLayoutPreview() {
                         name = "Shower",
                         deadlineDate = null,
                         deadlineTime = null,
+                        startAfterDate = null,
+                        startAfterTime = null,
                         scheduledDate = null,
                         scheduledTime = null,
                         doneAt = null,

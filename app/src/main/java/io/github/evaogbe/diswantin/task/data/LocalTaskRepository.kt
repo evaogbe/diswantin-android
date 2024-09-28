@@ -21,6 +21,7 @@ class LocalTaskRepository @Inject constructor(
         taskDao.getTaskPriorities(
             today = params.today,
             scheduledTimeBefore = params.scheduledTimeBefore,
+            startTimeBefore = params.startTimeBefore,
             doneBefore = params.doneBefore,
             week = params.week,
         )
@@ -42,6 +43,13 @@ class LocalTaskRepository @Inject constructor(
                                 ?: if (it.recurringPriority) params.recurringDeadline else null
                         }, nullsLast())
                         .thenComparing(TaskPriority::recurringPriority, reverseOrder())
+                        .thenComparing({
+                            dateTimePartsToZonedDateTime(
+                                it.startAfterDatePriority,
+                                it.startAfterTimePriority,
+                                LocalTime.MIN,
+                            )
+                        }, nullsFirst())
                         .thenComparing(TaskPriority::createdAtPriority)
                         .thenComparing(TaskPriority::idPriority)
                 )

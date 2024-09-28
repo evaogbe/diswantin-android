@@ -34,6 +34,8 @@ sealed interface TaskDetailUiState {
     ) : TaskDetailUiState {
         val formattedDeadline = formatDateTime(task.deadlineDate, task.deadlineTime)
 
+        val formattedStartAfter = formatDateTime(task.startAfterDate, task.startAfterTime)
+
         val formattedScheduledAt = formatDateTime(task.scheduledDate, task.scheduledTime)
 
         val isDone = if (recurrence == null) {
@@ -47,10 +49,7 @@ sealed interface TaskDetailUiState {
         private fun formatDateTime(date: LocalDate?, time: LocalTime?) = when {
             date != null && time != null -> {
                 date.atTime(time).format(
-                    DateTimeFormatter.ofLocalizedDateTime(
-                        FormatStyle.FULL,
-                        FormatStyle.SHORT,
-                    )
+                    DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL, FormatStyle.SHORT),
                 )
             }
 

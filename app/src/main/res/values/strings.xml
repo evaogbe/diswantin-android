@@ -5,6 +5,8 @@
     <string name="add_recurrence_button">Add recurrence</string>
     <string name="add_scheduled_at_button">Schedule</string>
     <string name="add_scheduled_date_button">Add scheduled date</string>
+    <string name="add_start_after_date_button">Add start after date</string>
+    <string name="add_start_after_time_button">Add start after time</string>
     <string name="add_task_button">Add to-do</string>
     <string name="add_task_category_button">Add category</string>
     <string name="advice_title">Advice</string>
@@ -104,6 +106,9 @@
     <string name="search_tasks_button">Search to-dos</string>
     <string name="search_task_category_options_error">Something went wrong loading categories</string>
     <string name="search_task_options_error">Something went wrong loading to-dos</string>
+    <string name="start_after_date_label">Start after date</string>
+    <string name="start_after_label">Start after</string>
+    <string name="start_after_time_label">Start after time</string>
     <string name="start_date_label">Start date</string>
     <string name="suggestion_item_break_down_task"><![CDATA[Be <b>flexible</b> about how much of the task needs to be completed. Do just the first <b>2 minutes</b>]]></string>
     <string name="suggestion_item_check_the_facts"><![CDATA[<b>Check the Facts</b>]]></string>

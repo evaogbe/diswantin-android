@@ -56,6 +56,8 @@ class FakeTaskCategoryRepository(private val db: FakeDatabase = FakeDatabase()) 
                             }
                             .thenComparing(Task::deadlineDate, nullsLast())
                             .thenComparing(Task::deadlineTime, nullsLast())
+                            .thenComparing(Task::startAfterDate, nullsFirst())
+                            .thenComparing(Task::startAfterTime, nullsFirst())
                             .thenComparing(Task::createdAt)
                             .thenComparing(Task::id))
                         .map { task ->

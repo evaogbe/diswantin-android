@@ -60,6 +60,13 @@ class FakeTaskRepository(
                         .thenComparing { task ->
                             !taskRecurrences.values.any { it.taskId == task.id }
                         }
+                        .thenComparing({
+                            dateTimePartsToZonedDateTime(
+                                it.startAfterDate,
+                                it.startAfterTime,
+                                LocalTime.MIN,
+                            )
+                        }, nullsFirst())
                         .thenComparing(Task::createdAt)
                         .thenComparing(Task::id)
                 )
@@ -93,7 +100,9 @@ class FakeTaskRepository(
                         ?.let { tasks[it.ancestor] }
                 }.firstOrNull { task ->
                     task.scheduledDate?.let { it <= params.today } != false &&
-                            task.scheduledTime?.let { it <= params.scheduledTimeBefore } != false
+                            task.scheduledTime?.let { it <= params.scheduledTimeBefore } != false &&
+                            task.startAfterDate?.let { it <= params.today } != false &&
+                            task.startAfterTime?.let { it <= params.startTimeBefore } != false
                 }
         }
 
@@ -175,6 +184,8 @@ class FakeTaskRepository(
                     name = task.name,
                     deadlineDate = task.deadlineDate,
                     deadlineTime = task.deadlineTime,
+                    startAfterDate = task.startAfterDate,
+                    startAfterTime = task.startAfterTime,
                     scheduledDate = task.scheduledDate,
                     scheduledTime = task.scheduledTime,
                     doneAt = taskCompletions.values
@@ -183,7 +194,7 @@ class FakeTaskRepository(
                     categoryId = task.categoryId,
                     categoryName = task.categoryId?.let { taskCategories[it] }?.name,
                     parentId = parentId,
-                    parentName = parentId?.let { tasks[it] }?.name
+                    parentName = parentId?.let { tasks[it] }?.name,
                 )
             }
         }
@@ -235,6 +246,8 @@ class FakeTaskRepository(
                         }
                         .thenComparing(Task::deadlineDate, nullsLast())
                         .thenComparing(Task::deadlineTime, nullsLast())
+                        .thenComparing(Task::startAfterDate, nullsFirst())
+                        .thenComparing(Task::startAfterTime, nullsFirst())
                         .thenComparing(Task::createdAt)
                         .thenComparing(Task::id)
                 )

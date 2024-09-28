@@ -224,13 +224,14 @@ class TaskCategoryFormViewModelTest {
             }
             viewModel.saveCategory()
 
+            assertThat(viewModel.uiState.value).isEqualTo(TaskCategoryFormUiState.Saved)
+
             val category = taskCategoryRepository.taskCategories.single()
             assertThat(category.name).isEqualTo(name)
             assertThat(taskCategoryRepository.getCategoryWithTasksById(category.id).first())
                 .isNotNull()
                 .prop(TaskCategoryWithTasks::tasks)
                 .isEqualTo(tasks.map { it.copy(categoryId = category.id) })
-            assertThat(viewModel.uiState.value).isEqualTo(TaskCategoryFormUiState.Saved)
         }
 
     @Test
@@ -299,10 +300,10 @@ class TaskCategoryFormViewModelTest {
             viewModel.updateNameInput(name)
             viewModel.saveCategory()
 
+            assertThat(viewModel.uiState.value).isEqualTo(TaskCategoryFormUiState.Saved)
             assertThat(taskCategoryRepository.getCategoryWithTasksById(category.id).first())
                 .isNotNull()
                 .isEqualTo(TaskCategoryWithTasks(category.copy(name = name), tasks))
-            assertThat(viewModel.uiState.value).isEqualTo(TaskCategoryFormUiState.Saved)
         }
 
     @Test

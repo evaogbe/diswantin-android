@@ -175,6 +175,8 @@ fun TaskFormScreen(
                 onSelectCategoryType = onSelectCategoryType,
                 onDeadlineDateChange = taskFormViewModel::updateDeadlineDate,
                 onDeadlineTimeChange = taskFormViewModel::updateDeadlineTime,
+                onStartAfterDateChange = taskFormViewModel::updateStartAfterDate,
+                onStartAfterTimeChange = taskFormViewModel::updateStartAfterTime,
                 onScheduledDateChange = taskFormViewModel::updateScheduledDate,
                 onScheduledTimeChange = taskFormViewModel::updateScheduledTime,
                 onEditRecurrence = onEditRecurrence,
@@ -189,7 +191,7 @@ fun TaskFormScreen(
 }
 
 enum class FieldDialogType {
-    DeadlineDate, DeadlineTime, ScheduledDate, ScheduledTime
+    DeadlineDate, DeadlineTime, StartAfterDate, StartAfterTime, ScheduledDate, ScheduledTime
 }
 
 @Composable
@@ -201,6 +203,8 @@ fun TaskFormLayout(
     onSelectCategoryType: (String) -> Unit,
     onDeadlineDateChange: (LocalDate?) -> Unit,
     onDeadlineTimeChange: (LocalTime?) -> Unit,
+    onStartAfterDateChange: (LocalDate?) -> Unit,
+    onStartAfterTimeChange: (LocalTime?) -> Unit,
     onScheduledDateChange: (LocalDate?) -> Unit,
     onScheduledTimeChange: (LocalTime?) -> Unit,
     onEditRecurrence: () -> Unit,
@@ -242,101 +246,54 @@ fun TaskFormLayout(
                 )
             }
 
-            when {
-                uiState.deadlineDate != null || uiState.deadlineTime != null -> {
-                    if (uiState.deadlineDate == null) {
-                        TextButtonWithIcon(
-                            onClick = { dialogType = FieldDialogType.DeadlineDate },
-                            painter = painterResource(R.drawable.baseline_schedule_24),
-                            text = stringResource(R.string.add_deadline_date_button),
+            if (uiState.scheduledTime == null) {
+                if (uiState.deadlineDate == null) {
+                    TextButtonWithIcon(
+                        onClick = { dialogType = FieldDialogType.DeadlineDate },
+                        painter = painterResource(R.drawable.baseline_schedule_24),
+                        text = stringResource(R.string.add_deadline_date_button),
+                    )
+                } else {
+                    Column {
+                        Text(
+                            text = stringResource(R.string.deadline_date_label),
+                            style = typography.bodyLarge,
                         )
-                    } else {
-                        Column {
-                            Text(
-                                text = stringResource(R.string.deadline_date_label),
-                                style = typography.bodyLarge,
+                        Spacer(Modifier.size(SpaceSm))
+                        ClearableLayout(
+                            onClear = { onDeadlineDateChange(null) },
+                            invert = false,
+                        ) {
+                            EditFieldButton(
+                                onClick = { dialogType = FieldDialogType.DeadlineDate },
+                                text = uiState.deadlineDate.format(
+                                    DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
+                                ),
                             )
-                            Spacer(Modifier.size(SpaceSm))
-                            ClearableLayout(
-                                onClear = { onDeadlineDateChange(null) },
-                                invert = false,
-                            ) {
-                                EditFieldButton(
-                                    onClick = { dialogType = FieldDialogType.DeadlineDate },
-                                    text = uiState.deadlineDate.format(
-                                        DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
-                                    ),
-                                )
-                            }
-                        }
-                    }
-
-                    if (uiState.deadlineTime == null) {
-                        TextButtonWithIcon(
-                            onClick = { dialogType = FieldDialogType.DeadlineTime },
-                            painter = painterResource(R.drawable.baseline_schedule_24),
-                            text = stringResource(R.string.add_deadline_time_button),
-                        )
-                    } else {
-                        Column {
-                            Text(
-                                text = stringResource(R.string.deadline_time_label),
-                                style = typography.bodyLarge,
-                            )
-                            Spacer(Modifier.size(SpaceSm))
-                            ClearableLayout(
-                                onClear = { onDeadlineTimeChange(null) },
-                                invert = false,
-                            ) {
-                                EditFieldButton(
-                                    onClick = { dialogType = FieldDialogType.DeadlineTime },
-                                    text = uiState.deadlineTime.format(
-                                        DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
-                                    ),
-                                )
-                            }
                         }
                     }
                 }
 
-                uiState.scheduledTime != null -> {
-                    if (uiState.scheduledDate == null) {
-                        TextButtonWithIcon(
-                            onClick = { dialogType = FieldDialogType.ScheduledDate },
-                            painter = painterResource(R.drawable.baseline_schedule_24),
-                            text = stringResource(R.string.add_scheduled_date_button),
-                        )
-                    } else {
-                        Column {
-                            Text(
-                                text = stringResource(R.string.scheduled_date_label),
-                                style = typography.bodyLarge,
-                            )
-                            Spacer(Modifier.size(SpaceSm))
-                            ClearableLayout(
-                                onClear = { onScheduledDateChange(null) },
-                                invert = false,
-                            ) {
-                                EditFieldButton(
-                                    onClick = { dialogType = FieldDialogType.ScheduledDate },
-                                    text = uiState.scheduledDate.format(
-                                        DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
-                                    ),
-                                )
-                            }
-                        }
-                    }
-
+                if (uiState.deadlineTime == null) {
+                    TextButtonWithIcon(
+                        onClick = { dialogType = FieldDialogType.DeadlineTime },
+                        painter = painterResource(R.drawable.baseline_schedule_24),
+                        text = stringResource(R.string.add_deadline_time_button),
+                    )
+                } else {
                     Column {
                         Text(
-                            text = stringResource(R.string.scheduled_time_label),
+                            text = stringResource(R.string.deadline_time_label),
                             style = typography.bodyLarge,
                         )
                         Spacer(Modifier.size(SpaceSm))
-                        ClearableLayout(onClear = { onScheduledTimeChange(null) }, invert = false) {
+                        ClearableLayout(
+                            onClear = { onDeadlineTimeChange(null) },
+                            invert = false,
+                        ) {
                             EditFieldButton(
-                                onClick = { dialogType = FieldDialogType.ScheduledTime },
-                                text = uiState.scheduledTime.format(
+                                onClick = { dialogType = FieldDialogType.DeadlineTime },
+                                text = uiState.deadlineTime.format(
                                     DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
                                 ),
                             )
@@ -344,29 +301,116 @@ fun TaskFormLayout(
                     }
                 }
 
-                else -> {
+                if (uiState.startAfterDate == null) {
                     TextButtonWithIcon(
-                        onClick = { dialogType = FieldDialogType.DeadlineDate },
+                        onClick = { dialogType = FieldDialogType.StartAfterDate },
                         painter = painterResource(R.drawable.baseline_schedule_24),
-                        text = stringResource(R.string.add_deadline_date_button),
+                        text = stringResource(R.string.add_start_after_date_button),
                     )
-                    TextButtonWithIcon(
-                        onClick = { dialogType = FieldDialogType.DeadlineTime },
-                        painter = painterResource(R.drawable.baseline_schedule_24),
-                        text = stringResource(R.string.add_deadline_time_button),
-                    )
-                    TextButtonWithIcon(
-                        onClick = {
-                            dialogType = if (uiState.recurrence == null) {
-                                FieldDialogType.ScheduledDate
-                            } else {
-                                FieldDialogType.ScheduledTime
-                            }
-                        },
-                        painter = painterResource(R.drawable.baseline_schedule_24),
-                        text = stringResource(R.string.add_scheduled_at_button),
-                    )
+                } else {
+                    Column {
+                        Text(
+                            text = stringResource(R.string.start_after_date_label),
+                            style = typography.bodyLarge,
+                        )
+                        Spacer(Modifier.size(SpaceSm))
+                        ClearableLayout(
+                            onClear = { onStartAfterDateChange(null) },
+                            invert = false,
+                        ) {
+                            EditFieldButton(
+                                onClick = { dialogType = FieldDialogType.StartAfterDate },
+                                text = uiState.startAfterDate.format(
+                                    DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
+                                ),
+                            )
+                        }
+                    }
                 }
+
+                if (uiState.startAfterTime == null) {
+                    TextButtonWithIcon(
+                        onClick = { dialogType = FieldDialogType.StartAfterTime },
+                        painter = painterResource(R.drawable.baseline_schedule_24),
+                        text = stringResource(R.string.add_start_after_time_button),
+                    )
+                } else {
+                    Column {
+                        Text(
+                            text = stringResource(R.string.start_after_time_label),
+                            style = typography.bodyLarge,
+                        )
+                        Spacer(Modifier.size(SpaceSm))
+                        ClearableLayout(
+                            onClear = { onStartAfterTimeChange(null) },
+                            invert = false,
+                        ) {
+                            EditFieldButton(
+                                onClick = { dialogType = FieldDialogType.StartAfterTime },
+                                text = uiState.startAfterTime.format(
+                                    DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
+                                ),
+                            )
+                        }
+                    }
+                }
+            } else {
+                if (uiState.scheduledDate == null) {
+                    TextButtonWithIcon(
+                        onClick = { dialogType = FieldDialogType.ScheduledDate },
+                        painter = painterResource(R.drawable.baseline_schedule_24),
+                        text = stringResource(R.string.add_scheduled_date_button),
+                    )
+                } else {
+                    Column {
+                        Text(
+                            text = stringResource(R.string.scheduled_date_label),
+                            style = typography.bodyLarge,
+                        )
+                        Spacer(Modifier.size(SpaceSm))
+                        ClearableLayout(
+                            onClear = { onScheduledDateChange(null) },
+                            invert = false,
+                        ) {
+                            EditFieldButton(
+                                onClick = { dialogType = FieldDialogType.ScheduledDate },
+                                text = uiState.scheduledDate.format(
+                                    DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
+                                ),
+                            )
+                        }
+                    }
+                }
+
+                Column {
+                    Text(
+                        text = stringResource(R.string.scheduled_time_label),
+                        style = typography.bodyLarge,
+                    )
+                    Spacer(Modifier.size(SpaceSm))
+                    ClearableLayout(onClear = { onScheduledTimeChange(null) }, invert = false) {
+                        EditFieldButton(
+                            onClick = { dialogType = FieldDialogType.ScheduledTime },
+                            text = uiState.scheduledTime.format(
+                                DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
+                            ),
+                        )
+                    }
+                }
+            }
+
+            if (uiState.canSchedule && uiState.scheduledTime == null) {
+                TextButtonWithIcon(
+                    onClick = {
+                        dialogType = if (uiState.recurrence == null) {
+                            FieldDialogType.ScheduledDate
+                        } else {
+                            FieldDialogType.ScheduledTime
+                        }
+                    },
+                    painter = painterResource(R.drawable.baseline_schedule_24),
+                    text = stringResource(R.string.add_scheduled_at_button),
+                )
             }
 
             if (uiState.recurrence == null) {
@@ -436,6 +480,29 @@ fun TaskFormLayout(
                 time = uiState.deadlineTime,
                 onSelectTime = {
                     onDeadlineTimeChange(it)
+                    dialogType = null
+                },
+            )
+        }
+        FieldDialogType.StartAfterDate -> {
+            DiswantinDatePickerDialog(
+                onDismissRequest = { dialogType = null },
+                dateTime = uiState.startAfterDate,
+                onSelectDateTime = {
+                    if (it != null) {
+                        onStartAfterDateChange(it)
+                    }
+                    dialogType = null
+                },
+            )
+        }
+
+        FieldDialogType.StartAfterTime -> {
+            DiswantinTimePickerDialog(
+                onDismissRequest = { dialogType = null },
+                time = uiState.startAfterTime,
+                onSelectTime = {
+                    onStartAfterTimeChange(it)
                     dialogType = null
                 },
             )
@@ -545,6 +612,8 @@ private fun TaskFormScreenPreview_New() {
                 uiState = TaskFormUiState.Success(
                     deadlineDate = null,
                     deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
                     recurrence = null,
@@ -561,6 +630,8 @@ private fun TaskFormScreenPreview_New() {
                 onSelectCategoryType = {},
                 onDeadlineDateChange = {},
                 onDeadlineTimeChange = {},
+                onStartAfterDateChange = {},
+                onStartAfterTimeChange = {},
                 onScheduledDateChange = {},
                 onScheduledTimeChange = {},
                 onEditRecurrence = {},
@@ -589,8 +660,10 @@ private fun TaskFormScreenPreview_Edit() {
             TaskFormLayout(
                 isNew = false,
                 uiState = TaskFormUiState.Success(
-                    deadlineDate = LocalDate.now(),
-                    deadlineTime = LocalTime.now(),
+                    deadlineDate = LocalDate.now().plusDays(1),
+                    deadlineTime = LocalTime.now().plusHours(1),
+                    startAfterDate = LocalDate.now(),
+                    startAfterTime = LocalTime.now(),
                     scheduledDate = null,
                     scheduledTime = null,
                     recurrence = TaskRecurrenceUiState(
@@ -613,6 +686,8 @@ private fun TaskFormScreenPreview_Edit() {
                 onSelectCategoryType = {},
                 onDeadlineDateChange = {},
                 onDeadlineTimeChange = {},
+                onStartAfterDateChange = {},
+                onStartAfterTimeChange = {},
                 onScheduledDateChange = {},
                 onScheduledTimeChange = {},
                 onEditRecurrence = {},
@@ -637,6 +712,8 @@ private fun TaskFormLayoutPreview_ScheduledAt() {
                 uiState = TaskFormUiState.Success(
                     deadlineDate = null,
                     deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
                     scheduledDate = LocalDate.now(),
                     scheduledTime = LocalTime.now(),
                     recurrence = null,
@@ -653,6 +730,8 @@ private fun TaskFormLayoutPreview_ScheduledAt() {
                 onSelectCategoryType = {},
                 onDeadlineDateChange = {},
                 onDeadlineTimeChange = {},
+                onStartAfterDateChange = {},
+                onStartAfterTimeChange = {},
                 onScheduledDateChange = {},
                 onScheduledTimeChange = {},
                 onEditRecurrence = {},
@@ -676,6 +755,8 @@ private fun TaskFormLayoutPreview_ScheduledTime() {
                 uiState = TaskFormUiState.Success(
                     deadlineDate = null,
                     deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = LocalTime.now(),
                     recurrence = TaskRecurrenceUiState(
@@ -698,6 +779,8 @@ private fun TaskFormLayoutPreview_ScheduledTime() {
                 onSelectCategoryType = {},
                 onDeadlineDateChange = {},
                 onDeadlineTimeChange = {},
+                onStartAfterDateChange = {},
+                onStartAfterTimeChange = {},
                 onScheduledDateChange = {},
                 onScheduledTimeChange = {},
                 onEditRecurrence = {},

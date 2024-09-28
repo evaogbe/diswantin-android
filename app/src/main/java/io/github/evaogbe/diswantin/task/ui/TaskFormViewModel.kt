@@ -62,6 +62,10 @@ class TaskFormViewModel @Inject constructor(
 
     private val deadlineTime = MutableStateFlow<LocalTime?>(null)
 
+    private val startAfterDate = MutableStateFlow<LocalDate?>(null)
+
+    private val startAfterTime = MutableStateFlow<LocalTime?>(null)
+
     private val scheduledDate = MutableStateFlow<LocalDate?>(null)
 
     private val scheduledTime = MutableStateFlow<LocalTime?>(null)
@@ -139,6 +143,8 @@ class TaskFormViewModel @Inject constructor(
     val uiState = combine(
         deadlineDate,
         deadlineTime,
+        startAfterDate,
+        startAfterTime,
         scheduledDate,
         scheduledTime,
         recurrenceUiState,
@@ -177,23 +183,25 @@ class TaskFormViewModel @Inject constructor(
     ) { args ->
         val deadlineDate = args[0] as LocalDate?
         val deadlineTime = args[1] as LocalTime?
-        val scheduledDate = args[2] as LocalDate?
-        val scheduledTime = args[3] as LocalTime?
-        val recurrenceUiState = args[4] as TaskRecurrenceUiState?
-        val hasCategoriesResult = args[5] as Result<Boolean>
-        val category = args[6] as TaskCategory?
-        val categoryQuery = (args[7] as String).trim()
-        val categoryOptions = args[8] as List<TaskCategory>
-        val taskCountResult = args[9] as Result<Long>
-        val parentTask = args[10] as Task?
-        val parentTaskQuery = (args[11] as String).trim()
-        val parentTaskOptions = args[12] as List<Task>
-        val isSaved = args[13] as Boolean
-        val userMessage = args[14] as Int?
-        val existingTaskResult = args[15] as Result<Task?>
-        val existingRecurrencesResult = args[16] as Result<List<TaskRecurrence>>
-        val existingCategoryResult = args[17] as Result<TaskCategory?>
-        val existingParentTaskResult = args[18] as Result<Task?>
+        val startAfterDate = args[2] as LocalDate?
+        val startAfterTime = args[3] as LocalTime?
+        val scheduledDate = args[4] as LocalDate?
+        val scheduledTime = args[5] as LocalTime?
+        val recurrenceUiState = args[6] as TaskRecurrenceUiState?
+        val hasCategoriesResult = args[7] as Result<Boolean>
+        val category = args[8] as TaskCategory?
+        val categoryQuery = (args[9] as String).trim()
+        val categoryOptions = args[10] as List<TaskCategory>
+        val taskCountResult = args[11] as Result<Long>
+        val parentTask = args[12] as Task?
+        val parentTaskQuery = (args[13] as String).trim()
+        val parentTaskOptions = args[14] as List<Task>
+        val isSaved = args[15] as Boolean
+        val userMessage = args[16] as Int?
+        val existingTaskResult = args[17] as Result<Task?>
+        val existingRecurrencesResult = args[18] as Result<List<TaskRecurrence>>
+        val existingCategoryResult = args[19] as Result<TaskCategory?>
+        val existingParentTaskResult = args[20] as Result<Task?>
 
         if (isSaved) {
             TaskFormUiState.Saved
@@ -203,6 +211,8 @@ class TaskFormViewModel @Inject constructor(
                     TaskFormUiState.Success(
                         deadlineDate = deadlineDate,
                         deadlineTime = deadlineTime,
+                        startAfterDate = startAfterDate,
+                        startAfterTime = startAfterTime,
                         scheduledDate = scheduledDate,
                         scheduledTime = scheduledTime,
                         recurrence = recurrenceUiState,
@@ -242,7 +252,7 @@ class TaskFormViewModel @Inject constructor(
 
     val recurrenceUiStateOrDefault = recurrenceUiState.map {
         it ?: TaskRecurrenceUiState(
-            start = LocalDate.now(clock),
+            start = startAfterDate.value ?: LocalDate.now(clock),
             type = RecurrenceType.Day,
             step = 1,
             weekdays = persistentSetOf(),
@@ -252,7 +262,7 @@ class TaskFormViewModel @Inject constructor(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000L),
         initialValue = TaskRecurrenceUiState(
-            start = LocalDate.now(clock),
+            start = startAfterDate.value ?: LocalDate.now(clock),
             type = RecurrenceType.Day,
             step = 1,
             weekdays = persistentSetOf(),
@@ -268,6 +278,8 @@ class TaskFormViewModel @Inject constructor(
             nameInput = existingTask.name
             deadlineDate.value = existingTask.deadlineDate
             deadlineTime.value = existingTask.deadlineTime
+            startAfterDate.value = existingTask.startAfterDate
+            startAfterTime.value = existingTask.startAfterTime
             scheduledDate.value = existingTask.scheduledDate
             scheduledTime.value = existingTask.scheduledTime
             recurrenceUiState.value = existingRecurrencesStream.first().getOrNull()?.let {
@@ -288,6 +300,14 @@ class TaskFormViewModel @Inject constructor(
 
     fun updateDeadlineTime(value: LocalTime?) {
         deadlineTime.value = value
+    }
+
+    fun updateStartAfterDate(value: LocalDate?) {
+        startAfterDate.value = value
+    }
+
+    fun updateStartAfterTime(value: LocalTime?) {
+        startAfterTime.value = value
     }
 
     fun updateScheduledDate(value: LocalDate?) {
@@ -386,6 +406,8 @@ class TaskFormViewModel @Inject constructor(
                 name = nameInput,
                 deadlineDate = deadlineDate,
                 deadlineTime = state.deadlineTime,
+                startAfterDate = state.startAfterDate,
+                startAfterTime = state.startAfterTime,
                 scheduledDate = scheduledDate,
                 scheduledTime = state.scheduledTime,
                 categoryId = state.category?.id,
@@ -419,6 +441,8 @@ class TaskFormViewModel @Inject constructor(
                             name = nameInput,
                             deadlineDate = deadlineDate,
                             deadlineTime = state.deadlineTime,
+                            startAfterDate = state.startAfterDate,
+                            startAfterTime = state.startAfterTime,
                             scheduledDate = scheduledDate,
                             scheduledTime = state.scheduledTime,
                             categoryId = if (

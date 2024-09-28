@@ -73,6 +73,8 @@ class TaskFormViewModelTest {
                 TaskFormUiState.Success(
                     deadlineDate = null,
                     deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
                     recurrence = null,
@@ -94,8 +96,10 @@ class TaskFormViewModelTest {
             val clock = createClock()
             val locale = Locale.US
             val task = genTask().copy(
-                deadlineDate = LocalDate.parse("2024-08-22"),
-                deadlineTime = LocalTime.parse("17:00"),
+                deadlineDate = LocalDate.parse("2024-08-23"),
+                deadlineTime = LocalTime.parse("18:00"),
+                startAfterDate = LocalDate.parse("2024-08-22"),
+                startAfterTime = LocalTime.parse("17:00"),
             )
             val category = TaskCategory(name = loremFaker.lorem.words())
             val db = FakeDatabase().apply {
@@ -129,8 +133,10 @@ class TaskFormViewModelTest {
             assertThat(viewModel.isNew).isFalse()
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    deadlineDate = LocalDate.parse("2024-08-22"),
-                    deadlineTime = LocalTime.parse("17:00"),
+                    deadlineDate = LocalDate.parse("2024-08-23"),
+                    deadlineTime = LocalTime.parse("18:00"),
+                    startAfterDate = LocalDate.parse("2024-08-22"),
+                    startAfterTime = LocalTime.parse("17:00"),
                     scheduledDate = null,
                     scheduledTime = null,
                     recurrence = TaskRecurrenceUiState(
@@ -217,6 +223,8 @@ class TaskFormViewModelTest {
                 TaskFormUiState.Success(
                     deadlineDate = null,
                     deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
                     recurrence = null,
@@ -247,6 +255,8 @@ class TaskFormViewModelTest {
                 TaskFormUiState.Success(
                     deadlineDate = null,
                     deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
                     recurrence = null,
@@ -284,6 +294,8 @@ class TaskFormViewModelTest {
                 TaskFormUiState.Success(
                     deadlineDate = null,
                     deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
                     recurrence = null,
@@ -323,6 +335,8 @@ class TaskFormViewModelTest {
                 TaskFormUiState.Success(
                     deadlineDate = null,
                     deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
                     recurrence = null,
@@ -355,6 +369,8 @@ class TaskFormViewModelTest {
                 TaskFormUiState.Success(
                     deadlineDate = null,
                     deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
                     recurrence = null,
@@ -389,6 +405,8 @@ class TaskFormViewModelTest {
                 TaskFormUiState.Success(
                     deadlineDate = null,
                     deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
                     recurrence = null,
@@ -423,6 +441,8 @@ class TaskFormViewModelTest {
                 TaskFormUiState.Success(
                     deadlineDate = null,
                     deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
                     recurrence = null,
@@ -460,6 +480,8 @@ class TaskFormViewModelTest {
                 TaskFormUiState.Success(
                     deadlineDate = null,
                     deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
                     recurrence = null,
@@ -497,6 +519,8 @@ class TaskFormViewModelTest {
             TaskFormUiState.Success(
                 deadlineDate = null,
                 deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
                 recurrence = null,
@@ -537,6 +561,8 @@ class TaskFormViewModelTest {
                 TaskFormUiState.Success(
                     deadlineDate = null,
                     deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
                     recurrence = null,
@@ -578,6 +604,8 @@ class TaskFormViewModelTest {
             TaskFormUiState.Success(
                 deadlineDate = null,
                 deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
                 recurrence = null,
@@ -615,6 +643,8 @@ class TaskFormViewModelTest {
                 TaskFormUiState.Success(
                     deadlineDate = null,
                     deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
                     recurrence = null,
@@ -655,6 +685,8 @@ class TaskFormViewModelTest {
                 TaskFormUiState.Success(
                     deadlineDate = null,
                     deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
                     recurrence = null,
@@ -669,7 +701,7 @@ class TaskFormViewModelTest {
             )
 
             viewModel.updateNameInput(name)
-            viewModel.updateDeadlineDate(LocalDate.parse("2024-08-22"))
+            viewModel.updateDeadlineDate(LocalDate.parse("2024-08-23"))
             viewModel.updateDeadlineTime(LocalTime.parse("17:00"))
             viewModel.updateRecurrence(
                 TaskRecurrenceUiState(
@@ -682,12 +714,14 @@ class TaskFormViewModelTest {
             )
             viewModel.saveTask()
 
+            assertThat(viewModel.uiState.value).isEqualTo(TaskFormUiState.Saved)
+
             val task = taskRepository.tasks.single()
             assertThat(task).isEqualToIgnoringGivenProperties(
                 Task(
                     createdAt = Instant.parse("2024-08-22T08:00:00Z"),
                     name = name,
-                    deadlineDate = LocalDate.parse("2024-08-22"),
+                    deadlineDate = LocalDate.parse("2024-08-23"),
                     deadlineTime = LocalTime.parse("17:00"),
                 ),
                 Task::id,
@@ -703,7 +737,6 @@ class TaskFormViewModelTest {
                     ),
                     TaskRecurrence::id,
                 )
-            assertThat(viewModel.uiState.value).isEqualTo(TaskFormUiState.Saved)
         }
 
     @Test
@@ -728,6 +761,8 @@ class TaskFormViewModelTest {
                 TaskFormUiState.Success(
                     deadlineDate = null,
                     deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
                     recurrence = null,
@@ -749,8 +784,10 @@ class TaskFormViewModelTest {
             val clock = createClock()
             val locale = Locale.US
             val task = genTask().copy(
-                deadlineDate = LocalDate.parse("2024-08-22"),
-                deadlineTime = LocalTime.parse("21:00"),
+                deadlineDate = LocalDate.parse("2024-08-23"),
+                deadlineTime = LocalTime.parse("22:00"),
+                startAfterDate = LocalDate.parse("2024-08-22"),
+                startAfterTime = LocalTime.parse("21:00"),
             )
             val category = TaskCategory(id = 1L, name = loremFaker.lorem.words())
             val db = FakeDatabase().apply {
@@ -774,8 +811,10 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    deadlineDate = LocalDate.parse("2024-08-22"),
-                    deadlineTime = LocalTime.parse("21:00"),
+                    deadlineDate = LocalDate.parse("2024-08-23"),
+                    deadlineTime = LocalTime.parse("22:00"),
+                    startAfterDate = LocalDate.parse("2024-08-22"),
+                    startAfterTime = LocalTime.parse("21:00"),
                     scheduledDate = null,
                     scheduledTime = null,
                     recurrence = null,
@@ -792,6 +831,8 @@ class TaskFormViewModelTest {
             viewModel.updateNameInput(name)
             viewModel.updateDeadlineDate(null)
             viewModel.updateDeadlineTime(null)
+            viewModel.updateStartAfterDate(null)
+            viewModel.updateStartAfterTime(null)
             viewModel.updateScheduledDate(LocalDate.parse("2024-08-22"))
             viewModel.updateScheduledTime(LocalTime.parse("17:00"))
             viewModel.updateRecurrence(
@@ -806,11 +847,14 @@ class TaskFormViewModelTest {
             viewModel.updateCategory(category)
             viewModel.saveTask()
 
+            assertThat(viewModel.uiState.value).isEqualTo(TaskFormUiState.Saved)
             assertThat(taskRepository.tasks).containsExactlyInAnyOrder(
                 task.copy(
                     name = name,
                     deadlineDate = null,
                     deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
                     scheduledDate = LocalDate.parse("2024-08-22"),
                     scheduledTime = LocalTime.parse("17:00"),
                     categoryId = category.id,
@@ -835,7 +879,6 @@ class TaskFormViewModelTest {
                     week = 5,
                 ),
             )
-            assertThat(viewModel.uiState.value).isEqualTo(TaskFormUiState.Saved)
         }
 
     @Test
@@ -863,6 +906,8 @@ class TaskFormViewModelTest {
                 TaskFormUiState.Success(
                     deadlineDate = null,
                     deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
                     recurrence = null,
@@ -903,6 +948,8 @@ class TaskFormViewModelTest {
                 TaskFormUiState.Success(
                     deadlineDate = null,
                     deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
                     recurrence = null,
@@ -919,16 +966,8 @@ class TaskFormViewModelTest {
             viewModel.updateNameInput(name)
             viewModel.saveTask()
 
-            assertThat(taskRepository.tasks).containsExactlyInAnyOrder(
-                task.copy(
-                    name = name,
-                    deadlineDate = null,
-                    deadlineTime = null,
-                    scheduledDate = null,
-                    scheduledTime = null,
-                    categoryId = category.id,
-                )
-            )
+            assertThat(taskRepository.tasks)
+                .containsExactlyInAnyOrder(task.copy(name = name, categoryId = category.id))
         }
 
     @Test
@@ -957,6 +996,8 @@ class TaskFormViewModelTest {
                 TaskFormUiState.Success(
                     deadlineDate = null,
                     deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
                     recurrence = null,
@@ -973,16 +1014,8 @@ class TaskFormViewModelTest {
             viewModel.updateNameInput(name)
             viewModel.saveTask()
 
-            assertThat(taskRepository.tasks).containsExactlyInAnyOrder(
-                task.copy(
-                    name = name,
-                    deadlineDate = null,
-                    deadlineTime = null,
-                    scheduledDate = null,
-                    scheduledTime = null,
-                    categoryId = category.id,
-                )
-            )
+            assertThat(taskRepository.tasks)
+                .containsExactlyInAnyOrder(task.copy(name = name, categoryId = category.id))
         }
 
     @Test
@@ -1010,6 +1043,8 @@ class TaskFormViewModelTest {
                 TaskFormUiState.Success(
                     deadlineDate = null,
                     deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
                     recurrence = null,
@@ -1056,6 +1091,8 @@ class TaskFormViewModelTest {
                 TaskFormUiState.Success(
                     deadlineDate = null,
                     deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
                     recurrence = null,
