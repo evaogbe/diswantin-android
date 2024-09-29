@@ -2,7 +2,7 @@ package io.github.evaogbe.diswantin.ui.components
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -23,7 +23,7 @@ fun PendingLayout(modifier: Modifier = Modifier) {
             .fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        CircularProgressIndicator(modifier = Modifier.width(IconSizeLg))
+        CircularProgressIndicator(modifier = Modifier.size(IconSizeLg))
     }
 }
 

@@ -1,9 +1,10 @@
 package io.github.evaogbe.diswantin.task.data
 
+import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
 
 interface TaskCategoryRepository {
-    val categoriesStream: Flow<List<TaskCategory>>
+    val categoryPagingData: Flow<PagingData<TaskCategory>>
 
     val hasCategoriesStream: Flow<Boolean>
 

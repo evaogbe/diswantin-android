@@ -1,5 +1,7 @@
 package io.github.evaogbe.diswantin.task.data
 
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
 import io.github.evaogbe.diswantin.data.IoDispatcher
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.combine
@@ -12,7 +14,9 @@ class LocalTaskCategoryRepository @Inject constructor(
     private val taskDao: TaskDao,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : TaskCategoryRepository {
-    override val categoriesStream = taskCategoryDao.getTaskCategories().flowOn(ioDispatcher)
+    override val categoryPagingData = Pager(PagingConfig(pageSize = 20)) {
+        taskCategoryDao.getTaskCategoryPagingSource()
+    }.flow
 
     override val hasCategoriesStream = taskCategoryDao.hasCategories().flowOn(ioDispatcher)
 

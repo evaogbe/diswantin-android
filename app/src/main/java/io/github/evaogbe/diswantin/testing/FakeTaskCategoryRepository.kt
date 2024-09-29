@@ -1,5 +1,8 @@
 package io.github.evaogbe.diswantin.testing
 
+import androidx.paging.LoadState
+import androidx.paging.LoadStates
+import androidx.paging.PagingData
 import io.github.evaogbe.diswantin.task.data.EditTaskCategoryForm
 import io.github.evaogbe.diswantin.task.data.NewTaskCategoryForm
 import io.github.evaogbe.diswantin.task.data.Task
@@ -16,8 +19,17 @@ class FakeTaskCategoryRepository(private val db: FakeDatabase = FakeDatabase()) 
     val taskCategories
         get() = db.taskCategoryTable.value.values
 
-    override val categoriesStream =
-        db.taskCategoryTable.map { it.values.sortedBy(TaskCategory::name) }
+    override val categoryPagingData =
+        db.taskCategoryTable.map {
+            PagingData.from(
+                it.values.sortedBy(TaskCategory::name),
+                LoadStates(
+                    refresh = LoadState.NotLoading(endOfPaginationReached = true),
+                    prepend = LoadState.NotLoading(endOfPaginationReached = true),
+                    append = LoadState.NotLoading(endOfPaginationReached = true),
+                ),
+            )
+        }
 
     override val hasCategoriesStream = db.taskCategoryTable.map { it.isNotEmpty() }
 

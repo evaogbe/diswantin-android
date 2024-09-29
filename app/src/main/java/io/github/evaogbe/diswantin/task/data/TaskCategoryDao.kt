@@ -1,5 +1,6 @@
 package io.github.evaogbe.diswantin.task.data
 
+import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
@@ -10,8 +11,8 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface TaskCategoryDao {
-    @Query("SELECT * FROM task_category ORDER BY name LIMIT 20")
-    fun getTaskCategories(): Flow<List<TaskCategory>>
+    @Query("SELECT * FROM task_category ORDER BY name")
+    fun getTaskCategoryPagingSource(): PagingSource<Int, TaskCategory>
 
     @Query("SELECT * FROM task_category WHERE id = :id LIMIT 1")
     fun getById(id: Long): Flow<TaskCategory?>

@@ -93,17 +93,47 @@ fun OutlinedButtonWithIcon(
 }
 
 @Composable
+fun OutlinedButtonWithIcon(
+    onClick: () -> Unit,
+    imageVector: ImageVector,
+    text: String,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    colors: ButtonColors = ButtonDefaults.outlinedButtonColors(),
+    border: BorderStroke? = ButtonDefaults.outlinedButtonBorder(enabled),
+) {
+    OutlinedButton(
+        onClick = onClick,
+        modifier = modifier,
+        enabled = enabled,
+        colors = colors,
+        border = border,
+        contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
+    ) {
+        Icon(
+            imageVector = imageVector,
+            contentDescription = null,
+            modifier = Modifier.size(ButtonDefaults.IconSize),
+        )
+        Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+        Text(text = text)
+    }
+}
+
+@Composable
 fun TextButtonWithIcon(
     onClick: () -> Unit,
     painter: Painter,
     text: String,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    colors: ButtonColors = ButtonDefaults.textButtonColors(),
 ) {
     TextButton(
         onClick = onClick,
         modifier = modifier,
         enabled = enabled,
+        colors = colors,
         contentPadding = ButtonDefaults.TextButtonWithIconContentPadding,
     ) {
         Icon(
@@ -123,11 +153,13 @@ fun TextButtonWithIcon(
     text: String,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    colors: ButtonColors = ButtonDefaults.textButtonColors(),
 ) {
     TextButton(
         onClick = onClick,
         modifier = modifier,
         enabled = enabled,
+        colors = colors,
         contentPadding = ButtonDefaults.TextButtonWithIconContentPadding,
     ) {
         Icon(

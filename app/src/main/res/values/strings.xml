@@ -107,6 +107,7 @@
         <item quantity="one">Yearly</item>
         <item quantity="other">Every %1$d years</item>
     </plurals>
+    <string name="retry_button">Retry</string>
     <string name="save_button">Save</string>
     <string name="scheduled_at_label">Scheduled at</string>
     <string name="scheduled_date_label">Scheduled date</string>
