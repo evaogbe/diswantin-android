@@ -48,12 +48,12 @@ import java.time.ZoneOffset
 @Composable
 fun DiswantinDatePickerDialog(
     onDismissRequest: () -> Unit,
-    dateTime: LocalDate?,
-    onSelectDateTime: (LocalDate?) -> Unit,
+    date: LocalDate?,
+    onSelectDate: (LocalDate?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val datePickerState = rememberDatePickerState(
-        initialSelectedDateMillis = dateTime?.atStartOfDay(ZoneOffset.UTC)
+        initialSelectedDateMillis = date?.atStartOfDay(ZoneOffset.UTC)
             ?.toInstant()
             ?.toEpochMilli(),
     )
@@ -61,7 +61,7 @@ fun DiswantinDatePickerDialog(
         onDismissRequest = onDismissRequest,
         confirmButton = {
             TextButton(onClick = {
-                onSelectDateTime(datePickerState.selectedDateMillis?.let {
+                onSelectDate(datePickerState.selectedDateMillis?.let {
                     Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate()
                 })
             }) {

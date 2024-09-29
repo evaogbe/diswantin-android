@@ -371,7 +371,7 @@ class TaskFormScreenTest {
     fun displaysMatchingCategoryOptions_whenCategorySearchedFor() {
         val query = loremFaker.verbs.base()
         val categories = List(3) {
-            TaskCategory(id = it + 1L, name = faker.string.regexify("""$query \w+"""))
+            TaskCategory(id = it + 1L, name = "$query ${loremFaker.lorem.unique.words()}")
         }
         val db = FakeDatabase().apply {
             insertTask(genTask())

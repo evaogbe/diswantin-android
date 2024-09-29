@@ -480,8 +480,8 @@ fun TaskFormLayout(
         FieldDialogType.DeadlineDate -> {
             DiswantinDatePickerDialog(
                 onDismissRequest = { dialogType = null },
-                dateTime = uiState.deadlineDate,
-                onSelectDateTime = {
+                date = uiState.deadlineDate,
+                onSelectDate = {
                     if (it != null) {
                         onDeadlineDateChange(it)
                     }
@@ -504,8 +504,8 @@ fun TaskFormLayout(
         FieldDialogType.StartAfterDate -> {
             DiswantinDatePickerDialog(
                 onDismissRequest = { dialogType = null },
-                dateTime = uiState.startAfterDate,
-                onSelectDateTime = {
+                date = uiState.startAfterDate,
+                onSelectDate = {
                     if (it != null) {
                         onStartAfterDateChange(it)
                     }
@@ -528,8 +528,8 @@ fun TaskFormLayout(
         FieldDialogType.ScheduledDate -> {
             DiswantinDatePickerDialog(
                 onDismissRequest = { dialogType = null },
-                dateTime = uiState.scheduledDate,
-                onSelectDateTime = {
+                date = uiState.scheduledDate,
+                onSelectDate = {
                     if (it != null) {
                         onScheduledDateChange(it)
                     }
