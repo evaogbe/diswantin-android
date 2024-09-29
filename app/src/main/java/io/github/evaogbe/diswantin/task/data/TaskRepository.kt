@@ -21,6 +21,8 @@ interface TaskRepository {
 
     fun getCount(): Flow<Long>
 
+    fun getCompletionCount(): Flow<Long>
+
     suspend fun create(form: NewTaskForm): Task
 
     suspend fun update(form: EditTaskForm): Task

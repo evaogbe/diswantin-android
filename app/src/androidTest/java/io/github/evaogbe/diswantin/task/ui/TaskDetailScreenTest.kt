@@ -9,12 +9,16 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isTrue
 import io.github.evaogbe.diswantin.R
+import io.github.evaogbe.diswantin.task.data.RecurrenceType
 import io.github.evaogbe.diswantin.task.data.Task
+import io.github.evaogbe.diswantin.task.data.TaskCompletion
+import io.github.evaogbe.diswantin.task.data.TaskRecurrence
 import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.stringResource
 import io.github.evaogbe.diswantin.ui.components.PendingLayoutTestTag
 import io.github.evaogbe.diswantin.ui.navigation.NavArguments
+import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
@@ -86,7 +90,7 @@ class TaskDetailScreenTest {
             createSavedStateHandle(),
             taskRepository,
             clock,
-            Locale.getDefault(),
+            Locale.US,
         )
 
         composeTestRule.setContent {
@@ -121,7 +125,7 @@ class TaskDetailScreenTest {
             createSavedStateHandle(),
             taskRepository,
             clock,
-            Locale.getDefault(),
+            Locale.US,
         )
 
         composeTestRule.setContent {
@@ -156,7 +160,7 @@ class TaskDetailScreenTest {
 
     @Test
     fun displaysErrorMessage_whenMarkTaskDoneFails() {
-        var userMessage: Int? = null
+        var userMessage: UserMessage? = null
         val clock = createClock()
         val task = genTask()
         val db = FakeDatabase().apply {
@@ -169,7 +173,7 @@ class TaskDetailScreenTest {
             createSavedStateHandle(),
             taskRepository,
             clock,
-            Locale.getDefault(),
+            Locale.US,
         )
 
         composeTestRule.setContent {
@@ -190,13 +194,131 @@ class TaskDetailScreenTest {
         viewModel.markTaskDone()
 
         composeTestRule.waitUntil {
-            userMessage == R.string.task_detail_mark_done_error
+            userMessage == UserMessage.String(R.string.task_detail_mark_done_error)
+        }
+    }
+
+    @Test
+    fun displaysCelebrationMessage_whenCompletionCountMultipleOf50() {
+        var userMessage: UserMessage? = null
+        val clock =
+            Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
+        val task = genTask()
+        val db = FakeDatabase().apply {
+            insertTask(task)
+            insertTaskRecurrence(
+                TaskRecurrence(
+                    taskId = task.id,
+                    start = LocalDate.parse("2024-01-01"),
+                    type = RecurrenceType.Day,
+                    step = 1,
+                    week = 1,
+                )
+            )
+            repeat(49) {
+                insertTaskCompletion(
+                    TaskCompletion(
+                        taskId = task.id,
+                        // 1704157200 = 2024-01-02T00:00:00Z
+                        doneAt = Instant.ofEpochMilli(1704153600L + 86400000L * it)
+                    )
+                )
+            }
+        }
+        val taskRepository = FakeTaskRepository(db, clock)
+        val viewModel = TaskDetailViewModel(
+            createSavedStateHandle(),
+            taskRepository,
+            clock,
+            Locale.US,
+        )
+
+        composeTestRule.setContent {
+            DiswantinTheme {
+                TaskDetailScreen(
+                    onPopBackStack = {},
+                    setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
+                    setUserMessage = { userMessage = it },
+                    onNavigateToTask = {},
+                    onNavigateToCategory = {},
+                    taskDetailViewModel = viewModel,
+                )
+            }
+        }
+
+        viewModel.markTaskDone()
+
+        composeTestRule.waitUntil {
+            userMessage == UserMessage.Plural(R.plurals.completed_tasks_celebration_message, 50)
+        }
+    }
+
+    @Test
+    fun displaysErrorMessage_whenFetchCompletionCountFails() {
+        var userMessage: UserMessage? = null
+        val clock =
+            Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
+        val task = genTask()
+        val db = FakeDatabase().apply {
+            insertTask(task)
+            insertTaskRecurrence(
+                TaskRecurrence(
+                    taskId = task.id,
+                    start = LocalDate.parse("2024-01-01"),
+                    type = RecurrenceType.Day,
+                    step = 1,
+                    week = 1,
+                )
+            )
+            repeat(49) {
+                insertTaskCompletion(
+                    TaskCompletion(
+                        taskId = task.id,
+                        // 1704157200 = 2024-01-02T00:00:00Z
+                        doneAt = Instant.ofEpochMilli(1704153600L + 86400000L * it)
+                    )
+                )
+            }
+        }
+        val taskRepository = spyk(FakeTaskRepository(db, clock))
+        every { taskRepository.getCompletionCount() } returns flow {
+            throw RuntimeException("Test")
+        }
+
+        val viewModel = TaskDetailViewModel(
+            createSavedStateHandle(),
+            taskRepository,
+            clock,
+            Locale.US,
+        )
+
+        composeTestRule.setContent {
+            DiswantinTheme {
+                TaskDetailScreen(
+                    onPopBackStack = {},
+                    setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
+                    setUserMessage = { userMessage = it },
+                    onNavigateToTask = {},
+                    onNavigateToCategory = {},
+                    taskDetailViewModel = viewModel,
+                )
+            }
+        }
+
+        viewModel.markTaskDone()
+
+        composeTestRule.waitUntil {
+            userMessage == UserMessage.String(R.string.task_detail_fetch_completion_error)
         }
     }
 
     @Test
     fun displaysErrorMessage_whenUnmarkTaskDoneFails() {
-        var userMessage: Int? = null
+        var userMessage: UserMessage? = null
         val clock = createClock()
         val task = genTask()
         val db = FakeDatabase().apply {
@@ -209,7 +331,7 @@ class TaskDetailScreenTest {
             createSavedStateHandle(),
             taskRepository,
             clock,
-            Locale.getDefault(),
+            Locale.US,
         )
         viewModel.markTaskDone()
 
@@ -231,7 +353,7 @@ class TaskDetailScreenTest {
         viewModel.unmarkTaskDone()
 
         composeTestRule.waitUntil {
-            userMessage == R.string.task_detail_unmark_done_error
+            userMessage == UserMessage.String(R.string.task_detail_unmark_done_error)
         }
     }
 
@@ -248,7 +370,7 @@ class TaskDetailScreenTest {
             createSavedStateHandle(),
             taskRepository,
             clock,
-            Locale.getDefault(),
+            Locale.US,
         )
 
         composeTestRule.setContent {
@@ -274,7 +396,7 @@ class TaskDetailScreenTest {
 
     @Test
     fun displaysErrorMessage_whenDeleteTaskFails() {
-        var userMessage: Int? = null
+        var userMessage: UserMessage? = null
         val clock = createClock()
         val task = genTask()
         val db = FakeDatabase().apply {
@@ -287,7 +409,7 @@ class TaskDetailScreenTest {
             createSavedStateHandle(),
             taskRepository,
             clock,
-            Locale.getDefault(),
+            Locale.US,
         )
 
         composeTestRule.setContent {
@@ -308,7 +430,7 @@ class TaskDetailScreenTest {
         viewModel.deleteTask()
 
         composeTestRule.waitUntil {
-            userMessage == R.string.task_detail_delete_error
+            userMessage == UserMessage.String(R.string.task_detail_delete_error)
         }
     }
 
@@ -320,5 +442,6 @@ class TaskDetailScreenTest {
 
     private fun createSavedStateHandle() = SavedStateHandle(mapOf(NavArguments.ID_KEY to 1L))
 
-    private fun createClock() = Clock.systemDefaultZone()
+    private fun createClock() =
+        Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
 }

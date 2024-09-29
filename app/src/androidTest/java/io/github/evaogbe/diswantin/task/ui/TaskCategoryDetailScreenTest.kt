@@ -15,6 +15,7 @@ import io.github.evaogbe.diswantin.testing.FakeTaskCategoryRepository
 import io.github.evaogbe.diswantin.testing.stringResource
 import io.github.evaogbe.diswantin.ui.components.PendingLayoutTestTag
 import io.github.evaogbe.diswantin.ui.navigation.NavArguments
+import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
@@ -107,7 +108,7 @@ class TaskCategoryDetailScreenTest {
 
     @Test
     fun displaysErrorMessage_whenDeleteCategoryFails() {
-        var userMessage: Int? = null
+        var userMessage: UserMessage? = null
         val categoryWithTasks = genTaskCategoryWithTasks()
         val taskCategoryRepository =
             spyk(FakeTaskCategoryRepository.withCategories(categoryWithTasks))
@@ -131,7 +132,7 @@ class TaskCategoryDetailScreenTest {
         viewModel.deleteCategory()
 
         composeTestRule.waitUntil {
-            userMessage == R.string.task_category_detail_delete_error
+            userMessage == UserMessage.String(R.string.task_category_detail_delete_error)
         }
     }
 

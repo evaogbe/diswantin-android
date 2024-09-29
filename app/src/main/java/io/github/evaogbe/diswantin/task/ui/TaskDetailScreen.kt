@@ -53,6 +53,7 @@ import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskDetail
 import io.github.evaogbe.diswantin.ui.components.LoadFailureLayout
 import io.github.evaogbe.diswantin.ui.components.PendingLayout
+import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.evaogbe.diswantin.ui.theme.ScreenLg
 import io.github.evaogbe.diswantin.ui.theme.SpaceMd
@@ -125,7 +126,10 @@ fun TaskDetailTopBar(
                 DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.delete_button)) },
-                        onClick = onDeleteTask,
+                        onClick = {
+                            onDeleteTask()
+                            menuExpanded = false
+                        },
                         leadingIcon = {
                             Icon(imageVector = Icons.Default.Delete, contentDescription = null)
                         },
@@ -142,7 +146,7 @@ fun TaskDetailScreen(
     setTopBarState: (TaskDetailTopBarState) -> Unit,
     topBarAction: TaskDetailTopBarAction?,
     topBarActionHandled: () -> Unit,
-    setUserMessage: (Int) -> Unit,
+    setUserMessage: (UserMessage) -> Unit,
     onNavigateToTask: (Long) -> Unit,
     onNavigateToCategory: (Long) -> Unit,
     taskDetailViewModel: TaskDetailViewModel = hiltViewModel(),

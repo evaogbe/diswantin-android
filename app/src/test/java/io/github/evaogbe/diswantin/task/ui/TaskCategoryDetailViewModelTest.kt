@@ -13,6 +13,7 @@ import io.github.evaogbe.diswantin.task.data.TaskCategoryWithTasks
 import io.github.evaogbe.diswantin.testing.FakeTaskCategoryRepository
 import io.github.evaogbe.diswantin.testing.MainDispatcherRule
 import io.github.evaogbe.diswantin.ui.navigation.NavArguments
+import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
 import io.mockk.coEvery
@@ -141,7 +142,7 @@ class TaskCategoryDetailViewModelTest {
                     category = categoryWithTasks.category,
                     tasks = categoryWithTasks.tasks.map { it.toTaskItemUiState() }
                         .toImmutableList(),
-                    userMessage = R.string.task_category_detail_delete_error,
+                    userMessage = UserMessage.String(R.string.task_category_detail_delete_error),
                 )
             )
         }

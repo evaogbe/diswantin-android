@@ -53,6 +53,7 @@ import io.github.evaogbe.diswantin.ui.components.ClearableLayout
 import io.github.evaogbe.diswantin.ui.components.LoadFailureLayout
 import io.github.evaogbe.diswantin.ui.components.PendingLayout
 import io.github.evaogbe.diswantin.ui.components.TextButtonWithIcon
+import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.evaogbe.diswantin.ui.theme.ScreenLg
 import io.github.evaogbe.diswantin.ui.theme.SpaceLg
@@ -109,7 +110,7 @@ fun TaskCategoryFormScreen(
     setTopBarState: (TaskCategoryFormTopBarState) -> Unit,
     topBarAction: TaskCategoryFormTopBarAction?,
     topBarActionHandled: () -> Unit,
-    setUserMessage: (Int) -> Unit,
+    setUserMessage: (UserMessage) -> Unit,
     onSelectTaskType: (String) -> Unit,
     taskCategoryFormViewModel: TaskCategoryFormViewModel = hiltViewModel(),
 ) {

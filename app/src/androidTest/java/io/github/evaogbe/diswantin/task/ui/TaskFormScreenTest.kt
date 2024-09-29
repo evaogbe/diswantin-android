@@ -26,6 +26,7 @@ import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.stringResource
 import io.github.evaogbe.diswantin.ui.components.PendingLayoutTestTag
 import io.github.evaogbe.diswantin.ui.navigation.NavArguments
+import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
@@ -189,7 +190,7 @@ class TaskFormScreenTest {
 
     @Test
     fun displaysErrorMessage_whenQueryHasCategoryFails() {
-        var userMessage: Int? = null
+        var userMessage: UserMessage? = null
         val db = FakeDatabase().apply {
             insertTask(genTask())
             insertTaskCategory(TaskCategory(name = loremFaker.lorem.words()), emptySet())
@@ -221,12 +222,13 @@ class TaskFormScreenTest {
             stringResource(R.string.task_category_label),
             useUnmergedTree = true
         ).assertDoesNotExist()
-        assertThat(userMessage).isEqualTo(R.string.task_form_fetch_category_error)
+        assertThat(userMessage)
+            .isEqualTo(UserMessage.String(R.string.task_form_fetch_category_error))
     }
 
     @Test
     fun displaysErrorMessage_whenFetchExistingCategoryFails() {
-        var userMessage: Int? = null
+        var userMessage: UserMessage? = null
         val db = FakeDatabase().apply {
             insertTask(genTask())
             insertTaskCategory(TaskCategory(name = loremFaker.lorem.words()), emptySet())
@@ -258,7 +260,8 @@ class TaskFormScreenTest {
             stringResource(R.string.task_category_label),
             useUnmergedTree = true
         ).assertDoesNotExist()
-        assertThat(userMessage).isEqualTo(R.string.task_form_fetch_category_error)
+        assertThat(userMessage)
+            .isEqualTo(UserMessage.String(R.string.task_form_fetch_category_error))
     }
 
     @Test
@@ -294,7 +297,7 @@ class TaskFormScreenTest {
 
     @Test
     fun displaysErrorMessage_whenFetchTaskCountFails() {
-        var userMessage: Int? = null
+        var userMessage: UserMessage? = null
         val db = FakeDatabase().apply {
             insertTask(genTask())
             insertTask(genTask(id = 2L))
@@ -324,12 +327,13 @@ class TaskFormScreenTest {
             stringResource(R.string.parent_task_label),
             useUnmergedTree = true
         ).assertDoesNotExist()
-        assertThat(userMessage).isEqualTo(R.string.task_form_fetch_parent_task_error)
+        assertThat(userMessage)
+            .isEqualTo(UserMessage.String(R.string.task_form_fetch_parent_task_error))
     }
 
     @Test
     fun displaysErrorMessage_whenFetchExistingParentTaskFails() {
-        var userMessage: Int? = null
+        var userMessage: UserMessage? = null
         val db = FakeDatabase().apply {
             insertTask(genTask())
             insertTask(genTask(id = 2L))
@@ -359,7 +363,8 @@ class TaskFormScreenTest {
             stringResource(R.string.parent_task_label),
             useUnmergedTree = true
         ).assertDoesNotExist()
-        assertThat(userMessage).isEqualTo(R.string.task_form_fetch_parent_task_error)
+        assertThat(userMessage)
+            .isEqualTo(UserMessage.String(R.string.task_form_fetch_parent_task_error))
     }
 
     @Test
@@ -406,7 +411,7 @@ class TaskFormScreenTest {
 
     @Test
     fun displaysErrorMessage_whenSearchCategoriesFails() {
-        var userMessage: Int? = null
+        var userMessage: UserMessage? = null
         val query = loremFaker.verbs.base()
         val category = TaskCategory(name = faker.string.regexify("""$query \w+"""))
         val db = FakeDatabase().apply {
@@ -444,7 +449,7 @@ class TaskFormScreenTest {
             .performTextInput(query)
 
         composeTestRule.waitUntil {
-            userMessage == R.string.search_task_category_options_error
+            userMessage == UserMessage.String(R.string.search_task_category_options_error)
         }
     }
 
@@ -495,7 +500,7 @@ class TaskFormScreenTest {
 
     @Test
     fun displaysErrorMessage_whenSearchTasksFails() {
-        var userMessage: Int? = null
+        var userMessage: UserMessage? = null
         val query = loremFaker.verbs.base()
         val db = FakeDatabase().apply {
             insertTask(genTask())
@@ -529,7 +534,7 @@ class TaskFormScreenTest {
             .performTextInput(query)
 
         composeTestRule.waitUntil {
-            userMessage == R.string.search_task_options_error
+            userMessage == UserMessage.String(R.string.search_task_options_error)
         }
     }
 
@@ -578,7 +583,7 @@ class TaskFormScreenTest {
 
     @Test
     fun displaysErrorMessage_withSaveErrorForNew() {
-        var userMessage: Int? = null
+        var userMessage: UserMessage? = null
         val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
         val db = FakeDatabase()
         val taskRepository = spyk(FakeTaskRepository(db))
@@ -611,7 +616,7 @@ class TaskFormScreenTest {
         viewModel.saveTask()
 
         composeTestRule.waitUntil {
-            userMessage == R.string.task_form_save_error_new
+            userMessage == UserMessage.String(R.string.task_form_save_error_new)
         }
     }
 
@@ -669,7 +674,7 @@ class TaskFormScreenTest {
 
     @Test
     fun displaysErrorMessage_withSaveErrorForEdit() {
-        var userMessage: Int? = null
+        var userMessage: UserMessage? = null
         val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
         val task = genTask()
         val db = FakeDatabase().apply {
@@ -705,7 +710,7 @@ class TaskFormScreenTest {
         viewModel.saveTask()
 
         composeTestRule.waitUntil {
-            userMessage == R.string.task_form_save_error_edit
+            userMessage == UserMessage.String(R.string.task_form_save_error_edit)
         }
     }
 

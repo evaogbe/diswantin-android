@@ -21,6 +21,7 @@ import io.github.evaogbe.diswantin.task.data.TaskCategoryRepository
 import io.github.evaogbe.diswantin.task.data.TaskRecurrence
 import io.github.evaogbe.diswantin.task.data.TaskRepository
 import io.github.evaogbe.diswantin.ui.navigation.NavArguments
+import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toPersistentList
@@ -85,13 +86,13 @@ class TaskFormViewModel @Inject constructor(
 
     private val isSaved = MutableStateFlow(false)
 
-    private val userMessage = MutableStateFlow<Int?>(null)
+    private val userMessage = MutableStateFlow<UserMessage?>(null)
 
     private val hasCategoriesStream = taskCategoryRepository.hasCategoriesStream
         .map<Boolean, Result<Boolean>> { Result.Success(it) }
         .catch { e ->
             Timber.e(e, "Failed to query has categories")
-            userMessage.value = R.string.task_form_fetch_category_error
+            userMessage.value = UserMessage.String(R.string.task_form_fetch_category_error)
             emit(Result.Failure(e))
         }
 
@@ -99,7 +100,7 @@ class TaskFormViewModel @Inject constructor(
         .map<Long, Result<Long>> { Result.Success(it) }
         .catch { e ->
             Timber.e(e, "Failed to fetch task count")
-            userMessage.value = R.string.task_form_fetch_parent_task_error
+            userMessage.value = UserMessage.String(R.string.task_form_fetch_parent_task_error)
             emit(Result.Failure(e))
         }
 
@@ -126,7 +127,7 @@ class TaskFormViewModel @Inject constructor(
             .map<TaskCategory?, Result<TaskCategory?>> { Result.Success(it) }
             .catch { e ->
                 Timber.e(e, "Failed to fetch task category by task id: %d", id)
-                userMessage.value = R.string.task_form_fetch_category_error
+                userMessage.value = UserMessage.String(R.string.task_form_fetch_category_error)
                 emit(Result.Failure(e))
             }
     } ?: flowOf(Result.Success(null))
@@ -136,7 +137,7 @@ class TaskFormViewModel @Inject constructor(
             .map<Task?, Result<Task?>> { Result.Success(it) }
             .catch { e ->
                 Timber.e(e, "Failed to fetch parent task by child id: %d", id)
-                userMessage.value = R.string.task_form_fetch_parent_task_error
+                userMessage.value = UserMessage.String(R.string.task_form_fetch_parent_task_error)
                 emit(Result.Failure(e))
             }
     } ?: flowOf(Result.Success(null))
@@ -160,7 +161,8 @@ class TaskFormViewModel @Inject constructor(
             } else {
                 taskCategoryRepository.search(query.trim()).catch { e ->
                     Timber.e(e, "Failed to search for task category by query: %s", query)
-                    userMessage.value = R.string.search_task_category_options_error
+                    userMessage.value =
+                        UserMessage.String(R.string.search_task_category_options_error)
                 }
             }
         },
@@ -173,7 +175,7 @@ class TaskFormViewModel @Inject constructor(
             } else {
                 taskRepository.search(query.trim()).catch { e ->
                     Timber.e(e, "Failed to search for task by query: %s", query)
-                    userMessage.value = R.string.search_task_options_error
+                    userMessage.value = UserMessage.String(R.string.search_task_options_error)
                 }
             }
         },
@@ -200,7 +202,7 @@ class TaskFormViewModel @Inject constructor(
         val parentTaskQuery = (args[13] as String).trim()
         val parentTaskOptions = args[14] as List<Task>
         val isSaved = args[15] as Boolean
-        val userMessage = args[16] as Int?
+        val userMessage = args[16] as UserMessage?
         val existingTaskResult = args[17] as Result<Task?>
         val existingRecurrencesResult = args[18] as Result<List<TaskRecurrence>>
         val existingCategoryResult = args[19] as Result<TaskCategory?>
@@ -432,7 +434,7 @@ class TaskFormViewModel @Inject constructor(
                     throw e
                 } catch (e: Exception) {
                     Timber.e(e, "Failed to create task with form: %s", form)
-                    userMessage.value = R.string.task_form_save_error_new
+                    userMessage.value = UserMessage.String(R.string.task_form_save_error_new)
                 }
             }
         } else {
@@ -483,7 +485,7 @@ class TaskFormViewModel @Inject constructor(
                     throw e
                 } catch (e: Exception) {
                     Timber.e(e, "Failed to update task with id: %d", taskId)
-                    userMessage.value = R.string.task_form_save_error_edit
+                    userMessage.value = UserMessage.String(R.string.task_form_save_error_edit)
                 }
             }
         }

@@ -55,6 +55,7 @@ import io.github.evaogbe.diswantin.ui.components.FilledTonalButtonWithIcon
 import io.github.evaogbe.diswantin.ui.components.LoadFailureLayout
 import io.github.evaogbe.diswantin.ui.components.OutlinedButtonWithIcon
 import io.github.evaogbe.diswantin.ui.components.PendingLayout
+import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.evaogbe.diswantin.ui.theme.IconSizeLg
 import io.github.evaogbe.diswantin.ui.theme.ScreenLg
@@ -122,13 +123,14 @@ fun CurrentTaskScreen(
     setTopBarState: (CurrentTaskTopBarState) -> Unit,
     topBarAction: CurrentTaskTopBarAction?,
     topBarActionHandled: () -> Unit,
-    setUserMessage: (Int) -> Unit,
+    setUserMessage: (UserMessage) -> Unit,
     onNavigateToAdvice: () -> Unit,
     onAddTask: () -> Unit,
     onNavigateToTask: (Long) -> Unit,
     currentTaskViewModel: CurrentTaskViewModel = hiltViewModel(),
 ) {
     val uiState by currentTaskViewModel.uiState.collectAsStateWithLifecycle()
+    val userMessage by currentTaskViewModel.userMessage.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
     var showDialog by rememberSaveable { mutableStateOf(false) }
 
@@ -166,7 +168,7 @@ fun CurrentTaskScreen(
         }
     }
 
-    (uiState as? CurrentTaskUiState.Present)?.userMessage?.let { message ->
+    userMessage?.let { message ->
         LaunchedEffect(message, setUserMessage) {
             setUserMessage(message)
             currentTaskViewModel.userMessageShown()
@@ -321,7 +323,6 @@ private fun CurrentTaskScreenPreview_Present() {
                         name = "Brush teeth",
                     ),
                     canSkip = true,
-                    userMessage = null,
                 ),
                 onNavigateToTask = {},
                 onMarkTaskDone = {},
@@ -353,7 +354,6 @@ private fun CurrentTaskScreenPreview_withNote() {
                         note = "Don't forget to floss and rinse with mouthwash",
                     ),
                     canSkip = false,
-                    userMessage = null,
                 ),
                 onNavigateToTask = {},
                 onMarkTaskDone = {},

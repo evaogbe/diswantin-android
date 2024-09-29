@@ -71,6 +71,7 @@ import io.github.evaogbe.diswantin.task.ui.TaskSearchScreen
 import io.github.evaogbe.diswantin.task.ui.TaskSearchTopBar
 import io.github.evaogbe.diswantin.task.ui.TaskSearchTopBarAction
 import io.github.evaogbe.diswantin.ui.navigation.NavArguments
+import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
 
@@ -91,12 +92,19 @@ fun DiswantinApp() {
     }
 
     val resources = LocalContext.current.resources
-    var userMessage by remember { mutableStateOf<Int?>(null) }
+    var userMessage by remember { mutableStateOf<UserMessage?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
 
     userMessage?.let { message ->
         LaunchedEffect(message, snackbarHostState) {
-            snackbarHostState.showSnackbar(resources.getString(message))
+            snackbarHostState.showSnackbar(
+                when (message) {
+                    is UserMessage.String -> resources.getString(message.resId)
+                    is UserMessage.Plural -> {
+                        resources.getQuantityString(message.resId, message.count, message.count)
+                    }
+                }
+            )
             userMessage = null
         }
     }

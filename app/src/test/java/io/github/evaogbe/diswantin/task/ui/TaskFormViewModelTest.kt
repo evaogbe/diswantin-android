@@ -21,6 +21,7 @@ import io.github.evaogbe.diswantin.testing.FakeTaskCategoryRepository
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.MainDispatcherRule
 import io.github.evaogbe.diswantin.ui.navigation.NavArguments
+import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
 import io.mockk.coEvery
@@ -305,7 +306,7 @@ class TaskFormViewModelTest {
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
-                    userMessage = R.string.task_form_fetch_category_error,
+                    userMessage = UserMessage.String(R.string.task_form_fetch_category_error),
                 )
             )
         }
@@ -346,7 +347,7 @@ class TaskFormViewModelTest {
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
-                    userMessage = R.string.task_form_fetch_category_error,
+                    userMessage = UserMessage.String(R.string.task_form_fetch_category_error),
                 )
             )
         }
@@ -452,7 +453,7 @@ class TaskFormViewModelTest {
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
-                    userMessage = R.string.task_form_fetch_parent_task_error,
+                    userMessage = UserMessage.String(R.string.task_form_fetch_parent_task_error),
                 )
             )
         }
@@ -491,7 +492,7 @@ class TaskFormViewModelTest {
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
-                    userMessage = R.string.task_form_fetch_parent_task_error,
+                    userMessage = UserMessage.String(R.string.task_form_fetch_parent_task_error),
                 )
             )
         }
@@ -572,7 +573,7 @@ class TaskFormViewModelTest {
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
-                    userMessage = R.string.search_task_category_options_error,
+                    userMessage = UserMessage.String(R.string.search_task_category_options_error),
                 )
             )
         }
@@ -654,7 +655,7 @@ class TaskFormViewModelTest {
                     showParentTaskField = true,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
-                    userMessage = R.string.search_task_options_error,
+                    userMessage = UserMessage.String(R.string.search_task_options_error),
                 )
             )
         }
@@ -772,7 +773,7 @@ class TaskFormViewModelTest {
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
-                    userMessage = R.string.task_form_save_error_new,
+                    userMessage = UserMessage.String(R.string.task_form_save_error_new),
                 )
             )
         }
@@ -917,7 +918,7 @@ class TaskFormViewModelTest {
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
-                    userMessage = R.string.task_form_save_error_edit,
+                    userMessage = UserMessage.String(R.string.task_form_save_error_edit),
                 )
             )
         }
@@ -959,7 +960,7 @@ class TaskFormViewModelTest {
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
-                    userMessage = R.string.task_form_fetch_category_error,
+                    userMessage = UserMessage.String(R.string.task_form_fetch_category_error),
                 )
             )
 
@@ -1007,7 +1008,7 @@ class TaskFormViewModelTest {
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
-                    userMessage = R.string.task_form_fetch_category_error,
+                    userMessage = UserMessage.String(R.string.task_form_fetch_category_error),
                 )
             )
 
@@ -1054,13 +1055,15 @@ class TaskFormViewModelTest {
                     showParentTaskField = false,
                     parentTask = parentTask,
                     parentTaskOptions = persistentListOf(),
-                    userMessage = R.string.task_form_fetch_parent_task_error,
+                    userMessage = UserMessage.String(R.string.task_form_fetch_parent_task_error),
                 )
             )
 
             viewModel.updateNameInput(name)
             viewModel.saveTask()
 
+            assertThat(taskRepository.tasks)
+                .containsExactlyInAnyOrder(task.copy(name = name), parentTask)
             assertThat(taskRepository.getParent(task.id).first()).isEqualTo(parentTask)
         }
 
@@ -1102,13 +1105,15 @@ class TaskFormViewModelTest {
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
-                    userMessage = R.string.task_form_fetch_parent_task_error,
+                    userMessage = UserMessage.String(R.string.task_form_fetch_parent_task_error),
                 )
             )
 
             viewModel.updateNameInput(name)
             viewModel.saveTask()
 
+            assertThat(taskRepository.tasks)
+                .containsExactlyInAnyOrder(task.copy(name = name), parentTask)
             assertThat(FakeTaskRepository(db).getParent(task.id).first()).isEqualTo(parentTask)
         }
 

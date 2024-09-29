@@ -16,6 +16,7 @@ import io.github.evaogbe.diswantin.task.data.TaskCategoryRepository
 import io.github.evaogbe.diswantin.task.data.TaskCategoryWithTasks
 import io.github.evaogbe.diswantin.task.data.TaskRepository
 import io.github.evaogbe.diswantin.ui.navigation.NavArguments
+import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
@@ -57,7 +58,7 @@ class TaskCategoryFormViewModel @Inject constructor(
 
     private val isSaved = MutableStateFlow(false)
 
-    private val userMessage = MutableStateFlow<Int?>(null)
+    private val userMessage = MutableStateFlow<UserMessage?>(null)
 
     private val existingCategoryWithTasksStream = categoryId?.let { id ->
         taskCategoryRepository.getCategoryWithTasksById(id)
@@ -81,7 +82,7 @@ class TaskCategoryFormViewModel @Inject constructor(
             } else {
                 taskRepository.search(query.trim()).catch { e ->
                     Timber.e(e, "Failed to search for tasks by query: %s", query)
-                    userMessage.value = R.string.search_task_options_error
+                    userMessage.value = UserMessage.String(R.string.search_task_options_error)
                 }
             }
         },
@@ -94,7 +95,7 @@ class TaskCategoryFormViewModel @Inject constructor(
         val taskQuery = (args[3] as String).trim()
         val taskSearchResults = args[4] as List<Task>
         val isSaved = args[5] as Boolean
-        val userMessage = args[6] as Int?
+        val userMessage = args[6] as UserMessage?
 
         if (isSaved) {
             TaskCategoryFormUiState.Saved
@@ -187,7 +188,8 @@ class TaskCategoryFormViewModel @Inject constructor(
                     throw e
                 } catch (e: Exception) {
                     Timber.e(e, "Failed to create task category with form: %s", form)
-                    userMessage.value = R.string.task_category_form_save_error_new
+                    userMessage.value =
+                        UserMessage.String(R.string.task_category_form_save_error_new)
                 }
             }
         } else {
@@ -207,7 +209,8 @@ class TaskCategoryFormViewModel @Inject constructor(
                     throw e
                 } catch (e: Exception) {
                     Timber.e(e, "Failed to update task category with id: %s", categoryId)
-                    userMessage.value = R.string.task_category_form_save_error_edit
+                    userMessage.value =
+                        UserMessage.String(R.string.task_category_form_save_error_edit)
                 }
             }
         }

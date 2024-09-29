@@ -4,17 +4,20 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isNotNull
+import assertk.assertions.isNull
 import assertk.assertions.prop
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.EditTaskForm
 import io.github.evaogbe.diswantin.task.data.PathUpdateType
 import io.github.evaogbe.diswantin.task.data.RecurrenceType
 import io.github.evaogbe.diswantin.task.data.Task
+import io.github.evaogbe.diswantin.task.data.TaskCompletion
 import io.github.evaogbe.diswantin.task.data.TaskDetail
 import io.github.evaogbe.diswantin.task.data.TaskRecurrence
 import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.MainDispatcherRule
+import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
 import io.mockk.coEvery
@@ -60,13 +63,8 @@ class CurrentTaskViewModelTest {
                 viewModel.uiState.collect()
             }
 
-            assertThat(viewModel.uiState.value).isEqualTo(
-                CurrentTaskUiState.Present(
-                    currentTask = task1,
-                    canSkip = false,
-                    userMessage = null,
-                )
-            )
+            assertThat(viewModel.uiState.value)
+                .isEqualTo(CurrentTaskUiState.Present(currentTask = task1, canSkip = false))
 
             taskRepository.update(
                 EditTaskForm(
@@ -90,7 +88,6 @@ class CurrentTaskViewModelTest {
                 CurrentTaskUiState.Present(
                     currentTask = task1.copy(name = name),
                     canSkip = false,
-                    userMessage = null,
                 )
             )
         }
@@ -141,38 +138,9 @@ class CurrentTaskViewModelTest {
             viewModel.uiState.collect()
         }
 
-        assertThat(viewModel.uiState.value).isEqualTo(
-            CurrentTaskUiState.Present(
-                currentTask = task,
-                canSkip = true,
-                userMessage = null,
-            )
-        )
+        assertThat(viewModel.uiState.value)
+            .isEqualTo(CurrentTaskUiState.Present(currentTask = task, canSkip = true))
     }
-
-    @Test
-    fun `uiState cannot skip when non-recurring task`() =
-        runTest(mainDispatcherRule.testDispatcher) {
-            val clock = createClock()
-            val task = genTasks(1).single()
-            val db = FakeDatabase().apply {
-                insertTask(task)
-            }
-            val taskRepository = FakeTaskRepository(db, clock)
-            val viewModel = CurrentTaskViewModel(taskRepository, clock)
-
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-                viewModel.uiState.collect()
-            }
-
-            assertThat(viewModel.uiState.value).isEqualTo(
-                CurrentTaskUiState.Present(
-                    currentTask = task,
-                    canSkip = false,
-                    userMessage = null,
-                )
-            )
-        }
 
     @Test
     fun `uiState cannot skip when fetch task recurrences fails`() =
@@ -201,15 +169,13 @@ class CurrentTaskViewModelTest {
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
+                viewModel.userMessage.collect()
             }
 
-            assertThat(viewModel.uiState.value).isEqualTo(
-                CurrentTaskUiState.Present(
-                    currentTask = task,
-                    canSkip = false,
-                    userMessage = R.string.current_task_fetch_recurrences_error,
-                )
-            )
+            assertThat(viewModel.uiState.value)
+                .isEqualTo(CurrentTaskUiState.Present(currentTask = task, canSkip = false))
+            assertThat(viewModel.userMessage.value)
+                .isEqualTo(UserMessage.String(R.string.current_task_fetch_recurrences_error))
         }
 
     @Test
@@ -238,23 +204,13 @@ class CurrentTaskViewModelTest {
                 viewModel.uiState.collect()
             }
 
-            assertThat(viewModel.uiState.value).isEqualTo(
-                CurrentTaskUiState.Present(
-                    currentTask = task1,
-                    canSkip = true,
-                    userMessage = null,
-                )
-            )
+            assertThat(viewModel.uiState.value)
+                .isEqualTo(CurrentTaskUiState.Present(currentTask = task1, canSkip = true))
 
             viewModel.skipCurrentTask()
 
-            assertThat(viewModel.uiState.value).isEqualTo(
-                CurrentTaskUiState.Present(
-                    currentTask = task2,
-                    canSkip = false,
-                    userMessage = null,
-                )
-            )
+            assertThat(viewModel.uiState.value)
+                .isEqualTo(CurrentTaskUiState.Present(currentTask = task2, canSkip = false))
         }
 
     @Test
@@ -282,17 +238,15 @@ class CurrentTaskViewModelTest {
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
+                viewModel.userMessage.collect()
             }
 
             viewModel.skipCurrentTask()
 
-            assertThat(viewModel.uiState.value).isEqualTo(
-                CurrentTaskUiState.Present(
-                    currentTask = task,
-                    canSkip = true,
-                    userMessage = R.string.current_task_skip_error,
-                )
-            )
+            assertThat(viewModel.uiState.value)
+                .isEqualTo(CurrentTaskUiState.Present(currentTask = task, canSkip = true))
+            assertThat(viewModel.userMessage.value)
+                .isEqualTo(UserMessage.String(R.string.current_task_skip_error))
         }
 
     @Test
@@ -309,29 +263,21 @@ class CurrentTaskViewModelTest {
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
+                viewModel.userMessage.collect()
             }
 
-            assertThat(viewModel.uiState.value).isEqualTo(
-                CurrentTaskUiState.Present(
-                    currentTask = task1,
-                    canSkip = false,
-                    userMessage = null,
-                )
-            )
+            assertThat(viewModel.uiState.value)
+                .isEqualTo(CurrentTaskUiState.Present(currentTask = task1, canSkip = false))
 
             viewModel.markCurrentTaskDone()
 
+            assertThat(viewModel.uiState.value)
+                .isEqualTo(CurrentTaskUiState.Present(currentTask = task2, canSkip = false))
+            assertThat(viewModel.userMessage.value).isNull()
             assertThat(taskRepository.getTaskDetailById(task1.id).first())
                 .isNotNull()
                 .prop(TaskDetail::doneAt)
                 .isNotNull()
-            assertThat(viewModel.uiState.value).isEqualTo(
-                CurrentTaskUiState.Present(
-                    currentTask = task2,
-                    canSkip = false,
-                    userMessage = null,
-                )
-            )
         }
 
     @Test
@@ -350,26 +296,105 @@ class CurrentTaskViewModelTest {
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
+                viewModel.userMessage.collect()
             }
-
-            assertThat(viewModel.uiState.value)
-                .isEqualTo(
-                    CurrentTaskUiState.Present(
-                        currentTask = task,
-                        canSkip = false,
-                        userMessage = null,
-                    )
-                )
 
             viewModel.markCurrentTaskDone()
 
-            assertThat(viewModel.uiState.value).isEqualTo(
-                CurrentTaskUiState.Present(
-                    currentTask = task,
-                    canSkip = false,
-                    userMessage = R.string.current_task_mark_done_error,
+            assertThat(viewModel.uiState.value)
+                .isEqualTo(CurrentTaskUiState.Present(currentTask = task, canSkip = false))
+            assertThat(viewModel.userMessage.value)
+                .isEqualTo(UserMessage.String(R.string.current_task_mark_done_error))
+        }
+
+    @Test
+    fun `markCurrentTaskDone shows celebration message when multiple of 50 completed`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val clock =
+                Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
+            val task = genTasks(1).single()
+            val db = FakeDatabase().apply {
+                insertTask(task)
+                insertTaskRecurrence(
+                    TaskRecurrence(
+                        taskId = task.id,
+                        start = LocalDate.parse("2024-01-01"),
+                        type = RecurrenceType.Day,
+                        step = 1,
+                        week = 1,
+                    )
                 )
-            )
+                repeat(49) {
+                    insertTaskCompletion(
+                        TaskCompletion(
+                            taskId = task.id,
+                            // 1704157200 = 2024-01-02T00:00:00Z
+                            doneAt = Instant.ofEpochMilli(1704153600L + 86400000L * it)
+                        )
+                    )
+                }
+            }
+            val taskRepository = FakeTaskRepository(db, clock)
+            val viewModel = CurrentTaskViewModel(taskRepository, clock)
+
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect()
+                viewModel.userMessage.collect()
+            }
+
+            viewModel.markCurrentTaskDone()
+
+            assertThat(viewModel.uiState.value)
+                .isEqualTo(CurrentTaskUiState.Empty)
+            assertThat(viewModel.userMessage.value)
+                .isEqualTo(UserMessage.Plural(R.plurals.completed_tasks_celebration_message, 50))
+        }
+
+    @Test
+    fun `markCurrentTaskDone shows error message when fetch completion count fails`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val clock =
+                Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
+            val task = genTasks(1).single()
+            val db = FakeDatabase().apply {
+                insertTask(task)
+                insertTaskRecurrence(
+                    TaskRecurrence(
+                        taskId = task.id,
+                        start = LocalDate.parse("2024-01-01"),
+                        type = RecurrenceType.Day,
+                        step = 1,
+                        week = 1,
+                    )
+                )
+                repeat(49) {
+                    insertTaskCompletion(
+                        TaskCompletion(
+                            taskId = task.id,
+                            // 1704157200 = 2024-01-02T00:00:00Z
+                            doneAt = Instant.ofEpochMilli(1704153600L + 86400000L * it)
+                        )
+                    )
+                }
+            }
+            val taskRepository = spyk(FakeTaskRepository(db, clock))
+            every { taskRepository.getCompletionCount() } returns flow {
+                throw RuntimeException("Test")
+            }
+
+            val viewModel = CurrentTaskViewModel(taskRepository, clock)
+
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect()
+                viewModel.userMessage.collect()
+            }
+
+            viewModel.markCurrentTaskDone()
+
+            assertThat(viewModel.uiState.value)
+                .isEqualTo(CurrentTaskUiState.Empty)
+            assertThat(viewModel.userMessage.value)
+                .isEqualTo(UserMessage.String(R.string.current_task_fetch_completion_error))
         }
 
     private fun genTasks(count: Int) = generateSequence(

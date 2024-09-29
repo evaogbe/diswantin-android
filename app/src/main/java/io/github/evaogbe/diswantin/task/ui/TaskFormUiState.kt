@@ -1,9 +1,9 @@
 package io.github.evaogbe.diswantin.task.ui
 
 import android.os.Parcelable
-import androidx.annotation.StringRes
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskCategory
+import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.parcelize.Parcelize
 import java.time.LocalDate
@@ -39,7 +39,7 @@ sealed interface TaskFormUiState {
         val showParentTaskField: Boolean,
         val parentTask: Task?,
         val parentTaskOptions: ImmutableList<Task>,
-        @StringRes val userMessage: Int?,
+        val userMessage: UserMessage?,
     ) : TaskFormUiState {
         val canSchedule =
             listOf(deadlineDate, deadlineTime, startAfterDate, startAfterTime).all { it == null }

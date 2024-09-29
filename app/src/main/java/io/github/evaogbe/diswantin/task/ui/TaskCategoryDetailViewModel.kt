@@ -9,6 +9,7 @@ import io.github.evaogbe.diswantin.data.Result
 import io.github.evaogbe.diswantin.task.data.TaskCategoryRepository
 import io.github.evaogbe.diswantin.task.data.TaskCategoryWithTaskItems
 import io.github.evaogbe.diswantin.ui.navigation.NavArguments
+import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -35,7 +36,7 @@ class TaskCategoryDetailViewModel @Inject constructor(
 
     private val initialized = MutableStateFlow(false)
 
-    private val userMessage = MutableStateFlow<Int?>(null)
+    private val userMessage = MutableStateFlow<UserMessage?>(null)
 
     val uiState =
         combine(
@@ -96,7 +97,7 @@ class TaskCategoryDetailViewModel @Inject constructor(
                 throw e
             } catch (e: Exception) {
                 Timber.e(e, "Failed to delete task category: %s", category)
-                userMessage.value = R.string.task_category_detail_delete_error
+                userMessage.value = UserMessage.String(R.string.task_category_detail_delete_error)
             }
         }
     }

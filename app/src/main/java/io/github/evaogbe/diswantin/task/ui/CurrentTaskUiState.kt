@@ -1,7 +1,6 @@
 package io.github.evaogbe.diswantin.task.ui
 
 import android.os.Parcelable
-import androidx.annotation.StringRes
 import io.github.evaogbe.diswantin.task.data.Task
 import kotlinx.parcelize.Parcelize
 
@@ -19,9 +18,5 @@ sealed interface CurrentTaskUiState {
 
     data object Empty : CurrentTaskUiState
 
-    data class Present(
-        val currentTask: Task,
-        val canSkip: Boolean,
-        @StringRes val userMessage: Int?,
-    ) : CurrentTaskUiState
+    data class Present(val currentTask: Task, val canSkip: Boolean) : CurrentTaskUiState
 }

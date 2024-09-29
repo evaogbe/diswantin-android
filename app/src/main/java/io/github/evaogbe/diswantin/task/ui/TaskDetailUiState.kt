@@ -1,9 +1,9 @@
 package io.github.evaogbe.diswantin.task.ui
 
 import android.os.Parcelable
-import androidx.annotation.StringRes
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskDetail
+import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.parcelize.Parcelize
 import java.time.Clock
@@ -29,7 +29,7 @@ sealed interface TaskDetailUiState {
         val task: TaskDetail,
         val recurrence: TaskRecurrenceUiState?,
         val childTasks: ImmutableList<Task>,
-        @StringRes val userMessage: Int?,
+        val userMessage: UserMessage?,
         private val clock: Clock,
     ) : TaskDetailUiState {
         val formattedDeadline = formatDateTime(task.deadlineDate, task.deadlineTime)

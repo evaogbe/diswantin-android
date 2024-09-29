@@ -1,8 +1,8 @@
 package io.github.evaogbe.diswantin.task.ui
 
 import android.os.Parcelable
-import androidx.annotation.StringRes
 import io.github.evaogbe.diswantin.task.data.Task
+import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.parcelize.Parcelize
 
@@ -26,7 +26,7 @@ sealed interface TaskCategoryFormUiState {
         val tasks: ImmutableList<Task>,
         val editingTaskIndex: Int?,
         val taskOptions: ImmutableList<Task>,
-        @StringRes val userMessage: Int?,
+        val userMessage: UserMessage?,
     ) : TaskCategoryFormUiState
 
     data object Saved : TaskCategoryFormUiState

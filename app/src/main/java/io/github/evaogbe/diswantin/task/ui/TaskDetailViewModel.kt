@@ -11,12 +11,14 @@ import io.github.evaogbe.diswantin.task.data.TaskDetail
 import io.github.evaogbe.diswantin.task.data.TaskRecurrence
 import io.github.evaogbe.diswantin.task.data.TaskRepository
 import io.github.evaogbe.diswantin.ui.navigation.NavArguments
+import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
@@ -37,7 +39,7 @@ class TaskDetailViewModel @Inject constructor(
 
     private val initialized = MutableStateFlow(false)
 
-    private val userMessage = MutableStateFlow<Int?>(null)
+    private val userMessage = MutableStateFlow<UserMessage?>(null)
 
     val uiState =
         combine(
@@ -98,13 +100,34 @@ class TaskDetailViewModel @Inject constructor(
         val task = (uiState.value as? TaskDetailUiState.Success)?.task ?: return
 
         viewModelScope.launch {
+            var markedDone = false
+
             try {
                 taskRepository.markDone(task.id)
+                markedDone = true
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
                 Timber.e(e, "Failed to mark task done: %s", task)
-                userMessage.value = R.string.task_detail_mark_done_error
+                userMessage.value = UserMessage.String(R.string.task_detail_mark_done_error)
+            }
+
+            if (markedDone) {
+                try {
+                    val completionCount = taskRepository.getCompletionCount().first().toInt()
+                    if (completionCount % 50 == 0) {
+                        userMessage.value = UserMessage.Plural(
+                            R.plurals.completed_tasks_celebration_message,
+                            completionCount,
+                        )
+                    }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Timber.e(e, "Failed to fetch completion count")
+                    userMessage.value =
+                        UserMessage.String(R.string.task_detail_fetch_completion_error)
+                }
             }
         }
     }
@@ -119,7 +142,7 @@ class TaskDetailViewModel @Inject constructor(
                 throw e
             } catch (e: Exception) {
                 Timber.e(e, "Failed to unmark task done: %s", task)
-                userMessage.value = R.string.task_detail_unmark_done_error
+                userMessage.value = UserMessage.String(R.string.task_detail_unmark_done_error)
             }
         }
     }
@@ -134,7 +157,7 @@ class TaskDetailViewModel @Inject constructor(
                 throw e
             } catch (e: Exception) {
                 Timber.e(e, "Failed to delete task: %s", task)
-                userMessage.value = R.string.task_detail_delete_error
+                userMessage.value = UserMessage.String(R.string.task_detail_delete_error)
             }
         }
     }

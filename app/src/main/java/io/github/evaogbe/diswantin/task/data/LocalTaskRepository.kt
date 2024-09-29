@@ -88,8 +88,9 @@ class LocalTaskRepository @Inject constructor(
     override fun getTaskRecurrencesByTaskId(taskId: Long) =
         taskDao.getTaskRecurrencesByTaskId(taskId).flowOn(ioDispatcher)
 
-    override fun getCount() =
-        taskDao.getCount().flowOn(ioDispatcher)
+    override fun getCount() = taskDao.getCount().flowOn(ioDispatcher)
+
+    override fun getCompletionCount() = taskDao.getCompletionCount().flowOn(ioDispatcher)
 
     override suspend fun create(form: NewTaskForm): Task {
         val task = form.newTask

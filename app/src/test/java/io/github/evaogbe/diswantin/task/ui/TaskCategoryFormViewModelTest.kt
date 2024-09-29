@@ -16,6 +16,7 @@ import io.github.evaogbe.diswantin.testing.FakeTaskCategoryRepository
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.MainDispatcherRule
 import io.github.evaogbe.diswantin.ui.navigation.NavArguments
+import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
 import io.mockk.coEvery
@@ -184,7 +185,7 @@ class TaskCategoryFormViewModelTest {
                     tasks = persistentListOf(),
                     editingTaskIndex = 0,
                     taskOptions = persistentListOf(),
-                    userMessage = R.string.search_task_options_error,
+                    userMessage = UserMessage.String(R.string.search_task_options_error),
                 )
             )
         }
@@ -261,7 +262,7 @@ class TaskCategoryFormViewModelTest {
                     tasks = persistentListOf(),
                     editingTaskIndex = 0,
                     taskOptions = persistentListOf(),
-                    userMessage = R.string.task_category_form_save_error_new,
+                    userMessage = UserMessage.String(R.string.task_category_form_save_error_new),
                 )
             )
         }
@@ -338,7 +339,7 @@ class TaskCategoryFormViewModelTest {
                     tasks = tasks.toImmutableList(),
                     editingTaskIndex = null,
                     taskOptions = persistentListOf(),
-                    userMessage = R.string.task_category_form_save_error_edit,
+                    userMessage = UserMessage.String(R.string.task_category_form_save_error_edit),
                 )
             )
         }

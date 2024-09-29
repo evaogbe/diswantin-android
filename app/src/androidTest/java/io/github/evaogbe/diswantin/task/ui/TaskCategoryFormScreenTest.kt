@@ -22,6 +22,7 @@ import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.stringResource
 import io.github.evaogbe.diswantin.ui.components.PendingLayoutTestTag
 import io.github.evaogbe.diswantin.ui.navigation.NavArguments
+import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
@@ -122,7 +123,7 @@ class TaskCategoryFormScreenTest {
 
     @Test
     fun displaysErrorMessage_whenSearchTasksFails() {
-        var userMessage: Int? = null
+        var userMessage: UserMessage? = null
         val query = loremFaker.verbs.base()
         val db = FakeDatabase()
         val taskRepository = spyk(FakeTaskRepository(db))
@@ -154,7 +155,7 @@ class TaskCategoryFormScreenTest {
             .performTextInput(query)
 
         composeTestRule.waitUntil {
-            userMessage == R.string.search_task_options_error
+            userMessage == UserMessage.String(R.string.search_task_options_error)
         }
     }
 
@@ -217,7 +218,7 @@ class TaskCategoryFormScreenTest {
 
     @Test
     fun displaysErrorMessage_withSaveErrorForNew() {
-        var userMessage: Int? = null
+        var userMessage: UserMessage? = null
         val name = loremFaker.lorem.words()
         val db = FakeDatabase()
         val taskRepository = FakeTaskRepository(db)
@@ -250,7 +251,7 @@ class TaskCategoryFormScreenTest {
         viewModel.saveCategory()
 
         composeTestRule.waitUntil {
-            userMessage == R.string.task_category_form_save_error_new
+            userMessage == UserMessage.String(R.string.task_category_form_save_error_new)
         }
     }
 
@@ -295,7 +296,7 @@ class TaskCategoryFormScreenTest {
 
     @Test
     fun displaysErrorMessage_withSaveErrorForEdit() {
-        var userMessage: Int? = null
+        var userMessage: UserMessage? = null
         val name = loremFaker.lorem.words()
         val category = genTaskCategory()
         val db = FakeDatabase().apply {
@@ -334,7 +335,7 @@ class TaskCategoryFormScreenTest {
         viewModel.saveCategory()
 
         composeTestRule.waitUntil {
-            userMessage == R.string.task_category_form_save_error_edit
+            userMessage == UserMessage.String(R.string.task_category_form_save_error_edit)
         }
     }
 
