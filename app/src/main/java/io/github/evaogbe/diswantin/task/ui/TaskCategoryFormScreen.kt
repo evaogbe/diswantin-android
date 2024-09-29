@@ -289,25 +289,27 @@ fun TaskCategoryFormLayout(
                 HorizontalDivider()
             }
 
-            item {
-                if (editingTaskIndex == tasks.size) {
-                    Spacer(Modifier.size(SpaceSm))
-                    AutocompleteField(
-                        query = taskQuery,
-                        onQueryChange = { taskQuery = it },
-                        label = { Text(stringResource(R.string.task_name_label)) },
-                        onSearch = onTaskSearch,
-                        options = uiState.taskOptions,
-                        formatOption = Task::name,
-                        onSelectOption = { onSelectTaskOption(tasks.size, it) },
-                        autoFocus = editingTaskIndex > 0,
-                    )
-                } else {
-                    TextButtonWithIcon(
-                        onClick = { startEditTask(tasks.size) },
-                        imageVector = Icons.Default.Add,
-                        text = stringResource(R.string.add_task_button),
-                    )
+            if (tasks.size < 20) {
+                item {
+                    if (editingTaskIndex == tasks.size) {
+                        Spacer(Modifier.size(SpaceSm))
+                        AutocompleteField(
+                            query = taskQuery,
+                            onQueryChange = { taskQuery = it },
+                            label = { Text(stringResource(R.string.task_name_label)) },
+                            onSearch = onTaskSearch,
+                            options = uiState.taskOptions,
+                            formatOption = Task::name,
+                            onSelectOption = { onSelectTaskOption(tasks.size, it) },
+                            autoFocus = editingTaskIndex > 0,
+                        )
+                    } else {
+                        TextButtonWithIcon(
+                            onClick = { startEditTask(tasks.size) },
+                            imageVector = Icons.Default.Add,
+                            text = stringResource(R.string.add_task_button),
+                        )
+                    }
                 }
             }
         }

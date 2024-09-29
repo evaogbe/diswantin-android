@@ -44,6 +44,68 @@ class TaskCategoryFormScreenTest {
     private val faker = Faker()
 
     @Test
+    fun hidesAddTaskButton_when20TasksAdded() {
+        val tasks = List(20) {
+            Task(
+                id = it + 1L,
+                createdAt = faker.random.randomPastDate().toInstant(),
+                name = loremFaker.lorem.unique.words(),
+            )
+        }
+        val db = FakeDatabase().apply {
+            tasks.forEach(::insertTask)
+        }
+        val taskRepository = FakeTaskRepository(db)
+        val taskCategoryRepository = FakeTaskCategoryRepository(db)
+        val viewModel =
+            TaskCategoryFormViewModel(SavedStateHandle(), taskCategoryRepository, taskRepository)
+
+        composeTestRule.setContent {
+            DiswantinTheme {
+                TaskCategoryFormScreen(
+                    onPopBackStack = {},
+                    setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
+                    setUserMessage = {},
+                    onSelectTaskType = {},
+                    taskCategoryFormViewModel = viewModel,
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(
+            stringResource(R.string.task_name_label),
+            useUnmergedTree = true,
+        )
+            .onParent()
+            .performTextInput(tasks[0].name.substring(0, 1))
+
+        composeTestRule.waitUntilExactlyOneExists(hasText(tasks[0].name))
+        composeTestRule.onNodeWithText(tasks[0].name).performClick()
+
+        tasks.drop(1).forEach { task ->
+            composeTestRule.onNodeWithText(stringResource(R.string.add_task_button)).performClick()
+            composeTestRule.onNodeWithText(
+                stringResource(R.string.task_name_label),
+                useUnmergedTree = true,
+            )
+                .onParent()
+                .performTextInput(task.name.substring(0, 1))
+
+            composeTestRule.waitUntilExactlyOneExists(hasText(task.name))
+            composeTestRule.onNodeWithText(task.name).performClick()
+        }
+
+        composeTestRule.onNodeWithText(stringResource(R.string.add_task_button))
+            .assertDoesNotExist()
+        composeTestRule.onNodeWithText(
+            stringResource(R.string.task_name_label),
+            useUnmergedTree = true,
+        ).assertDoesNotExist()
+    }
+
+    @Test
     fun displaysErrorMessage_withFailureUi() {
         val db = FakeDatabase()
         val taskRepository = FakeTaskRepository(db)
