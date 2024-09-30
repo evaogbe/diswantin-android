@@ -179,7 +179,7 @@ class TaskCategoryFormViewModel @Inject constructor(
         val state = (uiState.value as? TaskCategoryFormUiState.Success) ?: return
 
         if (categoryId == null) {
-            val form = NewTaskCategoryForm(name = nameInput, tasks = state.tasks)
+            val form = NewTaskCategoryForm(name = nameInput, tasks = state.tasks.take(20))
             viewModelScope.launch {
                 try {
                     taskCategoryRepository.create(form)
@@ -200,7 +200,7 @@ class TaskCategoryFormViewModel @Inject constructor(
                     taskCategoryRepository.update(
                         EditTaskCategoryForm(
                             name = nameInput,
-                            tasks = state.tasks,
+                            tasks = state.tasks.take(20),
                             existingCategoryWithTasks = existingCategoryWithTasks,
                         )
                     )
