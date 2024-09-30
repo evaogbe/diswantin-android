@@ -76,31 +76,31 @@ class TaskFormViewModel @Inject constructor(
 
     private val recurrenceUiState = MutableStateFlow<TaskRecurrenceUiState?>(null)
 
-    private val category = MutableStateFlow<TaskCategory?>(null)
-
-    private val categoryQuery = MutableStateFlow("")
-
     private val parentTask = MutableStateFlow<Task?>(null)
 
     private val parentTaskQuery = MutableStateFlow("")
 
+    private val category = MutableStateFlow<TaskCategory?>(null)
+
+    private val categoryQuery = MutableStateFlow("")
+
     private val isSaved = MutableStateFlow(false)
 
     private val userMessage = MutableStateFlow<UserMessage?>(null)
-
-    private val hasCategoriesStream = taskCategoryRepository.hasCategoriesStream
-        .map<Boolean, Result<Boolean>> { Result.Success(it) }
-        .catch { e ->
-            Timber.e(e, "Failed to query has categories")
-            userMessage.value = UserMessage.String(R.string.task_form_fetch_category_error)
-            emit(Result.Failure(e))
-        }
 
     private val taskCountStream = taskRepository.getCount()
         .map<Long, Result<Long>> { Result.Success(it) }
         .catch { e ->
             Timber.e(e, "Failed to fetch task count")
             userMessage.value = UserMessage.String(R.string.task_form_fetch_parent_task_error)
+            emit(Result.Failure(e))
+        }
+
+    private val hasCategoriesStream = taskCategoryRepository.hasCategoriesStream
+        .map<Boolean, Result<Boolean>> { Result.Success(it) }
+        .catch { e ->
+            Timber.e(e, "Failed to query has categories")
+            userMessage.value = UserMessage.String(R.string.task_form_fetch_category_error)
             emit(Result.Failure(e))
         }
 
@@ -122,22 +122,22 @@ class TaskFormViewModel @Inject constructor(
             }
     } ?: flowOf(Result.Success(emptyList()))
 
-    private val existingCategoryStream = taskId?.let { id ->
-        taskCategoryRepository.getByTaskId(id)
-            .map<TaskCategory?, Result<TaskCategory?>> { Result.Success(it) }
-            .catch { e ->
-                Timber.e(e, "Failed to fetch task category by task id: %d", id)
-                userMessage.value = UserMessage.String(R.string.task_form_fetch_category_error)
-                emit(Result.Failure(e))
-            }
-    } ?: flowOf(Result.Success(null))
-
     private val existingParentTaskStream = taskId?.let { id ->
         taskRepository.getParent(id)
             .map<Task?, Result<Task?>> { Result.Success(it) }
             .catch { e ->
                 Timber.e(e, "Failed to fetch parent task by child id: %d", id)
                 userMessage.value = UserMessage.String(R.string.task_form_fetch_parent_task_error)
+                emit(Result.Failure(e))
+            }
+    } ?: flowOf(Result.Success(null))
+
+    private val existingCategoryStream = taskId?.let { id ->
+        taskCategoryRepository.getByTaskId(id)
+            .map<TaskCategory?, Result<TaskCategory?>> { Result.Success(it) }
+            .catch { e ->
+                Timber.e(e, "Failed to fetch task category by task id: %d", id)
+                userMessage.value = UserMessage.String(R.string.task_form_fetch_category_error)
                 emit(Result.Failure(e))
             }
     } ?: flowOf(Result.Success(null))
@@ -152,6 +152,19 @@ class TaskFormViewModel @Inject constructor(
         scheduledDate,
         scheduledTime,
         recurrenceUiState,
+        taskCountStream,
+        parentTask,
+        parentTaskQuery,
+        parentTaskQuery.flatMapLatest { query ->
+            if (query.isBlank()) {
+                flowOf(emptyList())
+            } else {
+                taskRepository.search(query.trim()).catch { e ->
+                    Timber.e(e, "Failed to search for task by query: %s", query)
+                    userMessage.value = UserMessage.String(R.string.search_task_options_error)
+                }
+            }
+        },
         hasCategoriesStream,
         category,
         categoryQuery,
@@ -163,19 +176,6 @@ class TaskFormViewModel @Inject constructor(
                     Timber.e(e, "Failed to search for task category by query: %s", query)
                     userMessage.value =
                         UserMessage.String(R.string.search_task_category_options_error)
-                }
-            }
-        },
-        taskCountStream,
-        parentTask,
-        parentTaskQuery,
-        parentTaskQuery.flatMapLatest { query ->
-            if (query.isBlank()) {
-                flowOf(emptyList())
-            } else {
-                taskRepository.search(query.trim()).catch { e ->
-                    Timber.e(e, "Failed to search for task by query: %s", query)
-                    userMessage.value = UserMessage.String(R.string.search_task_options_error)
                 }
             }
         },
@@ -193,14 +193,14 @@ class TaskFormViewModel @Inject constructor(
         val scheduledDate = args[4] as LocalDate?
         val scheduledTime = args[5] as LocalTime?
         val recurrenceUiState = args[6] as TaskRecurrenceUiState?
-        val hasCategoriesResult = args[7] as Result<Boolean>
-        val category = args[8] as TaskCategory?
-        val categoryQuery = (args[9] as String).trim()
-        val categoryOptions = args[10] as List<TaskCategory>
-        val taskCountResult = args[11] as Result<Long>
-        val parentTask = args[12] as Task?
-        val parentTaskQuery = (args[13] as String).trim()
-        val parentTaskOptions = args[14] as List<Task>
+        val taskCountResult = args[7] as Result<Long>
+        val parentTask = args[8] as Task?
+        val parentTaskQuery = (args[9] as String).trim()
+        val parentTaskOptions = args[10] as List<Task>
+        val hasCategoriesResult = args[11] as Result<Boolean>
+        val category = args[12] as TaskCategory?
+        val categoryQuery = (args[13] as String).trim()
+        val categoryOptions = args[14] as List<TaskCategory>
         val isSaved = args[15] as Boolean
         val userMessage = args[16] as UserMessage?
         val existingTaskResult = args[17] as Result<Task?>
@@ -291,8 +291,8 @@ class TaskFormViewModel @Inject constructor(
             recurrenceUiState.value = existingRecurrencesStream.first().getOrNull()?.let {
                 TaskRecurrenceUiState.tryFromEntities(it, locale)
             }
-            category.value = existingCategoryStream.first().getOrNull()
             parentTask.value = existingParentTaskStream.first().getOrNull()
+            category.value = existingCategoryStream.first().getOrNull()
         }
     }
 
@@ -334,12 +334,12 @@ class TaskFormViewModel @Inject constructor(
         }
     }
 
-    fun updateCategory(value: TaskCategory?) {
-        category.value = value
-    }
-
     fun updateParentTask(value: Task?) {
         parentTask.value = value
+    }
+
+    fun updateCategory(value: TaskCategory?) {
+        category.value = value
     }
 
     fun updateRecurrence(value: TaskRecurrenceUiState?) {
@@ -351,12 +351,12 @@ class TaskFormViewModel @Inject constructor(
             }
     }
 
-    fun searchCategories(query: String) {
-        categoryQuery.value = query
+    fun searchParentTasks(query: String) {
+        parentTaskQuery.value = query
     }
 
-    fun searchTasks(query: String) {
-        parentTaskQuery.value = query
+    fun searchCategories(query: String) {
+        categoryQuery.value = query
     }
 
     fun saveTask() {

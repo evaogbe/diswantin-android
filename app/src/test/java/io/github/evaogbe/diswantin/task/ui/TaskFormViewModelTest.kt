@@ -206,6 +206,151 @@ class TaskFormViewModelTest {
         }
 
     @Test
+    fun `uiState shows parent task field when taskId is null and repository has tasks`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val db = FakeDatabase().apply {
+                insertTask(genTask())
+            }
+            val taskRepository = FakeTaskRepository(db)
+            val taskCategoryRepository = FakeTaskCategoryRepository(db)
+            val viewModel = createTaskFormViewModelForNew(taskRepository, taskCategoryRepository)
+
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect()
+            }
+
+            assertThat(viewModel.uiState.value).isEqualTo(
+                TaskFormUiState.Success(
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
+                    recurrence = null,
+                    showCategoryField = false,
+                    category = null,
+                    categoryOptions = persistentListOf(),
+                    showParentTaskField = true,
+                    parentTask = null,
+                    parentTaskOptions = persistentListOf(),
+                    userMessage = null,
+                )
+            )
+        }
+
+    @Test
+    fun `uiState shows parent task field when taskId is present and repository has other tasks`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val db = FakeDatabase().apply {
+                insertTask(genTask())
+                insertTask(genTask(id = 2L))
+            }
+            val taskRepository = FakeTaskRepository(db)
+            val taskCategoryRepository = FakeTaskCategoryRepository(db)
+            val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
+
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect()
+            }
+
+            assertThat(viewModel.isNew).isFalse()
+            assertThat(viewModel.uiState.value).isEqualTo(
+                TaskFormUiState.Success(
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
+                    recurrence = null,
+                    showCategoryField = false,
+                    category = null,
+                    categoryOptions = persistentListOf(),
+                    showParentTaskField = true,
+                    parentTask = null,
+                    parentTaskOptions = persistentListOf(),
+                    userMessage = null,
+                )
+            )
+        }
+
+    @Test
+    fun `uiState hides parent task field when fetch count fails`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val db = FakeDatabase().apply {
+                insertTask(genTask())
+            }
+            val taskRepository = spyk(FakeTaskRepository(db))
+            every { taskRepository.getCount() } returns flow { throw RuntimeException("Test") }
+
+            val taskCategoryRepository = FakeTaskCategoryRepository(db)
+            val viewModel = createTaskFormViewModelForNew(taskRepository, taskCategoryRepository)
+
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect()
+            }
+
+            assertThat(viewModel.uiState.value).isEqualTo(
+                TaskFormUiState.Success(
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
+                    recurrence = null,
+                    showCategoryField = false,
+                    category = null,
+                    categoryOptions = persistentListOf(),
+                    showParentTaskField = false,
+                    parentTask = null,
+                    parentTaskOptions = persistentListOf(),
+                    userMessage = UserMessage.String(R.string.task_form_fetch_parent_task_error),
+                )
+            )
+        }
+
+    @Test
+    fun `uiState hides parent task field when fetch existing task parent fails`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val task = genTask()
+            val db = FakeDatabase().apply {
+                insertTask(task)
+            }
+            val taskRepository = spyk(FakeTaskRepository(db))
+            every { taskRepository.getParent(any()) } returns flow {
+                throw RuntimeException("Test")
+            }
+
+            val taskCategoryRepository = FakeTaskCategoryRepository(db)
+            val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
+
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect()
+            }
+
+            assertThat(viewModel.uiState.value).isEqualTo(
+                TaskFormUiState.Success(
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
+                    recurrence = null,
+                    showCategoryField = false,
+                    category = null,
+                    categoryOptions = persistentListOf(),
+                    showParentTaskField = false,
+                    parentTask = null,
+                    parentTaskOptions = persistentListOf(),
+                    userMessage = UserMessage.String(R.string.task_form_fetch_parent_task_error),
+                )
+            )
+        }
+
+    @Test
     fun `uiState shows category field when has categories`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val category = TaskCategory(name = loremFaker.lorem.words())
@@ -353,10 +498,18 @@ class TaskFormViewModelTest {
         }
 
     @Test
-    fun `uiState shows parent task field when taskId is null and repository has tasks`() =
+    fun `searchParentTasks fetches parentTaskOptions`() =
         runTest(mainDispatcherRule.testDispatcher) {
+            val query = loremFaker.verbs.base()
+            val tasks = List(faker.random.nextInt(min = 1, max = 5)) {
+                Task(
+                    id = it + 1L,
+                    createdAt = faker.random.randomPastDate().toInstant(),
+                    name = "$query ${loremFaker.lorem.words()}",
+                )
+            }
             val db = FakeDatabase().apply {
-                insertTask(genTask())
+                tasks.forEach(::insertTask)
             }
             val taskRepository = FakeTaskRepository(db)
             val taskCategoryRepository = FakeTaskCategoryRepository(db)
@@ -365,6 +518,47 @@ class TaskFormViewModelTest {
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
             }
+
+            viewModel.searchParentTasks(query)
+
+            assertThat(viewModel.uiState.value).isEqualTo(
+                TaskFormUiState.Success(
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
+                    recurrence = null,
+                    showCategoryField = false,
+                    category = null,
+                    categoryOptions = persistentListOf(),
+                    showParentTaskField = true,
+                    parentTask = null,
+                    parentTaskOptions = tasks.toPersistentList(),
+                    userMessage = null,
+                )
+            )
+        }
+
+    @Test
+    fun `searchParentTasks shows error message when repository throws`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val query = loremFaker.verbs.base()
+            val db = FakeDatabase().apply {
+                insertTask(genTask())
+            }
+            val taskRepository = spyk(FakeTaskRepository(db))
+            every { taskRepository.search(any()) } returns flow { throw RuntimeException("Test") }
+
+            val taskCategoryRepository = FakeTaskCategoryRepository(db)
+            val viewModel = createTaskFormViewModelForNew(taskRepository, taskCategoryRepository)
+
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect()
+            }
+
+            viewModel.searchParentTasks(query)
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
@@ -381,118 +575,7 @@ class TaskFormViewModelTest {
                     showParentTaskField = true,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
-                    userMessage = null,
-                )
-            )
-        }
-
-    @Test
-    fun `uiState shows parent task field when taskId is present and repository has other tasks`() =
-        runTest(mainDispatcherRule.testDispatcher) {
-            val db = FakeDatabase().apply {
-                insertTask(genTask())
-                insertTask(genTask(id = 2L))
-            }
-            val taskRepository = FakeTaskRepository(db)
-            val taskCategoryRepository = FakeTaskCategoryRepository(db)
-            val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
-
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-                viewModel.uiState.collect()
-            }
-
-            assertThat(viewModel.isNew).isFalse()
-            assertThat(viewModel.uiState.value).isEqualTo(
-                TaskFormUiState.Success(
-                    deadlineDate = null,
-                    deadlineTime = null,
-                    startAfterDate = null,
-                    startAfterTime = null,
-                    scheduledDate = null,
-                    scheduledTime = null,
-                    recurrence = null,
-                    showCategoryField = false,
-                    category = null,
-                    categoryOptions = persistentListOf(),
-                    showParentTaskField = true,
-                    parentTask = null,
-                    parentTaskOptions = persistentListOf(),
-                    userMessage = null,
-                )
-            )
-        }
-
-    @Test
-    fun `uiState hides parent task field when fetch count fails`() =
-        runTest(mainDispatcherRule.testDispatcher) {
-            val db = FakeDatabase().apply {
-                insertTask(genTask())
-            }
-            val taskRepository = spyk(FakeTaskRepository(db))
-            every { taskRepository.getCount() } returns flow { throw RuntimeException("Test") }
-
-            val taskCategoryRepository = FakeTaskCategoryRepository(db)
-            val viewModel = createTaskFormViewModelForNew(taskRepository, taskCategoryRepository)
-
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-                viewModel.uiState.collect()
-            }
-
-            assertThat(viewModel.uiState.value).isEqualTo(
-                TaskFormUiState.Success(
-                    deadlineDate = null,
-                    deadlineTime = null,
-                    startAfterDate = null,
-                    startAfterTime = null,
-                    scheduledDate = null,
-                    scheduledTime = null,
-                    recurrence = null,
-                    showCategoryField = false,
-                    category = null,
-                    categoryOptions = persistentListOf(),
-                    showParentTaskField = false,
-                    parentTask = null,
-                    parentTaskOptions = persistentListOf(),
-                    userMessage = UserMessage.String(R.string.task_form_fetch_parent_task_error),
-                )
-            )
-        }
-
-    @Test
-    fun `uiState hides parent task field when fetch existing task parent fails`() =
-        runTest(mainDispatcherRule.testDispatcher) {
-            val task = genTask()
-            val db = FakeDatabase().apply {
-                insertTask(task)
-            }
-            val taskRepository = spyk(FakeTaskRepository(db))
-            every { taskRepository.getParent(any()) } returns flow {
-                throw RuntimeException("Test")
-            }
-
-            val taskCategoryRepository = FakeTaskCategoryRepository(db)
-            val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
-
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-                viewModel.uiState.collect()
-            }
-
-            assertThat(viewModel.uiState.value).isEqualTo(
-                TaskFormUiState.Success(
-                    deadlineDate = null,
-                    deadlineTime = null,
-                    startAfterDate = null,
-                    startAfterTime = null,
-                    scheduledDate = null,
-                    scheduledTime = null,
-                    recurrence = null,
-                    showCategoryField = false,
-                    category = null,
-                    categoryOptions = persistentListOf(),
-                    showParentTaskField = false,
-                    parentTask = null,
-                    parentTaskOptions = persistentListOf(),
-                    userMessage = UserMessage.String(R.string.task_form_fetch_parent_task_error),
+                    userMessage = UserMessage.String(R.string.search_task_options_error),
                 )
             )
         }
@@ -574,88 +657,6 @@ class TaskFormViewModelTest {
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
                     userMessage = UserMessage.String(R.string.search_task_category_options_error),
-                )
-            )
-        }
-
-    @Test
-    fun `searchTasks fetches parentTaskOptions`() = runTest(mainDispatcherRule.testDispatcher) {
-        val query = loremFaker.verbs.base()
-        val tasks = List(faker.random.nextInt(min = 1, max = 5)) {
-            Task(
-                id = it + 1L,
-                createdAt = faker.random.randomPastDate().toInstant(),
-                name = "$query ${loremFaker.lorem.words()}",
-            )
-        }
-        val db = FakeDatabase().apply {
-            tasks.forEach(::insertTask)
-        }
-        val taskRepository = FakeTaskRepository(db)
-        val taskCategoryRepository = FakeTaskCategoryRepository(db)
-        val viewModel = createTaskFormViewModelForNew(taskRepository, taskCategoryRepository)
-
-        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-            viewModel.uiState.collect()
-        }
-
-        viewModel.searchTasks(query)
-
-        assertThat(viewModel.uiState.value).isEqualTo(
-            TaskFormUiState.Success(
-                deadlineDate = null,
-                deadlineTime = null,
-                startAfterDate = null,
-                startAfterTime = null,
-                scheduledDate = null,
-                scheduledTime = null,
-                recurrence = null,
-                showCategoryField = false,
-                category = null,
-                categoryOptions = persistentListOf(),
-                showParentTaskField = true,
-                parentTask = null,
-                parentTaskOptions = tasks.toPersistentList(),
-                userMessage = null,
-            )
-        )
-    }
-
-    @Test
-    fun `searchTasks shows error message when repository throws`() =
-        runTest(mainDispatcherRule.testDispatcher) {
-            val query = loremFaker.verbs.base()
-            val db = FakeDatabase().apply {
-                insertTask(genTask())
-            }
-            val taskRepository = spyk(FakeTaskRepository(db))
-            every { taskRepository.search(any()) } returns flow { throw RuntimeException("Test") }
-
-            val taskCategoryRepository = FakeTaskCategoryRepository(db)
-            val viewModel = createTaskFormViewModelForNew(taskRepository, taskCategoryRepository)
-
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-                viewModel.uiState.collect()
-            }
-
-            viewModel.searchTasks(query)
-
-            assertThat(viewModel.uiState.value).isEqualTo(
-                TaskFormUiState.Success(
-                    deadlineDate = null,
-                    deadlineTime = null,
-                    startAfterDate = null,
-                    startAfterTime = null,
-                    scheduledDate = null,
-                    scheduledTime = null,
-                    recurrence = null,
-                    showCategoryField = false,
-                    category = null,
-                    categoryOptions = persistentListOf(),
-                    showParentTaskField = true,
-                    parentTask = null,
-                    parentTaskOptions = persistentListOf(),
-                    userMessage = UserMessage.String(R.string.search_task_options_error),
                 )
             )
         }
@@ -924,102 +925,6 @@ class TaskFormViewModelTest {
         }
 
     @Test
-    fun `saveTask maintains category when query has category fails`() =
-        runTest(mainDispatcherRule.testDispatcher) {
-            val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
-            val task = genTask()
-            val category = TaskCategory(id = 1L, name = loremFaker.lorem.words())
-            val db = FakeDatabase().apply {
-                insertTask(task)
-                insertTaskCategory(category, setOf(task.id))
-            }
-            val taskRepository = FakeTaskRepository(db)
-            val taskCategoryRepository = spyk(FakeTaskCategoryRepository(db))
-            every { taskCategoryRepository.hasCategoriesStream } returns flow {
-                throw RuntimeException("Test")
-            }
-
-            val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
-
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-                viewModel.uiState.collect()
-            }
-
-            assertThat(viewModel.uiState.value).isEqualTo(
-                TaskFormUiState.Success(
-                    deadlineDate = null,
-                    deadlineTime = null,
-                    startAfterDate = null,
-                    startAfterTime = null,
-                    scheduledDate = null,
-                    scheduledTime = null,
-                    recurrence = null,
-                    showCategoryField = false,
-                    category = category,
-                    categoryOptions = persistentListOf(),
-                    showParentTaskField = false,
-                    parentTask = null,
-                    parentTaskOptions = persistentListOf(),
-                    userMessage = UserMessage.String(R.string.task_form_fetch_category_error),
-                )
-            )
-
-            viewModel.updateNameInput(name)
-            viewModel.saveTask()
-
-            assertThat(taskRepository.tasks)
-                .containsExactlyInAnyOrder(task.copy(name = name, categoryId = category.id))
-        }
-
-    @Test
-    fun `saveTask maintains category when fetch existing category fails`() =
-        runTest(mainDispatcherRule.testDispatcher) {
-            val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
-            val task = genTask()
-            val category = TaskCategory(id = 1L, name = loremFaker.lorem.words())
-            val db = FakeDatabase().apply {
-                insertTask(task)
-                insertTaskCategory(category, setOf(task.id))
-            }
-            val taskRepository = FakeTaskRepository(db)
-            val taskCategoryRepository = spyk(FakeTaskCategoryRepository(db))
-            every { taskCategoryRepository.getByTaskId(any()) } returns flow {
-                throw RuntimeException("Test")
-            }
-
-            val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
-
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-                viewModel.uiState.collect()
-            }
-
-            assertThat(viewModel.uiState.value).isEqualTo(
-                TaskFormUiState.Success(
-                    deadlineDate = null,
-                    deadlineTime = null,
-                    startAfterDate = null,
-                    startAfterTime = null,
-                    scheduledDate = null,
-                    scheduledTime = null,
-                    recurrence = null,
-                    showCategoryField = false,
-                    category = null,
-                    categoryOptions = persistentListOf(),
-                    showParentTaskField = false,
-                    parentTask = null,
-                    parentTaskOptions = persistentListOf(),
-                    userMessage = UserMessage.String(R.string.task_form_fetch_category_error),
-                )
-            )
-
-            viewModel.updateNameInput(name)
-            viewModel.saveTask()
-
-            assertThat(taskRepository.tasks)
-                .containsExactlyInAnyOrder(task.copy(name = name, categoryId = category.id))
-        }
-
-    @Test
     fun `saveTask maintains parent task when fetch task count fails`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
@@ -1115,6 +1020,102 @@ class TaskFormViewModelTest {
             assertThat(taskRepository.tasks)
                 .containsExactlyInAnyOrder(task.copy(name = name), parentTask)
             assertThat(FakeTaskRepository(db).getParent(task.id).first()).isEqualTo(parentTask)
+        }
+
+    @Test
+    fun `saveTask maintains category when query has category fails`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
+            val task = genTask()
+            val category = TaskCategory(id = 1L, name = loremFaker.lorem.words())
+            val db = FakeDatabase().apply {
+                insertTask(task)
+                insertTaskCategory(category, setOf(task.id))
+            }
+            val taskRepository = FakeTaskRepository(db)
+            val taskCategoryRepository = spyk(FakeTaskCategoryRepository(db))
+            every { taskCategoryRepository.hasCategoriesStream } returns flow {
+                throw RuntimeException("Test")
+            }
+
+            val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
+
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect()
+            }
+
+            assertThat(viewModel.uiState.value).isEqualTo(
+                TaskFormUiState.Success(
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
+                    recurrence = null,
+                    showCategoryField = false,
+                    category = category,
+                    categoryOptions = persistentListOf(),
+                    showParentTaskField = false,
+                    parentTask = null,
+                    parentTaskOptions = persistentListOf(),
+                    userMessage = UserMessage.String(R.string.task_form_fetch_category_error),
+                )
+            )
+
+            viewModel.updateNameInput(name)
+            viewModel.saveTask()
+
+            assertThat(taskRepository.tasks)
+                .containsExactlyInAnyOrder(task.copy(name = name, categoryId = category.id))
+        }
+
+    @Test
+    fun `saveTask maintains category when fetch existing category fails`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
+            val task = genTask()
+            val category = TaskCategory(id = 1L, name = loremFaker.lorem.words())
+            val db = FakeDatabase().apply {
+                insertTask(task)
+                insertTaskCategory(category, setOf(task.id))
+            }
+            val taskRepository = FakeTaskRepository(db)
+            val taskCategoryRepository = spyk(FakeTaskCategoryRepository(db))
+            every { taskCategoryRepository.getByTaskId(any()) } returns flow {
+                throw RuntimeException("Test")
+            }
+
+            val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
+
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect()
+            }
+
+            assertThat(viewModel.uiState.value).isEqualTo(
+                TaskFormUiState.Success(
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
+                    recurrence = null,
+                    showCategoryField = false,
+                    category = null,
+                    categoryOptions = persistentListOf(),
+                    showParentTaskField = false,
+                    parentTask = null,
+                    parentTaskOptions = persistentListOf(),
+                    userMessage = UserMessage.String(R.string.task_form_fetch_category_error),
+                )
+            )
+
+            viewModel.updateNameInput(name)
+            viewModel.saveTask()
+
+            assertThat(taskRepository.tasks)
+                .containsExactlyInAnyOrder(task.copy(name = name, categoryId = category.id))
         }
 
     private fun createClock() =

@@ -187,7 +187,7 @@ fun TaskFormScreen(
                 onCategoryChange = taskFormViewModel::updateCategory,
                 onCategorySearch = taskFormViewModel::searchCategories,
                 onParentTaskChange = taskFormViewModel::updateParentTask,
-                onTaskSearch = taskFormViewModel::searchTasks,
+                onTaskSearch = taskFormViewModel::searchParentTasks,
             )
         }
     }
@@ -451,17 +451,6 @@ fun TaskFormLayout(
                 }
             }
 
-            if (uiState.showCategoryField) {
-                SelectableAutocompleteField(
-                    selectedOption = uiState.category,
-                    label = stringResource(R.string.task_category_label),
-                    onSearch = onCategorySearch,
-                    options = uiState.categoryOptions,
-                    formatOption = TaskCategory::name,
-                    onSelectOption = onCategoryChange,
-                )
-            }
-
             if (uiState.showParentTaskField) {
                 SelectableAutocompleteField(
                     selectedOption = uiState.parentTask,
@@ -470,6 +459,17 @@ fun TaskFormLayout(
                     options = uiState.parentTaskOptions,
                     formatOption = Task::name,
                     onSelectOption = onParentTaskChange,
+                )
+            }
+
+            if (uiState.showCategoryField) {
+                SelectableAutocompleteField(
+                    selectedOption = uiState.category,
+                    label = stringResource(R.string.task_category_label),
+                    onSearch = onCategorySearch,
+                    options = uiState.categoryOptions,
+                    formatOption = TaskCategory::name,
+                    onSelectOption = onCategoryChange,
                 )
             }
         }
