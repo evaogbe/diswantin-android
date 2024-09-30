@@ -235,16 +235,172 @@ interface TaskDao {
             FROM task_completion
             GROUP BY task_id
         ) c ON c.task_id = t.id
-        LEFT JOIN (SELECT DISTINCT task_id FROM task_recurrence) r ON r.task_id = t.id
+        LEFT JOIN task_recurrence r ON r.task_id = t.id
         WHERE task_fts MATCH :query
-            AND (:deadlineDate IS NULL OR t.deadline_date = :deadlineDate)
-            AND (:scheduledDate IS NULL OR t.scheduled_date = :scheduledDate)
+            AND (
+                :deadlineDate IS NULL 
+                OR t.deadline_date = :deadlineDate
+                OR (
+                    t.deadline_time IS NOT NULL
+                    AND r.start <= :deadlineDate
+                    AND CASE type
+                        WHEN 0 THEN (julianday(:deadlineDate) - julianday(start)) % step = 0
+                        WHEN 1 THEN (julianday(:deadlineDate) - julianday(start)) % (step * 7) = 0
+                        WHEN 2 THEN (
+                                12
+                                + CAST(strftime('%m', :deadlineDate) as INT)
+                                - CAST(strftime('%m', start) as INT)
+                            ) % step = 0
+                            AND (
+                                strftime('%d', start) = strftime('%d', :deadlineDate)
+                                OR (
+                                    strftime('%m-%d', start)
+                                        IN (
+                                            '01-31', '03-31', '05-31', '07-31', '08-31', '10-31',
+                                            '12-31'
+                                        )
+                                    AND strftime('%m-%d', :deadlineDate)
+                                        IN ('04-30', '06-30', '09-30', '11-30')
+                                )
+                                OR (
+                                    strftime('%m-%d', start)
+                                        IN (
+                                            '01-31', '02-29', '03-31', '04-30', '05-31', '06-30',
+                                            '07-31', '08-31', '09-30', '10-31', '11-30', '12-31'
+                                        )
+                                    AND (
+                                        strftime('%m-%d', :deadlineDate) = '02-29'
+                                        OR (
+                                            strftime('%m-%d', :deadlineDate) = '02-28'
+                                            AND (
+                                                CAST(strftime('%Y', :deadlineDate) as INT) & 3 != 0
+                                                OR (
+                                                    CAST(strftime('%Y', :deadlineDate) as INT) % 25
+                                                        = 0
+                                                    AND CAST(strftime('%Y', :deadlineDate) as INT)
+                                                        & 15 != 0
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        WHEN 3 THEN (
+                                12
+                                + CAST(strftime('%m', :deadlineDate) as INT)
+                                - CAST(strftime('%m', start) as INT)
+                            ) % step = 0
+                            AND week = :deadlineWeek
+                            AND strftime('%w', start) = strftime('%w', :deadlineDate)
+                        WHEN 4 THEN (
+                                CAST(strftime('%Y', :deadlineDate) as INT)
+                                - CAST(strftime('%Y', start) as INT)
+                            ) % step = 0
+                            AND (
+                                strftime('%m-%d', start) = strftime('%m-%d', :deadlineDate)
+                                OR (
+                                    strftime('%m-%d', start) = '02-29'
+                                    AND strftime('%m-%d', :deadlineDate) = '02-28'
+                                    AND (
+                                        CAST(strftime('%Y', :deadlineDate) as INT) & 3 != 0
+                                        OR (
+                                            CAST(strftime('%Y', :deadlineDate) as INT) % 25 = 0
+                                            AND CAST(strftime('%Y', :deadlineDate) as INT) & 15 != 0
+                                        )
+                                    )
+                                )
+                            )
+                        ELSE TRUE
+                        END
+                )
+            )
+            AND (
+                :scheduledDate IS NULL
+                OR t.scheduled_date = :scheduledDate
+                OR (
+                    t.scheduled_time IS NOT NULL
+                    AND r.start <= :scheduledDate
+                    AND CASE type
+                        WHEN 0 THEN (julianday(:scheduledDate) - julianday(start)) % step = 0
+                        WHEN 1 THEN (julianday(:scheduledDate) - julianday(start)) % (step * 7) = 0
+                        WHEN 2 THEN (
+                                12
+                                + CAST(strftime('%m', :scheduledDate) as INT)
+                                - CAST(strftime('%m', start) as INT)
+                            ) % step = 0
+                            AND (
+                                strftime('%d', start) = strftime('%d', :scheduledDate)
+                                OR (
+                                    strftime('%m-%d', start)
+                                        IN (
+                                            '01-31', '03-31', '05-31', '07-31', '08-31', '10-31',
+                                            '12-31'
+                                        )
+                                    AND strftime('%m-%d', :scheduledDate)
+                                        IN ('04-30', '06-30', '09-30', '11-30')
+                                )
+                                OR (
+                                    strftime('%m-%d', start)
+                                        IN (
+                                            '01-31', '02-29', '03-31', '04-30', '05-31', '06-30',
+                                            '07-31', '08-31', '09-30', '10-31', '11-30', '12-31'
+                                        )
+                                    AND (
+                                        strftime('%m-%d', :scheduledDate) = '02-29'
+                                        OR (
+                                            strftime('%m-%d', :scheduledDate) = '02-28'
+                                            AND (
+                                                CAST(strftime('%Y', :scheduledDate) as INT) & 3 != 0
+                                                OR (
+                                                    CAST(strftime('%Y', :scheduledDate) as INT) % 25
+                                                        = 0
+                                                    AND CAST(strftime('%Y', :scheduledDate) as INT)
+                                                        & 15 != 0
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        WHEN 3 THEN (
+                                12
+                                + CAST(strftime('%m', :scheduledDate) as INT)
+                                - CAST(strftime('%m', start) as INT)
+                            ) % step = 0
+                            AND week = :scheduledWeek
+                            AND strftime('%w', start) = strftime('%w', :scheduledDate)
+                        WHEN 4 THEN (
+                                CAST(strftime('%Y', :scheduledDate) as INT)
+                                - CAST(strftime('%Y', start) as INT)
+                            ) % step = 0
+                            AND (
+                                strftime('%m-%d', start) = strftime('%m-%d', :scheduledDate)
+                                OR (
+                                    strftime('%m-%d', start) = '02-29'
+                                    AND strftime('%m-%d', :scheduledDate) = '02-28'
+                                    AND (
+                                        CAST(strftime('%Y', :scheduledDate) as INT) & 3 != 0
+                                        OR (
+                                            CAST(strftime('%Y', :scheduledDate) as INT) % 25 = 0
+                                            AND CAST(strftime('%Y', :scheduledDate) as INT) & 15
+                                                != 0
+                                        )
+                                    )
+                                )
+                            )
+                        ELSE TRUE
+                        END
+                )
+            )
+        ORDER BY t.name, t.id
         LIMIT 20"""
     )
     fun searchTaskItems(
         query: String,
         deadlineDate: LocalDate?,
+        deadlineWeek: Int?,
         scheduledDate: LocalDate?,
+        scheduledWeek: Int?,
     ): Flow<List<TaskItem>>
 
     @Query(
@@ -255,12 +411,171 @@ interface TaskDao {
             FROM task_completion
             GROUP BY task_id
         ) c ON c.task_id = t.id
-        LEFT JOIN (SELECT DISTINCT task_id FROM task_recurrence) r ON r.task_id = t.id
-        WHERE (:deadlineDate IS NULL OR t.deadline_date = :deadlineDate)
-            AND (:scheduledDate IS NULL OR t.scheduled_date = :scheduledDate)
+        LEFT JOIN task_recurrence r ON r.task_id = t.id
+        WHERE (
+                :deadlineDate IS NULL 
+                OR t.deadline_date = :deadlineDate
+                OR (
+                    t.deadline_time IS NOT NULL
+                    AND r.start <= :deadlineDate
+                    AND CASE type
+                        WHEN 0 THEN (julianday(:deadlineDate) - julianday(start)) % step = 0
+                        WHEN 1 THEN (julianday(:deadlineDate) - julianday(start)) % (step * 7) = 0
+                        WHEN 2 THEN (
+                                12
+                                + CAST(strftime('%m', :deadlineDate) as INT)
+                                - CAST(strftime('%m', start) as INT)
+                            ) % step = 0
+                            AND (
+                                strftime('%d', start) = strftime('%d', :deadlineDate)
+                                OR (
+                                    strftime('%m-%d', start)
+                                        IN (
+                                            '01-31', '03-31', '05-31', '07-31', '08-31', '10-31',
+                                            '12-31'
+                                        )
+                                    AND strftime('%m-%d', :deadlineDate)
+                                        IN ('04-30', '06-30', '09-30', '11-30')
+                                )
+                                OR (
+                                    strftime('%m-%d', start)
+                                        IN (
+                                            '01-31', '02-29', '03-31', '04-30', '05-31', '06-30',
+                                            '07-31', '08-31', '09-30', '10-31', '11-30', '12-31'
+                                        )
+                                    AND (
+                                        strftime('%m-%d', :deadlineDate) = '02-29'
+                                        OR (
+                                            strftime('%m-%d', :deadlineDate) = '02-28'
+                                            AND (
+                                                CAST(strftime('%Y', :deadlineDate) as INT) & 3 != 0
+                                                OR (
+                                                    CAST(strftime('%Y', :deadlineDate) as INT) % 25
+                                                        = 0
+                                                    AND CAST(strftime('%Y', :deadlineDate) as INT)
+                                                        & 15 != 0
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        WHEN 3 THEN (
+                                12
+                                + CAST(strftime('%m', :deadlineDate) as INT)
+                                - CAST(strftime('%m', start) as INT)
+                            ) % step = 0
+                            AND week = :deadlineWeek
+                            AND strftime('%w', start) = strftime('%w', :deadlineDate)
+                        WHEN 4 THEN (
+                                CAST(strftime('%Y', :deadlineDate) as INT)
+                                - CAST(strftime('%Y', start) as INT)
+                            ) % step = 0
+                            AND (
+                                strftime('%m-%d', start) = strftime('%m-%d', :deadlineDate)
+                                OR (
+                                    strftime('%m-%d', start) = '02-29'
+                                    AND strftime('%m-%d', :deadlineDate) = '02-28'
+                                    AND (
+                                        CAST(strftime('%Y', :deadlineDate) as INT) & 3 != 0
+                                        OR (
+                                            CAST(strftime('%Y', :deadlineDate) as INT) % 25 = 0
+                                            AND CAST(strftime('%Y', :deadlineDate) as INT) & 15 != 0
+                                        )
+                                    )
+                                )
+                            )
+                        ELSE TRUE
+                        END
+                )
+            )
+            AND (
+                :scheduledDate IS NULL
+                OR t.scheduled_date = :scheduledDate
+                OR (
+                    t.scheduled_time IS NOT NULL
+                    AND r.start <= :scheduledDate
+                    AND CASE type
+                        WHEN 0 THEN (julianday(:scheduledDate) - julianday(start)) % step = 0
+                        WHEN 1 THEN (julianday(:scheduledDate) - julianday(start)) % (step * 7) = 0
+                        WHEN 2 THEN (
+                                12
+                                + CAST(strftime('%m', :scheduledDate) as INT)
+                                - CAST(strftime('%m', start) as INT)
+                            ) % step = 0
+                            AND (
+                                strftime('%d', start) = strftime('%d', :scheduledDate)
+                                OR (
+                                    strftime('%m-%d', start)
+                                        IN (
+                                            '01-31', '03-31', '05-31', '07-31', '08-31', '10-31',
+                                            '12-31'
+                                        )
+                                    AND strftime('%m-%d', :scheduledDate)
+                                        IN ('04-30', '06-30', '09-30', '11-30')
+                                )
+                                OR (
+                                    strftime('%m-%d', start)
+                                        IN (
+                                            '01-31', '02-29', '03-31', '04-30', '05-31', '06-30',
+                                            '07-31', '08-31', '09-30', '10-31', '11-30', '12-31'
+                                        )
+                                    AND (
+                                        strftime('%m-%d', :scheduledDate) = '02-29'
+                                        OR (
+                                            strftime('%m-%d', :scheduledDate) = '02-28'
+                                            AND (
+                                                CAST(strftime('%Y', :scheduledDate) as INT) & 3 != 0
+                                                OR (
+                                                    CAST(strftime('%Y', :scheduledDate) as INT) % 25
+                                                        = 0
+                                                    AND CAST(strftime('%Y', :scheduledDate) as INT)
+                                                        & 15 != 0
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        WHEN 3 THEN (
+                                12
+                                + CAST(strftime('%m', :scheduledDate) as INT)
+                                - CAST(strftime('%m', start) as INT)
+                            ) % step = 0
+                            AND week = :scheduledWeek
+                            AND strftime('%w', start) = strftime('%w', :scheduledDate)
+                        WHEN 4 THEN (
+                                CAST(strftime('%Y', :scheduledDate) as INT)
+                                - CAST(strftime('%Y', start) as INT)
+                            ) % step = 0
+                            AND (
+                                strftime('%m-%d', start) = strftime('%m-%d', :scheduledDate)
+                                OR (
+                                    strftime('%m-%d', start) = '02-29'
+                                    AND strftime('%m-%d', :scheduledDate) = '02-28'
+                                    AND (
+                                        CAST(strftime('%Y', :scheduledDate) as INT) & 3 != 0
+                                        OR (
+                                            CAST(strftime('%Y', :scheduledDate) as INT) % 25 = 0
+                                            AND CAST(strftime('%Y', :scheduledDate) as INT) & 15
+                                                != 0
+                                        )
+                                    )
+                                )
+                            )
+                        ELSE TRUE
+                        END
+                )
+            )
+        ORDER BY t.name, t.id
         LIMIT 20"""
     )
-    fun filterTaskItems(deadlineDate: LocalDate?, scheduledDate: LocalDate?): Flow<List<TaskItem>>
+    fun filterTaskItems(
+        deadlineDate: LocalDate?,
+        deadlineWeek: Int?,
+        scheduledDate: LocalDate?,
+        scheduledWeek: Int?,
+    ): Flow<List<TaskItem>>
 
     @Query(
         """SELECT t.*

@@ -1,6 +1,7 @@
 package io.github.evaogbe.diswantin.task.data
 
 import io.github.evaogbe.diswantin.data.IoDispatcher
+import io.github.evaogbe.diswantin.data.weekOfMonthField
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
@@ -80,13 +81,17 @@ class LocalTaskRepository @Inject constructor(
         if (criteria.name.isEmpty()) {
             taskDao.filterTaskItems(
                 deadlineDate = criteria.deadlineDate,
+                deadlineWeek = criteria.deadlineDate?.get(weekOfMonthField()),
                 scheduledDate = criteria.scheduledDate,
+                scheduledWeek = criteria.scheduledDate?.get(weekOfMonthField()),
             )
         } else {
             taskDao.searchTaskItems(
                 query = escapeSql("${criteria.name}*"),
                 deadlineDate = criteria.deadlineDate,
+                deadlineWeek = criteria.deadlineDate?.get(weekOfMonthField()),
                 scheduledDate = criteria.scheduledDate,
+                scheduledWeek = criteria.scheduledDate?.get(weekOfMonthField()),
             )
         }.flowOn(ioDispatcher)
 

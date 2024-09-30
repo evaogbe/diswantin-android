@@ -5,6 +5,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.cash.turbine.test
 import assertk.assertThat
+import assertk.assertions.containsExactly
 import assertk.assertions.isDataClassEqualTo
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotNull
@@ -1618,6 +1619,302 @@ class LocalTaskRepositoryTest {
                     .isNotNull()
                     .isDataClassEqualTo(task)
             }
+    }
+
+    @Test
+    fun searchTaskItems_emitsTasksWithDeadlineDate() = runTest {
+        val clock =
+            Clock.fixed(Instant.parse("2024-08-23T17:00:00Z"), ZoneId.of("America/New_York"))
+        val taskRepository = LocalTaskRepository(
+            db.taskDao(),
+            UnconfinedTestDispatcher(testScheduler),
+            clock,
+        )
+
+        val task1 = taskRepository.create(
+            NewTaskForm(
+                name = "1. ${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                note = "",
+                deadlineDate = LocalDate.parse("2024-08-22"),
+                deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
+                scheduledDate = null,
+                scheduledTime = null,
+                categoryId = null,
+                recurrences = emptyList(),
+                parentTaskId = null,
+                clock = clock,
+            )
+        )
+        val task2 = taskRepository.create(
+            NewTaskForm(
+                name = "2. ${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                note = "",
+                deadlineDate = null,
+                deadlineTime = LocalTime.parse("12:00"),
+                startAfterDate = null,
+                startAfterTime = null,
+                scheduledDate = null,
+                scheduledTime = null,
+                categoryId = null,
+                recurrences = listOf(
+                    TaskRecurrence(
+                        taskId = 0L,
+                        start = LocalDate.parse("2024-08-21"),
+                        type = RecurrenceType.Week,
+                        step = 1,
+                        week = 4,
+                    ),
+                    TaskRecurrence(
+                        taskId = 0L,
+                        start = LocalDate.parse("2024-08-22"),
+                        type = RecurrenceType.Week,
+                        step = 1,
+                        week = 4,
+                    ),
+                ),
+                parentTaskId = null,
+                clock = clock,
+            )
+        )
+        taskRepository.create(
+            NewTaskForm(
+                name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                note = "",
+                deadlineDate = LocalDate.parse("2024-08-21"),
+                deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
+                scheduledDate = null,
+                scheduledTime = null,
+                categoryId = null,
+                recurrences = emptyList(),
+                parentTaskId = null,
+                clock = clock,
+            )
+        )
+        taskRepository.create(
+            NewTaskForm(
+                name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                note = "",
+                deadlineDate = null,
+                deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
+                scheduledDate = null,
+                scheduledTime = null,
+                categoryId = null,
+                recurrences = emptyList(),
+                parentTaskId = null,
+                clock = clock,
+            )
+        )
+        taskRepository.create(
+            NewTaskForm(
+                name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                note = "",
+                deadlineDate = null,
+                deadlineTime = LocalTime.parse("12:00"),
+                startAfterDate = null,
+                startAfterTime = null,
+                scheduledDate = null,
+                scheduledTime = null,
+                categoryId = null,
+                recurrences = listOf(
+                    TaskRecurrence(
+                        taskId = 0L,
+                        start = LocalDate.parse("2024-08-21"),
+                        type = RecurrenceType.DayOfMonth,
+                        step = 1,
+                        week = 4,
+                    ),
+                ),
+                parentTaskId = null,
+                clock = clock,
+            )
+        )
+        taskRepository.create(
+            NewTaskForm(
+                name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                note = "",
+                deadlineDate = null,
+                deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
+                scheduledDate = null,
+                scheduledTime = null,
+                categoryId = null,
+                recurrences = listOf(
+                    TaskRecurrence(
+                        taskId = 0L,
+                        start = LocalDate.parse("2024-08-22"),
+                        type = RecurrenceType.Day,
+                        step = 1,
+                        week = 4,
+                    ),
+                ),
+                parentTaskId = null,
+                clock = clock,
+            )
+        )
+
+        assertThat(
+            taskRepository.searchTaskItems(
+                TaskSearchCriteria(deadlineDate = LocalDate.parse("2024-08-22")),
+            ).first()
+        ).containsExactly(
+            TaskItem(id = task1.id, name = task1.name, recurring = false, doneAt = null),
+            TaskItem(id = task2.id, name = task2.name, recurring = true, doneAt = null),
+        )
+    }
+
+    @Test
+    fun searchTaskItems_emitsTasksWithScheduledDate() = runTest {
+        val clock =
+            Clock.fixed(Instant.parse("2024-08-23T17:00:00Z"), ZoneId.of("America/New_York"))
+        val taskRepository = LocalTaskRepository(
+            db.taskDao(),
+            UnconfinedTestDispatcher(testScheduler),
+            clock,
+        )
+
+        val task1 = taskRepository.create(
+            NewTaskForm(
+                name = "1. ${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                note = "",
+                deadlineDate = null,
+                deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
+                scheduledDate = LocalDate.parse("2024-08-22"),
+                scheduledTime = LocalTime.MIN,
+                categoryId = null,
+                recurrences = emptyList(),
+                parentTaskId = null,
+                clock = clock,
+            )
+        )
+        val task2 = taskRepository.create(
+            NewTaskForm(
+                name = "2. ${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                note = "",
+                deadlineDate = null,
+                deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
+                scheduledDate = null,
+                scheduledTime = LocalTime.parse("12:00"),
+                categoryId = null,
+                recurrences = listOf(
+                    TaskRecurrence(
+                        taskId = 0L,
+                        start = LocalDate.parse("2024-08-21"),
+                        type = RecurrenceType.Week,
+                        step = 1,
+                        week = 4,
+                    ),
+                    TaskRecurrence(
+                        taskId = 0L,
+                        start = LocalDate.parse("2024-08-22"),
+                        type = RecurrenceType.Week,
+                        step = 1,
+                        week = 4,
+                    ),
+                ),
+                parentTaskId = null,
+                clock = clock,
+            )
+        )
+        taskRepository.create(
+            NewTaskForm(
+                name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                note = "",
+                deadlineDate = null,
+                deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
+                scheduledDate = LocalDate.parse("2024-08-21"),
+                scheduledTime = LocalTime.MIN,
+                categoryId = null,
+                recurrences = emptyList(),
+                parentTaskId = null,
+                clock = clock,
+            )
+        )
+        taskRepository.create(
+            NewTaskForm(
+                name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                note = "",
+                deadlineDate = null,
+                deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
+                scheduledDate = null,
+                scheduledTime = null,
+                categoryId = null,
+                recurrences = emptyList(),
+                parentTaskId = null,
+                clock = clock,
+            )
+        )
+        taskRepository.create(
+            NewTaskForm(
+                name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                note = "",
+                deadlineDate = null,
+                deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
+                scheduledDate = null,
+                scheduledTime = LocalTime.parse("12:00"),
+                categoryId = null,
+                recurrences = listOf(
+                    TaskRecurrence(
+                        taskId = 0L,
+                        start = LocalDate.parse("2024-08-21"),
+                        type = RecurrenceType.DayOfMonth,
+                        step = 1,
+                        week = 4,
+                    ),
+                ),
+                parentTaskId = null,
+                clock = clock,
+            )
+        )
+        taskRepository.create(
+            NewTaskForm(
+                name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                note = "",
+                deadlineDate = null,
+                deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
+                scheduledDate = null,
+                scheduledTime = null,
+                categoryId = null,
+                recurrences = listOf(
+                    TaskRecurrence(
+                        taskId = 0L,
+                        start = LocalDate.parse("2024-08-22"),
+                        type = RecurrenceType.Day,
+                        step = 1,
+                        week = 4,
+                    ),
+                ),
+                parentTaskId = null,
+                clock = clock,
+            )
+        )
+
+        assertThat(
+            taskRepository.searchTaskItems(
+                TaskSearchCriteria(scheduledDate = LocalDate.parse("2024-08-22")),
+            ).first()
+        ).containsExactly(
+            TaskItem(id = task1.id, name = task1.name, recurring = false, doneAt = null),
+            TaskItem(id = task2.id, name = task2.name, recurring = true, doneAt = null),
+        )
     }
 
     @Test
