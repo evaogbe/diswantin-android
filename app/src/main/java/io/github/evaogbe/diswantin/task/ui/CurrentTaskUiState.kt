@@ -8,7 +8,7 @@ import kotlinx.parcelize.Parcelize
 data class CurrentTaskTopBarState(val canSkip: Boolean) : Parcelable
 
 enum class CurrentTaskTopBarAction {
-    Skip
+    Refresh, Skip
 }
 
 sealed interface CurrentTaskUiState {

@@ -123,9 +123,12 @@ fun DiswantinApp() {
                             query = ""
                             navController.navigate(route = MainDestination.TaskSearch.route)
                         },
+                        onRefresh = {
+                            topBarState = state.copy(action = CurrentTaskTopBarAction.Refresh)
+                        },
                         onSkip = {
                             topBarState = state.copy(action = CurrentTaskTopBarAction.Skip)
-                        }
+                        },
                     )
                 }
 

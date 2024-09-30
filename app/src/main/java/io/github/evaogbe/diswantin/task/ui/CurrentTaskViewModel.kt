@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -34,13 +35,19 @@ class CurrentTaskViewModel @Inject constructor(
 ) : ViewModel() {
     private val currentTaskParams = MutableStateFlow(CurrentTaskParams(ZonedDateTime.now(clock)))
 
+    private val _isRefreshing = MutableStateFlow(false)
+
+    val isRefreshing = _isRefreshing.asStateFlow()
+
     private val _userMessage = MutableStateFlow<UserMessage?>(null)
 
     val userMessage = _userMessage.asStateFlow()
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val uiState = currentTaskParams.flatMapLatest {
+        _isRefreshing.value = true
         taskRepository.getCurrentTask(it)
+            .onEach { _isRefreshing.value = false }
             .map<Task?, Result<Task?>> { Result.Success(it) }
             .catch { e ->
                 Timber.e(e, "Failed to fetch current task")

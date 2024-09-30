@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
@@ -32,6 +33,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -74,6 +76,7 @@ import kotlin.time.Duration.Companion.hours
 fun CurrentTaskTopBar(
     uiState: CurrentTaskTopBarState,
     onSearch: () -> Unit,
+    onRefresh: () -> Unit,
     onSkip: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -90,15 +93,29 @@ fun CurrentTaskTopBar(
                 )
             }
 
-            if (uiState.canSkip) {
-                IconButton(onClick = { menuExpanded = !menuExpanded }) {
-                    Icon(
-                        imageVector = Icons.Default.MoreVert,
-                        contentDescription = stringResource(R.string.more_actions_button),
-                    )
-                }
+            IconButton(onClick = { menuExpanded = !menuExpanded }) {
+                Icon(
+                    imageVector = Icons.Default.MoreVert,
+                    contentDescription = stringResource(R.string.more_actions_button),
+                )
+            }
 
-                DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+            DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.refresh_button)) },
+                    onClick = {
+                        onRefresh()
+                        menuExpanded = false
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = null,
+                        )
+                    },
+                )
+
+                if (uiState.canSkip) {
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.skip_button)) },
                         onClick = {
@@ -130,6 +147,7 @@ fun CurrentTaskScreen(
     currentTaskViewModel: CurrentTaskViewModel = hiltViewModel(),
 ) {
     val uiState by currentTaskViewModel.uiState.collectAsStateWithLifecycle()
+    val isRefreshing by currentTaskViewModel.isRefreshing.collectAsStateWithLifecycle()
     val userMessage by currentTaskViewModel.userMessage.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
     var showDialog by rememberSaveable { mutableStateOf(false) }
@@ -161,6 +179,11 @@ fun CurrentTaskScreen(
     LaunchedEffect(topBarAction) {
         when (topBarAction) {
             null -> {}
+            CurrentTaskTopBarAction.Refresh -> {
+                currentTaskViewModel.refresh()
+                topBarActionHandled()
+            }
+
             CurrentTaskTopBarAction.Skip -> {
                 showDialog = true
                 topBarActionHandled()
@@ -181,10 +204,19 @@ fun CurrentTaskScreen(
             LoadFailureLayout(message = stringResource(R.string.current_task_fetch_error))
         }
 
-        is CurrentTaskUiState.Empty -> EmptyCurrentTaskLayout(onAddTask = onAddTask)
+        is CurrentTaskUiState.Empty -> {
+            EmptyCurrentTaskLayout(
+                isRefreshing = isRefreshing,
+                onRefresh = currentTaskViewModel::refresh,
+                onAddTask = onAddTask,
+            )
+        }
+
         is CurrentTaskUiState.Present -> {
             CurrentTaskLayout(
                 uiState = state,
+                isRefreshing = isRefreshing,
+                onRefresh = currentTaskViewModel::refresh,
                 onNavigateToTask = onNavigateToTask,
                 onMarkTaskDone = currentTaskViewModel::markCurrentTaskDone,
             )
@@ -220,84 +252,101 @@ fun CurrentTaskScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CurrentTaskLayout(
     uiState: CurrentTaskUiState.Present,
+    isRefreshing: Boolean,
+    onRefresh: () -> Unit,
     onNavigateToTask: (Long) -> Unit,
     onMarkTaskDone: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
-        Column(
-            modifier = Modifier
-                .padding(SpaceMd)
-                .widthIn(max = ScreenLg)
-                .fillMaxHeight()
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.SpaceAround,
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            SelectionContainer {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(text = uiState.currentTask.name, style = typography.displaySmall)
-                    Spacer(Modifier.size(SpaceMd))
-
-                    if (uiState.currentTask.note.isNotEmpty()) {
-                        Text(
-                            text = uiState.currentTask.note,
-                            color = colorScheme.onSurfaceVariant,
-                            style = typography.titleLarge,
-                        )
+        PullToRefreshBox(isRefreshing = isRefreshing, onRefresh = onRefresh) {
+            Column(
+                modifier = Modifier
+                    .padding(SpaceMd)
+                    .widthIn(max = ScreenLg)
+                    .fillMaxHeight()
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.SpaceAround,
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                SelectionContainer {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(text = uiState.currentTask.name, style = typography.displaySmall)
                         Spacer(Modifier.size(SpaceMd))
+
+                        if (uiState.currentTask.note.isNotEmpty()) {
+                            Text(
+                                text = uiState.currentTask.note,
+                                color = colorScheme.onSurfaceVariant,
+                                style = typography.titleLarge,
+                            )
+                            Spacer(Modifier.size(SpaceMd))
+                        }
                     }
                 }
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceAround,
-            ) {
-                OutlinedButtonWithIcon(
-                    onClick = { onNavigateToTask(uiState.currentTask.id) },
-                    painter = painterResource(R.drawable.baseline_details_24),
-                    text = stringResource(R.string.current_task_view_details_button),
-                )
-                FilledTonalButtonWithIcon(
-                    onClick = onMarkTaskDone,
-                    imageVector = Icons.Default.Done,
-                    text = stringResource(R.string.current_task_mark_done_button),
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceAround,
+                ) {
+                    OutlinedButtonWithIcon(
+                        onClick = { onNavigateToTask(uiState.currentTask.id) },
+                        painter = painterResource(R.drawable.baseline_details_24),
+                        text = stringResource(R.string.current_task_view_details_button),
+                    )
+                    FilledTonalButtonWithIcon(
+                        onClick = onMarkTaskDone,
+                        imageVector = Icons.Default.Done,
+                        text = stringResource(R.string.current_task_mark_done_button),
+                    )
+                }
             }
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EmptyCurrentTaskLayout(onAddTask: () -> Unit, modifier: Modifier = Modifier) {
+fun EmptyCurrentTaskLayout(
+    isRefreshing: Boolean,
+    onRefresh: () -> Unit,
+    onAddTask: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Surface(modifier = modifier.fillMaxSize(), color = colorScheme.surfaceVariant) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(SpaceMd),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = onRefresh,
         ) {
-            Icon(
-                painter = painterResource(R.drawable.baseline_add_task_24),
-                contentDescription = null,
-                modifier = Modifier.size(IconSizeLg),
-            )
-            Spacer(Modifier.size(SpaceXl))
-            Text(
-                stringResource(R.string.current_task_empty),
-                textAlign = TextAlign.Center,
-                style = typography.headlineLarge
-            )
-            Spacer(Modifier.size(SpaceLg))
-            ButtonWithIcon(
-                onClick = onAddTask,
-                imageVector = Icons.Default.Add,
-                text = stringResource(R.string.add_task_button),
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(SpaceMd)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.baseline_add_task_24),
+                    contentDescription = null,
+                    modifier = Modifier.size(IconSizeLg),
+                )
+                Spacer(Modifier.size(SpaceXl))
+                Text(
+                    stringResource(R.string.current_task_empty),
+                    textAlign = TextAlign.Center,
+                    style = typography.headlineLarge
+                )
+                Spacer(Modifier.size(SpaceLg))
+                ButtonWithIcon(
+                    onClick = onAddTask,
+                    imageVector = Icons.Default.Add,
+                    text = stringResource(R.string.add_task_button),
+                )
+            }
         }
     }
 }
@@ -311,6 +360,7 @@ private fun CurrentTaskScreenPreview_Present() {
                 CurrentTaskTopBar(
                     uiState = CurrentTaskTopBarState(canSkip = true),
                     onSearch = {},
+                    onRefresh = {},
                     onSkip = {},
                 )
             },
@@ -324,6 +374,8 @@ private fun CurrentTaskScreenPreview_Present() {
                     ),
                     canSkip = true,
                 ),
+                isRefreshing = false,
+                onRefresh = {},
                 onNavigateToTask = {},
                 onMarkTaskDone = {},
                 modifier = Modifier.padding(innerPadding),
@@ -341,6 +393,7 @@ private fun CurrentTaskScreenPreview_withNote() {
                 CurrentTaskTopBar(
                     uiState = CurrentTaskTopBarState(canSkip = false),
                     onSearch = {},
+                    onRefresh = {},
                     onSkip = {},
                 )
             },
@@ -355,6 +408,8 @@ private fun CurrentTaskScreenPreview_withNote() {
                     ),
                     canSkip = false,
                 ),
+                isRefreshing = false,
+                onRefresh = {},
                 onNavigateToTask = {},
                 onMarkTaskDone = {},
                 modifier = Modifier.padding(innerPadding),
@@ -372,11 +427,17 @@ private fun CurrentTaskScreenPreview_Empty() {
                 CurrentTaskTopBar(
                     uiState = CurrentTaskTopBarState(canSkip = false),
                     onSearch = {},
+                    onRefresh = {},
                     onSkip = {},
                 )
             },
         ) { innerPadding ->
-            EmptyCurrentTaskLayout(onAddTask = {}, modifier = Modifier.padding(innerPadding))
+            EmptyCurrentTaskLayout(
+                isRefreshing = false,
+                onRefresh = {},
+                onAddTask = {},
+                modifier = Modifier.padding(innerPadding),
+            )
         }
     }
 }
