@@ -32,7 +32,7 @@ class LocalTaskRepository @Inject constructor(
                         dateTimePartsToZonedDateTime(
                             it.scheduledDatePriority,
                             it.scheduledTimePriority,
-                            LocalTime.of(9, 0),
+                            LocalTime.MIN,
                         )
                     }
                         .thenComparing({

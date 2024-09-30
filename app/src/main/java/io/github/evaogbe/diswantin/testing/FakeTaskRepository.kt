@@ -46,7 +46,7 @@ class FakeTaskRepository(
                         dateTimePartsToZonedDateTime(
                             it.scheduledDate,
                             it.scheduledTime,
-                            LocalTime.of(9, 0),
+                            LocalTime.MIN,
                         )
                     }
                         .thenComparing({ task ->

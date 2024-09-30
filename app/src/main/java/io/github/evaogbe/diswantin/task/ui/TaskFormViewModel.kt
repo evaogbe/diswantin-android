@@ -323,7 +323,7 @@ class TaskFormViewModel @Inject constructor(
     fun updateScheduledDate(value: LocalDate?) {
         scheduledDate.value = value
         if (scheduledTime.value == null) {
-            scheduledTime.value = LocalTime.of(9, 0)
+            scheduledTime.value = LocalTime.MIN
         }
     }
 
