@@ -4,6 +4,7 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskRepository
+import io.github.evaogbe.diswantin.task.data.TaskSearchCriteria
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.MainDispatcherRule
 import io.github.serpro69.kfaker.Faker
@@ -52,11 +53,11 @@ class TaskSearchViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(TaskSearchUiState.Initial)
 
-            viewModel.searchTasks(blankQuery)
+            viewModel.searchTasks(TaskSearchCriteria(name = blankQuery))
 
             assertThat(viewModel.uiState.value).isEqualTo(TaskSearchUiState.Initial)
 
-            viewModel.searchTasks(query)
+            viewModel.searchTasks(TaskSearchCriteria(name = query))
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskSearchUiState.Success(
@@ -68,7 +69,7 @@ class TaskSearchViewModelTest {
                 )
             )
 
-            viewModel.searchTasks(blankQuery)
+            viewModel.searchTasks(TaskSearchCriteria(name = blankQuery))
 
             assertThat(viewModel.uiState.value).isEqualTo(TaskSearchUiState.Initial)
         }
@@ -87,7 +88,7 @@ class TaskSearchViewModelTest {
                 viewModel.uiState.collect()
             }
 
-            viewModel.searchTasks(query)
+            viewModel.searchTasks(TaskSearchCriteria(name = query))
 
             assertThat(viewModel.uiState.value).isEqualTo(TaskSearchUiState.Failure(exception))
         }

@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.evaogbe.diswantin.task.data.TaskItem
 import io.github.evaogbe.diswantin.task.data.TaskRepository
+import io.github.evaogbe.diswantin.task.data.TaskSearchCriteria
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,14 +27,14 @@ class TaskSearchViewModel @Inject constructor(
     private val taskRepository: TaskRepository,
     clock: Clock,
 ) : ViewModel() {
-    private val query = MutableStateFlow("")
+    private val criteria = MutableStateFlow(TaskSearchCriteria())
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val uiState = query.flatMapLatest { query ->
-        if (query.isBlank()) {
+    val uiState = criteria.flatMapLatest { criteria ->
+        if (criteria.isEmpty) {
             flowOf(TaskSearchUiState.Initial)
         } else {
-            taskRepository.searchTaskItems(query.trim())
+            taskRepository.searchTaskItems(criteria)
                 .map<List<TaskItem>, TaskSearchUiState> { searchResults ->
                     val doneBefore = ZonedDateTime.now(clock).with(LocalTime.MIN).toInstant()
                     TaskSearchUiState.Success(
@@ -42,18 +43,18 @@ class TaskSearchViewModel @Inject constructor(
                         }.toImmutableList(),
                     )
                 }.catch { e ->
-                    Timber.e(e, "Failed to search for tasks by query: %s", query)
+                    Timber.e(e, "Failed to search for tasks by criteria: %s", criteria)
                     emit(TaskSearchUiState.Failure(e))
                 }
         }
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000L),
-        initialValue = TaskSearchUiState.Initial
+        initialValue = TaskSearchUiState.Initial,
     )
 
-    fun searchTasks(query: String) {
-        this.query.value = query
+    fun searchTasks(criteria: TaskSearchCriteria) {
+        this.criteria.value = criteria.copy(name = criteria.name.trim())
     }
 }
 

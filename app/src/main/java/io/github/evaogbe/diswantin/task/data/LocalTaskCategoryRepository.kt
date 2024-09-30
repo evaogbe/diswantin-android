@@ -37,7 +37,7 @@ class LocalTaskCategoryRepository @Inject constructor(
         }.flowOn(ioDispatcher)
 
     override fun search(query: String) =
-        taskCategoryDao.search(escapeSql(query)).flowOn(ioDispatcher)
+        taskCategoryDao.search(escapeSql("$query*")).flowOn(ioDispatcher)
 
     private fun escapeSql(str: String) = str.replace("'", "''").replace("\"", "\"\"")
 

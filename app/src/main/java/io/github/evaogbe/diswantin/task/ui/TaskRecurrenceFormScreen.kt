@@ -337,14 +337,9 @@ fun TaskRecurrenceFormScreen(
 
     if (showDialog) {
         DiswantinDatePickerDialog(
-            onDismissRequest = { showDialog = false },
+            onDismiss = { showDialog = false },
             date = start,
-            onSelectDate = {
-                if (it != null) {
-                    onStartChange(it)
-                }
-                showDialog = false
-            },
+            onSelectDate = onStartChange,
         )
     }
 }

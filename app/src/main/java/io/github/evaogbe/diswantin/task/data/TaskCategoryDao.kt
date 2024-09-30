@@ -30,7 +30,7 @@ interface TaskCategoryDao {
         """SELECT c.*
         FROM task_category c
         JOIN task_category_fts cf ON cf.name = c.name
-        WHERE task_category_fts MATCH :query || '*'
+        WHERE task_category_fts MATCH :query
         LIMIT 20"""
     )
     fun search(query: String): Flow<List<TaskCategory>>

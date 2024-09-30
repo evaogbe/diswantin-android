@@ -35,6 +35,7 @@
     <string name="delete_button">Delete</string>
     <string name="deadline_label">Deadline</string>
     <string name="deadline_date_label">Deadline date</string>
+    <string name="deadline_chip_label">Deadline: %1$s</string>
     <string name="deadline_time_label">Deadline time</string>
     <string name="done_button">Done</string>
     <string name="form_type_button_category">Category</string>
@@ -111,6 +112,7 @@
     <string name="save_button">Save</string>
     <string name="scheduled_at_label">Scheduled at</string>
     <string name="scheduled_date_label">Scheduled date</string>
+    <string name="scheduled_chip_label">Scheduled: %1$s</string>
     <string name="scheduled_time_label">Scheduled time</string>
     <string name="search_tasks_button">Search to-dos</string>
     <string name="search_task_category_options_error">Something went wrong loading categories</string>

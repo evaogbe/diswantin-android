@@ -479,73 +479,49 @@ fun TaskFormLayout(
         null -> {}
         FieldDialogType.DeadlineDate -> {
             DiswantinDatePickerDialog(
-                onDismissRequest = { dialogType = null },
+                onDismiss = { dialogType = null },
                 date = uiState.deadlineDate,
-                onSelectDate = {
-                    if (it != null) {
-                        onDeadlineDateChange(it)
-                    }
-                    dialogType = null
-                },
+                onSelectDate = onDeadlineDateChange,
             )
         }
 
         FieldDialogType.DeadlineTime -> {
             DiswantinTimePickerDialog(
-                onDismissRequest = { dialogType = null },
+                onDismiss = { dialogType = null },
                 time = uiState.deadlineTime,
-                onSelectTime = {
-                    onDeadlineTimeChange(it)
-                    dialogType = null
-                },
+                onSelectTime = onDeadlineTimeChange,
             )
         }
 
         FieldDialogType.StartAfterDate -> {
             DiswantinDatePickerDialog(
-                onDismissRequest = { dialogType = null },
+                onDismiss = { dialogType = null },
                 date = uiState.startAfterDate,
-                onSelectDate = {
-                    if (it != null) {
-                        onStartAfterDateChange(it)
-                    }
-                    dialogType = null
-                },
+                onSelectDate = onStartAfterDateChange,
             )
         }
 
         FieldDialogType.StartAfterTime -> {
             DiswantinTimePickerDialog(
-                onDismissRequest = { dialogType = null },
+                onDismiss = { dialogType = null },
                 time = uiState.startAfterTime,
-                onSelectTime = {
-                    onStartAfterTimeChange(it)
-                    dialogType = null
-                },
+                onSelectTime = onStartAfterTimeChange,
             )
         }
 
         FieldDialogType.ScheduledDate -> {
             DiswantinDatePickerDialog(
-                onDismissRequest = { dialogType = null },
+                onDismiss = { dialogType = null },
                 date = uiState.scheduledDate,
-                onSelectDate = {
-                    if (it != null) {
-                        onScheduledDateChange(it)
-                    }
-                    dialogType = null
-                },
+                onSelectDate = onScheduledDateChange,
             )
         }
 
         FieldDialogType.ScheduledTime -> {
             DiswantinTimePickerDialog(
-                onDismissRequest = { dialogType = null },
+                onDismiss = { dialogType = null },
                 time = uiState.scheduledTime,
-                onSelectTime = {
-                    onScheduledTimeChange(it)
-                    dialogType = null
-                },
+                onSelectTime = onScheduledTimeChange,
             )
         }
     }

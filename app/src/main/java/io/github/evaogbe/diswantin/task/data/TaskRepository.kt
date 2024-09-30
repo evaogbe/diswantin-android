@@ -11,7 +11,7 @@ interface TaskRepository {
 
     fun search(query: String): Flow<List<Task>>
 
-    fun searchTaskItems(query: String): Flow<List<TaskItem>>
+    fun searchTaskItems(criteria: TaskSearchCriteria): Flow<List<TaskItem>>
 
     fun getParent(id: Long): Flow<Task?>
 

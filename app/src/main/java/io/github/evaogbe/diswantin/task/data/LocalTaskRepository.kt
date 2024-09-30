@@ -74,10 +74,21 @@ class LocalTaskRepository @Inject constructor(
     override fun getTaskDetailById(id: Long) =
         taskDao.getTaskDetailById(id).flowOn(ioDispatcher)
 
-    override fun search(query: String) = taskDao.search(escapeSql(query)).flowOn(ioDispatcher)
+    override fun search(query: String) = taskDao.search(escapeSql("$query*")).flowOn(ioDispatcher)
 
-    override fun searchTaskItems(query: String) =
-        taskDao.searchTaskItems(escapeSql(query)).flowOn(ioDispatcher)
+    override fun searchTaskItems(criteria: TaskSearchCriteria) =
+        if (criteria.name.isEmpty()) {
+            taskDao.filterTaskItems(
+                deadlineDate = criteria.deadlineDate,
+                scheduledDate = criteria.scheduledDate,
+            )
+        } else {
+            taskDao.searchTaskItems(
+                query = escapeSql("${criteria.name}*"),
+                deadlineDate = criteria.deadlineDate,
+                scheduledDate = criteria.scheduledDate,
+            )
+        }.flowOn(ioDispatcher)
 
     private fun escapeSql(str: String) = str.replace("'", "''").replace("\"", "\"\"")
 

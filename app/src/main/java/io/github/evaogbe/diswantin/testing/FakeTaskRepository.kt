@@ -11,6 +11,7 @@ import io.github.evaogbe.diswantin.task.data.TaskDetail
 import io.github.evaogbe.diswantin.task.data.TaskItem
 import io.github.evaogbe.diswantin.task.data.TaskRecurrence
 import io.github.evaogbe.diswantin.task.data.TaskRepository
+import io.github.evaogbe.diswantin.task.data.TaskSearchCriteria
 import io.github.evaogbe.diswantin.task.data.TaskSkip
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -211,22 +212,28 @@ class FakeTaskRepository(
             tasks.values.filter { it.name.contains(query, ignoreCase = true) }
         }
 
-    override fun searchTaskItems(query: String) =
+    override fun searchTaskItems(criteria: TaskSearchCriteria) =
         combine(
             db.taskTable,
             db.taskCompletionTable,
             db.taskRecurrenceTable,
         ) { tasks, taskCompletions, taskRecurrences ->
-            tasks.values.filter { it.name.contains(query, ignoreCase = true) }.map { task ->
-                TaskItem(
-                    id = task.id,
-                    name = task.name,
-                    recurring = taskRecurrences.values.any { it.taskId == task.id },
-                    doneAt = taskCompletions.values
-                        .filter { it.taskId == task.id }
-                        .maxOfOrNull { it.doneAt },
-                )
-            }
+            tasks.values
+                .filter { task ->
+                    task.name.contains(criteria.name, ignoreCase = true) &&
+                            criteria.deadlineDate?.let { task.deadlineDate == it } != false &&
+                            criteria.scheduledDate?.let { task.scheduledDate == it } != false
+                }
+                .map { task ->
+                    TaskItem(
+                        id = task.id,
+                        name = task.name,
+                        recurring = taskRecurrences.values.any { it.taskId == task.id },
+                        doneAt = taskCompletions.values
+                            .filter { it.taskId == task.id }
+                            .maxOfOrNull { it.doneAt },
+                    )
+                }
         }
 
     override fun getParent(id: Long) =

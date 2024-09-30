@@ -47,9 +47,9 @@ import java.time.ZoneOffset
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DiswantinDatePickerDialog(
-    onDismissRequest: () -> Unit,
+    onDismiss: () -> Unit,
     date: LocalDate?,
-    onSelectDate: (LocalDate?) -> Unit,
+    onSelectDate: (LocalDate) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val datePickerState = rememberDatePickerState(
@@ -57,23 +57,27 @@ fun DiswantinDatePickerDialog(
             ?.toInstant()
             ?.toEpochMilli(),
     )
+
     DatePickerDialog(
-        onDismissRequest = onDismissRequest,
+        onDismissRequest = onDismiss,
         confirmButton = {
-            TextButton(onClick = {
-                onSelectDate(datePickerState.selectedDateMillis?.let {
-                    Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate()
-                })
-            }) {
+            TextButton(
+                onClick = {
+                    datePickerState.selectedDateMillis?.let {
+                        onSelectDate(Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate())
+                    }
+                    onDismiss()
+                },
+            ) {
                 Text(stringResource(R.string.ok_button))
             }
         },
         modifier = modifier.verticalScroll(rememberScrollState()),
         dismissButton = {
-            TextButton(onClick = onDismissRequest) {
+            TextButton(onClick = onDismiss) {
                 Text(stringResource(R.string.cancel_button))
             }
-        }
+        },
     ) {
         DatePicker(state = datePickerState)
     }
@@ -82,7 +86,7 @@ fun DiswantinDatePickerDialog(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DiswantinTimePickerDialog(
-    onDismissRequest: () -> Unit,
+    onDismiss: () -> Unit,
     time: LocalTime?,
     onSelectTime: (LocalTime) -> Unit,
     modifier: Modifier = Modifier,
@@ -94,7 +98,7 @@ fun DiswantinTimePickerDialog(
     var showDial by rememberSaveable { mutableStateOf(true) }
 
     Dialog(
-        onDismissRequest = onDismissRequest,
+        onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
         Surface(
@@ -150,12 +154,15 @@ fun DiswantinTimePickerDialog(
                     }
 
                     Spacer(modifier = Modifier.weight(1f))
-                    TextButton(onClick = onDismissRequest) {
+                    TextButton(onClick = onDismiss) {
                         Text(stringResource(R.string.cancel_button))
                     }
-                    TextButton(onClick = {
-                        onSelectTime(LocalTime.of(timePickerState.hour, timePickerState.minute))
-                    }) {
+                    TextButton(
+                        onClick = {
+                            onSelectTime(LocalTime.of(timePickerState.hour, timePickerState.minute))
+                            onDismiss()
+                        },
+                    ) {
                         Text(stringResource(R.string.ok_button))
                     }
                 }

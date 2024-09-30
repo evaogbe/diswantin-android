@@ -241,7 +241,7 @@ class TaskFormViewModel @Inject constructor(
                         ) {
                             persistentListOf()
                         } else {
-                            parentTaskOptions.toPersistentList()
+                            parentTaskOptions.filter { it.id != taskId }.toPersistentList()
                         },
                         userMessage = userMessage,
                     )

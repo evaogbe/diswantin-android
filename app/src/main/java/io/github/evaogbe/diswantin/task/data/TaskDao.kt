@@ -221,7 +221,7 @@ interface TaskDao {
         """SELECT DISTINCT task.*
         FROM task
         JOIN task_fts tf ON tf.name = task.name
-        WHERE task_fts MATCH :query || '*'
+        WHERE task_fts MATCH :query
         LIMIT 20"""
     )
     fun search(query: String): Flow<List<Task>>
@@ -236,10 +236,31 @@ interface TaskDao {
             GROUP BY task_id
         ) c ON c.task_id = t.id
         LEFT JOIN (SELECT DISTINCT task_id FROM task_recurrence) r ON r.task_id = t.id
-        WHERE task_fts MATCH :query || '*'
+        WHERE task_fts MATCH :query
+            AND (:deadlineDate IS NULL OR t.deadline_date = :deadlineDate)
+            AND (:scheduledDate IS NULL OR t.scheduled_date = :scheduledDate)
         LIMIT 20"""
     )
-    fun searchTaskItems(query: String): Flow<List<TaskItem>>
+    fun searchTaskItems(
+        query: String,
+        deadlineDate: LocalDate?,
+        scheduledDate: LocalDate?,
+    ): Flow<List<TaskItem>>
+
+    @Query(
+        """SELECT DISTINCT t.id, t.name, r.task_id IS NOT NULL AS recurring, c.done_at
+        FROM task t
+        LEFT JOIN (
+            SELECT task_id, MAX(done_at) AS done_at
+            FROM task_completion
+            GROUP BY task_id
+        ) c ON c.task_id = t.id
+        LEFT JOIN (SELECT DISTINCT task_id FROM task_recurrence) r ON r.task_id = t.id
+        WHERE (:deadlineDate IS NULL OR t.deadline_date = :deadlineDate)
+            AND (:scheduledDate IS NULL OR t.scheduled_date = :scheduledDate)
+        LIMIT 20"""
+    )
+    fun filterTaskItems(deadlineDate: LocalDate?, scheduledDate: LocalDate?): Flow<List<TaskItem>>
 
     @Query(
         """SELECT t.*
