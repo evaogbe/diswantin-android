@@ -24,7 +24,7 @@ import io.github.evaogbe.diswantin.ui.navigation.NavArguments
 import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
-import kotlinx.collections.immutable.toPersistentList
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -230,7 +230,7 @@ class TaskFormViewModel @Inject constructor(
                         ) {
                             persistentListOf()
                         } else {
-                            categoryOptions.toPersistentList()
+                            categoryOptions.toImmutableList()
                         },
                         showParentTaskField = existingParentTaskResult.isSuccess &&
                                 taskCountResult.getOrDefault(0L) > if (taskId == null) 0L else 1L,
@@ -241,7 +241,7 @@ class TaskFormViewModel @Inject constructor(
                         ) {
                             persistentListOf()
                         } else {
-                            parentTaskOptions.filter { it.id != taskId }.toPersistentList()
+                            parentTaskOptions.filter { it.id != taskId }.toImmutableList()
                         },
                         userMessage = userMessage,
                     )
