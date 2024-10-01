@@ -256,7 +256,7 @@ fun TaskDetailLayout(
                         Text(
                             text = uiState.task.note,
                             color = colorScheme.onSurfaceVariant,
-                            style = typography.bodyMedium,
+                            style = typography.bodyLarge,
                         )
                     }
                 }
