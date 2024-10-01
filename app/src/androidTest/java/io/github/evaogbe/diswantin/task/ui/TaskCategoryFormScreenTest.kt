@@ -8,6 +8,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onParent
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.lifecycle.SavedStateHandle
@@ -49,7 +50,7 @@ class TaskCategoryFormScreenTest {
             Task(
                 id = it + 1L,
                 createdAt = faker.random.randomPastDate().toInstant(),
-                name = loremFaker.lorem.unique.words(),
+                name = "${loremFaker.verbs.unique.base()} ${loremFaker.lorem.words()}",
             )
         }
         val db = FakeDatabase().apply {
@@ -79,19 +80,21 @@ class TaskCategoryFormScreenTest {
             useUnmergedTree = true,
         )
             .onParent()
-            .performTextInput(tasks[0].name.substring(0, 1))
+            .performTextInput(tasks[0].name.dropLast(1))
 
         composeTestRule.waitUntilExactlyOneExists(hasText(tasks[0].name))
         composeTestRule.onNodeWithText(tasks[0].name).performClick()
 
         tasks.drop(1).forEach { task ->
+            composeTestRule.onNodeWithTag(TaskCategoryFormLayoutTestTag)
+                .performScrollToNode(hasText(stringResource(R.string.add_task_button)))
             composeTestRule.onNodeWithText(stringResource(R.string.add_task_button)).performClick()
             composeTestRule.onNodeWithText(
                 stringResource(R.string.task_name_label),
                 useUnmergedTree = true,
             )
                 .onParent()
-                .performTextInput(task.name.substring(0, 1))
+                .performTextInput(task.name.dropLast(1))
 
             composeTestRule.waitUntilExactlyOneExists(hasText(task.name))
             composeTestRule.onNodeWithText(task.name).performClick()
@@ -260,6 +263,7 @@ class TaskCategoryFormScreenTest {
             .performTextInput(name)
 
         tasks.forEach { task ->
+            Timber.d("task: %s", task)
             composeTestRule.onNodeWithText(
                 stringResource(R.string.task_name_label),
                 useUnmergedTree = true

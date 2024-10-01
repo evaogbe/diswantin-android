@@ -723,7 +723,7 @@ class TaskFormViewModelTest {
                 Task(
                     createdAt = Instant.parse("2024-08-22T08:00:00Z"),
                     name = name,
-                    deadlineDate = LocalDate.parse("2024-08-23"),
+                    deadlineDate = null,
                     deadlineTime = LocalTime.parse("17:00"),
                 ),
                 Task::id,
@@ -857,7 +857,7 @@ class TaskFormViewModelTest {
                     deadlineTime = null,
                     startAfterDate = null,
                     startAfterTime = null,
-                    scheduledDate = LocalDate.parse("2024-08-22"),
+                    scheduledDate = null,
                     scheduledTime = LocalTime.parse("17:00"),
                     categoryId = category.id,
                 )

@@ -349,6 +349,12 @@ class TaskFormViewModel @Inject constructor(
             } else {
                 value
             }
+
+        if (value != null) {
+            deadlineDate.value = null
+            startAfterDate.value = null
+            scheduledDate.value = null
+        }
     }
 
     fun searchParentTasks(query: String) {

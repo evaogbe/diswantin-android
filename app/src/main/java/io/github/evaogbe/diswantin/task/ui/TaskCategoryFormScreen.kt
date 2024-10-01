@@ -41,6 +41,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
@@ -176,6 +177,8 @@ fun TaskCategoryFormScreen(
     }
 }
 
+const val TaskCategoryFormLayoutTestTag = "TaskCategoryFormLayoutTestTag"
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskCategoryFormLayout(
@@ -200,6 +203,7 @@ fun TaskCategoryFormLayout(
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         LazyColumn(
             modifier = Modifier
+                .testTag(TaskCategoryFormLayoutTestTag)
                 .widthIn(max = ScreenLg)
                 .padding(SpaceMd),
         ) {

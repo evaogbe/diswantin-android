@@ -263,13 +263,7 @@ fun TaskFormLayout(
             )
 
             if (uiState.scheduledTime == null) {
-                if (uiState.deadlineDate == null) {
-                    TextButtonWithIcon(
-                        onClick = { dialogType = FieldDialogType.DeadlineDate },
-                        painter = painterResource(R.drawable.baseline_schedule_24),
-                        text = stringResource(R.string.add_deadline_date_button),
-                    )
-                } else {
+                if (uiState.deadlineDate != null) {
                     Column {
                         Text(
                             text = stringResource(R.string.deadline_date_label),
@@ -288,15 +282,15 @@ fun TaskFormLayout(
                             )
                         }
                     }
+                } else if (uiState.recurrence == null) {
+                    TextButtonWithIcon(
+                        onClick = { dialogType = FieldDialogType.DeadlineDate },
+                        painter = painterResource(R.drawable.baseline_schedule_24),
+                        text = stringResource(R.string.add_deadline_date_button),
+                    )
                 }
 
-                if (uiState.deadlineTime == null) {
-                    TextButtonWithIcon(
-                        onClick = { dialogType = FieldDialogType.DeadlineTime },
-                        painter = painterResource(R.drawable.baseline_schedule_24),
-                        text = stringResource(R.string.add_deadline_time_button),
-                    )
-                } else {
+                if (uiState.deadlineTime != null) {
                     Column {
                         Text(
                             text = stringResource(R.string.deadline_time_label),
@@ -315,15 +309,15 @@ fun TaskFormLayout(
                             )
                         }
                     }
+                } else {
+                    TextButtonWithIcon(
+                        onClick = { dialogType = FieldDialogType.DeadlineTime },
+                        painter = painterResource(R.drawable.baseline_schedule_24),
+                        text = stringResource(R.string.add_deadline_time_button),
+                    )
                 }
 
-                if (uiState.startAfterDate == null) {
-                    TextButtonWithIcon(
-                        onClick = { dialogType = FieldDialogType.StartAfterDate },
-                        painter = painterResource(R.drawable.baseline_schedule_24),
-                        text = stringResource(R.string.add_start_after_date_button),
-                    )
-                } else {
+                if (uiState.startAfterDate != null) {
                     Column {
                         Text(
                             text = stringResource(R.string.start_after_date_label),
@@ -342,15 +336,15 @@ fun TaskFormLayout(
                             )
                         }
                     }
+                } else if (uiState.recurrence == null) {
+                    TextButtonWithIcon(
+                        onClick = { dialogType = FieldDialogType.StartAfterDate },
+                        painter = painterResource(R.drawable.baseline_schedule_24),
+                        text = stringResource(R.string.add_start_after_date_button),
+                    )
                 }
 
-                if (uiState.startAfterTime == null) {
-                    TextButtonWithIcon(
-                        onClick = { dialogType = FieldDialogType.StartAfterTime },
-                        painter = painterResource(R.drawable.baseline_schedule_24),
-                        text = stringResource(R.string.add_start_after_time_button),
-                    )
-                } else {
+                if (uiState.startAfterTime != null) {
                     Column {
                         Text(
                             text = stringResource(R.string.start_after_time_label),
@@ -369,15 +363,15 @@ fun TaskFormLayout(
                             )
                         }
                     }
+                } else {
+                    TextButtonWithIcon(
+                        onClick = { dialogType = FieldDialogType.StartAfterTime },
+                        painter = painterResource(R.drawable.baseline_schedule_24),
+                        text = stringResource(R.string.add_start_after_time_button),
+                    )
                 }
             } else {
-                if (uiState.scheduledDate == null) {
-                    TextButtonWithIcon(
-                        onClick = { dialogType = FieldDialogType.ScheduledDate },
-                        painter = painterResource(R.drawable.baseline_schedule_24),
-                        text = stringResource(R.string.add_scheduled_date_button),
-                    )
-                } else {
+                if (uiState.scheduledDate != null) {
                     Column {
                         Text(
                             text = stringResource(R.string.scheduled_date_label),
@@ -396,6 +390,12 @@ fun TaskFormLayout(
                             )
                         }
                     }
+                } else if (uiState.recurrence == null) {
+                    TextButtonWithIcon(
+                        onClick = { dialogType = FieldDialogType.ScheduledDate },
+                        painter = painterResource(R.drawable.baseline_schedule_24),
+                        text = stringResource(R.string.add_scheduled_date_button),
+                    )
                 }
 
                 Column {
@@ -655,9 +655,9 @@ private fun TaskFormScreenPreview_Edit() {
             TaskFormLayout(
                 isNew = false,
                 uiState = TaskFormUiState.Success(
-                    deadlineDate = LocalDate.now().plusDays(1),
+                    deadlineDate = null,
                     deadlineTime = LocalTime.now().plusHours(1),
-                    startAfterDate = LocalDate.now(),
+                    startAfterDate = null,
                     startAfterTime = LocalTime.now(),
                     scheduledDate = null,
                     scheduledTime = null,
@@ -758,13 +758,7 @@ private fun TaskFormLayoutPreview_ScheduledTime() {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = LocalTime.now(),
-                    recurrence = TaskRecurrenceUiState(
-                        start = LocalDate.now(),
-                        type = RecurrenceType.Week,
-                        step = 2,
-                        weekdays = persistentSetOf(LocalDate.now().dayOfWeek),
-                        locale = Locale.getDefault(),
-                    ),
+                    recurrence = null,
                     showCategoryField = false,
                     category = null,
                     categoryOptions = persistentListOf(),

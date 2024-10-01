@@ -55,6 +55,21 @@ data class EditTaskForm(
         require(scheduledTime != null || scheduledDate == null) {
             "Must have scheduledTime if scheduledDate is set, but got scheduledDate: $scheduledDate"
         }
+        require(recurrences.isEmpty() || deadlineDate == null) {
+            """Must not set deadline date for recurring tasks, but got 
+                |deadlineDate: $deadlineDate, 
+                |recurrences: $recurrences""".trimMargin()
+        }
+        require(recurrences.isEmpty() || startAfterDate == null) {
+            """Must not set start after date for recurring tasks, but got 
+                |startAfterDate: $startAfterDate, 
+                |recurrences: $recurrences""".trimMargin()
+        }
+        require(recurrences.isEmpty() || scheduledDate == null) {
+            """Must not set scheduled date for recurring tasks, but got 
+                |scheduledDate: $scheduledDate, 
+                |recurrences: $recurrences""".trimMargin()
+        }
 
         val newRecurrenceSet = recurrences.toSet()
         val oldRecurrenceSet = existingRecurrences.map { it.copy(id = 0L) }.toSet()
