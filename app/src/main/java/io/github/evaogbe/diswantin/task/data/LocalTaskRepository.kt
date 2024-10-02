@@ -81,6 +81,8 @@ class LocalTaskRepository @Inject constructor(
             taskDao.filterTaskItems(
                 deadlineStartDate = criteria.deadlineDateRange?.first,
                 deadlineEndDate = criteria.deadlineDateRange?.second,
+                startAfterStartDate = criteria.startAfterDateRange?.first,
+                startAfterEndDate = criteria.startAfterDateRange?.second,
                 scheduledStartDate = criteria.scheduledDateRange?.first,
                 scheduledEndDate = criteria.scheduledDateRange?.second,
             )
@@ -89,6 +91,8 @@ class LocalTaskRepository @Inject constructor(
                 query = escapeSql("${criteria.name}*"),
                 deadlineStartDate = criteria.deadlineDateRange?.first,
                 deadlineEndDate = criteria.deadlineDateRange?.second,
+                startAfterStartDate = criteria.startAfterDateRange?.first,
+                startAfterEndDate = criteria.startAfterDateRange?.second,
                 scheduledStartDate = criteria.scheduledDateRange?.first,
                 scheduledEndDate = criteria.scheduledDateRange?.second,
             )
@@ -96,6 +100,10 @@ class LocalTaskRepository @Inject constructor(
             results
                 .filter { (task, recurrences) ->
                     !task.recurring || (criteria.deadlineDateRange?.let { (start, end) ->
+                        generateSequence(start) { if (it <= end) it.plusDays(1) else null }.any {
+                            doesRecurOnDate(recurrences, it)
+                        }
+                    } != false && criteria.startAfterDateRange?.let { (start, end) ->
                         generateSequence(start) { if (it <= end) it.plusDays(1) else null }.any {
                             doesRecurOnDate(recurrences, it)
                         }

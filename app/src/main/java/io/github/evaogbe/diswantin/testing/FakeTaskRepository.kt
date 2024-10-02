@@ -179,6 +179,15 @@ class FakeTaskRepository(
                                     }.any { doesRecurOnDate(recurrences, it) }
                                 }
                             } != false &&
+                            criteria.startAfterDateRange?.let { (start, end) ->
+                                if (recurrences.isEmpty()) {
+                                    task.startAfterDate?.let { it in (start..end) } == true
+                                } else {
+                                    task.startAfterTime != null && generateSequence(start) {
+                                        if (it <= end) it.plusDays(1) else null
+                                    }.any { doesRecurOnDate(recurrences, it) }
+                                }
+                            } != false &&
                             criteria.scheduledDateRange?.let { (start, end) ->
                                 if (recurrences.isEmpty()) {
                                     task.scheduledDate?.let { it in (start..end) } == true

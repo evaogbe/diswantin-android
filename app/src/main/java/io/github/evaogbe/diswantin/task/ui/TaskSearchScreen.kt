@@ -134,7 +134,7 @@ fun TaskSearchTopBar(
 }
 
 enum class FilterDialogType {
-    DeadlineDateRange, ScheduledDateRange
+    DeadlineDateRange, StartAfterDateRange, ScheduledDateRange
 }
 
 @OptIn(FlowPreview::class)
@@ -149,6 +149,9 @@ fun TaskSearchScreen(
 ) {
     val uiState by taskSearchViewModel.uiState.collectAsStateWithLifecycle()
     var deadlineDateRange by rememberSaveable { mutableStateOf<Pair<LocalDate, LocalDate>?>(null) }
+    var startAfterDateRange by rememberSaveable {
+        mutableStateOf<Pair<LocalDate, LocalDate>?>(null)
+    }
     var scheduledDateRange by rememberSaveable { mutableStateOf<Pair<LocalDate, LocalDate>?>(null) }
     var filterDialogType by rememberSaveable { mutableStateOf<FilterDialogType?>(null) }
     val currentQuery by rememberUpdatedState(query)
@@ -162,6 +165,7 @@ fun TaskSearchScreen(
                     TaskSearchCriteria(
                         name = it,
                         deadlineDateRange = deadlineDateRange,
+                        startAfterDateRange = startAfterDateRange,
                         scheduledDateRange = scheduledDateRange,
                     ),
                 )
@@ -176,6 +180,7 @@ fun TaskSearchScreen(
                     TaskSearchCriteria(
                         name = query,
                         deadlineDateRange = deadlineDateRange,
+                        startAfterDateRange = startAfterDateRange,
                         scheduledDateRange = scheduledDateRange,
                     ),
                 )
@@ -184,11 +189,12 @@ fun TaskSearchScreen(
         }
     }
 
-    LaunchedEffect(deadlineDateRange, scheduledDateRange) {
+    LaunchedEffect(deadlineDateRange, startAfterDateRange, scheduledDateRange) {
         taskSearchViewModel.searchTasks(
             TaskSearchCriteria(
                 name = query,
                 deadlineDateRange = deadlineDateRange,
+                startAfterDateRange = startAfterDateRange,
                 scheduledDateRange = scheduledDateRange,
             ),
         )
@@ -202,6 +208,14 @@ fun TaskSearchScreen(
                 filterDialogType = FilterDialogType.DeadlineDateRange
             } else {
                 deadlineDateRange = null
+            }
+        },
+        startAfterDateRange = startAfterDateRange,
+        onStartAfterChipClick = {
+            if (startAfterDateRange == null) {
+                filterDialogType = FilterDialogType.StartAfterDateRange
+            } else {
+                startAfterDateRange = null
             }
         },
         scheduledDateRange = scheduledDateRange,
@@ -230,6 +244,17 @@ fun TaskSearchScreen(
             )
         }
 
+        FilterDialogType.StartAfterDateRange -> {
+            DiswantinDateRangePickerDialog(
+                onDismiss = { filterDialogType = null },
+                dateRange = startAfterDateRange,
+                onSelectDateRange = {
+                    startAfterDateRange = it
+                    scheduledDateRange = null
+                }
+            )
+        }
+
         FilterDialogType.ScheduledDateRange -> {
             DiswantinDateRangePickerDialog(
                 onDismiss = { filterDialogType = null },
@@ -237,6 +262,7 @@ fun TaskSearchScreen(
                 onSelectDateRange = {
                     scheduledDateRange = it
                     deadlineDateRange = null
+                    startAfterDateRange = null
                 },
             )
         }
@@ -248,6 +274,8 @@ fun TaskSearchScreen(
     query: String,
     deadlineDateRange: Pair<LocalDate, LocalDate>?,
     onDeadlineChipClick: () -> Unit,
+    startAfterDateRange: Pair<LocalDate, LocalDate>?,
+    onStartAfterChipClick: () -> Unit,
     scheduledDateRange: Pair<LocalDate, LocalDate>?,
     onScheduledChipClick: () -> Unit,
     uiState: TaskSearchUiState,
@@ -276,6 +304,21 @@ fun TaskSearchScreen(
                                 it.second.format(dateFormatter),
                             )
                         } ?: stringResource(R.string.deadline_label),
+                    )
+                },
+            )
+            FilterChip(
+                selected = startAfterDateRange != null,
+                onClick = onStartAfterChipClick,
+                label = {
+                    Text(
+                        text = startAfterDateRange?.let {
+                            stringResource(
+                                R.string.start_after_chip_label,
+                                it.first.format(dateFormatter),
+                                it.second.format(dateFormatter),
+                            )
+                        } ?: stringResource(R.string.start_after_label),
                     )
                 },
             )
@@ -440,6 +483,8 @@ private fun TaskSearchScreenPreview_Present() {
                 query = "Bru",
                 deadlineDateRange = LocalDate.now() to LocalDate.now().plusDays(1),
                 onDeadlineChipClick = {},
+                startAfterDateRange = LocalDate.now() to LocalDate.now().plusDays(1),
+                onStartAfterChipClick = {},
                 scheduledDateRange = null,
                 onScheduledChipClick = {},
                 uiState = TaskSearchUiState.Success(
@@ -470,6 +515,8 @@ private fun TaskSearchScreenPreview_Empty() {
                 query = "Bru",
                 deadlineDateRange = null,
                 onDeadlineChipClick = {},
+                startAfterDateRange = null,
+                onStartAfterChipClick = {},
                 scheduledDateRange = LocalDate.now() to LocalDate.now().plusDays(1),
                 onScheduledChipClick = {},
                 uiState = TaskSearchUiState.Success(searchResults = persistentListOf()),
@@ -494,6 +541,8 @@ private fun TaskSearchScreenPreview_Initial() {
                 query = "",
                 deadlineDateRange = null,
                 onDeadlineChipClick = {},
+                startAfterDateRange = null,
+                onStartAfterChipClick = {},
                 scheduledDateRange = null,
                 onScheduledChipClick = {},
                 uiState = TaskSearchUiState.Initial,

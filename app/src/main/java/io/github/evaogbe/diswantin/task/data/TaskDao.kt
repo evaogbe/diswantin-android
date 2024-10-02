@@ -245,6 +245,15 @@ interface TaskDao {
                 OR (t.deadline_time IS NOT NULL AND r.start <= :deadlineEndDate)
             )
             AND (
+                :startAfterStartDate IS NULL
+                OR :startAfterEndDate IS NULL
+                OR (
+                    t.start_after_date >= :startAfterStartDate 
+                    AND t.start_after_date <= :startAfterEndDate
+                )
+                OR (t.start_after_time IS NOT NULL AND r.start <= :startAfterEndDate)
+            )
+            AND (
                 :scheduledStartDate IS NULL
                 OR :scheduledEndDate IS NULL
                 OR (
@@ -263,6 +272,10 @@ interface TaskDao {
             t.deadline_date,
             t.deadline_time IS NULL,
             t.deadline_time,
+            t.start_after_date IS NULL,
+            t.start_after_date,
+            t.start_after_time IS NULL,
+            t.start_after_time,
             t.name,
             t.id
         LIMIT 30"""
@@ -271,6 +284,8 @@ interface TaskDao {
         query: String,
         deadlineStartDate: LocalDate?,
         deadlineEndDate: LocalDate?,
+        startAfterStartDate: LocalDate?,
+        startAfterEndDate: LocalDate?,
         scheduledStartDate: LocalDate?,
         scheduledEndDate: LocalDate?,
     ): Flow<List<TaskItemWithRecurrences>>
@@ -292,6 +307,15 @@ interface TaskDao {
                 OR (t.deadline_time IS NOT NULL AND r.start <= :deadlineEndDate)
             )
             AND (
+                :startAfterStartDate IS NULL
+                OR :startAfterEndDate IS NULL
+                OR (
+                    t.start_after_date >= :startAfterStartDate 
+                    AND t.start_after_date <= :startAfterEndDate
+                )
+                OR (t.start_after_time IS NOT NULL AND r.start <= :startAfterEndDate)
+            )
+            AND (
                 :scheduledStartDate IS NULL
                 OR :scheduledEndDate IS NULL
                 OR (
@@ -310,6 +334,10 @@ interface TaskDao {
             t.deadline_date,
             t.deadline_time IS NULL,
             t.deadline_time,
+            t.start_after_date IS NULL,
+            t.start_after_date,
+            t.start_after_time IS NULL,
+            t.start_after_time,
             t.name,
             t.id
         LIMIT 30"""
@@ -317,6 +345,8 @@ interface TaskDao {
     fun filterTaskItems(
         deadlineStartDate: LocalDate?,
         deadlineEndDate: LocalDate?,
+        startAfterStartDate: LocalDate?,
+        startAfterEndDate: LocalDate?,
         scheduledStartDate: LocalDate?,
         scheduledEndDate: LocalDate?,
     ): Flow<List<TaskItemWithRecurrences>>
