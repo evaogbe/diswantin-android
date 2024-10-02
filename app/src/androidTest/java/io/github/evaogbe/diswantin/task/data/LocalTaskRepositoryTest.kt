@@ -838,6 +838,57 @@ class LocalTaskRepositoryTest {
                 assertThat(awaitItem())
                     .isNotNull()
                     .isDataClassEqualTo(updatedTask1)
+
+                val task5 = taskRepository.create(
+                    NewTaskForm(
+                        name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                        note = "",
+                        deadlineDate = null,
+                        deadlineTime = null,
+                        startAfterDate = null,
+                        startAfterTime = null,
+                        scheduledDate = null,
+                        scheduledTime = null,
+                        categoryId = null,
+                        recurrences = listOf(
+                            TaskRecurrence(
+                                taskId = 0L,
+                                start = LocalDate.parse("2024-08-22"),
+                                type = RecurrenceType.Day,
+                                step = 2,
+                                week = 4,
+                            ),
+                        ),
+                        parentTaskId = null,
+                        clock = clock,
+                    )
+                )
+
+                assertThat(awaitItem())
+                    .isNotNull()
+                    .isDataClassEqualTo(updatedTask1)
+
+                taskRepository.update(
+                    EditTaskForm(
+                        name = updatedTask1.name,
+                        note = updatedTask1.note,
+                        deadlineDate = updatedTask1.deadlineDate,
+                        deadlineTime = updatedTask1.deadlineTime,
+                        startAfterDate = updatedTask1.startAfterDate,
+                        startAfterTime = updatedTask1.startAfterTime,
+                        scheduledDate = updatedTask1.scheduledDate,
+                        scheduledTime = updatedTask1.scheduledTime,
+                        categoryId = updatedTask1.categoryId,
+                        recurrences = emptyList(),
+                        parentUpdateType = PathUpdateType.Replace(task5.id),
+                        existingTask = updatedTask1,
+                        existingRecurrences = emptyList(),
+                    )
+                )
+
+                assertThat(awaitItem())
+                    .isNotNull()
+                    .isDataClassEqualTo(updatedTask1)
             }
     }
 
