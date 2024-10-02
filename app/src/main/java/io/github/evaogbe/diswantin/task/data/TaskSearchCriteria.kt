@@ -4,8 +4,8 @@ import java.time.LocalDate
 
 data class TaskSearchCriteria(
     val name: String = "",
-    val deadlineDate: LocalDate? = null,
-    val scheduledDate: LocalDate? = null,
+    val deadlineDateRange: Pair<LocalDate, LocalDate>? = null,
+    val scheduledDateRange: Pair<LocalDate, LocalDate>? = null,
 ) {
-    val isEmpty = name.isBlank() && deadlineDate == null && scheduledDate == null
+    val isEmpty = name.isBlank() && deadlineDateRange == null && scheduledDateRange == null
 }

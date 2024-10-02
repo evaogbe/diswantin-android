@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -63,7 +64,7 @@ import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.TaskSearchCriteria
 import io.github.evaogbe.diswantin.ui.components.AutoFocusTextField
 import io.github.evaogbe.diswantin.ui.components.ButtonWithIcon
-import io.github.evaogbe.diswantin.ui.components.DiswantinDatePickerDialog
+import io.github.evaogbe.diswantin.ui.components.DiswantinDateRangePickerDialog
 import io.github.evaogbe.diswantin.ui.components.LoadFailureLayout
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.evaogbe.diswantin.ui.theme.IconSizeLg
@@ -133,7 +134,7 @@ fun TaskSearchTopBar(
 }
 
 enum class FilterDialogType {
-    DeadlineDate, ScheduledDate
+    DeadlineDateRange, ScheduledDateRange
 }
 
 @OptIn(FlowPreview::class)
@@ -147,8 +148,8 @@ fun TaskSearchScreen(
     taskSearchViewModel: TaskSearchViewModel = hiltViewModel(),
 ) {
     val uiState by taskSearchViewModel.uiState.collectAsStateWithLifecycle()
-    var deadlineDate by rememberSaveable { mutableStateOf<LocalDate?>(null) }
-    var scheduledDate by rememberSaveable { mutableStateOf<LocalDate?>(null) }
+    var deadlineDateRange by rememberSaveable { mutableStateOf<Pair<LocalDate, LocalDate>?>(null) }
+    var scheduledDateRange by rememberSaveable { mutableStateOf<Pair<LocalDate, LocalDate>?>(null) }
     var filterDialogType by rememberSaveable { mutableStateOf<FilterDialogType?>(null) }
     val currentQuery by rememberUpdatedState(query)
 
@@ -160,8 +161,8 @@ fun TaskSearchScreen(
                 taskSearchViewModel.searchTasks(
                     TaskSearchCriteria(
                         name = it,
-                        deadlineDate = deadlineDate,
-                        scheduledDate = scheduledDate,
+                        deadlineDateRange = deadlineDateRange,
+                        scheduledDateRange = scheduledDateRange,
                     ),
                 )
             }
@@ -174,8 +175,8 @@ fun TaskSearchScreen(
                 taskSearchViewModel.searchTasks(
                     TaskSearchCriteria(
                         name = query,
-                        deadlineDate = deadlineDate,
-                        scheduledDate = scheduledDate,
+                        deadlineDateRange = deadlineDateRange,
+                        scheduledDateRange = scheduledDateRange,
                     ),
                 )
                 topBarActionHandled()
@@ -183,32 +184,32 @@ fun TaskSearchScreen(
         }
     }
 
-    LaunchedEffect(deadlineDate, scheduledDate) {
+    LaunchedEffect(deadlineDateRange, scheduledDateRange) {
         taskSearchViewModel.searchTasks(
             TaskSearchCriteria(
                 name = query,
-                deadlineDate = deadlineDate,
-                scheduledDate = scheduledDate,
+                deadlineDateRange = deadlineDateRange,
+                scheduledDateRange = scheduledDateRange,
             ),
         )
     }
 
     TaskSearchScreen(
         query = query,
-        deadlineDate = deadlineDate,
+        deadlineDateRange = deadlineDateRange,
         onDeadlineChipClick = {
-            if (deadlineDate == null) {
-                filterDialogType = FilterDialogType.DeadlineDate
+            if (deadlineDateRange == null) {
+                filterDialogType = FilterDialogType.DeadlineDateRange
             } else {
-                deadlineDate = null
+                deadlineDateRange = null
             }
         },
-        scheduledDate = scheduledDate,
+        scheduledDateRange = scheduledDateRange,
         onScheduledChipClick = {
-            if (scheduledDate == null) {
-                filterDialogType = FilterDialogType.ScheduledDate
+            if (scheduledDateRange == null) {
+                filterDialogType = FilterDialogType.ScheduledDateRange
             } else {
-                scheduledDate = null
+                scheduledDateRange = null
             }
         },
         uiState = uiState,
@@ -218,24 +219,24 @@ fun TaskSearchScreen(
 
     when (filterDialogType) {
         null -> {}
-        FilterDialogType.DeadlineDate -> {
-            DiswantinDatePickerDialog(
+        FilterDialogType.DeadlineDateRange -> {
+            DiswantinDateRangePickerDialog(
                 onDismiss = { filterDialogType = null },
-                date = deadlineDate,
-                onSelectDate = {
-                    deadlineDate = it
-                    scheduledDate = null
+                dateRange = deadlineDateRange,
+                onSelectDateRange = {
+                    deadlineDateRange = it
+                    scheduledDateRange = null
                 },
             )
         }
 
-        FilterDialogType.ScheduledDate -> {
-            DiswantinDatePickerDialog(
+        FilterDialogType.ScheduledDateRange -> {
+            DiswantinDateRangePickerDialog(
                 onDismiss = { filterDialogType = null },
-                date = scheduledDate,
-                onSelectDate = {
-                    scheduledDate = it
-                    deadlineDate = null
+                dateRange = scheduledDateRange,
+                onSelectDateRange = {
+                    scheduledDateRange = it
+                    deadlineDateRange = null
                 },
             )
         }
@@ -245,9 +246,9 @@ fun TaskSearchScreen(
 @Composable
 fun TaskSearchScreen(
     query: String,
-    deadlineDate: LocalDate?,
+    deadlineDateRange: Pair<LocalDate, LocalDate>?,
     onDeadlineChipClick: () -> Unit,
-    scheduledDate: LocalDate?,
+    scheduledDateRange: Pair<LocalDate, LocalDate>?,
     onScheduledChipClick: () -> Unit,
     uiState: TaskSearchUiState,
     onAddTask: (String) -> Unit,
@@ -264,23 +265,31 @@ fun TaskSearchScreen(
             horizontalArrangement = Arrangement.spacedBy(SpaceMd),
         ) {
             FilterChip(
-                selected = deadlineDate != null,
+                selected = deadlineDateRange != null,
                 onClick = onDeadlineChipClick,
                 label = {
                     Text(
-                        text = deadlineDate?.let {
-                            stringResource(R.string.deadline_chip_label, it.format(dateFormatter))
+                        text = deadlineDateRange?.let {
+                            stringResource(
+                                R.string.deadline_chip_label,
+                                it.first.format(dateFormatter),
+                                it.second.format(dateFormatter),
+                            )
                         } ?: stringResource(R.string.deadline_label),
                     )
                 },
             )
             FilterChip(
-                selected = scheduledDate != null,
+                selected = scheduledDateRange != null,
                 onClick = onScheduledChipClick,
                 label = {
                     Text(
-                        text = scheduledDate?.let {
-                            stringResource(R.string.scheduled_chip_label, it.format(dateFormatter))
+                        text = scheduledDateRange?.let {
+                            stringResource(
+                                R.string.scheduled_chip_label,
+                                it.first.format(dateFormatter),
+                                it.second.format(dateFormatter),
+                            )
                         } ?: stringResource(R.string.scheduled_at_label),
                     )
                 },
@@ -383,9 +392,10 @@ fun EmptyTaskSearchLayout(onAddTask: () -> Unit, modifier: Modifier = Modifier) 
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
                 .padding(SpaceMd),
             verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Icon(
                 imageVector = Icons.Default.Search,
@@ -396,7 +406,7 @@ fun EmptyTaskSearchLayout(onAddTask: () -> Unit, modifier: Modifier = Modifier) 
             Text(
                 stringResource(R.string.task_search_empty),
                 textAlign = TextAlign.Center,
-                style = typography.headlineLarge
+                style = typography.headlineLarge,
             )
             Spacer(Modifier.size(SpaceLg))
             ButtonWithIcon(
@@ -428,9 +438,9 @@ private fun TaskSearchScreenPreview_Present() {
         ) { innerPadding ->
             TaskSearchScreen(
                 query = "Bru",
-                deadlineDate = LocalDate.now(),
+                deadlineDateRange = LocalDate.now() to LocalDate.now().plusDays(1),
                 onDeadlineChipClick = {},
-                scheduledDate = null,
+                scheduledDateRange = null,
                 onScheduledChipClick = {},
                 uiState = TaskSearchUiState.Success(
                     searchResults = persistentListOf(
@@ -458,9 +468,9 @@ private fun TaskSearchScreenPreview_Empty() {
         ) { innerPadding ->
             TaskSearchScreen(
                 query = "Bru",
-                deadlineDate = null,
+                deadlineDateRange = null,
                 onDeadlineChipClick = {},
-                scheduledDate = LocalDate.now(),
+                scheduledDateRange = LocalDate.now() to LocalDate.now().plusDays(1),
                 onScheduledChipClick = {},
                 uiState = TaskSearchUiState.Success(searchResults = persistentListOf()),
                 onAddTask = {},
@@ -482,9 +492,9 @@ private fun TaskSearchScreenPreview_Initial() {
         ) { innerPadding ->
             TaskSearchScreen(
                 query = "",
-                deadlineDate = null,
+                deadlineDateRange = null,
                 onDeadlineChipClick = {},
-                scheduledDate = null,
+                scheduledDateRange = null,
                 onScheduledChipClick = {},
                 uiState = TaskSearchUiState.Initial,
                 onAddTask = {},

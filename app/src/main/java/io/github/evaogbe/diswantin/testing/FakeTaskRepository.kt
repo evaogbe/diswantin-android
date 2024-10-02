@@ -1,19 +1,17 @@
 package io.github.evaogbe.diswantin.testing
 
-import io.github.evaogbe.diswantin.data.weekOfMonthField
 import io.github.evaogbe.diswantin.task.data.CurrentTaskParams
 import io.github.evaogbe.diswantin.task.data.EditTaskForm
 import io.github.evaogbe.diswantin.task.data.NewTaskForm
 import io.github.evaogbe.diswantin.task.data.PathUpdateType
-import io.github.evaogbe.diswantin.task.data.RecurrenceType
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskCompletion
 import io.github.evaogbe.diswantin.task.data.TaskDetail
 import io.github.evaogbe.diswantin.task.data.TaskItem
-import io.github.evaogbe.diswantin.task.data.TaskRecurrence
 import io.github.evaogbe.diswantin.task.data.TaskRepository
 import io.github.evaogbe.diswantin.task.data.TaskSearchCriteria
 import io.github.evaogbe.diswantin.task.data.TaskSkip
+import io.github.evaogbe.diswantin.task.data.doesRecurOnDate
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
@@ -21,10 +19,8 @@ import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.Month
 import java.time.ZoneId
 import java.time.ZonedDateTime
-import java.time.temporal.ChronoUnit
 
 class FakeTaskRepository(
     private val db: FakeDatabase = FakeDatabase(),
@@ -95,7 +91,7 @@ class FakeTaskRepository(
                                 if (recurrences.isEmpty()) {
                                     doneAt == null
                                 } else {
-                                    doesRecurOnDate(recurrences, params.today, params.week) &&
+                                    doesRecurOnDate(recurrences, params.today) &&
                                             (doneAt == null || doneAt < params.doneAfter)
                                 }
                             } == true
@@ -174,23 +170,23 @@ class FakeTaskRepository(
                 }
                 .filter { (task, recurrences) ->
                     task.name.contains(criteria.name, ignoreCase = true) &&
-                            criteria.deadlineDate?.let {
-                                task.deadlineDate == it ||
-                                        (task.deadlineTime != null &&
-                                                doesRecurOnDate(
-                                                    recurrences,
-                                                    it,
-                                                    it.get(weekOfMonthField()),
-                                                ))
+                            criteria.deadlineDateRange?.let { (start, end) ->
+                                if (recurrences.isEmpty()) {
+                                    task.deadlineDate?.let { it in (start..end) } == true
+                                } else {
+                                    task.deadlineTime != null && generateSequence(start) {
+                                        if (it <= end) it.plusDays(1) else null
+                                    }.any { doesRecurOnDate(recurrences, it) }
+                                }
                             } != false &&
-                            criteria.scheduledDate?.let {
-                                task.scheduledDate == it ||
-                                        (task.scheduledTime != null &&
-                                                doesRecurOnDate(
-                                                    recurrences,
-                                                    it,
-                                                    it.get(weekOfMonthField()),
-                                                ))
+                            criteria.scheduledDateRange?.let { (start, end) ->
+                                if (recurrences.isEmpty()) {
+                                    task.scheduledDate?.let { it in (start..end) } == true
+                                } else {
+                                    task.scheduledTime != null && generateSequence(start) {
+                                        if (it <= end) it.plusDays(1) else null
+                                    }.any { doesRecurOnDate(recurrences, it) }
+                                }
                             } != false
                 }
                 .map { (task, recurrences) ->
@@ -292,49 +288,6 @@ class FakeTaskRepository(
 
     override suspend fun skip(id: Long) {
         db.insertTaskSkip(TaskSkip(taskId = id, skippedAt = Instant.now(clock)))
-    }
-
-    private fun doesRecurOnDate(
-        recurrences: List<TaskRecurrence>,
-        date: LocalDate,
-        week: Int,
-    ): Boolean {
-        val recurrence = recurrences.first()
-        return when (recurrence.type) {
-            RecurrenceType.Day -> {
-                ChronoUnit.DAYS.between(recurrence.start, date) % recurrence.step == 0L
-            }
-
-            RecurrenceType.Week -> {
-                (ChronoUnit.WEEKS.between(recurrence.start, date) % recurrence.step == 0L) &&
-                        recurrence.start.dayOfWeek == date.dayOfWeek
-            }
-
-            RecurrenceType.DayOfMonth -> {
-                (ChronoUnit.MONTHS.between(recurrence.start, date) % recurrence.step == 0L) &&
-                        (recurrence.start.dayOfMonth == date.dayOfMonth ||
-                                (recurrence.start.dayOfMonth == recurrence.start.lengthOfMonth() &&
-                                        date.dayOfMonth == date.lengthOfMonth()))
-            }
-
-            RecurrenceType.WeekOfMonth -> {
-                recurrences.any {
-                    (ChronoUnit.MONTHS.between(it.start, date) % it.step == 0L) &&
-                            it.start.dayOfWeek == date.dayOfWeek &&
-                            it.week == week
-                }
-            }
-
-            RecurrenceType.Year -> {
-                (ChronoUnit.YEARS.between(recurrence.start, date) % recurrence.step == 0L) &&
-                        recurrence.start.month == date.month &&
-                        (recurrence.start.dayOfMonth == date.dayOfMonth ||
-                                (recurrence.start.month == Month.FEBRUARY &&
-                                        recurrence.start.dayOfMonth == 29 &&
-                                        date.dayOfMonth == 28 &&
-                                        !date.isLeapYear))
-            }
-        }
     }
 
     companion object {

@@ -13,6 +13,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DateRangePicker
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -25,6 +26,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimeInput
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -80,6 +82,58 @@ fun DiswantinDatePickerDialog(
         },
     ) {
         DatePicker(state = datePickerState)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DiswantinDateRangePickerDialog(
+    onDismiss: () -> Unit,
+    dateRange: Pair<LocalDate, LocalDate>?,
+    onSelectDateRange: (Pair<LocalDate, LocalDate>) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val dateRangePickerState = rememberDateRangePickerState(
+        initialSelectedStartDateMillis = dateRange?.first
+            ?.atStartOfDay(ZoneOffset.UTC)
+            ?.toInstant()
+            ?.toEpochMilli(),
+        initialSelectedEndDateMillis = dateRange?.second
+            ?.atStartOfDay(ZoneOffset.UTC)
+            ?.toInstant()
+            ?.toEpochMilli(),
+    )
+
+    DatePickerDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    val start = dateRangePickerState.selectedStartDateMillis?.let {
+                        Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate()
+                    }
+                    val end = dateRangePickerState.selectedEndDateMillis?.let {
+                        Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate()
+                    }
+
+                    if (start != null && end != null) {
+                        onSelectDateRange(start to end)
+                    }
+
+                    onDismiss()
+                },
+            ) {
+                Text(stringResource(R.string.ok_button))
+            }
+        },
+        modifier = modifier.verticalScroll(rememberScrollState()),
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancel_button))
+            }
+        },
+    ) {
+        DateRangePicker(state = dateRangePickerState)
     }
 }
 

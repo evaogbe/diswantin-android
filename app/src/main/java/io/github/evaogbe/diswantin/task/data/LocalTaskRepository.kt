@@ -1,7 +1,6 @@
 package io.github.evaogbe.diswantin.task.data
 
 import io.github.evaogbe.diswantin.data.IoDispatcher
-import io.github.evaogbe.diswantin.data.weekOfMonthField
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
@@ -80,19 +79,33 @@ class LocalTaskRepository @Inject constructor(
     override fun searchTaskItems(criteria: TaskSearchCriteria) =
         if (criteria.name.isEmpty()) {
             taskDao.filterTaskItems(
-                deadlineDate = criteria.deadlineDate,
-                deadlineWeek = criteria.deadlineDate?.get(weekOfMonthField()),
-                scheduledDate = criteria.scheduledDate,
-                scheduledWeek = criteria.scheduledDate?.get(weekOfMonthField()),
+                deadlineStartDate = criteria.deadlineDateRange?.first,
+                deadlineEndDate = criteria.deadlineDateRange?.second,
+                scheduledStartDate = criteria.scheduledDateRange?.first,
+                scheduledEndDate = criteria.scheduledDateRange?.second,
             )
         } else {
             taskDao.searchTaskItems(
                 query = escapeSql("${criteria.name}*"),
-                deadlineDate = criteria.deadlineDate,
-                deadlineWeek = criteria.deadlineDate?.get(weekOfMonthField()),
-                scheduledDate = criteria.scheduledDate,
-                scheduledWeek = criteria.scheduledDate?.get(weekOfMonthField()),
+                deadlineStartDate = criteria.deadlineDateRange?.first,
+                deadlineEndDate = criteria.deadlineDateRange?.second,
+                scheduledStartDate = criteria.scheduledDateRange?.first,
+                scheduledEndDate = criteria.scheduledDateRange?.second,
             )
+        }.map { results ->
+            results
+                .filter { (task, recurrences) ->
+                    !task.recurring || (criteria.deadlineDateRange?.let { (start, end) ->
+                        generateSequence(start) { if (it <= end) it.plusDays(1) else null }.any {
+                            doesRecurOnDate(recurrences, it)
+                        }
+                    } != false && criteria.scheduledDateRange?.let { (start, end) ->
+                        generateSequence(start) { if (it <= end) it.plusDays(1) else null }.any {
+                            doesRecurOnDate(recurrences, it)
+                        }
+                    } != false)
+                }
+                .map { it.task }
         }.flowOn(ioDispatcher)
 
     private fun escapeSql(str: String) = str.replace("'", "''").replace("\"", "\"\"")
