@@ -49,7 +49,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.RecurrenceType
-import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskDetail
 import io.github.evaogbe.diswantin.ui.components.LoadFailureLayout
 import io.github.evaogbe.diswantin.ui.components.PendingLayout
@@ -361,9 +360,22 @@ fun TaskDetailLayout(
                     )
                 }
 
-                items(uiState.childTasks, key = Task::id) { task ->
+                items(uiState.childTasks, key = TaskItemUiState::id) { task ->
                     ListItem(
-                        headlineContent = { Text(text = task.name) },
+                        headlineContent = {
+                            if (task.isDone) {
+                                Text(
+                                    text = task.name,
+                                    modifier = Modifier.semantics {
+                                        contentDescription =
+                                            resources.getString(R.string.task_name_done, task.name)
+                                    },
+                                    textDecoration = TextDecoration.LineThrough,
+                                )
+                            } else {
+                                Text(text = task.name)
+                            }
+                        },
                         modifier = Modifier.clickable { onNavigateToTask(task.id) },
                     )
                     HorizontalDivider()
@@ -456,8 +468,8 @@ private fun TaskDetailScreenPreview_Detailed() {
                     ),
                     recurrence = null,
                     childTasks = persistentListOf(
-                        Task(id = 3L, createdAt = Instant.now(), name = "Eat breakfast"),
-                        Task(id = 4L, createdAt = Instant.now(), name = "Go to work"),
+                        TaskItemUiState(id = 3L, name = "Eat breakfast", isDone = false),
+                        TaskItemUiState(id = 4L, name = "Go to work", isDone = true),
                     ),
                     userMessage = null,
                     clock = Clock.systemDefaultZone(),

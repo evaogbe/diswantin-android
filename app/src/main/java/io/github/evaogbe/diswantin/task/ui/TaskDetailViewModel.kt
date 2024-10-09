@@ -6,8 +6,8 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.data.Result
-import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskDetail
+import io.github.evaogbe.diswantin.task.data.TaskItem
 import io.github.evaogbe.diswantin.task.data.TaskRecurrence
 import io.github.evaogbe.diswantin.task.data.TaskRepository
 import io.github.evaogbe.diswantin.ui.navigation.NavArguments
@@ -25,6 +25,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.time.Clock
+import java.time.LocalTime
+import java.time.ZonedDateTime
 import java.util.Locale
 import javax.inject.Inject
 
@@ -63,7 +65,7 @@ class TaskDetailViewModel @Inject constructor(
                     emit(Result.Failure(e))
                 },
             taskRepository.getChildren(taskId)
-                .map<List<Task>, Result<List<Task>>> { Result.Success(it) }
+                .map<List<TaskItem>, Result<List<TaskItem>>> { Result.Success(it) }
                 .catch { e ->
                     Timber.e(e, "Failed to fetch task children by id: %d", taskId)
                     emit(Result.Failure(e))
@@ -75,10 +77,14 @@ class TaskDetailViewModel @Inject constructor(
                     task != null -> {
                         recurrenceResult.andThen { recurrence ->
                             childTasksResult.map { childTasks ->
+                                val doneBefore =
+                                    ZonedDateTime.now(clock).with(LocalTime.MIN).toInstant()
                                 TaskDetailUiState.Success(
                                     task = task,
                                     recurrence = recurrence,
-                                    childTasks = childTasks.toImmutableList(),
+                                    childTasks = childTasks.map {
+                                        TaskItemUiState.fromTaskItem(it, doneBefore)
+                                    }.toImmutableList(),
                                     userMessage = userMessage,
                                     clock = clock,
                                 )

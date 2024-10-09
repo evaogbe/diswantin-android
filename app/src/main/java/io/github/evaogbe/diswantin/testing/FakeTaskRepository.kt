@@ -221,8 +221,9 @@ class FakeTaskRepository(
         combine(
             db.taskTable,
             db.taskPathTable,
-            db.taskRecurrenceTable
-        ) { tasks, taskPaths, taskRecurrences ->
+            db.taskRecurrenceTable,
+            db.taskCompletionTable,
+        ) { tasks, taskPaths, taskRecurrences, taskCompletions ->
             taskPaths.values
                 .filter { it.ancestor == id && it.depth == 1 }
                 .mapNotNull { tasks[it.descendant] }
@@ -239,6 +240,16 @@ class FakeTaskRepository(
                         .thenComparing(Task::createdAt)
                         .thenComparing(Task::id)
                 )
+                .map { task ->
+                    TaskItem(
+                        id = task.id,
+                        name = task.name,
+                        recurring = taskRecurrences.values.any { it.taskId == task.id },
+                        doneAt = taskCompletions.values
+                            .filter { it.taskId == task.id }
+                            .maxOfOrNull { it.doneAt },
+                    )
+                }
         }
 
     override fun getTaskRecurrencesByTaskId(taskId: Long) =

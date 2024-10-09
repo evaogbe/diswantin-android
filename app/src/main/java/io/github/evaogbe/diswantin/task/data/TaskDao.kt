@@ -381,12 +381,18 @@ interface TaskDao {
     fun getParent(id: Long): Flow<Task?>
 
     @Query(
-        """SELECT t.*
+        """SELECT t.id, t.name, r.task_id IS NOT NULL AS recurring, c.done_at
         FROM task t
         JOIN task_path p ON p.descendant = t.id
         LEFT JOIN (SELECT DISTINCT task_id FROM task_recurrence) r ON r.task_id = t.id
+        LEFT JOIN (
+            SELECT task_id, MAX(done_at) AS done_at
+            FROM task_completion
+            GROUP BY task_id
+        ) c ON c.task_id = t.id
         WHERE p.ancestor = :id AND p.depth = 1
         ORDER BY
+            c.done_at,
             t.scheduled_date IS NULL,
             t.scheduled_date,
             t.scheduled_time IS NULL,
@@ -402,7 +408,7 @@ interface TaskDao {
             t.id
         LIMIT 20"""
     )
-    fun getChildren(id: Long): Flow<List<Task>>
+    fun getChildren(id: Long): Flow<List<TaskItem>>
 
     @Query("SELECT * FROM task_recurrence WHERE task_id = :taskId ORDER BY start")
     fun getTaskRecurrencesByTaskId(taskId: Long): Flow<List<TaskRecurrence>>

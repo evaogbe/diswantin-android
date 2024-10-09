@@ -89,7 +89,9 @@ class TaskDetailViewModelTest {
                     weekdays = persistentSetOf(),
                     locale = locale,
                 ),
-                childTasks = persistentListOf(task2),
+                childTasks = persistentListOf(
+                    TaskItemUiState(id = task2.id, name = task2.name, isDone = false),
+                ),
                 userMessage = null,
                 clock = clock,
             )

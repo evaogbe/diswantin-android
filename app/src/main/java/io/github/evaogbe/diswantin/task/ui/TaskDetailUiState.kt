@@ -1,7 +1,6 @@
 package io.github.evaogbe.diswantin.task.ui
 
 import android.os.Parcelable
-import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskDetail
 import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import kotlinx.collections.immutable.ImmutableList
@@ -28,7 +27,7 @@ sealed interface TaskDetailUiState {
     data class Success(
         val task: TaskDetail,
         val recurrence: TaskRecurrenceUiState?,
-        val childTasks: ImmutableList<Task>,
+        val childTasks: ImmutableList<TaskItemUiState>,
         val userMessage: UserMessage?,
         private val clock: Clock,
     ) : TaskDetailUiState {
