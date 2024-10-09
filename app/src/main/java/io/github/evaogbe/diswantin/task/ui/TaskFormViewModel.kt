@@ -62,6 +62,8 @@ class TaskFormViewModel @Inject constructor(
     var noteInput by mutableStateOf("")
         private set
 
+    private val recurrenceUiState = MutableStateFlow<TaskRecurrenceUiState?>(null)
+
     private val deadlineDate = MutableStateFlow<LocalDate?>(null)
 
     private val deadlineTime = MutableStateFlow<LocalTime?>(null)
@@ -73,8 +75,6 @@ class TaskFormViewModel @Inject constructor(
     private val scheduledDate = MutableStateFlow<LocalDate?>(null)
 
     private val scheduledTime = MutableStateFlow<LocalTime?>(null)
-
-    private val recurrenceUiState = MutableStateFlow<TaskRecurrenceUiState?>(null)
 
     private val parentTask = MutableStateFlow<Task?>(null)
 
@@ -145,13 +145,13 @@ class TaskFormViewModel @Inject constructor(
     @OptIn(ExperimentalCoroutinesApi::class)
     @Suppress("UNCHECKED_CAST")
     val uiState = combine(
+        recurrenceUiState,
         deadlineDate,
         deadlineTime,
         startAfterDate,
         startAfterTime,
         scheduledDate,
         scheduledTime,
-        recurrenceUiState,
         taskCountStream,
         parentTask,
         parentTaskQuery,
@@ -186,13 +186,13 @@ class TaskFormViewModel @Inject constructor(
         existingCategoryStream,
         existingParentTaskStream,
     ) { args ->
-        val deadlineDate = args[0] as LocalDate?
-        val deadlineTime = args[1] as LocalTime?
-        val startAfterDate = args[2] as LocalDate?
-        val startAfterTime = args[3] as LocalTime?
-        val scheduledDate = args[4] as LocalDate?
-        val scheduledTime = args[5] as LocalTime?
-        val recurrenceUiState = args[6] as TaskRecurrenceUiState?
+        val recurrenceUiState = args[0] as TaskRecurrenceUiState?
+        val deadlineDate = args[1] as LocalDate?
+        val deadlineTime = args[2] as LocalTime?
+        val startAfterDate = args[3] as LocalDate?
+        val startAfterTime = args[4] as LocalTime?
+        val scheduledDate = args[5] as LocalDate?
+        val scheduledTime = args[6] as LocalTime?
         val taskCountResult = args[7] as Result<Long>
         val parentTask = args[8] as Task?
         val parentTaskQuery = (args[9] as String).trim()
@@ -214,13 +214,13 @@ class TaskFormViewModel @Inject constructor(
             existingTaskResult.andThen { existingRecurrencesResult }.fold(
                 onSuccess = {
                     TaskFormUiState.Success(
+                        recurrence = recurrenceUiState,
                         deadlineDate = deadlineDate,
                         deadlineTime = deadlineTime,
                         startAfterDate = startAfterDate,
                         startAfterTime = startAfterTime,
                         scheduledDate = scheduledDate,
                         scheduledTime = scheduledTime,
-                        recurrence = recurrenceUiState,
                         showCategoryField = existingCategoryResult.isSuccess &&
                                 hasCategoriesResult.getOrDefault(false),
                         category = category,

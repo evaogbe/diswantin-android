@@ -72,13 +72,13 @@ class TaskFormViewModelTest {
             assertThat(viewModel.isNew).isTrue()
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
+                    recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
                     startAfterDate = null,
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    recurrence = null,
                     showCategoryField = false,
                     category = null,
                     categoryOptions = persistentListOf(),
@@ -134,12 +134,6 @@ class TaskFormViewModelTest {
             assertThat(viewModel.isNew).isFalse()
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    deadlineDate = LocalDate.parse("2024-08-23"),
-                    deadlineTime = LocalTime.parse("18:00"),
-                    startAfterDate = LocalDate.parse("2024-08-22"),
-                    startAfterTime = LocalTime.parse("17:00"),
-                    scheduledDate = null,
-                    scheduledTime = null,
                     recurrence = TaskRecurrenceUiState(
                         start = LocalDate.parse("2024-08-22"),
                         type = RecurrenceType.Day,
@@ -147,6 +141,12 @@ class TaskFormViewModelTest {
                         weekdays = persistentSetOf(),
                         locale = locale,
                     ),
+                    deadlineDate = LocalDate.parse("2024-08-23"),
+                    deadlineTime = LocalTime.parse("18:00"),
+                    startAfterDate = LocalDate.parse("2024-08-22"),
+                    startAfterTime = LocalTime.parse("17:00"),
+                    scheduledDate = null,
+                    scheduledTime = null,
                     showCategoryField = true,
                     category = category,
                     categoryOptions = persistentListOf(),
@@ -221,13 +221,13 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
+                    recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
                     startAfterDate = null,
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    recurrence = null,
                     showCategoryField = false,
                     category = null,
                     categoryOptions = persistentListOf(),
@@ -257,13 +257,13 @@ class TaskFormViewModelTest {
             assertThat(viewModel.isNew).isFalse()
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
+                    recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
                     startAfterDate = null,
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    recurrence = null,
                     showCategoryField = false,
                     category = null,
                     categoryOptions = persistentListOf(),
@@ -293,13 +293,13 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
+                    recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
                     startAfterDate = null,
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    recurrence = null,
                     showCategoryField = false,
                     category = null,
                     categoryOptions = persistentListOf(),
@@ -332,13 +332,13 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
+                    recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
                     startAfterDate = null,
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    recurrence = null,
                     showCategoryField = false,
                     category = null,
                     categoryOptions = persistentListOf(),
@@ -367,13 +367,13 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
+                    recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
                     startAfterDate = null,
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    recurrence = null,
                     showCategoryField = true,
                     category = null,
                     categoryOptions = persistentListOf(),
@@ -399,13 +399,13 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
+                    recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
                     startAfterDate = null,
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    recurrence = null,
                     showCategoryField = false,
                     category = null,
                     categoryOptions = persistentListOf(),
@@ -438,13 +438,13 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
+                    recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
                     startAfterDate = null,
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    recurrence = null,
                     showCategoryField = false,
                     category = null,
                     categoryOptions = persistentListOf(),
@@ -479,13 +479,13 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
+                    recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
                     startAfterDate = null,
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    recurrence = null,
                     showCategoryField = false,
                     category = null,
                     categoryOptions = persistentListOf(),
@@ -523,13 +523,13 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
+                    recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
                     startAfterDate = null,
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    recurrence = null,
                     showCategoryField = false,
                     category = null,
                     categoryOptions = persistentListOf(),
@@ -562,13 +562,13 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
+                    recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
                     startAfterDate = null,
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    recurrence = null,
                     showCategoryField = false,
                     category = null,
                     categoryOptions = persistentListOf(),
@@ -601,13 +601,13 @@ class TaskFormViewModelTest {
 
         assertThat(viewModel.uiState.value).isEqualTo(
             TaskFormUiState.Success(
+                recurrence = null,
                 deadlineDate = null,
                 deadlineTime = null,
                 startAfterDate = null,
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                recurrence = null,
                 showCategoryField = true,
                 category = null,
                 categoryOptions = categories.toImmutableList(),
@@ -643,13 +643,13 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
+                    recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
                     startAfterDate = null,
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    recurrence = null,
                     showCategoryField = true,
                     category = null,
                     categoryOptions = persistentListOf(),
@@ -685,13 +685,13 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
+                    recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
                     startAfterDate = null,
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    recurrence = null,
                     showCategoryField = false,
                     category = null,
                     categoryOptions = persistentListOf(),
@@ -761,13 +761,13 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
+                    recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
                     startAfterDate = null,
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    recurrence = null,
                     showCategoryField = false,
                     category = null,
                     categoryOptions = persistentListOf(),
@@ -813,13 +813,13 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
+                    recurrence = null,
                     deadlineDate = LocalDate.parse("2024-08-23"),
                     deadlineTime = LocalTime.parse("22:00"),
                     startAfterDate = LocalDate.parse("2024-08-22"),
                     startAfterTime = LocalTime.parse("21:00"),
                     scheduledDate = null,
                     scheduledTime = null,
-                    recurrence = null,
                     showCategoryField = true,
                     category = null,
                     categoryOptions = persistentListOf(),
@@ -906,13 +906,13 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
+                    recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
                     startAfterDate = null,
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    recurrence = null,
                     showCategoryField = false,
                     category = null,
                     categoryOptions = persistentListOf(),
@@ -947,13 +947,13 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
+                    recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
                     startAfterDate = null,
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    recurrence = null,
                     showCategoryField = false,
                     category = null,
                     categoryOptions = persistentListOf(),
@@ -997,13 +997,13 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
+                    recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
                     startAfterDate = null,
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    recurrence = null,
                     showCategoryField = false,
                     category = null,
                     categoryOptions = persistentListOf(),
@@ -1046,13 +1046,13 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
+                    recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
                     startAfterDate = null,
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    recurrence = null,
                     showCategoryField = false,
                     category = category,
                     categoryOptions = persistentListOf(),
@@ -1094,13 +1094,13 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
+                    recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
                     startAfterDate = null,
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    recurrence = null,
                     showCategoryField = false,
                     category = null,
                     categoryOptions = persistentListOf(),

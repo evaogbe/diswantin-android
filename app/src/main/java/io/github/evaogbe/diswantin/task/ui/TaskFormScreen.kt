@@ -262,6 +262,28 @@ fun TaskFormLayout(
                 minLines = 2,
             )
 
+            if (uiState.recurrence == null) {
+                TextButtonWithIcon(
+                    onClick = onEditRecurrence,
+                    imageVector = Icons.Default.Refresh,
+                    text = stringResource(R.string.add_recurrence_button),
+                )
+            } else {
+                Column {
+                    Text(
+                        text = stringResource(R.string.recurrence_label),
+                        style = typography.bodyLarge,
+                    )
+                    Spacer(Modifier.size(SpaceSm))
+                    ClearableLayout(onClear = onClearRecurrence, invert = false) {
+                        EditFieldButton(
+                            onClick = onEditRecurrence,
+                            text = taskRecurrenceText(uiState.recurrence),
+                        )
+                    }
+                }
+            }
+
             if (uiState.scheduledTime == null) {
                 if (uiState.deadlineDate != null) {
                     Column {
@@ -429,28 +451,6 @@ fun TaskFormLayout(
                 )
             }
 
-            if (uiState.recurrence == null) {
-                TextButtonWithIcon(
-                    onClick = onEditRecurrence,
-                    imageVector = Icons.Default.Refresh,
-                    text = stringResource(R.string.add_recurrence_button),
-                )
-            } else {
-                Column {
-                    Text(
-                        text = stringResource(R.string.recurrence_label),
-                        style = typography.bodyLarge,
-                    )
-                    Spacer(Modifier.size(SpaceSm))
-                    ClearableLayout(onClear = onClearRecurrence, invert = false) {
-                        EditFieldButton(
-                            onClick = onEditRecurrence,
-                            text = taskRecurrenceText(uiState.recurrence),
-                        )
-                    }
-                }
-            }
-
             if (uiState.showParentTaskField) {
                 SelectableAutocompleteField(
                     selectedOption = uiState.parentTask,
@@ -604,13 +604,13 @@ private fun TaskFormScreenPreview_New() {
             TaskFormLayout(
                 isNew = true,
                 uiState = TaskFormUiState.Success(
+                    recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
                     startAfterDate = null,
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    recurrence = null,
                     showCategoryField = false,
                     category = null,
                     categoryOptions = persistentListOf(),
@@ -656,12 +656,6 @@ private fun TaskFormScreenPreview_Edit() {
             TaskFormLayout(
                 isNew = false,
                 uiState = TaskFormUiState.Success(
-                    deadlineDate = null,
-                    deadlineTime = LocalTime.now().plusHours(1),
-                    startAfterDate = null,
-                    startAfterTime = LocalTime.now(),
-                    scheduledDate = null,
-                    scheduledTime = null,
                     recurrence = TaskRecurrenceUiState(
                         start = LocalDate.now(),
                         type = RecurrenceType.Day,
@@ -669,6 +663,12 @@ private fun TaskFormScreenPreview_Edit() {
                         weekdays = persistentSetOf(),
                         locale = Locale.getDefault(),
                     ),
+                    deadlineDate = null,
+                    deadlineTime = LocalTime.now().plusHours(1),
+                    startAfterDate = null,
+                    startAfterTime = LocalTime.now(),
+                    scheduledDate = null,
+                    scheduledTime = null,
                     showCategoryField = true,
                     category = TaskCategory(id = 1L, name = "Morning routine"),
                     categoryOptions = persistentListOf(),
@@ -708,13 +708,13 @@ private fun TaskFormLayoutPreview_ScheduledAt() {
             TaskFormLayout(
                 isNew = true,
                 uiState = TaskFormUiState.Success(
+                    recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
                     startAfterDate = null,
                     startAfterTime = null,
                     scheduledDate = LocalDate.now(),
                     scheduledTime = LocalTime.now(),
-                    recurrence = null,
                     showCategoryField = true,
                     category = null,
                     categoryOptions = persistentListOf(),
@@ -753,13 +753,13 @@ private fun TaskFormLayoutPreview_ScheduledTime() {
             TaskFormLayout(
                 isNew = false,
                 uiState = TaskFormUiState.Success(
+                    recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
                     startAfterDate = null,
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = LocalTime.now(),
-                    recurrence = null,
                     showCategoryField = false,
                     category = null,
                     categoryOptions = persistentListOf(),

@@ -26,13 +26,13 @@ sealed interface TaskFormUiState {
     data class Failure(val exception: Throwable) : TaskFormUiState
 
     data class Success(
+        val recurrence: TaskRecurrenceUiState?,
         val deadlineDate: LocalDate?,
         val deadlineTime: LocalTime?,
         val startAfterDate: LocalDate?,
         val startAfterTime: LocalTime?,
         val scheduledDate: LocalDate?,
         val scheduledTime: LocalTime?,
-        val recurrence: TaskRecurrenceUiState?,
         val showCategoryField: Boolean,
         val category: TaskCategory?,
         val categoryOptions: ImmutableList<TaskCategory>,

@@ -262,6 +262,19 @@ fun TaskDetailLayout(
                 }
             }
 
+            if (uiState.recurrence != null) {
+                item {
+                    ListItem(
+                        headlineContent = {
+                            SelectionContainer {
+                                Text(text = taskRecurrenceText(uiState.recurrence))
+                            }
+                        },
+                        overlineContent = { Text(stringResource(R.string.recurrence_label)) },
+                    )
+                }
+            }
+
             if (uiState.formattedDeadline != null) {
                 item {
                     ListItem(
@@ -297,19 +310,6 @@ fun TaskDetailLayout(
                             }
                         },
                         overlineContent = { Text(stringResource(R.string.scheduled_at_label)) },
-                    )
-                }
-            }
-
-            if (uiState.recurrence != null) {
-                item {
-                    ListItem(
-                        headlineContent = {
-                            SelectionContainer {
-                                Text(text = taskRecurrenceText(uiState.recurrence))
-                            }
-                        },
-                        overlineContent = { Text(stringResource(R.string.recurrence_label)) },
                     )
                 }
             }
@@ -486,7 +486,7 @@ private fun TaskDetailLayoutPreview() {
                         startAfterDate = null,
                         startAfterTime = null,
                         scheduledDate = null,
-                        scheduledTime = null,
+                        scheduledTime = LocalTime.now(),
                         doneAt = null,
                         categoryId = null,
                         categoryName = null,
