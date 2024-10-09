@@ -582,6 +582,7 @@ fun <T : Any> SelectableAutocompleteField(
                             isEditing = true
                         },
                         text = formatOption(selectedOption),
+                        modifier = Modifier.weight(1f, fill = false),
                     )
                 }
             }
