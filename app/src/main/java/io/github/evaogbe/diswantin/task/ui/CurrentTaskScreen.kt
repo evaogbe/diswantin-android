@@ -47,6 +47,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.flowWithLifecycle
@@ -152,7 +154,7 @@ fun CurrentTaskScreen(
     val lifecycleOwner = LocalLifecycleOwner.current
     var showDialog by rememberSaveable { mutableStateOf(false) }
 
-    LaunchedEffect(currentTaskViewModel) {
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         currentTaskViewModel.refresh()
     }
 
@@ -162,7 +164,8 @@ fun CurrentTaskScreen(
                 delay(1.hours)
                 emit(Unit)
             }
-        }.flowWithLifecycle(lifecycleOwner.lifecycle)
+        }
+            .flowWithLifecycle(lifecycleOwner.lifecycle)
             .collectLatest {
                 currentTaskViewModel.refresh()
             }
