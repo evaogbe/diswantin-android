@@ -199,7 +199,7 @@ class TaskDetailScreenTest {
     }
 
     @Test
-    fun displaysCelebrationMessage_whenCompletionCountMultipleOf50() {
+    fun displaysCelebrationMessage_whenCompletionCountMultipleOf20() {
         var userMessage: UserMessage? = null
         val clock =
             Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
@@ -215,7 +215,7 @@ class TaskDetailScreenTest {
                     week = 1,
                 )
             )
-            repeat(49) {
+            repeat(19) {
                 insertTaskCompletion(
                     TaskCompletion(
                         taskId = task.id,
@@ -251,7 +251,7 @@ class TaskDetailScreenTest {
         viewModel.markTaskDone()
 
         composeTestRule.waitUntil {
-            userMessage == UserMessage.Plural(R.plurals.completed_tasks_celebration_message, 50)
+            userMessage == UserMessage.Plural(R.plurals.completed_tasks_celebration_message, 20)
         }
     }
 
@@ -272,7 +272,7 @@ class TaskDetailScreenTest {
                     week = 1,
                 )
             )
-            repeat(49) {
+            repeat(19) {
                 insertTaskCompletion(
                     TaskCompletion(
                         taskId = task.id,

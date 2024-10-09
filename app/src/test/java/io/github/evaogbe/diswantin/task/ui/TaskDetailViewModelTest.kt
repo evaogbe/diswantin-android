@@ -325,7 +325,7 @@ class TaskDetailViewModelTest {
         }
 
     @Test
-    fun `markTaskDone shows celebration message when multiple of 50 completed`() =
+    fun `markTaskDone shows celebration message when multiple of 20 completed`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val clock =
                 Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
@@ -342,7 +342,7 @@ class TaskDetailViewModelTest {
                         week = 1,
                     )
                 )
-                repeat(49) {
+                repeat(19) {
                     insertTaskCompletion(
                         TaskCompletion(
                             taskId = task.id,
@@ -390,7 +390,7 @@ class TaskDetailViewModelTest {
                     childTasks = persistentListOf(),
                     userMessage = UserMessage.Plural(
                         R.plurals.completed_tasks_celebration_message,
-                        50,
+                        20,
                     ),
                     clock = clock,
                 )
@@ -415,7 +415,7 @@ class TaskDetailViewModelTest {
                         week = 1,
                     )
                 )
-                repeat(49) {
+                repeat(19) {
                     insertTaskCompletion(
                         TaskCompletion(
                             taskId = task.id,

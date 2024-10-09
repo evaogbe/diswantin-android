@@ -115,7 +115,7 @@ class TaskDetailViewModel @Inject constructor(
             if (markedDone) {
                 try {
                     val completionCount = taskRepository.getCompletionCount().first().toInt()
-                    if (completionCount % 50 == 0) {
+                    if (completionCount % 20 == 0) {
                         userMessage.value = UserMessage.Plural(
                             R.plurals.completed_tasks_celebration_message,
                             completionCount,

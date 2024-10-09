@@ -308,7 +308,7 @@ class CurrentTaskViewModelTest {
         }
 
     @Test
-    fun `markCurrentTaskDone shows celebration message when multiple of 50 completed`() =
+    fun `markCurrentTaskDone shows celebration message when multiple of 20 completed`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val clock =
                 Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
@@ -324,7 +324,7 @@ class CurrentTaskViewModelTest {
                         week = 1,
                     )
                 )
-                repeat(49) {
+                repeat(19) {
                     insertTaskCompletion(
                         TaskCompletion(
                             taskId = task.id,
@@ -347,7 +347,7 @@ class CurrentTaskViewModelTest {
             assertThat(viewModel.uiState.value)
                 .isEqualTo(CurrentTaskUiState.Empty)
             assertThat(viewModel.userMessage.value)
-                .isEqualTo(UserMessage.Plural(R.plurals.completed_tasks_celebration_message, 50))
+                .isEqualTo(UserMessage.Plural(R.plurals.completed_tasks_celebration_message, 20))
         }
 
     @Test
@@ -367,7 +367,7 @@ class CurrentTaskViewModelTest {
                         week = 1,
                     )
                 )
-                repeat(49) {
+                repeat(19) {
                     insertTaskCompletion(
                         TaskCompletion(
                             taskId = task.id,
