@@ -175,7 +175,7 @@ class FakeTaskRepository(
                                     task.deadlineDate?.let { it in (start..end) } == true
                                 } else {
                                     task.deadlineTime != null && generateSequence(start) {
-                                        if (it <= end) it.plusDays(1) else null
+                                        if (it < end) it.plusDays(1) else null
                                     }.any { doesRecurOnDate(recurrences, it) }
                                 }
                             } != false &&
@@ -184,7 +184,7 @@ class FakeTaskRepository(
                                     task.startAfterDate?.let { it in (start..end) } == true
                                 } else {
                                     task.startAfterTime != null && generateSequence(start) {
-                                        if (it <= end) it.plusDays(1) else null
+                                        if (it < end) it.plusDays(1) else null
                                     }.any { doesRecurOnDate(recurrences, it) }
                                 }
                             } != false &&
@@ -193,7 +193,7 @@ class FakeTaskRepository(
                                     task.scheduledDate?.let { it in (start..end) } == true
                                 } else {
                                     task.scheduledTime != null && generateSequence(start) {
-                                        if (it <= end) it.plusDays(1) else null
+                                        if (it < end) it.plusDays(1) else null
                                     }.any { doesRecurOnDate(recurrences, it) }
                                 }
                             } != false

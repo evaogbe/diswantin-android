@@ -85,6 +85,11 @@ class LocalTaskRepository @Inject constructor(
                 startAfterEndDate = criteria.startAfterDateRange?.second,
                 scheduledStartDate = criteria.scheduledDateRange?.first,
                 scheduledEndDate = criteria.scheduledDateRange?.second,
+                doneStart = criteria.doneDateRange?.first?.atStartOfDay(clock.zone)?.toInstant(),
+                doneEnd = criteria.doneDateRange?.second
+                    ?.atStartOfDay(clock.zone)
+                    ?.with(LocalTime.MAX)
+                    ?.toInstant(),
             )
         } else {
             taskDao.searchTaskItems(
@@ -95,20 +100,25 @@ class LocalTaskRepository @Inject constructor(
                 startAfterEndDate = criteria.startAfterDateRange?.second,
                 scheduledStartDate = criteria.scheduledDateRange?.first,
                 scheduledEndDate = criteria.scheduledDateRange?.second,
+                doneStart = criteria.doneDateRange?.first?.atStartOfDay(clock.zone)?.toInstant(),
+                doneEnd = criteria.doneDateRange?.second
+                    ?.atStartOfDay(clock.zone)
+                    ?.with(LocalTime.MAX)
+                    ?.toInstant(),
             )
         }.map { results ->
             results
                 .filter { (task, recurrences) ->
                     !task.recurring || (criteria.deadlineDateRange?.let { (start, end) ->
-                        generateSequence(start) { if (it <= end) it.plusDays(1) else null }.any {
+                        generateSequence(start) { if (it < end) it.plusDays(1) else null }.any {
                             doesRecurOnDate(recurrences, it)
                         }
                     } != false && criteria.startAfterDateRange?.let { (start, end) ->
-                        generateSequence(start) { if (it <= end) it.plusDays(1) else null }.any {
+                        generateSequence(start) { if (it < end) it.plusDays(1) else null }.any {
                             doesRecurOnDate(recurrences, it)
                         }
                     } != false && criteria.scheduledDateRange?.let { (start, end) ->
-                        generateSequence(start) { if (it <= end) it.plusDays(1) else null }.any {
+                        generateSequence(start) { if (it < end) it.plusDays(1) else null }.any {
                             doesRecurOnDate(recurrences, it)
                         }
                     } != false)

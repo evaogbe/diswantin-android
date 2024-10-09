@@ -2,10 +2,6 @@ package io.github.evaogbe.diswantin.ui.tooling
 
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import android.content.res.Configuration.UI_MODE_TYPE_NORMAL
-import androidx.compose.ui.tooling.preview.Devices.DESKTOP
-import androidx.compose.ui.tooling.preview.Devices.FOLDABLE
-import androidx.compose.ui.tooling.preview.Devices.PHONE
-import androidx.compose.ui.tooling.preview.Devices.TABLET
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.Wallpapers.BLUE_DOMINATED_EXAMPLE
 import androidx.compose.ui.tooling.preview.Wallpapers.GREEN_DOMINATED_EXAMPLE
@@ -23,15 +19,27 @@ import androidx.compose.ui.tooling.preview.Wallpapers.YELLOW_DOMINATED_EXAMPLE
 @Preview(name = "03 - Blue", wallpaper = BLUE_DOMINATED_EXAMPLE, apiLevel = 31)
 @Preview(name = "04 - Green", wallpaper = GREEN_DOMINATED_EXAMPLE, apiLevel = 31)
 @Preview(name = "05 - Yellow", wallpaper = YELLOW_DOMINATED_EXAMPLE, apiLevel = 31)
-@Preview(name = "06 - Phone", device = PHONE, showSystemUi = true)
+@Preview(name = "06 - Phone", device = "spec:width=411dp,height=891dp", showSystemUi = true)
 @Preview(
     name = "07 - Phone - Landscape",
-    device = "spec:width = 411dp, height = 891dp, orientation = landscape, dpi = 420",
+    device = "spec:width=411dp,height=891dp,orientation=landscape,dpi=420",
     showSystemUi = true
 )
-@Preview(name = "08 - Unfolded Foldable", device = FOLDABLE, showSystemUi = true)
-@Preview(name = "09 - Tablet", device = TABLET, showSystemUi = true)
-@Preview(name = "10 - Desktop", device = DESKTOP, showSystemUi = true)
+@Preview(
+    name = "08 - Unfolded Foldable",
+    device = "spec:width=673dp,height=841dp",
+    showSystemUi = true
+)
+@Preview(
+    name = "09 - Tablet",
+    device = "spec:width=1280dp,height=800dp,dpi=240",
+    showSystemUi = true
+)
+@Preview(
+    name = "10 - Desktop",
+    device = "spec:width=1920dp,height=1080dp,dpi=160",
+    showSystemUi = true
+)
 @Preview(name = "11 - 85%", fontScale = 0.85f)
 @Preview(name = "12 - 100%", fontScale = 1.0f)
 @Preview(name = "13 - 115%", fontScale = 1.15f)

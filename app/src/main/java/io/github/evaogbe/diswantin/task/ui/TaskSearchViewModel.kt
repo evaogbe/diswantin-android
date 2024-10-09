@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import timber.log.Timber
 import java.time.Clock
+import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZonedDateTime
 import java.util.regex.Pattern
@@ -53,8 +54,20 @@ class TaskSearchViewModel @Inject constructor(
         initialValue = TaskSearchUiState.Initial,
     )
 
-    fun searchTasks(criteria: TaskSearchCriteria) {
-        this.criteria.value = criteria.copy(name = criteria.name.trim())
+    fun searchTasks(
+        name: String,
+        deadlineDateRange: Pair<LocalDate, LocalDate>?,
+        startAfterDateRange: Pair<LocalDate, LocalDate>?,
+        scheduledDateRange: Pair<LocalDate, LocalDate>?,
+        doneDateRange: Pair<LocalDate, LocalDate>?,
+    ) {
+        criteria.value = TaskSearchCriteria(
+            name = name.trim(),
+            deadlineDateRange = deadlineDateRange,
+            startAfterDateRange = startAfterDateRange,
+            scheduledDateRange = scheduledDateRange,
+            doneDateRange = doneDateRange,
+        )
     }
 }
 

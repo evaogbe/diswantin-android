@@ -61,7 +61,6 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.evaogbe.diswantin.R
-import io.github.evaogbe.diswantin.task.data.TaskSearchCriteria
 import io.github.evaogbe.diswantin.ui.components.AutoFocusTextField
 import io.github.evaogbe.diswantin.ui.components.ButtonWithIcon
 import io.github.evaogbe.diswantin.ui.components.DiswantinDateRangePickerDialog
@@ -134,7 +133,7 @@ fun TaskSearchTopBar(
 }
 
 enum class FilterDialogType {
-    DeadlineDateRange, StartAfterDateRange, ScheduledDateRange
+    DeadlineDateRange, StartAfterDateRange, ScheduledDateRange, DoneDateRange
 }
 
 @OptIn(FlowPreview::class)
@@ -153,6 +152,7 @@ fun TaskSearchScreen(
         mutableStateOf<Pair<LocalDate, LocalDate>?>(null)
     }
     var scheduledDateRange by rememberSaveable { mutableStateOf<Pair<LocalDate, LocalDate>?>(null) }
+    var doneDateRange by rememberSaveable { mutableStateOf<Pair<LocalDate, LocalDate>?>(null) }
     var filterDialogType by rememberSaveable { mutableStateOf<FilterDialogType?>(null) }
     val currentQuery by rememberUpdatedState(query)
 
@@ -162,12 +162,11 @@ fun TaskSearchScreen(
             .distinctUntilChanged()
             .collectLatest {
                 taskSearchViewModel.searchTasks(
-                    TaskSearchCriteria(
-                        name = it,
-                        deadlineDateRange = deadlineDateRange,
-                        startAfterDateRange = startAfterDateRange,
-                        scheduledDateRange = scheduledDateRange,
-                    ),
+                    name = it,
+                    deadlineDateRange = deadlineDateRange,
+                    startAfterDateRange = startAfterDateRange,
+                    scheduledDateRange = scheduledDateRange,
+                    doneDateRange = doneDateRange,
                 )
             }
     }
@@ -177,26 +176,24 @@ fun TaskSearchScreen(
             null -> {}
             TaskSearchTopBarAction.Search -> {
                 taskSearchViewModel.searchTasks(
-                    TaskSearchCriteria(
-                        name = query,
-                        deadlineDateRange = deadlineDateRange,
-                        startAfterDateRange = startAfterDateRange,
-                        scheduledDateRange = scheduledDateRange,
-                    ),
+                    name = query,
+                    deadlineDateRange = deadlineDateRange,
+                    startAfterDateRange = startAfterDateRange,
+                    scheduledDateRange = scheduledDateRange,
+                    doneDateRange = doneDateRange,
                 )
                 topBarActionHandled()
             }
         }
     }
 
-    LaunchedEffect(deadlineDateRange, startAfterDateRange, scheduledDateRange) {
+    LaunchedEffect(deadlineDateRange, startAfterDateRange, scheduledDateRange, doneDateRange) {
         taskSearchViewModel.searchTasks(
-            TaskSearchCriteria(
-                name = query,
-                deadlineDateRange = deadlineDateRange,
-                startAfterDateRange = startAfterDateRange,
-                scheduledDateRange = scheduledDateRange,
-            ),
+            name = query,
+            deadlineDateRange = deadlineDateRange,
+            startAfterDateRange = startAfterDateRange,
+            scheduledDateRange = scheduledDateRange,
+            doneDateRange = doneDateRange,
         )
     }
 
@@ -224,6 +221,14 @@ fun TaskSearchScreen(
                 filterDialogType = FilterDialogType.ScheduledDateRange
             } else {
                 scheduledDateRange = null
+            }
+        },
+        doneDateRange = doneDateRange,
+        onDoneChipClick = {
+            if (doneDateRange == null) {
+                filterDialogType = FilterDialogType.DoneDateRange
+            } else {
+                doneDateRange = null
             }
         },
         uiState = uiState,
@@ -266,6 +271,14 @@ fun TaskSearchScreen(
                 },
             )
         }
+
+        FilterDialogType.DoneDateRange -> {
+            DiswantinDateRangePickerDialog(
+                onDismiss = { filterDialogType = null },
+                dateRange = doneDateRange,
+                onSelectDateRange = { doneDateRange = it },
+            )
+        }
     }
 }
 
@@ -278,6 +291,8 @@ fun TaskSearchScreen(
     onStartAfterChipClick: () -> Unit,
     scheduledDateRange: Pair<LocalDate, LocalDate>?,
     onScheduledChipClick: () -> Unit,
+    doneDateRange: Pair<LocalDate, LocalDate>?,
+    onDoneChipClick: () -> Unit,
     uiState: TaskSearchUiState,
     onAddTask: (String) -> Unit,
     onSelectSearchResult: (Long) -> Unit,
@@ -334,6 +349,21 @@ fun TaskSearchScreen(
                                 it.second.format(dateFormatter),
                             )
                         } ?: stringResource(R.string.scheduled_at_label),
+                    )
+                },
+            )
+            FilterChip(
+                selected = doneDateRange != null,
+                onClick = onDoneChipClick,
+                label = {
+                    Text(
+                        text = doneDateRange?.let {
+                            stringResource(
+                                R.string.done_filter_chip_label_selected,
+                                it.first.format(dateFormatter),
+                                it.second.format(dateFormatter),
+                            )
+                        } ?: stringResource(R.string.done_filter_chip_label_unselected),
                     )
                 },
             )
@@ -487,6 +517,8 @@ private fun TaskSearchScreenPreview_Present() {
                 onStartAfterChipClick = {},
                 scheduledDateRange = null,
                 onScheduledChipClick = {},
+                doneDateRange = null,
+                onDoneChipClick = {},
                 uiState = TaskSearchUiState.Success(
                     searchResults = persistentListOf(
                         TaskItemUiState(id = 1L, name = "Brush teeth", isDone = true),
@@ -519,6 +551,8 @@ private fun TaskSearchScreenPreview_Empty() {
                 onStartAfterChipClick = {},
                 scheduledDateRange = LocalDate.now() to LocalDate.now().plusDays(1),
                 onScheduledChipClick = {},
+                doneDateRange = null,
+                onDoneChipClick = {},
                 uiState = TaskSearchUiState.Success(searchResults = persistentListOf()),
                 onAddTask = {},
                 onSelectSearchResult = {},
@@ -545,7 +579,43 @@ private fun TaskSearchScreenPreview_Initial() {
                 onStartAfterChipClick = {},
                 scheduledDateRange = null,
                 onScheduledChipClick = {},
+                doneDateRange = null,
+                onDoneChipClick = {},
                 uiState = TaskSearchUiState.Initial,
+                onAddTask = {},
+                onSelectSearchResult = {},
+                modifier = Modifier.padding(innerPadding),
+            )
+        }
+    }
+}
+
+@DevicePreviews
+@Composable
+private fun TaskSearchScreenPreview_WithDoneFilter() {
+    DiswantinTheme {
+        Scaffold(
+            topBar = {
+                TaskSearchTopBar(query = "", onQueryChange = {}, onBackClick = {}, onSearch = {})
+            },
+        ) { innerPadding ->
+            TaskSearchScreen(
+                query = "",
+                deadlineDateRange = null,
+                onDeadlineChipClick = {},
+                startAfterDateRange = null,
+                onStartAfterChipClick = {},
+                scheduledDateRange = null,
+                onScheduledChipClick = {},
+                doneDateRange = LocalDate.now() to LocalDate.now().plusDays(1),
+                onDoneChipClick = {},
+                uiState = TaskSearchUiState.Success(
+                    searchResults = persistentListOf(
+                        TaskItemUiState(id = 1L, name = "Brush teeth", isDone = true),
+                        TaskItemUiState(id = 2L, name = "Brush hair", isDone = true),
+                        TaskItemUiState(id = 3L, name = "Eat brunch", isDone = true),
+                    ),
+                ),
                 onAddTask = {},
                 onSelectSearchResult = {},
                 modifier = Modifier.padding(innerPadding),

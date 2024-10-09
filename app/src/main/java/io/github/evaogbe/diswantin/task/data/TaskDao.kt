@@ -236,31 +236,38 @@ interface TaskDao {
             FROM task_completion
             GROUP BY task_id
         ) c ON c.task_id = t.id
-        LEFT JOIN task_recurrence r ON r.task_id = t.id
+        LEFT JOIN (
+            SELECT task_id, MIN(start) AS start
+            FROM task_recurrence
+            GROUP BY task_id
+        ) r ON r.task_id = t.id
         WHERE task_fts MATCH :query
             AND (
                 :deadlineStartDate IS NULL
                 OR :deadlineEndDate IS NULL
-                OR (t.deadline_date >= :deadlineStartDate AND t.deadline_date <= :deadlineEndDate)
+                OR t.deadline_date BETWEEN :deadlineStartDate AND :deadlineEndDate
                 OR (t.deadline_time IS NOT NULL AND r.start <= :deadlineEndDate)
             )
             AND (
                 :startAfterStartDate IS NULL
                 OR :startAfterEndDate IS NULL
-                OR (
-                    t.start_after_date >= :startAfterStartDate 
-                    AND t.start_after_date <= :startAfterEndDate
-                )
+                OR t.start_after_date BETWEEN :startAfterStartDate AND :startAfterEndDate
                 OR (t.start_after_time IS NOT NULL AND r.start <= :startAfterEndDate)
             )
             AND (
                 :scheduledStartDate IS NULL
                 OR :scheduledEndDate IS NULL
-                OR (
-                    t.scheduled_date >= :scheduledStartDate
-                    AND t.scheduled_date <= :scheduledEndDate
-                )
+                OR t.scheduled_date BETWEEN :scheduledStartDate AND :scheduledEndDate
                 OR (t.scheduled_time IS NOT NULL AND r.start <= :scheduledEndDate)
+            )
+            AND (
+                :doneStart IS NULL
+                OR :doneEnd IS NULL
+                OR EXISTS (
+                    SELECT *
+                    FROM task_completion c2
+                    WHERE c2.task_id = t.id AND c2.done_at BETWEEN :doneStart AND :doneEnd
+                )
             )
         ORDER BY
             recurring,
@@ -276,6 +283,8 @@ interface TaskDao {
             t.start_after_date,
             t.start_after_time IS NULL,
             t.start_after_time,
+            c.done_at IS NOT NULL,
+            c.done_at DESC,
             t.name,
             t.id
         LIMIT 30"""
@@ -288,6 +297,8 @@ interface TaskDao {
         startAfterEndDate: LocalDate?,
         scheduledStartDate: LocalDate?,
         scheduledEndDate: LocalDate?,
+        doneStart: Instant?,
+        doneEnd: Instant?,
     ): Flow<List<TaskItemWithRecurrences>>
 
     @Transaction
@@ -299,30 +310,37 @@ interface TaskDao {
             FROM task_completion
             GROUP BY task_id
         ) c ON c.task_id = t.id
-        LEFT JOIN task_recurrence r ON r.task_id = t.id
+        LEFT JOIN (
+            SELECT task_id, MIN(start) AS start
+            FROM task_recurrence
+            GROUP BY task_id
+        ) r ON r.task_id = t.id
         WHERE (
                 :deadlineStartDate IS NULL
                 OR :deadlineEndDate IS NULL
-                OR (t.deadline_date >= :deadlineStartDate AND t.deadline_date <= :deadlineEndDate)
+                OR t.deadline_date BETWEEN :deadlineStartDate AND :deadlineEndDate
                 OR (t.deadline_time IS NOT NULL AND r.start <= :deadlineEndDate)
             )
             AND (
                 :startAfterStartDate IS NULL
                 OR :startAfterEndDate IS NULL
-                OR (
-                    t.start_after_date >= :startAfterStartDate 
-                    AND t.start_after_date <= :startAfterEndDate
-                )
+                OR t.start_after_date BETWEEN :startAfterStartDate AND :startAfterEndDate
                 OR (t.start_after_time IS NOT NULL AND r.start <= :startAfterEndDate)
             )
             AND (
                 :scheduledStartDate IS NULL
                 OR :scheduledEndDate IS NULL
-                OR (
-                    t.scheduled_date >= :scheduledStartDate
-                    AND t.scheduled_date <= :scheduledEndDate
-                )
+                OR t.scheduled_date BETWEEN :scheduledStartDate AND :scheduledEndDate
                 OR (t.scheduled_time IS NOT NULL AND r.start <= :scheduledEndDate)
+            )
+            AND (
+                :doneStart IS NULL
+                OR :doneEnd IS NULL
+                OR EXISTS (
+                    SELECT *
+                    FROM task_completion c2
+                    WHERE c2.task_id = t.id AND c2.done_at BETWEEN :doneStart AND :doneEnd
+                )
             )
         ORDER BY
             recurring,
@@ -338,6 +356,8 @@ interface TaskDao {
             t.start_after_date,
             t.start_after_time IS NULL,
             t.start_after_time,
+            c.done_at IS NOT NULL,
+            c.done_at DESC,
             t.name,
             t.id
         LIMIT 30"""
@@ -349,6 +369,8 @@ interface TaskDao {
         startAfterEndDate: LocalDate?,
         scheduledStartDate: LocalDate?,
         scheduledEndDate: LocalDate?,
+        doneStart: Instant?,
+        doneEnd: Instant?,
     ): Flow<List<TaskItemWithRecurrences>>
 
     @Query(

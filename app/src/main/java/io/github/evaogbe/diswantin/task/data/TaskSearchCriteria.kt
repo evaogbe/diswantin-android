@@ -7,10 +7,12 @@ data class TaskSearchCriteria(
     val deadlineDateRange: Pair<LocalDate, LocalDate>? = null,
     val startAfterDateRange: Pair<LocalDate, LocalDate>? = null,
     val scheduledDateRange: Pair<LocalDate, LocalDate>? = null,
+    val doneDateRange: Pair<LocalDate, LocalDate>? = null,
 ) {
     val isEmpty =
         name.isBlank() &&
                 deadlineDateRange == null &&
                 startAfterDateRange == null &&
-                scheduledDateRange == null
+                scheduledDateRange == null &&
+                doneDateRange == null
 }
