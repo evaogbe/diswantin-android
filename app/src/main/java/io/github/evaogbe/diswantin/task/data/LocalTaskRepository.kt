@@ -20,10 +20,8 @@ class LocalTaskRepository @Inject constructor(
     override fun getCurrentTask(params: CurrentTaskParams) =
         taskDao.getTaskPriorities(
             today = params.today,
-            scheduledAfterTime = params.scheduledAfterTime,
-            startAfterTime = params.startAfterTime,
-            doneAfter = params.doneAfter,
-            skippedAfter = params.skippedAfter,
+            currentTime = params.currentTime,
+            startOfToday = params.startOfToday,
             week = params.week,
         )
             .map { priorities ->
@@ -41,7 +39,7 @@ class LocalTaskRepository @Inject constructor(
                                 it.deadlineTimePriority,
                                 LocalTime.MAX,
                             )
-                                ?: if (it.recurringPriority) params.recurringDeadline else null
+                                ?: if (it.recurringPriority) params.endOfToday else null
                         }, nullsLast())
                         .thenComparing(TaskPriority::recurringPriority, reverseOrder())
                         .thenComparing({

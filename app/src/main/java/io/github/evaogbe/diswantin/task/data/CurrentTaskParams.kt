@@ -8,18 +8,14 @@ import java.time.ZonedDateTime
 
 data class CurrentTaskParams(
     val today: LocalDate,
-    val scheduledAfterTime: LocalTime,
-    val startAfterTime: LocalTime,
-    val doneAfter: Instant,
-    val skippedAfter: Instant,
-    val recurringDeadline: ZonedDateTime,
+    val currentTime: LocalTime,
+    val startOfToday: Instant,
+    val endOfToday: ZonedDateTime,
     val week: Int,
 ) {
     constructor(now: ZonedDateTime) : this(
         now.toLocalDate(),
-        now.plusHours(1).toLocalTime(),
         now.toLocalTime(),
-        now.with(LocalTime.MIN).toInstant(),
         now.with(LocalTime.MIN).toInstant(),
         now.with(LocalTime.MAX),
         now.toLocalDate().get(weekOfMonthField()),

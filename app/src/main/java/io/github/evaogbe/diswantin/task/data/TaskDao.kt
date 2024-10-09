@@ -43,8 +43,8 @@ interface TaskDao {
                 GROUP BY task_id
             ) cd ON cd.task_id = p2.descendant
             LEFT JOIN task_recurrence rd ON rd.task_id = p2.descendant
-            WHERE (ca.done_at IS NULL OR (ra.task_id IS NOT NULL AND ca.done_at < :doneAfter))
-                AND (cd.done_at IS NULL OR (rd.task_id IS NOT NULL AND cd.done_at < :doneAfter))
+            WHERE (ca.done_at IS NULL OR (ra.task_id IS NOT NULL AND ca.done_at < :startOfToday))
+                AND (cd.done_at IS NULL OR (rd.task_id IS NOT NULL AND cd.done_at < :startOfToday))
                 AND (ra.start IS NULL OR ra.start <= :today)
                 AND CASE ra.type
                     WHEN 0 THEN (julianday(:today) - julianday(ra.start)) % ra.step = 0
@@ -123,10 +123,10 @@ interface TaskDao {
             GROUP BY task_id
         ) s ON s.task_id = t.id
         WHERE (t.scheduled_date IS NULL OR t.scheduled_date <= :today)
-            AND (t.scheduled_time IS NULL OR t.scheduled_time <= :scheduledAfterTime)
+            AND (t.scheduled_time IS NULL OR t.scheduled_time <= :currentTime)
             AND (t.start_after_date IS NULL OR t.start_after_date <= :today)
-            AND (t.start_after_time IS NULL OR t.start_after_time <= :startAfterTime)
-            AND (s.skipped_at IS NULL OR s.skipped_at < :skippedAfter)
+            AND (t.start_after_time IS NULL OR t.start_after_time <= :currentTime)
+            AND (s.skipped_at IS NULL OR s.skipped_at < :startOfToday)
         ORDER BY
             scheduled_date_priority IS NULL,
             scheduled_date_priority,
@@ -145,10 +145,8 @@ interface TaskDao {
     )
     fun getTaskPriorities(
         today: LocalDate,
-        scheduledAfterTime: LocalTime,
-        startAfterTime: LocalTime,
-        doneAfter: Instant,
-        skippedAfter: Instant,
+        currentTime: LocalTime,
+        startOfToday: Instant,
         week: Int,
     ): Flow<List<TaskPriority>>
 

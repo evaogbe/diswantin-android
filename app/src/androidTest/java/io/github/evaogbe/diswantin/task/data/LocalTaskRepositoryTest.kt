@@ -243,7 +243,7 @@ class LocalTaskRepositoryTest {
                         startAfterTime = null,
                         categoryId = updatedTask1.categoryId,
                         scheduledDate = LocalDate.parse("2024-08-23"),
-                        scheduledTime = LocalTime.parse("14:00"),
+                        scheduledTime = LocalTime.parse("13:00"),
                         recurrences = emptyList(),
                         parentUpdateType = PathUpdateType.Keep,
                         existingTask = updatedTask1,
@@ -264,7 +264,7 @@ class LocalTaskRepositoryTest {
                         startAfterDate = null,
                         startAfterTime = null,
                         scheduledDate = LocalDate.parse("2024-08-23"),
-                        scheduledTime = LocalTime.parse("15:00"),
+                        scheduledTime = LocalTime.parse("14:00"),
                         categoryId = updatedTask1.categoryId,
                         recurrences = emptyList(),
                         parentUpdateType = PathUpdateType.Keep,
@@ -905,11 +905,9 @@ class LocalTaskRepositoryTest {
         taskRepository.getCurrentTask(
             CurrentTaskParams(
                 today = LocalDate.parse("2024-08-23"),
-                scheduledAfterTime = LocalTime.parse("14:00"),
-                startAfterTime = LocalTime.parse("13:00"),
-                doneAfter = Instant.parse("2024-08-24T04:00:00Z"),
-                skippedAfter = Instant.parse("2024-08-23T04:00:00Z"),
-                recurringDeadline = ZonedDateTime.parse(
+                currentTime = LocalTime.parse("13:00"),
+                startOfToday = Instant.parse("2024-08-24T04:00:00Z"),
+                endOfToday = ZonedDateTime.parse(
                     "2024-08-24T23:59:59.999-04:00[America/New_York]"
                 ),
                 week = 4,

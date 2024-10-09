@@ -52,7 +52,7 @@ class FakeTaskRepository(
                                 task.deadlineTime,
                                 LocalTime.MAX,
                             ) ?: if (taskRecurrences.values.any { it.taskId == task.id }) {
-                                params.recurringDeadline
+                                params.endOfToday
                             } else {
                                 null
                             }
@@ -76,7 +76,7 @@ class FakeTaskRepository(
                         .maxOfOrNull { it.doneAt }
                     doneAt == null ||
                             (taskRecurrences.values.any { it.taskId == task.id } &&
-                                    doneAt < params.doneAfter)
+                                    doneAt < params.startOfToday)
                 }
                 .mapNotNull { descTask ->
                     taskPaths.values
@@ -92,7 +92,7 @@ class FakeTaskRepository(
                                     doneAt == null
                                 } else {
                                     doesRecurOnDate(recurrences, params.today) &&
-                                            (doneAt == null || doneAt < params.doneAfter)
+                                            (doneAt == null || doneAt < params.startOfToday)
                                 }
                             } == true
                         }
@@ -100,13 +100,13 @@ class FakeTaskRepository(
                         ?.let { tasks[it.ancestor] }
                 }.firstOrNull { task ->
                     task.scheduledDate?.let { it <= params.today } != false &&
-                            task.scheduledTime?.let { it <= params.scheduledAfterTime } != false &&
+                            task.scheduledTime?.let { it <= params.currentTime } != false &&
                             task.startAfterDate?.let { it <= params.today } != false &&
-                            task.startAfterTime?.let { it <= params.startAfterTime } != false &&
+                            task.startAfterTime?.let { it <= params.currentTime } != false &&
                             taskSkips.values
                                 .filter { it.taskId == task.id }
                                 .maxOfOrNull { it.skippedAt }
-                                ?.let { it < params.skippedAfter } != false
+                                ?.let { it < params.startOfToday } != false
                 }
         }
 
