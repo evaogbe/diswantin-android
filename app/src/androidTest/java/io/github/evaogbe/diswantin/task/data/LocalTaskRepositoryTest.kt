@@ -3664,7 +3664,7 @@ class LocalTaskRepositoryTest {
 
         taskRepository.delete(task2.id)
 
-        assertThat(taskRepository.getById(task2.id).first()).isNull()
+        assertThat(taskRepository.getTaskDetailById(task2.id).first()).isNull()
         assertThat(taskRepository.getTaskDetailById(task1.id).first()).isEqualTo(
             TaskDetail(
                 id = task1.id,
