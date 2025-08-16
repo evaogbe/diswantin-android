@@ -1,5 +1,6 @@
 package io.github.evaogbe.diswantin.task.data
 
+import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
@@ -284,8 +285,7 @@ interface TaskDao {
             c.done_at IS NOT NULL,
             c.done_at DESC,
             t.name,
-            t.id
-        LIMIT 30"""
+            t.id"""
     )
     fun searchTaskItems(
         query: String,
@@ -297,7 +297,7 @@ interface TaskDao {
         scheduledEndDate: LocalDate?,
         doneStart: Instant?,
         doneEnd: Instant?,
-    ): Flow<List<TaskItemWithRecurrences>>
+    ): PagingSource<Int, TaskItemWithRecurrences>
 
     @Transaction
     @Query(
@@ -357,8 +357,7 @@ interface TaskDao {
             c.done_at IS NOT NULL,
             c.done_at DESC,
             t.name,
-            t.id
-        LIMIT 30"""
+            t.id"""
     )
     fun filterTaskItems(
         deadlineStartDate: LocalDate?,
@@ -369,7 +368,7 @@ interface TaskDao {
         scheduledEndDate: LocalDate?,
         doneStart: Instant?,
         doneEnd: Instant?,
-    ): Flow<List<TaskItemWithRecurrences>>
+    ): PagingSource<Int, TaskItemWithRecurrences>
 
     @Query(
         """SELECT t.*

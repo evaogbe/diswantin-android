@@ -1,5 +1,9 @@
 package io.github.evaogbe.diswantin.task.data
 
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.filter
+import androidx.paging.map
 import io.github.evaogbe.diswantin.data.IoDispatcher
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.flowOn
@@ -14,7 +18,7 @@ import javax.inject.Inject
 
 class LocalTaskRepository @Inject constructor(
     private val taskDao: TaskDao,
-    @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
+    @param:IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     private val clock: Clock,
 ) : TaskRepository {
     override fun getCurrentTask(params: CurrentTaskParams) =
@@ -75,54 +79,60 @@ class LocalTaskRepository @Inject constructor(
     override fun search(query: String) = taskDao.search(escapeSql("$query*")).flowOn(ioDispatcher)
 
     override fun searchTaskItems(criteria: TaskSearchCriteria) =
-        if (criteria.name.isEmpty()) {
-            taskDao.filterTaskItems(
-                deadlineStartDate = criteria.deadlineDateRange?.first,
-                deadlineEndDate = criteria.deadlineDateRange?.second,
-                startAfterStartDate = criteria.startAfterDateRange?.first,
-                startAfterEndDate = criteria.startAfterDateRange?.second,
-                scheduledStartDate = criteria.scheduledDateRange?.first,
-                scheduledEndDate = criteria.scheduledDateRange?.second,
-                doneStart = criteria.doneDateRange?.first?.atStartOfDay(clock.zone)?.toInstant(),
-                doneEnd = criteria.doneDateRange?.second
-                    ?.atStartOfDay(clock.zone)
-                    ?.with(LocalTime.MAX)
-                    ?.toInstant(),
-            )
-        } else {
-            taskDao.searchTaskItems(
-                query = escapeSql("${criteria.name}*"),
-                deadlineStartDate = criteria.deadlineDateRange?.first,
-                deadlineEndDate = criteria.deadlineDateRange?.second,
-                startAfterStartDate = criteria.startAfterDateRange?.first,
-                startAfterEndDate = criteria.startAfterDateRange?.second,
-                scheduledStartDate = criteria.scheduledDateRange?.first,
-                scheduledEndDate = criteria.scheduledDateRange?.second,
-                doneStart = criteria.doneDateRange?.first?.atStartOfDay(clock.zone)?.toInstant(),
-                doneEnd = criteria.doneDateRange?.second
-                    ?.atStartOfDay(clock.zone)
-                    ?.with(LocalTime.MAX)
-                    ?.toInstant(),
-            )
-        }.map { results ->
-            results
-                .filter { (task, recurrences) ->
-                    !task.recurring || (criteria.deadlineDateRange?.let { (start, end) ->
-                        generateSequence(start) { if (it < end) it.plusDays(1) else null }.any {
-                            doesRecurOnDate(recurrences, it)
-                        }
-                    } != false && criteria.startAfterDateRange?.let { (start, end) ->
-                        generateSequence(start) { if (it < end) it.plusDays(1) else null }.any {
-                            doesRecurOnDate(recurrences, it)
-                        }
-                    } != false && criteria.scheduledDateRange?.let { (start, end) ->
-                        generateSequence(start) { if (it < end) it.plusDays(1) else null }.any {
-                            doesRecurOnDate(recurrences, it)
-                        }
-                    } != false)
-                }
-                .map { it.task }
-        }.flowOn(ioDispatcher)
+        Pager(PagingConfig(pageSize = 30)) {
+            if (criteria.name.isEmpty()) {
+                taskDao.filterTaskItems(
+                    deadlineStartDate = criteria.deadlineDateRange?.first,
+                    deadlineEndDate = criteria.deadlineDateRange?.second,
+                    startAfterStartDate = criteria.startAfterDateRange?.first,
+                    startAfterEndDate = criteria.startAfterDateRange?.second,
+                    scheduledStartDate = criteria.scheduledDateRange?.first,
+                    scheduledEndDate = criteria.scheduledDateRange?.second,
+                    doneStart = criteria.doneDateRange?.first?.atStartOfDay(clock.zone)
+                        ?.toInstant(),
+                    doneEnd = criteria.doneDateRange?.second
+                        ?.atStartOfDay(clock.zone)
+                        ?.with(LocalTime.MAX)
+                        ?.toInstant(),
+                )
+            } else {
+                taskDao.searchTaskItems(
+                    query = escapeSql("${criteria.name}*"),
+                    deadlineStartDate = criteria.deadlineDateRange?.first,
+                    deadlineEndDate = criteria.deadlineDateRange?.second,
+                    startAfterStartDate = criteria.startAfterDateRange?.first,
+                    startAfterEndDate = criteria.startAfterDateRange?.second,
+                    scheduledStartDate = criteria.scheduledDateRange?.first,
+                    scheduledEndDate = criteria.scheduledDateRange?.second,
+                    doneStart = criteria.doneDateRange?.first?.atStartOfDay(clock.zone)
+                        ?.toInstant(),
+                    doneEnd = criteria.doneDateRange?.second
+                        ?.atStartOfDay(clock.zone)
+                        ?.with(LocalTime.MAX)
+                        ?.toInstant(),
+                )
+            }
+        }
+            .flow
+            .map { results ->
+                results
+                    .filter { (task, recurrences) ->
+                        !task.recurring || (criteria.deadlineDateRange?.let { (start, end) ->
+                            generateSequence(start) { if (it < end) it.plusDays(1) else null }.any {
+                                doesRecurOnDate(recurrences, it)
+                            }
+                        } != false && criteria.startAfterDateRange?.let { (start, end) ->
+                            generateSequence(start) { if (it < end) it.plusDays(1) else null }.any {
+                                doesRecurOnDate(recurrences, it)
+                            }
+                        } != false && criteria.scheduledDateRange?.let { (start, end) ->
+                            generateSequence(start) { if (it < end) it.plusDays(1) else null }.any {
+                                doesRecurOnDate(recurrences, it)
+                            }
+                        } != false)
+                    }
+                    .map { it.task }
+            }.flowOn(ioDispatcher)
 
     private fun escapeSql(str: String) = str.replace("'", "''").replace("\"", "\"\"")
 

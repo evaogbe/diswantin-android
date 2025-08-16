@@ -2,20 +2,18 @@ package io.github.evaogbe.diswantin.task.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.cachedIn
+import androidx.paging.map
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.github.evaogbe.diswantin.task.data.TaskItem
 import io.github.evaogbe.diswantin.task.data.TaskRepository
 import io.github.evaogbe.diswantin.task.data.TaskSearchCriteria
-import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import timber.log.Timber
 import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalTime
@@ -31,27 +29,22 @@ class TaskSearchViewModel @Inject constructor(
     private val criteria = MutableStateFlow(TaskSearchCriteria())
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val uiState = criteria.flatMapLatest { criteria ->
-        if (criteria.isEmpty) {
-            flowOf(TaskSearchUiState.Initial)
-        } else {
-            taskRepository.searchTaskItems(criteria)
-                .map<List<TaskItem>, TaskSearchUiState> { searchResults ->
-                    val doneBefore = ZonedDateTime.now(clock).with(LocalTime.MIN).toInstant()
-                    TaskSearchUiState.Success(
-                        searchResults = searchResults.map {
-                            TaskItemUiState.fromTaskItem(it, doneBefore)
-                        }.toImmutableList(),
-                    )
-                }.catch { e ->
-                    Timber.e(e, "Failed to search for tasks by criteria: %s", criteria)
-                    emit(TaskSearchUiState.Failure(e))
+    val searchResultPagingData = criteria.filterNot { it.isEmpty }.flatMapLatest { criteria ->
+        val doneBefore = ZonedDateTime.now(clock).with(LocalTime.MIN).toInstant()
+        taskRepository.searchTaskItems(criteria)
+            .map { searchResults ->
+                searchResults.map {
+                    TaskItemUiState.fromTaskItem(it, doneBefore)
                 }
-        }
+            }
+    }.cachedIn(viewModelScope)
+
+    val uiState = criteria.map { criteria ->
+        TaskSearchUiState(hasCriteria = !criteria.isEmpty)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000L),
-        initialValue = TaskSearchUiState.Initial,
+        initialValue = TaskSearchUiState(hasCriteria = false),
     )
 
     fun searchTasks(

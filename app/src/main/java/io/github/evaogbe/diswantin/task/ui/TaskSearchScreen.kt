@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -24,13 +23,17 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.Scaffold
@@ -58,26 +61,35 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.LoadState
+import androidx.paging.PagingData
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.ui.components.AutoFocusTextField
 import io.github.evaogbe.diswantin.ui.components.ButtonWithIcon
 import io.github.evaogbe.diswantin.ui.components.DiswantinDateRangePickerDialog
 import io.github.evaogbe.diswantin.ui.components.LoadFailureLayout
+import io.github.evaogbe.diswantin.ui.components.PendingLayout
+import io.github.evaogbe.diswantin.ui.components.TextButtonWithIcon
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.evaogbe.diswantin.ui.theme.IconSizeLg
 import io.github.evaogbe.diswantin.ui.theme.ScreenLg
 import io.github.evaogbe.diswantin.ui.theme.SpaceLg
 import io.github.evaogbe.diswantin.ui.theme.SpaceMd
+import io.github.evaogbe.diswantin.ui.theme.SpaceSm
 import io.github.evaogbe.diswantin.ui.theme.SpaceXl
 import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flowOf
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -146,6 +158,8 @@ fun TaskSearchScreen(
     onSelectSearchResult: (Long) -> Unit,
     taskSearchViewModel: TaskSearchViewModel = hiltViewModel(),
 ) {
+    val searchResultPagingItems =
+        taskSearchViewModel.searchResultPagingData.collectAsLazyPagingItems()
     val uiState by taskSearchViewModel.uiState.collectAsStateWithLifecycle()
     var deadlineDateRange by rememberSaveable { mutableStateOf<Pair<LocalDate, LocalDate>?>(null) }
     var startAfterDateRange by rememberSaveable {
@@ -231,6 +245,7 @@ fun TaskSearchScreen(
                 doneDateRange = null
             }
         },
+        searchResultItems = searchResultPagingItems,
         uiState = uiState,
         onAddTask = onAddTask,
         onSelectSearchResult = onSelectSearchResult,
@@ -293,6 +308,7 @@ fun TaskSearchScreen(
     onScheduledChipClick: () -> Unit,
     doneDateRange: Pair<LocalDate, LocalDate>?,
     onDoneChipClick: () -> Unit,
+    searchResultItems: LazyPagingItems<TaskItemUiState>,
     uiState: TaskSearchUiState,
     onAddTask: (String) -> Unit,
     onSelectSearchResult: (Long) -> Unit,
@@ -369,24 +385,27 @@ fun TaskSearchScreen(
             )
         }
 
-        when (uiState) {
-            is TaskSearchUiState.Initial -> InitialTaskSearchLayout()
+        if (uiState.hasCriteria) {
+            when (searchResultItems.loadState.refresh) {
+                is LoadState.Loading -> PendingLayout()
+                is LoadState.Error -> {
+                    LoadFailureLayout(message = stringResource(R.string.task_search_error))
+                }
 
-            is TaskSearchUiState.Failure -> {
-                LoadFailureLayout(message = stringResource(R.string.task_search_error))
-            }
-
-            is TaskSearchUiState.Success -> {
-                if (uiState.searchResults.isEmpty()) {
-                    EmptyTaskSearchLayout(onAddTask = { onAddTask(query.trim()) })
-                } else {
-                    TaskSearchLayout(
-                        query = query,
-                        searchResults = uiState.searchResults,
-                        onSelectSearchResult = onSelectSearchResult,
-                    )
+                is LoadState.NotLoading -> {
+                    if (searchResultItems.itemCount > 0) {
+                        TaskSearchLayout(
+                            query = query,
+                            searchResultItems = searchResultItems,
+                            onSelectSearchResult = onSelectSearchResult,
+                        )
+                    } else {
+                        EmptyTaskSearchLayout(onAddTask = { onAddTask(query.trim()) })
+                    }
                 }
             }
+        } else {
+            InitialTaskSearchLayout()
         }
     }
 }
@@ -394,7 +413,7 @@ fun TaskSearchScreen(
 @Composable
 fun TaskSearchLayout(
     query: String,
-    searchResults: ImmutableList<TaskItemUiState>,
+    searchResultItems: LazyPagingItems<TaskItemUiState>,
     onSelectSearchResult: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -409,7 +428,11 @@ fun TaskSearchLayout(
                 .widthIn(max = ScreenLg)
                 .fillMaxSize(),
         ) {
-            items(searchResults, key = TaskItemUiState::id) { searchResult ->
+            items(
+                searchResultItems.itemCount,
+                key = searchResultItems.itemKey(TaskItemUiState::id)
+            ) { index ->
+                val searchResult = searchResultItems[index]!!
                 ListItem(
                     headlineContent = {
                         Text(
@@ -449,6 +472,47 @@ fun TaskSearchLayout(
                     modifier = Modifier.clickable { onSelectSearchResult(searchResult.id) }
                 )
                 HorizontalDivider()
+            }
+
+            when (searchResultItems.loadState.append) {
+                is LoadState.Loading -> {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(SpaceSm),
+                            contentAlignment = Alignment.TopCenter,
+                        ) {
+                            CircularProgressIndicator(modifier = Modifier.size(32.dp))
+                        }
+                    }
+                }
+
+                is LoadState.Error -> {
+                    item {
+                        ListItem(
+                            headlineContent = {
+                                Text(stringResource(R.string.task_search_error))
+                            },
+                            supportingContent = {
+                                TextButtonWithIcon(
+                                    onClick = { searchResultItems.retry() },
+                                    imageVector = Icons.Default.Refresh,
+                                    text = stringResource(R.string.retry_button),
+                                    colors = ButtonDefaults.textButtonColors(
+                                        contentColor = colorScheme.error,
+                                    ),
+                                )
+                            },
+                            colors = ListItemDefaults.colors(
+                                containerColor = colorScheme.errorContainer,
+                                headlineColor = colorScheme.onErrorContainer,
+                            ),
+                        )
+                    }
+                }
+
+                is LoadState.NotLoading -> {}
             }
         }
     }
@@ -503,6 +567,16 @@ fun InitialTaskSearchLayout(modifier: Modifier = Modifier) {
 @DevicePreviews
 @Composable
 private fun TaskSearchScreenPreview_Present() {
+    val searchResultItems = flowOf(
+        PagingData.from(
+            listOf(
+                TaskItemUiState(id = 1L, name = "Brush teeth", isDone = true),
+                TaskItemUiState(id = 2L, name = "Brush hair", isDone = false),
+                TaskItemUiState(id = 3L, name = "Eat brunch", isDone = false),
+            )
+        )
+    ).collectAsLazyPagingItems()
+
     DiswantinTheme {
         Scaffold(
             topBar = {
@@ -519,13 +593,8 @@ private fun TaskSearchScreenPreview_Present() {
                 onScheduledChipClick = {},
                 doneDateRange = null,
                 onDoneChipClick = {},
-                uiState = TaskSearchUiState.Success(
-                    searchResults = persistentListOf(
-                        TaskItemUiState(id = 1L, name = "Brush teeth", isDone = true),
-                        TaskItemUiState(id = 2L, name = "Brush hair", isDone = false),
-                        TaskItemUiState(id = 3L, name = "Eat brunch", isDone = false),
-                    ),
-                ),
+                searchResultItems = searchResultItems,
+                uiState = TaskSearchUiState(hasCriteria = true),
                 onAddTask = {},
                 onSelectSearchResult = {},
                 modifier = Modifier.padding(innerPadding),
@@ -538,33 +607,15 @@ private fun TaskSearchScreenPreview_Present() {
 @Composable
 private fun TaskSearchScreenPreview_Empty() {
     DiswantinTheme {
-        Scaffold(
-            topBar = {
-                TaskSearchTopBar(query = "Bru", onQueryChange = {}, onBackClick = {}, onSearch = {})
-            },
-        ) { innerPadding ->
-            TaskSearchScreen(
-                query = "Bru",
-                deadlineDateRange = null,
-                onDeadlineChipClick = {},
-                startAfterDateRange = null,
-                onStartAfterChipClick = {},
-                scheduledDateRange = LocalDate.now() to LocalDate.now().plusDays(1),
-                onScheduledChipClick = {},
-                doneDateRange = null,
-                onDoneChipClick = {},
-                uiState = TaskSearchUiState.Success(searchResults = persistentListOf()),
-                onAddTask = {},
-                onSelectSearchResult = {},
-                modifier = Modifier.padding(innerPadding),
-            )
-        }
+        EmptyTaskSearchLayout(onAddTask = {})
     }
 }
 
 @DevicePreviews
 @Composable
 private fun TaskSearchScreenPreview_Initial() {
+    val searchResultItems = emptyFlow<PagingData<TaskItemUiState>>().collectAsLazyPagingItems()
+
     DiswantinTheme {
         Scaffold(
             topBar = {
@@ -581,41 +632,8 @@ private fun TaskSearchScreenPreview_Initial() {
                 onScheduledChipClick = {},
                 doneDateRange = null,
                 onDoneChipClick = {},
-                uiState = TaskSearchUiState.Initial,
-                onAddTask = {},
-                onSelectSearchResult = {},
-                modifier = Modifier.padding(innerPadding),
-            )
-        }
-    }
-}
-
-@DevicePreviews
-@Composable
-private fun TaskSearchScreenPreview_WithDoneFilter() {
-    DiswantinTheme {
-        Scaffold(
-            topBar = {
-                TaskSearchTopBar(query = "", onQueryChange = {}, onBackClick = {}, onSearch = {})
-            },
-        ) { innerPadding ->
-            TaskSearchScreen(
-                query = "",
-                deadlineDateRange = null,
-                onDeadlineChipClick = {},
-                startAfterDateRange = null,
-                onStartAfterChipClick = {},
-                scheduledDateRange = null,
-                onScheduledChipClick = {},
-                doneDateRange = LocalDate.now() to LocalDate.now().plusDays(1),
-                onDoneChipClick = {},
-                uiState = TaskSearchUiState.Success(
-                    searchResults = persistentListOf(
-                        TaskItemUiState(id = 1L, name = "Brush teeth", isDone = true),
-                        TaskItemUiState(id = 2L, name = "Brush hair", isDone = true),
-                        TaskItemUiState(id = 3L, name = "Eat brunch", isDone = true),
-                    ),
-                ),
+                searchResultItems = searchResultItems,
+                uiState = TaskSearchUiState(hasCriteria = false),
                 onAddTask = {},
                 onSelectSearchResult = {},
                 modifier = Modifier.padding(innerPadding),

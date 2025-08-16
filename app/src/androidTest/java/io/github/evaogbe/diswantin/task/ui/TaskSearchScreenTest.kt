@@ -3,6 +3,9 @@ package io.github.evaogbe.diswantin.task.ui
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.paging.LoadState
+import androidx.paging.LoadStates
+import androidx.paging.PagingData
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskRepository
@@ -13,7 +16,7 @@ import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
 import io.mockk.every
 import io.mockk.spyk
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import org.junit.Rule
 import org.junit.Test
 import java.time.Clock
@@ -84,9 +87,16 @@ class TaskSearchScreenTest {
     fun displayErrorMessage_withFailureUi() {
         val query = loremFaker.verbs.base()
         val taskRepository = spyk<FakeTaskRepository>()
-        every { taskRepository.searchTaskItems(any()) } returns flow {
-            throw RuntimeException("Test")
-        }
+        every { taskRepository.searchTaskItems(any()) } returns flowOf(
+            PagingData.from(
+                emptyList(),
+                LoadStates(
+                    refresh = LoadState.Error(RuntimeException("Test")),
+                    prepend = LoadState.NotLoading(endOfPaginationReached = false),
+                    append = LoadState.NotLoading(endOfPaginationReached = false),
+                ),
+            )
+        )
 
         val viewModel = createTaskSearchViewModel(taskRepository)
 
