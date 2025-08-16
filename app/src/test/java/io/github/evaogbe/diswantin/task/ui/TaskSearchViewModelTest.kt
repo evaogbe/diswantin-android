@@ -1,20 +1,20 @@
 package io.github.evaogbe.diswantin.task.ui
 
+import androidx.paging.testing.asSnapshot
 import assertk.assertThat
+import assertk.assertions.containsExactly
 import assertk.assertions.isEqualTo
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskRepository
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.MainDispatcherRule
 import io.github.serpro69.kfaker.Faker
-import io.mockk.every
-import io.mockk.spyk
-import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
@@ -24,7 +24,7 @@ import java.util.regex.Pattern
 @OptIn(ExperimentalCoroutinesApi::class)
 class TaskSearchViewModelTest {
     @get:Rule
-    val mainDispatcherRule = MainDispatcherRule()
+    val mainDispatcherRule = MainDispatcherRule(StandardTestDispatcher())
 
     private val faker = Faker()
 
@@ -50,7 +50,7 @@ class TaskSearchViewModelTest {
                 viewModel.uiState.collect()
             }
 
-            assertThat(viewModel.uiState.value).isEqualTo(TaskSearchUiState.Initial)
+            assertThat(viewModel.uiState.value).isEqualTo(TaskSearchUiState(hasCriteria = false))
 
             viewModel.searchTasks(
                 name = blankQuery,
@@ -60,7 +60,7 @@ class TaskSearchViewModelTest {
                 doneDateRange = null,
             )
 
-            assertThat(viewModel.uiState.value).isEqualTo(TaskSearchUiState.Initial)
+            assertThat(viewModel.uiState.value).isEqualTo(TaskSearchUiState(hasCriteria = false))
 
             viewModel.searchTasks(
                 name = query,
@@ -69,15 +69,13 @@ class TaskSearchViewModelTest {
                 scheduledDateRange = null,
                 doneDateRange = null,
             )
+            advanceUntilIdle()
 
-            assertThat(viewModel.uiState.value).isEqualTo(
-                TaskSearchUiState.Success(
-                    searchResults = persistentListOf(
-                        TaskItemUiState(id = tasks[0].id, name = tasks[0].name, isDone = false),
-                        TaskItemUiState(id = tasks[1].id, name = tasks[1].name, isDone = false),
-                        TaskItemUiState(id = tasks[2].id, name = tasks[2].name, isDone = false),
-                    ),
-                )
+            assertThat(viewModel.uiState.value).isEqualTo(TaskSearchUiState(hasCriteria = true))
+            assertThat(viewModel.searchResultPagingData.asSnapshot()).containsExactly(
+                TaskItemUiState(id = tasks[0].id, name = tasks[0].name, isDone = false),
+                TaskItemUiState(id = tasks[1].id, name = tasks[1].name, isDone = false),
+                TaskItemUiState(id = tasks[2].id, name = tasks[2].name, isDone = false),
             )
 
             viewModel.searchTasks(
@@ -87,33 +85,9 @@ class TaskSearchViewModelTest {
                 scheduledDateRange = null,
                 doneDateRange = null,
             )
+            advanceUntilIdle()
 
-            assertThat(viewModel.uiState.value).isEqualTo(TaskSearchUiState.Initial)
-        }
-
-    @Test
-    fun `uiState emits failure when repository throws`() =
-        runTest(mainDispatcherRule.testDispatcher) {
-            val query = faker.string.regexify("""\S+""")
-            val exception = RuntimeException("Test")
-            val taskRepository = spyk<FakeTaskRepository>()
-            every { taskRepository.searchTaskItems(any()) } returns flow { throw exception }
-
-            val viewModel = createTaskSearchViewModel(taskRepository)
-
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-                viewModel.uiState.collect()
-            }
-
-            viewModel.searchTasks(
-                name = query,
-                deadlineDateRange = null,
-                startAfterDateRange = null,
-                scheduledDateRange = null,
-                doneDateRange = null,
-            )
-
-            assertThat(viewModel.uiState.value).isEqualTo(TaskSearchUiState.Failure(exception))
+            assertThat(viewModel.uiState.value).isEqualTo(TaskSearchUiState(hasCriteria = false))
         }
 
     private fun createTaskSearchViewModel(taskRepository: TaskRepository) =

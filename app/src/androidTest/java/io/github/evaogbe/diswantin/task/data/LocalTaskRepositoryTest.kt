@@ -1,5 +1,6 @@
 package io.github.evaogbe.diswantin.task.data
 
+import androidx.paging.testing.asSnapshot
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -1840,7 +1841,7 @@ class LocalTaskRepositoryTest {
                         LocalDate.parse("2024-08-22"),
                     ),
                 ),
-            ).first()
+            ).asSnapshot()
         ).containsExactly(
             TaskItem(id = task1.id, name = task1.name, recurring = false, doneAt = null),
             TaskItem(id = task2.id, name = task2.name, recurring = true, doneAt = null),
@@ -2017,7 +2018,7 @@ class LocalTaskRepositoryTest {
                         LocalDate.parse("2024-08-22"),
                     ),
                 ),
-            ).first()
+            ).asSnapshot()
         ).containsExactly(
             TaskItem(id = task1.id, name = task1.name, recurring = false, doneAt = null),
             TaskItem(id = task2.id, name = task2.name, recurring = true, doneAt = null),
@@ -2194,7 +2195,7 @@ class LocalTaskRepositoryTest {
                         LocalDate.parse("2024-08-22"),
                     ),
                 ),
-            ).first()
+            ).asSnapshot()
         ).containsExactly(
             TaskItem(id = task1.id, name = task1.name, recurring = false, doneAt = null),
             TaskItem(id = task2.id, name = task2.name, recurring = true, doneAt = null),
@@ -2374,7 +2375,7 @@ class LocalTaskRepositoryTest {
                         LocalDate.parse("2024-08-22"),
                     ),
                 ),
-            ).first()
+            ).asSnapshot()
         ).containsExactly(
             TaskItem(
                 id = task1.id,
@@ -2579,7 +2580,7 @@ class LocalTaskRepositoryTest {
                         LocalDate.parse("2024-08-22"),
                     ),
                 ),
-            ).first()
+            ).asSnapshot()
         ).containsExactly(
             TaskItem(id = task1.id, name = task1.name, recurring = false, doneAt = null),
             TaskItem(id = task2.id, name = task2.name, recurring = true, doneAt = null),
@@ -2774,7 +2775,7 @@ class LocalTaskRepositoryTest {
                         LocalDate.parse("2024-08-22"),
                     ),
                 ),
-            ).first()
+            ).asSnapshot()
         ).containsExactly(
             TaskItem(id = task1.id, name = task1.name, recurring = false, doneAt = null),
             TaskItem(id = task2.id, name = task2.name, recurring = true, doneAt = null),
@@ -2969,7 +2970,7 @@ class LocalTaskRepositoryTest {
                         LocalDate.parse("2024-08-22"),
                     ),
                 ),
-            ).first()
+            ).asSnapshot()
         ).containsExactly(
             TaskItem(id = task1.id, name = task1.name, recurring = false, doneAt = null),
             TaskItem(id = task2.id, name = task2.name, recurring = true, doneAt = null),
@@ -3174,7 +3175,7 @@ class LocalTaskRepositoryTest {
                         LocalDate.parse("2024-08-22"),
                     ),
                 ),
-            ).first()
+            ).asSnapshot()
         ).containsExactly(
             TaskItem(
                 id = task1.id,

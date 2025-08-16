@@ -1,5 +1,6 @@
 package io.github.evaogbe.diswantin.task.data
 
+import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
 
 interface TaskRepository {
@@ -11,7 +12,7 @@ interface TaskRepository {
 
     fun search(query: String): Flow<List<Task>>
 
-    fun searchTaskItems(criteria: TaskSearchCriteria): Flow<List<TaskItem>>
+    fun searchTaskItems(criteria: TaskSearchCriteria): Flow<PagingData<TaskItem>>
 
     fun getParent(id: Long): Flow<Task?>
 

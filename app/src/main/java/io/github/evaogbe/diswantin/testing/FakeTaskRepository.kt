@@ -1,5 +1,8 @@
 package io.github.evaogbe.diswantin.testing
 
+import androidx.paging.LoadState
+import androidx.paging.LoadStates
+import androidx.paging.PagingData
 import io.github.evaogbe.diswantin.task.data.CurrentTaskParams
 import io.github.evaogbe.diswantin.task.data.EditTaskForm
 import io.github.evaogbe.diswantin.task.data.NewTaskForm
@@ -164,50 +167,57 @@ class FakeTaskRepository(
             db.taskCompletionTable,
             db.taskRecurrenceTable,
         ) { tasks, taskCompletions, taskRecurrences ->
-            tasks.values
-                .map { task ->
-                    task to taskRecurrences.values.filter { it.taskId == task.id }
-                }
-                .filter { (task, recurrences) ->
-                    task.name.contains(criteria.name, ignoreCase = true) &&
-                            criteria.deadlineDateRange?.let { (start, end) ->
-                                if (recurrences.isEmpty()) {
-                                    task.deadlineDate?.let { it in (start..end) } == true
-                                } else {
-                                    task.deadlineTime != null && generateSequence(start) {
-                                        if (it < end) it.plusDays(1) else null
-                                    }.any { doesRecurOnDate(recurrences, it) }
-                                }
-                            } != false &&
-                            criteria.startAfterDateRange?.let { (start, end) ->
-                                if (recurrences.isEmpty()) {
-                                    task.startAfterDate?.let { it in (start..end) } == true
-                                } else {
-                                    task.startAfterTime != null && generateSequence(start) {
-                                        if (it < end) it.plusDays(1) else null
-                                    }.any { doesRecurOnDate(recurrences, it) }
-                                }
-                            } != false &&
-                            criteria.scheduledDateRange?.let { (start, end) ->
-                                if (recurrences.isEmpty()) {
-                                    task.scheduledDate?.let { it in (start..end) } == true
-                                } else {
-                                    task.scheduledTime != null && generateSequence(start) {
-                                        if (it < end) it.plusDays(1) else null
-                                    }.any { doesRecurOnDate(recurrences, it) }
-                                }
-                            } != false
-                }
-                .map { (task, recurrences) ->
-                    TaskItem(
-                        id = task.id,
-                        name = task.name,
-                        recurring = recurrences.isNotEmpty(),
-                        doneAt = taskCompletions.values
-                            .filter { it.taskId == task.id }
-                            .maxOfOrNull { it.doneAt },
-                    )
-                }
+            PagingData.from(
+                tasks.values
+                    .map { task ->
+                        task to taskRecurrences.values.filter { it.taskId == task.id }
+                    }
+                    .filter { (task, recurrences) ->
+                        task.name.contains(criteria.name, ignoreCase = true) &&
+                                criteria.deadlineDateRange?.let { (start, end) ->
+                                    if (recurrences.isEmpty()) {
+                                        task.deadlineDate?.let { it in (start..end) } == true
+                                    } else {
+                                        task.deadlineTime != null && generateSequence(start) {
+                                            if (it < end) it.plusDays(1) else null
+                                        }.any { doesRecurOnDate(recurrences, it) }
+                                    }
+                                } != false &&
+                                criteria.startAfterDateRange?.let { (start, end) ->
+                                    if (recurrences.isEmpty()) {
+                                        task.startAfterDate?.let { it in (start..end) } == true
+                                    } else {
+                                        task.startAfterTime != null && generateSequence(start) {
+                                            if (it < end) it.plusDays(1) else null
+                                        }.any { doesRecurOnDate(recurrences, it) }
+                                    }
+                                } != false &&
+                                criteria.scheduledDateRange?.let { (start, end) ->
+                                    if (recurrences.isEmpty()) {
+                                        task.scheduledDate?.let { it in (start..end) } == true
+                                    } else {
+                                        task.scheduledTime != null && generateSequence(start) {
+                                            if (it < end) it.plusDays(1) else null
+                                        }.any { doesRecurOnDate(recurrences, it) }
+                                    }
+                                } != false
+                    }
+                    .map { (task, recurrences) ->
+                        TaskItem(
+                            id = task.id,
+                            name = task.name,
+                            recurring = recurrences.isNotEmpty(),
+                            doneAt = taskCompletions.values
+                                .filter { it.taskId == task.id }
+                                .maxOfOrNull { it.doneAt },
+                        )
+                    },
+                LoadStates(
+                    refresh = LoadState.NotLoading(endOfPaginationReached = true),
+                    prepend = LoadState.NotLoading(endOfPaginationReached = true),
+                    append = LoadState.NotLoading(endOfPaginationReached = true),
+                ),
+            )
         }
 
     override fun getParent(id: Long) =
