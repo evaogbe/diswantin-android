@@ -2,7 +2,7 @@
     <string name="add_button">Add</string>
     <string name="add_deadline_date_button">Add deadline date</string>
     <string name="add_deadline_time_button">Add deadline time</string>
-    <string name="add_recurrence_button">Add recurrence</string>
+    <string name="add_recurrence_button">Does not repeat</string>
     <string name="add_scheduled_at_button">Schedule</string>
     <string name="add_scheduled_date_button">Add scheduled date</string>
     <string name="add_start_after_date_button">Add start after date</string>
@@ -182,7 +182,7 @@
     <string name="task_form_title_edit">Edit To-do</string>
     <string name="task_form_title_new">New To-do</string>
     <string name="task_name_label">To-do name</string>
-    <string name="task_recurrence_form_title">Recurrence</string>
+    <string name="task_recurrence_form_title">Repetition</string>
     <string name="task_search_empty">No matching to-dos</string>
     <string name="task_search_error">Something went wrong searching for to-dos</string>
     <string name="task_search_title">Search to-dos</string>
