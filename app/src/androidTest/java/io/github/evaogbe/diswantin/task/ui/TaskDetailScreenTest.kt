@@ -1,6 +1,7 @@
 package io.github.evaogbe.diswantin.task.ui
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -74,7 +75,10 @@ class TaskDetailScreenTest {
         }
 
         composeTestRule.onNodeWithText(task.name).assertIsDisplayed()
-        composeTestRule.onNodeWithText("Friday, August 23, 2024 at 5:00 PM").assertIsDisplayed()
+        composeTestRule.onNode(
+            hasText("Friday, August 23, 2024 at 5:00 PM") or
+                    hasText("Friday, August 23, 2024 at 5:00 PM")
+        ).assertIsDisplayed()
     }
 
     @Test
@@ -212,7 +216,6 @@ class TaskDetailScreenTest {
                     start = LocalDate.parse("2024-01-01"),
                     type = RecurrenceType.Day,
                     step = 1,
-                    week = 1,
                 )
             )
             repeat(19) {
@@ -269,7 +272,6 @@ class TaskDetailScreenTest {
                     start = LocalDate.parse("2024-01-01"),
                     type = RecurrenceType.Day,
                     step = 1,
-                    week = 1,
                 )
             )
             repeat(19) {

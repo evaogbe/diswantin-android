@@ -10,7 +10,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.data.Result
 import io.github.evaogbe.diswantin.data.getOrDefault
-import io.github.evaogbe.diswantin.data.weekOfMonthField
 import io.github.evaogbe.diswantin.task.data.EditTaskForm
 import io.github.evaogbe.diswantin.task.data.NewTaskForm
 import io.github.evaogbe.diswantin.task.data.PathUpdateType
@@ -39,6 +38,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.time.Clock
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
 import java.util.Locale
@@ -275,7 +275,7 @@ class TaskFormViewModel @Inject constructor(
         ),
     )
 
-    val currentWeekday = LocalDate.now(clock).dayOfWeek
+    val currentWeekday: DayOfWeek = LocalDate.now(clock).dayOfWeek
 
     init {
         viewModelScope.launch {
@@ -322,16 +322,13 @@ class TaskFormViewModel @Inject constructor(
 
     fun updateScheduledDate(value: LocalDate?) {
         scheduledDate.value = value
-        if (scheduledTime.value == null) {
-            scheduledTime.value = LocalTime.MIN
+        if (value == null) {
+            scheduledTime.value = null
         }
     }
 
     fun updateScheduledTime(value: LocalTime?) {
         scheduledTime.value = value
-        if (value == null) {
-            scheduledDate.value = null
-        }
     }
 
     fun updateParentTask(value: Task?) {
@@ -368,15 +365,6 @@ class TaskFormViewModel @Inject constructor(
     fun saveTask() {
         if (nameInput.isBlank()) return
         val state = (uiState.value as? TaskFormUiState.Success) ?: return
-        val deadlineDate = if (
-            state.deadlineDate == null &&
-            state.deadlineTime != null &&
-            state.recurrence == null
-        ) {
-            LocalDate.now()
-        } else {
-            state.deadlineDate
-        }
         val scheduledDate = if (
             state.scheduledDate == null &&
             state.scheduledTime != null &&
@@ -399,7 +387,6 @@ class TaskFormViewModel @Inject constructor(
                         start = start,
                         type = state.recurrence.type,
                         step = state.recurrence.step,
-                        week = start.get(weekOfMonthField()),
                     )
                 }
             }
@@ -411,7 +398,6 @@ class TaskFormViewModel @Inject constructor(
                         start = state.recurrence.start,
                         type = state.recurrence.type,
                         step = state.recurrence.step,
-                        week = state.recurrence.start.get(weekOfMonthField()),
                     )
                 )
             }
@@ -421,7 +407,7 @@ class TaskFormViewModel @Inject constructor(
             val form = NewTaskForm(
                 name = nameInput,
                 note = noteInput,
-                deadlineDate = deadlineDate,
+                deadlineDate = state.deadlineDate,
                 deadlineTime = state.deadlineTime,
                 startAfterDate = state.startAfterDate,
                 startAfterTime = state.startAfterTime,
@@ -457,7 +443,7 @@ class TaskFormViewModel @Inject constructor(
                         EditTaskForm(
                             name = nameInput,
                             note = noteInput,
-                            deadlineDate = deadlineDate,
+                            deadlineDate = state.deadlineDate,
                             deadlineTime = state.deadlineTime,
                             startAfterDate = state.startAfterDate,
                             startAfterTime = state.startAfterTime,

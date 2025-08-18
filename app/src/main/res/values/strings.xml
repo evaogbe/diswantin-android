@@ -4,7 +4,7 @@
     <string name="add_deadline_time_button">Add deadline time</string>
     <string name="add_recurrence_button">Does not repeat</string>
     <string name="add_scheduled_at_button">Schedule</string>
-    <string name="add_scheduled_date_button">Add scheduled date</string>
+    <string name="add_scheduled_time_button">Add scheduled time</string>
     <string name="add_start_after_date_button">Add start after date</string>
     <string name="add_start_after_time_button">Add start after time</string>
     <string name="add_task_button">Add to-do</string>

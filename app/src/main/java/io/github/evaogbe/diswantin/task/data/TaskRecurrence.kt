@@ -5,10 +5,10 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import io.github.evaogbe.diswantin.data.weekOfMonthField
 import java.time.LocalDate
 import java.time.Month
 import java.time.temporal.ChronoUnit
+import kotlin.math.ceil
 
 enum class RecurrenceType {
     Day, Week, DayOfMonth, WeekOfMonth, Year
@@ -31,7 +31,6 @@ data class TaskRecurrence(
     val start: LocalDate,
     val type: RecurrenceType,
     val step: Int,
-    val week: Int,
 )
 
 fun doesRecurOnDate(recurrences: List<TaskRecurrence>, date: LocalDate): Boolean {
@@ -60,7 +59,7 @@ fun doesRecurOnDate(recurrences: List<TaskRecurrence>, date: LocalDate): Boolean
         RecurrenceType.WeekOfMonth -> {
             (ChronoUnit.MONTHS.between(recurrence.start, date) % recurrence.step == 0L) &&
                     recurrence.start.dayOfWeek == date.dayOfWeek &&
-                    recurrence.week == date.get(weekOfMonthField())
+                    ceil(recurrence.start.dayOfMonth / 7.0) == ceil(date.dayOfMonth / 7.0)
         }
 
         RecurrenceType.Year -> {

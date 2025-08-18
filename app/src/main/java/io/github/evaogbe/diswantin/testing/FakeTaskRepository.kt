@@ -40,16 +40,65 @@ class FakeTaskRepository(
             db.taskRecurrenceTable,
             db.taskSkipTable,
         ) { tasks, taskPaths, taskCompletions, taskRecurrences, taskSkips ->
-            tasks.values
+            val availableTaskIds = tasks.values
+                .filter { task ->
+                    val recurrences = taskRecurrences.values.filter {
+                        it.taskId == task.id
+                    }
+                    val doneAt = taskCompletions.values
+                        .filter { it.taskId == task.id }
+                        .maxOfOrNull { it.doneAt }
+                    val isDone = doneAt != null &&
+                            (recurrences.isEmpty() || doneAt >= params.startOfToday)
+                    val isSkipped = taskSkips.values
+                        .filter { it.taskId == task.id }
+                        .maxOfOrNull { it.skippedAt }
+                        ?.let { it >= params.startOfToday } == true
+                    val doesRecurToday =
+                        recurrences.isEmpty() || doesRecurOnDate(recurrences, params.today)
+                    val isScheduledFuture =
+                        (task.scheduledDate != null &&
+                                (task.scheduledDate > params.today ||
+                                        (task.scheduledDate == params.today &&
+                                                task.scheduledTime?.let {
+                                                    it > params.currentTime
+                                                } == true))) ||
+                                (recurrences.isNotEmpty() &&
+                                        task.scheduledTime?.let {
+                                            it > params.currentTime
+                                        } == true)
+                    !isDone &&
+                            !isSkipped &&
+                            doesRecurToday &&
+                            !isScheduledFuture &&
+                            task.startAfterDate?.let { it <= params.today } != false &&
+                            task.startAfterTime?.let { it <= params.currentTime } != false
+
+                }
+                .map { it.id }
+                .toSet()
+            taskPaths.values
+                .filter { it.ancestor in availableTaskIds && it.descendant in availableTaskIds }
+                .groupBy { it.descendant }
+                .mapNotNull { (_, paths) ->
+                    val leaf = paths.maxBy { it.depth }
+                    val ancestor = tasks[leaf.ancestor]
+                    val descendant = tasks[leaf.descendant]
+                    if (ancestor == null || descendant == null) {
+                        null
+                    } else {
+                        descendant to ancestor
+                    }
+                }
                 .sortedWith(
-                    compareBy<Task, ZonedDateTime?>(nullsLast()) {
+                    compareBy<Pair<Task, Task>, ZonedDateTime?>(nullsLast()) { (_, task) ->
                         dateTimePartsToZonedDateTime(
-                            it.scheduledDate,
-                            it.scheduledTime,
+                            task.scheduledDate,
+                            task.scheduledTime,
                             LocalTime.MIN,
                         )
                     }
-                        .thenComparing({ task ->
+                        .thenComparing({ (task) ->
                             dateTimePartsToZonedDateTime(
                                 task.deadlineDate,
                                 task.deadlineTime,
@@ -60,57 +109,20 @@ class FakeTaskRepository(
                                 null
                             }
                         }, nullsLast())
-                        .thenComparing { task ->
+                        .thenComparing { (task) ->
                             !taskRecurrences.values.any { it.taskId == task.id }
                         }
-                        .thenComparing({
+                        .thenComparing({ (task) ->
                             dateTimePartsToZonedDateTime(
-                                it.startAfterDate,
-                                it.startAfterTime,
+                                task.startAfterDate,
+                                task.startAfterTime,
                                 LocalTime.MIN,
                             )
                         }, nullsFirst())
-                        .thenComparing(Task::createdAt)
-                        .thenComparing(Task::id)
+                        .thenComparing { (task) -> task.createdAt }
+                        .thenComparing { (task) -> task.id }
                 )
-                .filter { task ->
-                    val doneAt = taskCompletions.values
-                        .filter { it.taskId == task.id }
-                        .maxOfOrNull { it.doneAt }
-                    doneAt == null ||
-                            (taskRecurrences.values.any { it.taskId == task.id } &&
-                                    doneAt < params.startOfToday)
-                }
-                .mapNotNull { descTask ->
-                    taskPaths.values
-                        .filter { path ->
-                            val doneAt = taskCompletions.values
-                                .filter { it.taskId == path.ancestor }
-                                .maxOfOrNull { it.doneAt }
-                            path.descendant == descTask.id && tasks[path.ancestor]?.let { ancTask ->
-                                val recurrences = taskRecurrences.values.filter {
-                                    it.taskId == ancTask.id
-                                }
-                                if (recurrences.isEmpty()) {
-                                    doneAt == null
-                                } else {
-                                    doesRecurOnDate(recurrences, params.today) &&
-                                            (doneAt == null || doneAt < params.startOfToday)
-                                }
-                            } == true
-                        }
-                        .maxByOrNull { it.depth }
-                        ?.let { tasks[it.ancestor] }
-                }.firstOrNull { task ->
-                    task.scheduledDate?.let { it <= params.today } != false &&
-                            task.scheduledTime?.let { it <= params.currentTime } != false &&
-                            task.startAfterDate?.let { it <= params.today } != false &&
-                            task.startAfterTime?.let { it <= params.currentTime } != false &&
-                            taskSkips.values
-                                .filter { it.taskId == task.id }
-                                .maxOfOrNull { it.skippedAt }
-                                ?.let { it < params.startOfToday } != false
-                }
+                .firstNotNullOfOrNull { it.second }
         }
 
     private fun dateTimePartsToZonedDateTime(

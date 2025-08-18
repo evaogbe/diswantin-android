@@ -12,7 +12,7 @@ import javax.inject.Inject
 class LocalTaskCategoryRepository @Inject constructor(
     private val taskCategoryDao: TaskCategoryDao,
     private val taskDao: TaskDao,
-    @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
+    @param:IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : TaskCategoryRepository {
     override val categoryPagingData = Pager(PagingConfig(pageSize = 20)) {
         taskCategoryDao.getTaskCategoryPagingSource()

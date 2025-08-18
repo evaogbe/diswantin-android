@@ -18,64 +18,232 @@ interface TaskDao {
     @Query(
         """SELECT
             t.*,
-            t2.scheduled_date AS scheduled_date_priority,
-            t2.scheduled_time AS scheduled_time_priority,
-            t2.deadline_date AS deadline_date_priority,
-            t2.deadline_time AS deadline_time_priority,
-            r2.task_id IS NOT NULL AS recurring_priority,
-            t2.start_after_date AS start_after_date_priority,
-            t2.start_after_time AS start_after_time_priority,
-            t2.created_at AS created_at_priority,
-            t2.id AS id_priority
+            t.scheduled_date AS scheduled_date_priority,
+            t.scheduled_time AS scheduled_time_priority,
+            td.deadline_date AS deadline_date_priority,
+            td.deadline_time AS deadline_time_priority,
+            rd.task_id IS NOT NULL AS recurring_priority,
+            td.start_after_date AS start_after_date_priority,
+            td.start_after_time AS start_after_time_priority,
+            td.created_at AS created_at_priority,
+            td.id AS id_priority
         FROM task t
         JOIN task_path p ON p.ancestor = t.id
         JOIN (
-            SELECT p2.descendant, MAX(p2.depth) AS depth
-            FROM task_path p2
-            LEFT JOIN (
-                SELECT task_id, MAX(done_at) AS done_at
-                FROM task_completion
-                GROUP BY task_id
-            ) ca ON ca.task_id = p2.ancestor
-            LEFT JOIN task_recurrence ra ON ra.task_id = p2.ancestor
-            LEFT JOIN (
-                SELECT task_id, MAX(done_at) AS done_at
-                FROM task_completion
-                GROUP BY task_id
-            ) cd ON cd.task_id = p2.descendant
-            LEFT JOIN task_recurrence rd ON rd.task_id = p2.descendant
-            WHERE (ca.done_at IS NULL OR (ra.task_id IS NOT NULL AND ca.done_at < :startOfToday))
-                AND (cd.done_at IS NULL OR (rd.task_id IS NOT NULL AND cd.done_at < :startOfToday))
-                AND (ra.start IS NULL OR ra.start <= :today)
-                AND CASE ra.type
-                    WHEN 0 THEN (julianday(:today) - julianday(ra.start)) % ra.step = 0
-                    WHEN 1 THEN (julianday(:today) - julianday(ra.start)) % (ra.step * 7) = 0
-                    WHEN 2 THEN (
-                            12
-                            + CAST(strftime('%m', :today) as INT)
-                            - CAST(strftime('%m', ra.start) as INT)
-                        ) % ra.step = 0
-                        AND (
-                            strftime('%d', ra.start) = strftime('%d', :today)
-                            OR (
-                                strftime('%m-%d', ra.start)
-                                    IN (
-                                        '01-31', '03-31', '05-31', '07-31', '08-31', '10-31',
-                                        '12-31'
+            SELECT p.descendant, MAX(p.depth) AS depth
+            FROM task_path p
+            WHERE p.ancestor IN (
+                SELECT t.id
+                FROM task t
+                LEFT JOIN (
+                    SELECT task_id, MAX(done_at) AS done_at
+                    FROM task_completion
+                    GROUP BY task_id
+                ) c ON c.task_id = t.id
+                LEFT JOIN task_recurrence r ON r.task_id = t.id
+                LEFT JOIN (
+                    SELECT task_id, MAX(skipped_at) AS skipped_at
+                    FROM task_skip
+                    GROUP BY task_id
+                ) s ON s.task_id = t.id
+                WHERE (c.done_at IS NULL OR (r.task_id IS NOT NULL AND c.done_at < :startOfToday))
+                    AND (
+                        t.scheduled_date IS NULL
+                        OR t.scheduled_date < :today
+                        OR (
+                            t.scheduled_date = :today
+                            AND (t.scheduled_time IS NULL OR t.scheduled_time <= :currentTime)
+                        )
+                    )
+                    AND (
+                        r.task_id IS NULL
+                            OR t.scheduled_time IS NULL
+                            OR t.scheduled_time <= :currentTime
+                    )
+                    AND (t.start_after_date IS NULL OR t.start_after_date <= :today)
+                    AND (t.start_after_time IS NULL OR t.start_after_time <= :currentTime)
+                    AND (s.skipped_at IS NULL OR s.skipped_at < :startOfToday)
+                    AND (r.start IS NULL OR r.start <= :today)
+                    AND CASE r.type
+                        WHEN 0 THEN (julianday(:today) - julianday(r.start)) % r.step = 0
+                        WHEN 1 THEN (julianday(:today) - julianday(r.start)) % (r.step * 7) = 0
+                        WHEN 2 THEN (
+                                12
+                                + CAST(strftime('%m', :today) as INT)
+                                - CAST(strftime('%m', r.start) as INT)
+                            ) % r.step = 0
+                            AND (
+                                strftime('%d', r.start) = strftime('%d', :today)
+                                OR (
+                                    strftime('%m-%d', r.start)
+                                        IN (
+                                            '01-31', '03-31', '05-31', '07-31', '08-31', '10-31',
+                                            '12-31'
+                                        )
+                                    AND strftime('%m-%d', :today)
+                                        IN ('04-30', '06-30', '09-30', '11-30')
+                                )
+                                OR (
+                                    strftime('%m-%d', r.start)
+                                        IN (
+                                            '01-31', '02-29', '03-31', '04-30', '05-31', '06-30',
+                                            '07-31', '08-31', '09-30', '10-31', '11-30', '12-31'
+                                        )
+                                    AND (
+                                        strftime('%m-%d', :today) = '02-29'
+                                        OR (
+                                            strftime('%m-%d', :today) = '02-28'
+                                            AND (
+                                                CAST(strftime('%Y', :today) as INT) & 3 != 0
+                                                OR (
+                                                    CAST(strftime('%Y', :today) as INT) % 25 = 0
+                                                    AND CAST(strftime('%Y', :today) as INT) & 15
+                                                        != 0
+                                                )
+                                            )
+                                        )
                                     )
-                                AND strftime('%m-%d', :today)
-                                    IN ('04-30', '06-30', '09-30', '11-30')
+                                )
                             )
-                            OR (
-                                strftime('%m-%d', ra.start)
-                                    IN (
-                                        '01-31', '02-29', '03-31', '04-30', '05-31', '06-30',
-                                        '07-31', '08-31', '09-30', '10-31', '11-30', '12-31'
+                        WHEN 3 THEN (
+                                12
+                                + CAST(strftime('%m', :today) as INT)
+                                - CAST(strftime('%m', r.start) as INT)
+                            ) % r.step = 0
+                            AND CAST((CAST(strftime('%d', :today) as REAL) / 7) as INT)
+                                + (
+                                    (CAST(strftime('%d', :today) as REAL) / 7)
+                                    > CAST((CAST(strftime('%d', :today) as REAL) / 7) as INT)
+                                )
+                                = CAST((CAST(strftime('%d', r.start) as REAL) / 7) as INT)
+                                    + (
+                                        (CAST(strftime('%d', r.start) as REAL) / 7)
+                                        > CAST((CAST(strftime('%d', r.start) as REAL) / 7) as INT)
                                     )
+                            AND strftime('%w', r.start) = strftime('%w', :today)
+                        WHEN 4 THEN (
+                                CAST(strftime('%Y', :today) as INT)
+                                - CAST(strftime('%Y', r.start) as INT)
+                            ) % r.step = 0
+                            AND (
+                                strftime('%m-%d', r.start) = strftime('%m-%d', :today)
+                                OR (
+                                    strftime('%m-%d', r.start) = '02-29'
+                                    AND strftime('%m-%d', :today) = '02-28'
+                                    AND (
+                                        CAST(strftime('%Y', :today) as INT) & 3 != 0
+                                        OR (
+                                            CAST(strftime('%Y', :today) as INT) % 25 = 0
+                                            AND CAST(strftime('%Y', :today) as INT) & 15 != 0
+                                        )
+                                    )
+                                )
+                            )
+                        ELSE TRUE
+                        END
+            )
+                AND p.descendant IN (
+                    SELECT t.id
+                    FROM task t
+                    LEFT JOIN (
+                        SELECT task_id, MAX(done_at) AS done_at
+                        FROM task_completion
+                        GROUP BY task_id
+                    ) c ON c.task_id = t.id
+                    LEFT JOIN task_recurrence r ON r.task_id = t.id
+                    LEFT JOIN (
+                        SELECT task_id, MAX(skipped_at) AS skipped_at
+                        FROM task_skip
+                        GROUP BY task_id
+                    ) s ON s.task_id = t.id
+                    WHERE (
+                        c.done_at IS NULL
+                        OR (r.task_id IS NOT NULL AND c.done_at < :startOfToday)
+                    )
+                        AND (
+                            t.scheduled_date IS NULL
+                            OR t.scheduled_date < :today
+                            OR (
+                                t.scheduled_date = :today
+                                AND (t.scheduled_time IS NULL OR t.scheduled_time <= :currentTime)
+                            )
+                        )
+                        AND (
+                            r.task_id IS NULL
+                                OR t.scheduled_time IS NULL
+                                OR t.scheduled_time <= :currentTime
+                        )
+                        AND (t.start_after_date IS NULL OR t.start_after_date <= :today)
+                        AND (t.start_after_time IS NULL OR t.start_after_time <= :currentTime)
+                        AND (s.skipped_at IS NULL OR s.skipped_at < :startOfToday)
+                        AND (r.start IS NULL OR r.start <= :today)
+                        AND CASE r.type
+                            WHEN 0 THEN (julianday(:today) - julianday(r.start)) % r.step = 0
+                            WHEN 1 THEN (julianday(:today) - julianday(r.start)) % (r.step * 7) = 0
+                            WHEN 2 THEN (
+                                    12
+                                    + CAST(strftime('%m', :today) as INT)
+                                    - CAST(strftime('%m', r.start) as INT)
+                                ) % r.step = 0
                                 AND (
-                                    strftime('%m-%d', :today) = '02-29'
+                                    strftime('%d', r.start) = strftime('%d', :today)
                                     OR (
-                                        strftime('%m-%d', :today) = '02-28'
+                                        strftime('%m-%d', r.start)
+                                            IN (
+                                                '01-31', '03-31', '05-31', '07-31', '08-31',
+                                                '10-31', '12-31'
+                                            )
+                                        AND strftime('%m-%d', :today)
+                                            IN ('04-30', '06-30', '09-30', '11-30')
+                                    )
+                                    OR (
+                                        strftime('%m-%d', r.start)
+                                            IN (
+                                                '01-31', '02-29', '03-31', '04-30', '05-31',
+                                                '06-30', '07-31', '08-31', '09-30', '10-31',
+                                                '11-30', '12-31'
+                                            )
+                                        AND (
+                                            strftime('%m-%d', :today) = '02-29'
+                                            OR (
+                                                strftime('%m-%d', :today) = '02-28'
+                                                AND (
+                                                    CAST(strftime('%Y', :today) as INT) & 3 != 0
+                                                    OR (
+                                                        CAST(strftime('%Y', :today) as INT) % 25 = 0
+                                                        AND CAST(strftime('%Y', :today) as INT) & 15
+                                                            != 0
+                                                    )
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            WHEN 3 THEN (
+                                    12
+                                    + CAST(strftime('%m', :today) as INT)
+                                    - CAST(strftime('%m', r.start) as INT)
+                                ) % r.step = 0
+                                AND CAST((CAST(strftime('%d', :today) as REAL) / 7) as INT)
+                                    + (
+                                        (CAST(strftime('%d', :today) as REAL) / 7)
+                                        > CAST((CAST(strftime('%d', :today) as REAL) / 7) as INT)
+                                    )
+                                    = CAST((CAST(strftime('%d', r.start) as REAL) / 7) as INT)
+                                        + (
+                                            (CAST(strftime('%d', r.start) as REAL) / 7)
+                                            > CAST((CAST(strftime('%d', r.start) as REAL) / 7) as INT)
+                                        )
+                                AND strftime('%w', r.start) = strftime('%w', :today)
+                            WHEN 4 THEN (
+                                    CAST(strftime('%Y', :today) as INT)
+                                    - CAST(strftime('%Y', r.start) as INT)
+                                ) % r.step = 0
+                                AND (
+                                    strftime('%m-%d', r.start) = strftime('%m-%d', :today)
+                                    OR (
+                                        strftime('%m-%d', r.start) = '02-29'
+                                        AND strftime('%m-%d', :today) = '02-28'
                                         AND (
                                             CAST(strftime('%Y', :today) as INT) & 3 != 0
                                             OR (
@@ -85,49 +253,13 @@ interface TaskDao {
                                         )
                                     )
                                 )
-                            )
-                        )
-                    WHEN 3 THEN (
-                            12
-                            + CAST(strftime('%m', :today) as INT)
-                            - CAST(strftime('%m', ra.start) as INT)
-                        ) % ra.step = 0
-                        AND ra.week = :week
-                        AND strftime('%w', ra.start) = strftime('%w', :today)
-                    WHEN 4 THEN (
-                            CAST(strftime('%Y', :today) as INT)
-                            - CAST(strftime('%Y', ra.start) as INT)
-                        ) % ra.step = 0
-                        AND (
-                            strftime('%m-%d', ra.start) = strftime('%m-%d', :today)
-                            OR (
-                                strftime('%m-%d', ra.start) = '02-29'
-                                AND strftime('%m-%d', :today) = '02-28'
-                                AND (
-                                    CAST(strftime('%Y', :today) as INT) & 3 != 0
-                                    OR (
-                                        CAST(strftime('%Y', :today) as INT) % 25 = 0
-                                        AND CAST(strftime('%Y', :today) as INT) & 15 != 0
-                                    )
-                                )
-                            )
-                        )
-                    ELSE TRUE
-                    END
-            GROUP BY p2.descendant
+                            ELSE TRUE
+                            END
+                )
+            GROUP BY p.descendant
         ) leaf ON leaf.descendant = p.descendant AND leaf.depth = p.depth
-        JOIN task t2 ON p.descendant = t2.id
-        LEFT JOIN (SELECT DISTINCT task_id FROM task_recurrence) r2 ON r2.task_id = t2.id
-        LEFT JOIN (
-            SELECT task_id, MAX(skipped_at) AS skipped_at
-            FROM task_skip
-            GROUP BY task_id
-        ) s ON s.task_id = t.id
-        WHERE (t.scheduled_date IS NULL OR t.scheduled_date <= :today)
-            AND (t.scheduled_time IS NULL OR t.scheduled_time <= :currentTime)
-            AND (t.start_after_date IS NULL OR t.start_after_date <= :today)
-            AND (t.start_after_time IS NULL OR t.start_after_time <= :currentTime)
-            AND (s.skipped_at IS NULL OR s.skipped_at < :startOfToday)
+        JOIN task td ON p.descendant = td.id
+        LEFT JOIN (SELECT DISTINCT task_id FROM task_recurrence) rd ON rd.task_id = td.id
         ORDER BY
             scheduled_date_priority IS NULL,
             scheduled_date_priority,
@@ -148,7 +280,6 @@ interface TaskDao {
         today: LocalDate,
         currentTime: LocalTime,
         startOfToday: Instant,
-        week: Int,
     ): Flow<List<TaskPriority>>
 
     @Query("SELECT * FROM task WHERE id = :id LIMIT 1")
