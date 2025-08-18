@@ -98,6 +98,7 @@ class FakeTaskRepository(
                             LocalTime.MIN,
                         )
                     }
+                        .thenComparing { (task) -> task.startAfterTime != null }
                         .thenComparing({ (task) ->
                             dateTimePartsToZonedDateTime(
                                 task.deadlineDate,

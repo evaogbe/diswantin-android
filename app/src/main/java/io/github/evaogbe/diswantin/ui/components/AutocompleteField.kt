@@ -150,12 +150,14 @@ fun <T : Any> AutocompleteField(
 private fun AutocompleteFieldPreview() {
     DiswantinTheme {
         Surface {
+            val focusRequester = remember { FocusRequester() }
+
             AutocompleteField(
                 expanded = true,
                 onExpandedChange = {},
                 query = TextFieldValue("Br"),
                 onQueryChange = {},
-                focusRequester = FocusRequester(),
+                focusRequester = focusRequester,
                 label = { Text("Task before") },
                 onSearch = {},
                 options = persistentListOf("Brush teeth", "Brush hair", "Eat breakfast"),

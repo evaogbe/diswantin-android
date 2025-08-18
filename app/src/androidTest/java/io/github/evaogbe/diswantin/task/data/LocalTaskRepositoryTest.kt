@@ -272,7 +272,7 @@ class LocalTaskRepositoryTest {
                 .isNotNull()
                 .isDataClassEqualTo(task1)
 
-            // Recurring before non-recurring
+            // Recurring without start after time before non-recurring
             task1 = taskRepository.update(
                 EditTaskForm(
                     name = task1.name,
@@ -281,6 +281,53 @@ class LocalTaskRepositoryTest {
                     deadlineTime = task1.deadlineTime,
                     startAfterDate = task1.startAfterDate,
                     startAfterTime = task1.startAfterTime,
+                    categoryId = task1.categoryId,
+                    scheduledDate = null,
+                    scheduledTime = task1.scheduledTime,
+                    recurrences = emptyList(),
+                    parentUpdateType = PathUpdateType.Keep,
+                    existingTask = task1,
+                    existingRecurrences = emptyList(),
+                )
+            )
+
+            assertThat(awaitItem())
+                .isNotNull()
+                .isDataClassEqualTo(task2)
+
+            // Non-recurring before recurring with start after time
+            var taskRecurrences2 = taskRepository.getTaskRecurrencesByTaskId(task2.id).first()
+            task2 = taskRepository.update(
+                EditTaskForm(
+                    name = task2.name,
+                    note = task2.note,
+                    deadlineDate = task2.deadlineDate,
+                    deadlineTime = task2.deadlineTime,
+                    startAfterDate = task2.startAfterDate,
+                    startAfterTime = LocalTime.parse("12:59"),
+                    categoryId = task2.categoryId,
+                    scheduledDate = task2.scheduledDate,
+                    scheduledTime = task2.scheduledTime,
+                    recurrences = taskRecurrences2,
+                    parentUpdateType = PathUpdateType.Keep,
+                    existingTask = task2,
+                    existingRecurrences = taskRecurrences2,
+                )
+            )
+
+            assertThat(awaitItem())
+                .isNotNull()
+                .isDataClassEqualTo(task1)
+
+            // Start after time ascending
+            task1 = taskRepository.update(
+                EditTaskForm(
+                    name = task1.name,
+                    note = task1.note,
+                    deadlineDate = task1.deadlineDate,
+                    deadlineTime = task1.deadlineTime,
+                    startAfterDate = task1.startAfterDate,
+                    startAfterTime = LocalTime.parse("13:00"),
                     categoryId = task1.categoryId,
                     scheduledDate = null,
                     scheduledTime = task1.scheduledTime,
@@ -319,7 +366,6 @@ class LocalTaskRepositoryTest {
                 .isDataClassEqualTo(task1)
 
             // Deadline time ascending
-            var taskRecurrences2 = taskRepository.getTaskRecurrencesByTaskId(task2.id).first()
             task2 = taskRepository.update(
                 EditTaskForm(
                     name = task2.name,
@@ -343,48 +389,18 @@ class LocalTaskRepositoryTest {
                 .isDataClassEqualTo(task2)
 
             // Deadline time before start after time
-            task2 = taskRepository.update(
-                EditTaskForm(
-                    name = task2.name,
-                    note = task2.note,
-                    deadlineDate = task2.deadlineDate,
-                    deadlineTime = null,
-                    startAfterDate = task2.startAfterDate,
-                    startAfterTime = LocalTime.parse("12:59"),
-                    categoryId = task2.categoryId,
-                    scheduledDate = task2.scheduledDate,
-                    scheduledTime = task2.scheduledTime,
-                    recurrences = taskRecurrences2,
-                    parentUpdateType = PathUpdateType.Keep,
-                    existingTask = task2,
-                    existingRecurrences = taskRecurrences2,
-                )
-            )
-
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task1)
-
-            // Start after time ascending
             task1 = taskRepository.update(
                 EditTaskForm(
                     name = task1.name,
                     note = task1.note,
-                    deadlineDate = null,
-                    deadlineTime = null,
-                    startAfterDate = null,
-                    startAfterTime = LocalTime.parse("13:00"),
+                    deadlineDate = task1.deadlineDate,
+                    deadlineTime = LocalTime.parse("23:58"),
+                    startAfterDate = task1.startAfterDate,
+                    startAfterTime = null,
                     categoryId = task1.categoryId,
-                    scheduledDate = null,
+                    scheduledDate = task1.scheduledDate,
                     scheduledTime = task1.scheduledTime,
-                    recurrences = listOf(
-                        TaskRecurrence(
-                            taskId = task1.id,
-                            start = LocalDate.parse("2024-08-23"),
-                            type = RecurrenceType.Day,
-                            step = 1,
-                        ),
-                    ),
+                    recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task1,
                     existingRecurrences = emptyList(),
@@ -393,33 +409,9 @@ class LocalTaskRepositoryTest {
 
             assertThat(awaitItem())
                 .isNotNull()
-                .isDataClassEqualTo(task2)
-
-            // Scheduled time before start after time
-            val taskRecurrences1 = taskRepository.getTaskRecurrencesByTaskId(task1.id).first()
-            task1 = taskRepository.update(
-                EditTaskForm(
-                    name = task1.name,
-                    note = task1.note,
-                    deadlineDate = task1.deadlineDate,
-                    deadlineTime = null,
-                    startAfterDate = task1.startAfterDate,
-                    startAfterTime = null,
-                    categoryId = task1.categoryId,
-                    scheduledDate = task1.scheduledDate,
-                    scheduledTime = LocalTime.parse("12:59"),
-                    recurrences = taskRecurrences1,
-                    parentUpdateType = PathUpdateType.Keep,
-                    existingTask = task1,
-                    existingRecurrences = taskRecurrences1,
-                )
-            )
-
-            assertThat(awaitItem())
-                .isNotNull()
                 .isDataClassEqualTo(task1)
 
-            // Scheduled time ascending
+            // Scheduled time before deadline time
             task2 = taskRepository.update(
                 EditTaskForm(
                     name = task2.name,
@@ -430,7 +422,7 @@ class LocalTaskRepositoryTest {
                     startAfterTime = null,
                     categoryId = task2.categoryId,
                     scheduledDate = task2.scheduledDate,
-                    scheduledTime = LocalTime.parse("12:58"),
+                    scheduledTime = LocalTime.parse("13:00"),
                     recurrences = taskRecurrences2,
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task2,
@@ -441,6 +433,29 @@ class LocalTaskRepositoryTest {
             assertThat(awaitItem())
                 .isNotNull()
                 .isDataClassEqualTo(task2)
+
+            // Scheduled time ascending
+            task1 = taskRepository.update(
+                EditTaskForm(
+                    name = task1.name,
+                    note = task1.note,
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    categoryId = task1.categoryId,
+                    scheduledDate = LocalDate.parse("2024-08-23"),
+                    scheduledTime = LocalTime.parse("12:59"),
+                    recurrences = emptyList(),
+                    parentUpdateType = PathUpdateType.Keep,
+                    existingTask = task1,
+                    existingRecurrences = emptyList(),
+                )
+            )
+
+            assertThat(awaitItem())
+                .isNotNull()
+                .isDataClassEqualTo(task1)
 
             // Earlier scheduled date with later scheduled time first
             var task3 =
@@ -486,7 +501,7 @@ class LocalTaskRepositoryTest {
 
             assertThat(awaitItem())
                 .isNotNull()
-                .isDataClassEqualTo(task2)
+                .isDataClassEqualTo(task1)
 
             // Scheduled time ordered by ancestor
             task2 = taskRepository.update(
@@ -499,7 +514,7 @@ class LocalTaskRepositoryTest {
                     startAfterTime = null,
                     categoryId = task2.categoryId,
                     scheduledDate = task2.scheduledDate,
-                    scheduledTime = LocalTime.parse("13:00"),
+                    scheduledTime = LocalTime.parse("12:58"),
                     recurrences = taskRecurrences2,
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task2,
@@ -509,7 +524,7 @@ class LocalTaskRepositoryTest {
 
             assertThat(awaitItem())
                 .isNotNull()
-                .isDataClassEqualTo(task1)
+                .isDataClassEqualTo(task2)
 
             // Parent not occurring on day does not block child task
             task2 = taskRepository.update(
@@ -537,51 +552,6 @@ class LocalTaskRepositoryTest {
                 )
             )
             taskRecurrences2 = taskRepository.getTaskRecurrencesByTaskId(task2.id).first()
-
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task3)
-
-            // Scheduled time before deadline time
-            task3 = taskRepository.update(
-                EditTaskForm(
-                    name = task3.name,
-                    note = task3.note,
-                    deadlineDate = task3.deadlineDate,
-                    deadlineTime = LocalTime.parse("23:59"),
-                    startAfterDate = task3.startAfterDate,
-                    startAfterTime = task3.startAfterTime,
-                    categoryId = task3.categoryId,
-                    scheduledDate = null,
-                    scheduledTime = null,
-                    recurrences = emptyList(),
-                    parentUpdateType = PathUpdateType.Keep,
-                    existingTask = task3,
-                    existingRecurrences = emptyList(),
-                )
-            )
-
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task1)
-
-            task1 = taskRepository.update(
-                EditTaskForm(
-                    name = task1.name,
-                    note = task1.note,
-                    deadlineDate = task1.deadlineDate,
-                    deadlineTime = null,
-                    startAfterDate = task1.startAfterDate,
-                    startAfterTime = task1.startAfterTime,
-                    categoryId = task1.categoryId,
-                    scheduledDate = null,
-                    scheduledTime = null,
-                    recurrences = taskRecurrences1,
-                    parentUpdateType = PathUpdateType.Keep,
-                    existingTask = task1,
-                    existingRecurrences = taskRecurrences1,
-                )
-            )
 
             assertThat(awaitItem())
                 .isNotNull()
@@ -627,7 +597,7 @@ class LocalTaskRepositoryTest {
                     startAfterTime = null,
                     categoryId = task2.categoryId,
                     scheduledDate = task2.scheduledDate,
-                    scheduledTime = null,
+                    scheduledTime = LocalTime.parse("12:59"),
                     recurrences = listOf(
                         TaskRecurrence(
                             taskId = task2.id,

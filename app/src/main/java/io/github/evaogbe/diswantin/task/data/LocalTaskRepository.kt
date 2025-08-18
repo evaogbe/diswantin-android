@@ -36,6 +36,7 @@ class LocalTaskRepository @Inject constructor(
                             LocalTime.MIN,
                         )
                     }
+                        .thenComparing { it.startAfterTimePriority != null }
                         .thenComparing({
                             dateTimePartsToZonedDateTime(
                                 it.deadlineDatePriority,
