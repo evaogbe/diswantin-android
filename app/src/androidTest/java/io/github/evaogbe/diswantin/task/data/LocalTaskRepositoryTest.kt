@@ -411,18 +411,18 @@ class LocalTaskRepositoryTest {
                 .isNotNull()
                 .isDataClassEqualTo(task1)
 
-            // Scheduled time before deadline time
+            // Overdue tasks before not due tasks
             task2 = taskRepository.update(
                 EditTaskForm(
                     name = task2.name,
                     note = task2.note,
                     deadlineDate = task2.deadlineDate,
-                    deadlineTime = null,
+                    deadlineTime = LocalTime.parse("14:00"),
                     startAfterDate = task2.startAfterDate,
-                    startAfterTime = null,
+                    startAfterTime = LocalTime.parse("13:00"),
                     categoryId = task2.categoryId,
                     scheduledDate = task2.scheduledDate,
-                    scheduledTime = LocalTime.parse("13:00"),
+                    scheduledTime = task2.scheduledTime,
                     recurrences = taskRecurrences2,
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task2,
@@ -434,7 +434,7 @@ class LocalTaskRepositoryTest {
                 .isNotNull()
                 .isDataClassEqualTo(task2)
 
-            // Scheduled time ascending
+            // Scheduled time before deadline time
             task1 = taskRepository.update(
                 EditTaskForm(
                     name = task1.name,
@@ -456,6 +456,29 @@ class LocalTaskRepositoryTest {
             assertThat(awaitItem())
                 .isNotNull()
                 .isDataClassEqualTo(task1)
+
+            // Scheduled time ascending
+            task2 = taskRepository.update(
+                EditTaskForm(
+                    name = task2.name,
+                    note = task2.note,
+                    deadlineDate = task2.deadlineDate,
+                    deadlineTime = null,
+                    startAfterDate = task2.startAfterDate,
+                    startAfterTime = null,
+                    categoryId = task2.categoryId,
+                    scheduledDate = task2.scheduledDate,
+                    scheduledTime = LocalTime.parse("12:58"),
+                    recurrences = taskRecurrences2,
+                    parentUpdateType = PathUpdateType.Keep,
+                    existingTask = task2,
+                    existingRecurrences = taskRecurrences2,
+                )
+            )
+
+            assertThat(awaitItem())
+                .isNotNull()
+                .isDataClassEqualTo(task2)
 
             // Earlier scheduled date with later scheduled time first
             var task3 =
@@ -501,7 +524,7 @@ class LocalTaskRepositoryTest {
 
             assertThat(awaitItem())
                 .isNotNull()
-                .isDataClassEqualTo(task1)
+                .isDataClassEqualTo(task2)
 
             // Scheduled time ordered by ancestor
             task2 = taskRepository.update(
@@ -514,7 +537,7 @@ class LocalTaskRepositoryTest {
                     startAfterTime = null,
                     categoryId = task2.categoryId,
                     scheduledDate = task2.scheduledDate,
-                    scheduledTime = LocalTime.parse("12:58"),
+                    scheduledTime = LocalTime.parse("13:00"),
                     recurrences = taskRecurrences2,
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task2,
@@ -524,7 +547,7 @@ class LocalTaskRepositoryTest {
 
             assertThat(awaitItem())
                 .isNotNull()
-                .isDataClassEqualTo(task2)
+                .isDataClassEqualTo(task1)
 
             // Parent not occurring on day does not block child task
             task2 = taskRepository.update(

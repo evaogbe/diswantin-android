@@ -18,8 +18,8 @@ interface TaskDao {
     @Query(
         """SELECT
             t.*,
-            t.scheduled_date AS scheduled_date_priority,
-            t.scheduled_time AS scheduled_time_priority,
+            td.scheduled_date AS scheduled_date_priority,
+            td.scheduled_time AS scheduled_time_priority,
             td.deadline_date AS deadline_date_priority,
             td.deadline_time AS deadline_time_priority,
             rd.task_id IS NOT NULL AS recurring_priority,
@@ -261,10 +261,15 @@ interface TaskDao {
         JOIN task td ON p.descendant = td.id
         LEFT JOIN (SELECT DISTINCT task_id FROM task_recurrence) rd ON rd.task_id = td.id
         ORDER BY
+            t.scheduled_date IS NULL,
+            t.scheduled_date,
+            t.scheduled_time IS NULL,
+            t.scheduled_time,
             scheduled_date_priority IS NULL,
             scheduled_date_priority,
             scheduled_time_priority IS NULL,
             scheduled_time_priority,
+            NOT recurring_priority OR deadline_time_priority IS NULL,
             start_after_time_priority IS NOT NULL,
             recurring_priority DESC,
             deadline_date_priority IS NULL,
