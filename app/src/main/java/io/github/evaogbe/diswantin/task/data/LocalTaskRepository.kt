@@ -31,11 +31,22 @@ class LocalTaskRepository @Inject constructor(
                 priorities.sortedWith(
                     compareBy<TaskPriority, ZonedDateTime?>(nullsLast()) {
                         dateTimePartsToZonedDateTime(
+                            it.task.scheduledDate,
+                            it.task.scheduledTime,
+                            LocalTime.MIN,
+                        )
+                    }.thenComparing({
+                        dateTimePartsToZonedDateTime(
                             it.scheduledDatePriority,
                             it.scheduledTimePriority,
                             LocalTime.MIN,
                         )
-                    }
+                    }, nullsLast())
+                        .thenComparing { priority ->
+                            !priority.recurringPriority || priority.deadlineTimePriority?.let {
+                                it > params.currentTime.plusHours(1)
+                            } != false
+                        }
                         .thenComparing { it.startAfterTimePriority != null }
                         .thenComparing({
                             dateTimePartsToZonedDateTime(
