@@ -96,6 +96,7 @@ class TaskCategoryFormScreenTest {
                 .onParent()
                 .performTextInput(task.name.dropLast(1))
 
+            composeTestRule.waitForIdle()
             composeTestRule.waitUntilExactlyOneExists(hasText(task.name))
             composeTestRule.onNodeWithText(task.name).performClick()
         }
