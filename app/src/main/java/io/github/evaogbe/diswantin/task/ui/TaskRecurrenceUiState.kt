@@ -1,6 +1,5 @@
 package io.github.evaogbe.diswantin.task.ui
 
-import io.github.evaogbe.diswantin.data.weekOfMonthField
 import io.github.evaogbe.diswantin.task.data.RecurrenceType
 import io.github.evaogbe.diswantin.task.data.TaskRecurrence
 import kotlinx.collections.immutable.PersistentSet
@@ -11,6 +10,7 @@ import java.time.LocalDate
 import java.time.format.TextStyle
 import java.time.temporal.WeekFields
 import java.util.Locale
+import kotlin.math.ceil
 
 enum class TaskRecurrenceFormTopBarAction {
     Confirm
@@ -23,9 +23,9 @@ data class TaskRecurrenceUiState(
     val weekdays: PersistentSet<DayOfWeek>,
     private val locale: Locale,
 ) {
-    val startWeek = start.get(weekOfMonthField(locale))
+    val startWeek = ceil(start.dayOfMonth / 7.0).toInt()
 
-    val startWeekdayText = start.dayOfWeek.getDisplayName(TextStyle.FULL, locale)
+    val startWeekdayText: String = start.dayOfWeek.getDisplayName(TextStyle.FULL, locale)
 
     val weekdaysText: String
 

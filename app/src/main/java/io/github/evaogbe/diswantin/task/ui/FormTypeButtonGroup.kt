@@ -1,7 +1,6 @@
 package io.github.evaogbe.diswantin.task.ui
 
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -15,7 +14,6 @@ import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FormTypeButtonGroup(
     selectedIndex: Int,

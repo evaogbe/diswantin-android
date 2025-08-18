@@ -26,7 +26,6 @@ class LocalTaskRepository @Inject constructor(
             today = params.today,
             currentTime = params.currentTime,
             startOfToday = params.startOfToday,
-            week = params.week,
         )
             .map { priorities ->
                 priorities.sortedWith(

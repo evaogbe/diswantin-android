@@ -179,7 +179,6 @@ fun TaskCategoryFormScreen(
 
 const val TaskCategoryFormLayoutTestTag = "TaskCategoryFormLayoutTestTag"
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskCategoryFormLayout(
     isNew: Boolean,

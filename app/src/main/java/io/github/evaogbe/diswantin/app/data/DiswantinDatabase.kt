@@ -14,7 +14,6 @@ import androidx.room.TypeConverters
 import androidx.room.migration.AutoMigrationSpec
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
-import io.github.evaogbe.diswantin.data.weekOfMonthField
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskCategory
 import io.github.evaogbe.diswantin.task.data.TaskCategoryDao
@@ -29,10 +28,12 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.time.temporal.TemporalField
+import java.time.temporal.WeekFields
 import java.util.Locale
 
 @Database(
-    version = 30,
+    version = 31,
     entities = [
         Task::class,
         TaskFts::class,
@@ -63,6 +64,7 @@ import java.util.Locale
         AutoMigration(from = 25, to = 26),
         AutoMigration(from = 28, to = 29),
         AutoMigration(from = 29, to = 30),
+        AutoMigration(from = 30, to = 31, spec = DiswantinDatabase.Migration30to31::class),
     ]
 )
 @TypeConverters(Converters::class)
@@ -97,6 +99,9 @@ abstract class DiswantinDatabase : RoomDatabase() {
 
     @DeleteColumn(tableName = "task", columnName = "recurring")
     class Migration23to24 : AutoMigrationSpec
+
+    @DeleteColumn(tableName = "task_recurrence", columnName = "week")
+    class Migration30to31 : AutoMigrationSpec
 
     companion object {
         const val DB_NAME = "diswantin"
@@ -323,6 +328,9 @@ abstract class DiswantinDatabase : RoomDatabase() {
                 )
             }
         }
+
+        fun weekOfMonthField(locale: Locale = Locale.getDefault()): TemporalField =
+            WeekFields.of(WeekFields.of(locale).firstDayOfWeek, 1).weekOfMonth()
 
         val MIGRATION_26_27 = object : Migration(26, 27) {
             override fun migrate(db: SupportSQLiteDatabase) {

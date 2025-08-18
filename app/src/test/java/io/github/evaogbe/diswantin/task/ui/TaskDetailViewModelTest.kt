@@ -66,7 +66,6 @@ class TaskDetailViewModelTest {
                     start = LocalDate.parse("2024-08-22"),
                     type = RecurrenceType.Day,
                     step = 1,
-                    week = 4,
                 ),
             )
             insertChain(parentId = task1.id, childId = task2.id)
@@ -341,7 +340,6 @@ class TaskDetailViewModelTest {
                         start = LocalDate.parse("2024-01-01"),
                         type = RecurrenceType.Day,
                         step = 1,
-                        week = 1,
                     )
                 )
                 repeat(19) {
@@ -414,7 +412,6 @@ class TaskDetailViewModelTest {
                         start = LocalDate.parse("2024-01-01"),
                         type = RecurrenceType.Day,
                         step = 1,
-                        week = 1,
                     )
                 )
                 repeat(19) {

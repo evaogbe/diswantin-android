@@ -111,7 +111,6 @@ class TaskFormViewModelTest {
                         start = LocalDate.parse("2024-08-22"),
                         type = RecurrenceType.Day,
                         step = 1,
-                        week = 4,
                     )
                 )
                 insertTaskCategory(category, setOf(task.id))
@@ -735,7 +734,6 @@ class TaskFormViewModelTest {
                         start = LocalDate.parse("2024-08-22"),
                         type = RecurrenceType.Day,
                         step = 1,
-                        week = 4,
                     ),
                     TaskRecurrence::id,
                 )
@@ -871,14 +869,12 @@ class TaskFormViewModelTest {
                     start = LocalDate.parse("2024-08-22"),
                     type = RecurrenceType.Week,
                     step = 2,
-                    week = 4,
                 ),
                 TaskRecurrence(
                     taskId = task.id,
                     start = LocalDate.parse("2024-08-26"),
                     type = RecurrenceType.Week,
                     step = 2,
-                    week = 5,
                 ),
             )
         }

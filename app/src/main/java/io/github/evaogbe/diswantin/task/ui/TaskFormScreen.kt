@@ -284,7 +284,9 @@ fun TaskFormLayout(
                 }
             }
 
-            if (uiState.scheduledTime == null) {
+            if ((uiState.recurrence == null && uiState.scheduledDate == null)
+                || (uiState.recurrence != null && uiState.scheduledTime == null)
+            ) {
                 if (uiState.deadlineDate != null) {
                     Column {
                         Text(
@@ -392,6 +394,20 @@ fun TaskFormLayout(
                         text = stringResource(R.string.add_start_after_time_button),
                     )
                 }
+
+                if (uiState.canSchedule) {
+                    TextButtonWithIcon(
+                        onClick = {
+                            dialogType = if (uiState.recurrence == null) {
+                                FieldDialogType.ScheduledDate
+                            } else {
+                                FieldDialogType.ScheduledTime
+                            }
+                        },
+                        painter = painterResource(R.drawable.baseline_schedule_24),
+                        text = stringResource(R.string.add_scheduled_at_button),
+                    )
+                }
             } else {
                 if (uiState.scheduledDate != null) {
                     Column {
@@ -412,43 +428,31 @@ fun TaskFormLayout(
                             )
                         }
                     }
-                } else if (uiState.recurrence == null) {
-                    TextButtonWithIcon(
-                        onClick = { dialogType = FieldDialogType.ScheduledDate },
-                        painter = painterResource(R.drawable.baseline_schedule_24),
-                        text = stringResource(R.string.add_scheduled_date_button),
-                    )
                 }
 
-                Column {
-                    Text(
-                        text = stringResource(R.string.scheduled_time_label),
-                        style = typography.bodyLarge,
+                if (uiState.scheduledTime == null) {
+                    TextButtonWithIcon(
+                        onClick = { dialogType = FieldDialogType.ScheduledTime },
+                        painter = painterResource(R.drawable.baseline_schedule_24),
+                        text = stringResource(R.string.add_scheduled_time_button),
                     )
-                    Spacer(Modifier.size(SpaceSm))
-                    ClearableLayout(onClear = { onScheduledTimeChange(null) }, invert = false) {
-                        EditFieldButton(
-                            onClick = { dialogType = FieldDialogType.ScheduledTime },
-                            text = uiState.scheduledTime.format(
-                                DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
-                            ),
+                } else {
+                    Column {
+                        Text(
+                            text = stringResource(R.string.scheduled_time_label),
+                            style = typography.bodyLarge,
                         )
+                        Spacer(Modifier.size(SpaceSm))
+                        ClearableLayout(onClear = { onScheduledTimeChange(null) }, invert = false) {
+                            EditFieldButton(
+                                onClick = { dialogType = FieldDialogType.ScheduledTime },
+                                text = uiState.scheduledTime.format(
+                                    DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
+                                ),
+                            )
+                        }
                     }
                 }
-            }
-
-            if (uiState.canSchedule && uiState.scheduledTime == null) {
-                TextButtonWithIcon(
-                    onClick = {
-                        dialogType = if (uiState.recurrence == null) {
-                            FieldDialogType.ScheduledDate
-                        } else {
-                            FieldDialogType.ScheduledTime
-                        }
-                    },
-                    painter = painterResource(R.drawable.baseline_schedule_24),
-                    text = stringResource(R.string.add_scheduled_at_button),
-                )
             }
 
             if (uiState.showParentTaskField) {

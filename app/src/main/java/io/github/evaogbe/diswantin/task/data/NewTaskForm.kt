@@ -41,8 +41,9 @@ data class NewTaskForm(
                 |scheduledDate: $scheduledDate, and
                 |scheduledTime: $scheduledTime""".trimMargin()
         }
-        require(scheduledTime != null || scheduledDate == null) {
-            "Must have scheduledTime if scheduledDate is set, but got scheduledDate: $scheduledDate"
+        require(scheduledTime == null || scheduledDate != null || recurrences.isNotEmpty()) {
+            """Must have scheduledDate if scheduledTime is set for non-recurring tasks, but got
+                |scheduledTime: $scheduledTime""".trimMargin()
         }
         require(recurrences.isEmpty() || deadlineDate == null) {
             """Must not set deadline date for recurring tasks, but got 
