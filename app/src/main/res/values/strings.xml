@@ -17,14 +17,9 @@
     <string name="child_tasks_label">Next to-dos</string>
     <string name="clear_button">Clear</string>
     <string name="close_button">Close</string>
-    <plurals name="completed_tasks_celebration_message">
-        <item quantity="one">Congratulations! You\'ve completed %1$d task!</item>
-        <item quantity="other">Congratulations! You\'ve completed %1$d tasks!</item>
-    </plurals>
     <string name="current_task_add_parent_error">Something went wrong adding the previous to-do</string>
     <string name="current_task_empty">No upcoming to-dos</string>
     <string name="current_task_fetch_error">Something went wrong loading the current to-do</string>
-    <string name="current_task_fetch_completion_error">Something went wrong loading to-do info</string>
     <string name="current_task_fetch_recurrences_error">Something went wrong loading to-do info</string>
     <string name="current_task_mark_done_button">Done</string>
     <string name="current_task_mark_done_error">Something went wrong marking the to-do as done</string>
@@ -172,7 +167,6 @@
     <string name="task_category_list_title">Categories</string>
     <string name="task_detail_delete_error">Something went wrong deleting the to-do</string>
     <string name="task_detail_fetch_error">Something went wrong loading the to-do</string>
-    <string name="task_detail_fetch_completion_error">Something went wrong loading to-do info</string>
     <string name="task_detail_mark_done_error">Something went wrong marking the to-do as done</string>
     <string name="task_detail_unmark_done_error">Something went wrong unmarking the to-do as done</string>
     <string name="task_name_done">%1$s, done</string>

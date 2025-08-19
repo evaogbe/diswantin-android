@@ -715,9 +715,6 @@ interface TaskDao {
     @Query("SELECT COUNT(*) FROM task")
     fun getCount(): Flow<Long>
 
-    @Query("SELECT COUNT(*) FROM task_completion")
-    fun getCompletionCount(): Flow<Long>
-
     @Insert
     suspend fun insert(task: Task): Long
 
