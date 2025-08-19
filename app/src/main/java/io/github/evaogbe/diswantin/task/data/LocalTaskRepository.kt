@@ -40,6 +40,12 @@ class LocalTaskRepository @Inject constructor(
                     LocalTime.MIN,
                 )
             }, nullsLast()).thenComparing { priority ->
+                priority.task.deadlineDate?.let { it >= params.today } != false
+            }.thenComparing { priority ->
+                priority.task.deadlineTime?.let {
+                    it > params.currentTime.plusHours(1)
+                } != false
+            }.thenComparing { priority ->
                 priority.deadlineDatePriority?.let { it >= params.today } != false
             }.thenComparing { priority ->
                 priority.deadlineTimePriority?.let {

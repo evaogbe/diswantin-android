@@ -270,6 +270,8 @@ interface TaskDao {
             scheduled_time_priority IS NULL,
             scheduled_time_priority,
             recurring_priority DESC,
+            t.deadline_date IS NULL,
+            t.deadline_time IS NULL,
             deadline_date_priority IS NULL,
             deadline_time_priority IS NULL,
             start_after_time_priority IS NOT NULL,
