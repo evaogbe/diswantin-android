@@ -80,9 +80,9 @@ class FakeTaskRepository(
                 LocalTime.MIN,
             )
         }, nullsLast()).thenComparing { (task) ->
-            !taskRecurrences.values.any { it.taskId == task.id } || task.deadlineTime?.let {
-                it > params.currentTime.plusHours(1)
-            } != false
+            task.deadlineDate?.let { it >= params.today } != false
+        }.thenComparing { (task) ->
+            task.deadlineTime?.let { it > params.currentTime.plusHours(1) } != false
         }.thenComparing { (task) -> task.startAfterTime != null }.thenComparing({ (task) ->
             dateTimePartsToZonedDateTime(
                 task.deadlineDate,
@@ -178,8 +178,7 @@ class FakeTaskRepository(
                 task to taskRecurrences.values.filter { it.taskId == task.id }
             }.filter { (task, recurrences) ->
                 task.name.contains(
-                    criteria.name,
-                    ignoreCase = true
+                    criteria.name, ignoreCase = true
                 ) && criteria.deadlineDateRange?.let { (start, end) ->
                     if (recurrences.isEmpty()) {
                         task.deadlineDate?.let { it in (start..end) } == true
