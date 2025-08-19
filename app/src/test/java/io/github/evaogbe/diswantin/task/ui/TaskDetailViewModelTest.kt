@@ -8,7 +8,6 @@ import assertk.assertions.prop
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.RecurrenceType
 import io.github.evaogbe.diswantin.task.data.Task
-import io.github.evaogbe.diswantin.task.data.TaskCompletion
 import io.github.evaogbe.diswantin.task.data.TaskDetail
 import io.github.evaogbe.diswantin.task.data.TaskRecurrence
 import io.github.evaogbe.diswantin.testing.FakeDatabase
@@ -71,8 +70,7 @@ class TaskDetailViewModelTest {
             insertChain(parentId = task1.id, childId = task2.id)
         }
         val taskRepository = FakeTaskRepository(db, clock)
-        val viewModel =
-            TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock, locale)
+        val viewModel = TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock, locale)
 
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect()
@@ -98,23 +96,20 @@ class TaskDetailViewModelTest {
     }
 
     @Test
-    fun `uiState emits failure when task not found`() =
-        runTest(mainDispatcherRule.testDispatcher) {
-            val clock = createClock()
-            val db = FakeDatabase()
-            val taskRepository = FakeTaskRepository(db, clock)
-            val viewModel =
-                TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock, Locale.US)
+    fun `uiState emits failure when task not found`() = runTest(mainDispatcherRule.testDispatcher) {
+        val clock = createClock()
+        val db = FakeDatabase()
+        val taskRepository = FakeTaskRepository(db, clock)
+        val viewModel =
+            TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock, Locale.US)
 
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-                viewModel.uiState.collect()
-            }
-
-            assertThat(viewModel.uiState.value)
-                .isInstanceOf<TaskDetailUiState.Failure>()
-                .prop(TaskDetailUiState.Failure::exception)
-                .isInstanceOf<NullPointerException>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiState.collect()
         }
+
+        assertThat(viewModel.uiState.value).isInstanceOf<TaskDetailUiState.Failure>()
+            .prop(TaskDetailUiState.Failure::exception).isInstanceOf<NullPointerException>()
+    }
 
     @Test
     fun `uiState emits failure when fetch task detail throws`() =
@@ -320,151 +315,6 @@ class TaskDetailViewModelTest {
                     recurrence = null,
                     childTasks = persistentListOf(),
                     userMessage = UserMessage.String(R.string.task_detail_mark_done_error),
-                    clock = clock,
-                )
-            )
-        }
-
-    @Test
-    fun `markTaskDone shows celebration message when multiple of 20 completed`() =
-        runTest(mainDispatcherRule.testDispatcher) {
-            val clock =
-                Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
-            val locale = Locale.US
-            val task = genTask()
-            val db = FakeDatabase().apply {
-                insertTask(task)
-                insertTaskRecurrence(
-                    TaskRecurrence(
-                        taskId = task.id,
-                        start = LocalDate.parse("2024-01-01"),
-                        type = RecurrenceType.Day,
-                        step = 1,
-                    )
-                )
-                repeat(19) {
-                    insertTaskCompletion(
-                        TaskCompletion(
-                            taskId = task.id,
-                            // 1704157200 = 2024-01-02T00:00:00Z
-                            doneAt = Instant.ofEpochMilli(1704153600L + 86400000L * it)
-                        )
-                    )
-                }
-            }
-            val taskRepository = FakeTaskRepository(db, clock)
-            val viewModel =
-                TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock, locale)
-
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-                viewModel.uiState.collect()
-            }
-
-            viewModel.markTaskDone()
-
-            assertThat(viewModel.uiState.value).isEqualTo(
-                TaskDetailUiState.Success(
-                    task = TaskDetail(
-                        id = task.id,
-                        name = task.name,
-                        note = task.note,
-                        deadlineDate = task.deadlineDate,
-                        deadlineTime = task.deadlineTime,
-                        startAfterDate = task.startAfterDate,
-                        startAfterTime = task.startAfterTime,
-                        scheduledDate = task.scheduledDate,
-                        scheduledTime = task.scheduledTime,
-                        doneAt = Instant.parse("2024-08-22T08:00:00Z"),
-                        categoryId = null,
-                        categoryName = null,
-                        parentId = null,
-                        parentName = null,
-                    ),
-                    recurrence = TaskRecurrenceUiState(
-                        start = LocalDate.parse("2024-01-01"),
-                        type = RecurrenceType.Day,
-                        step = 1,
-                        weekdays = persistentSetOf(),
-                        locale = locale,
-                    ),
-                    childTasks = persistentListOf(),
-                    userMessage = UserMessage.Plural(
-                        R.plurals.completed_tasks_celebration_message,
-                        20,
-                    ),
-                    clock = clock,
-                )
-            )
-        }
-
-    @Test
-    fun `markTaskDone shows error message when fetch completion count throws`() =
-        runTest(mainDispatcherRule.testDispatcher) {
-            val clock =
-                Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
-            val locale = Locale.US
-            val task = genTask()
-            val db = FakeDatabase().apply {
-                insertTask(task)
-                insertTaskRecurrence(
-                    TaskRecurrence(
-                        taskId = task.id,
-                        start = LocalDate.parse("2024-01-01"),
-                        type = RecurrenceType.Day,
-                        step = 1,
-                    )
-                )
-                repeat(19) {
-                    insertTaskCompletion(
-                        TaskCompletion(
-                            taskId = task.id,
-                            // 1704157200 = 2024-01-02T00:00:00Z
-                            doneAt = Instant.ofEpochMilli(1704153600L + 86400000L * it)
-                        )
-                    )
-                }
-            }
-            val taskRepository = spyk(FakeTaskRepository(db, clock))
-            every { taskRepository.getCompletionCount() } returns flow {
-                throw RuntimeException("Test")
-            }
-
-            val viewModel =
-                TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock, locale)
-
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-                viewModel.uiState.collect()
-            }
-
-            viewModel.markTaskDone()
-
-            assertThat(viewModel.uiState.value).isEqualTo(
-                TaskDetailUiState.Success(
-                    task = TaskDetail(
-                        id = task.id,
-                        name = task.name,
-                        note = task.note,
-                        deadlineDate = task.deadlineDate,
-                        deadlineTime = task.deadlineTime,
-                        startAfterDate = task.startAfterDate,
-                        startAfterTime = task.startAfterTime,
-                        scheduledDate = task.scheduledDate,
-                        scheduledTime = task.scheduledTime,
-                        doneAt = Instant.parse("2024-08-22T08:00:00Z"),
-                        categoryId = null,
-                        categoryName = null,
-                        parentId = null,
-                        parentName = null,
-                    ),
-                    recurrence = TaskRecurrenceUiState(
-                        start = LocalDate.parse("2024-01-01"),
-                        type = RecurrenceType.Day,
-                        step = 1,
-                        weekdays = persistentSetOf(),
-                        locale = locale,
-                    ),
-                    childTasks = persistentListOf(),
-                    userMessage = UserMessage.String(R.string.task_detail_fetch_completion_error),
                     clock = clock,
                 )
             )

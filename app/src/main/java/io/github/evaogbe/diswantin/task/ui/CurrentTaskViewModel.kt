@@ -16,7 +16,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -46,41 +45,37 @@ class CurrentTaskViewModel @Inject constructor(
     @OptIn(ExperimentalCoroutinesApi::class)
     val uiState = currentTaskParams.flatMapLatest {
         _isRefreshing.value = true
-        taskRepository.getCurrentTask(it)
-            .onEach { _isRefreshing.value = false }
-            .map<Task?, Result<Task?>> { Result.Success(it) }
-            .catch { e ->
+        taskRepository.getCurrentTask(it).onEach { _isRefreshing.value = false }
+            .map<Task?, Result<Task?>> { Result.Success(it) }.catch { e ->
                 Timber.e(e, "Failed to fetch current task")
                 emit(Result.Failure(e))
             }
-    }
-        .flatMapLatest { taskResult ->
-            taskResult.fold(
-                onSuccess = { task ->
-                    task?.let { t ->
-                        taskRepository.getTaskRecurrencesByTaskId(t.id)
-                            .map<List<TaskRecurrence>, CurrentTaskUiState> {
-                                CurrentTaskUiState.Present(
-                                    currentTask = t,
-                                    canSkip = it.isNotEmpty(),
-                                )
-                            }
-                            .catch { e ->
-                                Timber.e(e, "Failed to fetch current task recurrences")
-                                _userMessage.value = UserMessage.String(
-                                    R.string.current_task_fetch_recurrences_error,
-                                )
-                                emit(CurrentTaskUiState.Present(currentTask = t, canSkip = false))
-                            }
-                    } ?: flowOf(CurrentTaskUiState.Empty)
-                },
-                onFailure = { flowOf(CurrentTaskUiState.Failure(it)) },
-            )
-        }.stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000L),
-            initialValue = CurrentTaskUiState.Pending,
+    }.flatMapLatest { taskResult ->
+        taskResult.fold(
+            onSuccess = { task ->
+                task?.let { t ->
+                    taskRepository.getTaskRecurrencesByTaskId(t.id)
+                        .map<List<TaskRecurrence>, CurrentTaskUiState> {
+                            CurrentTaskUiState.Present(
+                                currentTask = t,
+                                canSkip = it.isNotEmpty(),
+                            )
+                        }.catch { e ->
+                            Timber.e(e, "Failed to fetch current task recurrences")
+                            _userMessage.value = UserMessage.String(
+                                R.string.current_task_fetch_recurrences_error,
+                            )
+                            emit(CurrentTaskUiState.Present(currentTask = t, canSkip = false))
+                        }
+                } ?: flowOf(CurrentTaskUiState.Empty)
+            },
+            onFailure = { flowOf(CurrentTaskUiState.Failure(it)) },
         )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000L),
+        initialValue = CurrentTaskUiState.Pending,
+    )
 
     fun refresh() {
         currentTaskParams.value = CurrentTaskParams(ZonedDateTime.now(clock))
@@ -120,22 +115,6 @@ class CurrentTaskViewModel @Inject constructor(
 
             if (markedDone) {
                 currentTaskParams.value = CurrentTaskParams(ZonedDateTime.now(clock))
-
-                try {
-                    val completionCount = taskRepository.getCompletionCount().first().toInt()
-                    if (completionCount % 20 == 0) {
-                        _userMessage.value = UserMessage.Plural(
-                            R.plurals.completed_tasks_celebration_message,
-                            completionCount,
-                        )
-                    }
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    Timber.e(e, "Failed to fetch completion count")
-                    _userMessage.value =
-                        UserMessage.String(R.string.current_task_fetch_completion_error)
-                }
             }
         }
     }

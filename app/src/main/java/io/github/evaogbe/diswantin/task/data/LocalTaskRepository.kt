@@ -146,8 +146,6 @@ class LocalTaskRepository @Inject constructor(
 
     override fun getCount() = taskDao.getCount().flowOn(ioDispatcher)
 
-    override fun getCompletionCount() = taskDao.getCompletionCount().flowOn(ioDispatcher)
-
     override suspend fun create(form: NewTaskForm): Task {
         val task = form.newTask
         return withContext(ioDispatcher) {

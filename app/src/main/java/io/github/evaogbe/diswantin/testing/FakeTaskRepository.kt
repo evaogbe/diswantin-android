@@ -268,8 +268,6 @@ class FakeTaskRepository(
 
     override fun getCount() = db.taskTable.map { it.size.toLong() }
 
-    override fun getCompletionCount() = db.taskCompletionTable.map { it.size.toLong() }
-
     override suspend fun create(form: NewTaskForm): Task {
         val task = db.insertTask(form.newTask)
         form.recurrences.forEach { db.insertTaskRecurrence(it.copy(taskId = task.id)) }

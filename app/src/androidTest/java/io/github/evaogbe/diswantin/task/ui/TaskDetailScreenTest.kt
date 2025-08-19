@@ -10,10 +10,7 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isTrue
 import io.github.evaogbe.diswantin.R
-import io.github.evaogbe.diswantin.task.data.RecurrenceType
 import io.github.evaogbe.diswantin.task.data.Task
-import io.github.evaogbe.diswantin.task.data.TaskCompletion
-import io.github.evaogbe.diswantin.task.data.TaskRecurrence
 import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.stringResource
@@ -76,8 +73,7 @@ class TaskDetailScreenTest {
 
         composeTestRule.onNodeWithText(task.name).assertIsDisplayed()
         composeTestRule.onNode(
-            hasText("Friday, August 23, 2024 at 5:00 PM") or
-                    hasText("Friday, August 23, 2024 at 5:00 PM")
+            hasText("Friday, August 23, 2024 at 5:00 PM") or hasText("Friday, August 23, 2024 at 5:00 PM")
         ).assertIsDisplayed()
     }
 
@@ -199,122 +195,6 @@ class TaskDetailScreenTest {
 
         composeTestRule.waitUntil {
             userMessage == UserMessage.String(R.string.task_detail_mark_done_error)
-        }
-    }
-
-    @Test
-    fun displaysCelebrationMessage_whenCompletionCountMultipleOf20() {
-        var userMessage: UserMessage? = null
-        val clock =
-            Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
-        val task = genTask()
-        val db = FakeDatabase().apply {
-            insertTask(task)
-            insertTaskRecurrence(
-                TaskRecurrence(
-                    taskId = task.id,
-                    start = LocalDate.parse("2024-01-01"),
-                    type = RecurrenceType.Day,
-                    step = 1,
-                )
-            )
-            repeat(19) {
-                insertTaskCompletion(
-                    TaskCompletion(
-                        taskId = task.id,
-                        // 1704157200 = 2024-01-02T00:00:00Z
-                        doneAt = Instant.ofEpochMilli(1704153600L + 86400000L * it)
-                    )
-                )
-            }
-        }
-        val taskRepository = FakeTaskRepository(db, clock)
-        val viewModel = TaskDetailViewModel(
-            createSavedStateHandle(),
-            taskRepository,
-            clock,
-            Locale.US,
-        )
-
-        composeTestRule.setContent {
-            DiswantinTheme {
-                TaskDetailScreen(
-                    onPopBackStack = {},
-                    setTopBarState = {},
-                    topBarAction = null,
-                    topBarActionHandled = {},
-                    setUserMessage = { userMessage = it },
-                    onNavigateToTask = {},
-                    onNavigateToCategory = {},
-                    taskDetailViewModel = viewModel,
-                )
-            }
-        }
-
-        viewModel.markTaskDone()
-
-        composeTestRule.waitUntil {
-            userMessage == UserMessage.Plural(R.plurals.completed_tasks_celebration_message, 20)
-        }
-    }
-
-    @Test
-    fun displaysErrorMessage_whenFetchCompletionCountFails() {
-        var userMessage: UserMessage? = null
-        val clock =
-            Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
-        val task = genTask()
-        val db = FakeDatabase().apply {
-            insertTask(task)
-            insertTaskRecurrence(
-                TaskRecurrence(
-                    taskId = task.id,
-                    start = LocalDate.parse("2024-01-01"),
-                    type = RecurrenceType.Day,
-                    step = 1,
-                )
-            )
-            repeat(19) {
-                insertTaskCompletion(
-                    TaskCompletion(
-                        taskId = task.id,
-                        // 1704157200 = 2024-01-02T00:00:00Z
-                        doneAt = Instant.ofEpochMilli(1704153600L + 86400000L * it)
-                    )
-                )
-            }
-        }
-        val taskRepository = spyk(FakeTaskRepository(db, clock))
-        every { taskRepository.getCompletionCount() } returns flow {
-            throw RuntimeException("Test")
-        }
-
-        val viewModel = TaskDetailViewModel(
-            createSavedStateHandle(),
-            taskRepository,
-            clock,
-            Locale.US,
-        )
-
-        composeTestRule.setContent {
-            DiswantinTheme {
-                TaskDetailScreen(
-                    onPopBackStack = {},
-                    setTopBarState = {},
-                    topBarAction = null,
-                    topBarActionHandled = {},
-                    setUserMessage = { userMessage = it },
-                    onNavigateToTask = {},
-                    onNavigateToCategory = {},
-                    taskDetailViewModel = viewModel,
-                )
-            }
-        }
-
-        viewModel.markTaskDone()
-
-        composeTestRule.waitUntil {
-            userMessage == UserMessage.String(R.string.task_detail_fetch_completion_error)
         }
     }
 
