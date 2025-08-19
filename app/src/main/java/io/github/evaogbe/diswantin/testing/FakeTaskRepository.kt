@@ -46,13 +46,11 @@ class FakeTaskRepository(
             }
             val doneAt =
                 taskCompletions.values.filter { it.taskId == task.id }.maxOfOrNull { it.doneAt }
-            val isDone =
-                doneAt != null && (recurrences.isEmpty() || doneAt >= params.startOfToday)
+            val isDone = doneAt != null && (recurrences.isEmpty() || doneAt >= params.startOfToday)
             val isSkipped =
                 taskSkips.values.filter { it.taskId == task.id }.maxOfOrNull { it.skippedAt }
                     ?.let { it >= params.startOfToday } == true
-            val doesRecurToday =
-                recurrences.isEmpty() || doesRecurOnDate(recurrences, params.today)
+            val doesRecurToday = recurrences.isEmpty() || doesRecurOnDate(recurrences, params.today)
             val isScheduledFuture = isScheduledAtFuture(task, params.now)
             val doesStartFuture = doesStartAfterFuture(task, params.now)
             !isDone && !isSkipped && doesRecurToday && !isScheduledFuture && !doesStartFuture
@@ -206,6 +204,8 @@ class FakeTaskRepository(
                             if (it < end) it.plusDays(1) else null
                         }.any { doesRecurOnDate(recurrences, it) }
                     }
+                } != false && criteria.recurrenceDate?.let {
+                    doesRecurOnDate(recurrences, it)
                 } != false
             }.map { (task, recurrences) ->
                 TaskItem(
@@ -237,11 +237,9 @@ class FakeTaskRepository(
         db.taskCompletionTable,
     ) { tasks, taskPaths, taskRecurrences, taskCompletions ->
         taskPaths.values.filter { it.ancestor == id && it.depth == 1 }
-            .mapNotNull { tasks[it.descendant] }
-            .sortedWith(
+            .mapNotNull { tasks[it.descendant] }.sortedWith(
                 compareBy(nullsLast(), Task::scheduledDate).thenComparing(
-                    Task::scheduledTime,
-                    nullsLast()
+                    Task::scheduledTime, nullsLast()
                 ).thenComparing { task ->
                     !taskRecurrences.values.any { it.taskId == task.id }
                 }.thenComparing(Task::deadlineDate, nullsLast())

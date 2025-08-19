@@ -31,12 +31,11 @@ class TaskSearchViewModel @Inject constructor(
     @OptIn(ExperimentalCoroutinesApi::class)
     val searchResultPagingData = criteria.filterNot { it.isEmpty }.flatMapLatest { criteria ->
         val doneBefore = ZonedDateTime.now(clock).with(LocalTime.MIN).toInstant()
-        taskRepository.searchTaskItems(criteria)
-            .map { searchResults ->
-                searchResults.map {
-                    TaskItemUiState.fromTaskItem(it, doneBefore)
-                }
+        taskRepository.searchTaskItems(criteria).map { searchResults ->
+            searchResults.map {
+                TaskItemUiState.fromTaskItem(it, doneBefore)
             }
+        }
     }.cachedIn(viewModelScope)
 
     val uiState = criteria.map { criteria ->
@@ -53,6 +52,7 @@ class TaskSearchViewModel @Inject constructor(
         startAfterDateRange: Pair<LocalDate, LocalDate>?,
         scheduledDateRange: Pair<LocalDate, LocalDate>?,
         doneDateRange: Pair<LocalDate, LocalDate>?,
+        recurrenceDate: LocalDate?,
     ) {
         criteria.value = TaskSearchCriteria(
             name = name.trim(),
@@ -60,13 +60,11 @@ class TaskSearchViewModel @Inject constructor(
             startAfterDateRange = startAfterDateRange,
             scheduledDateRange = scheduledDateRange,
             doneDateRange = doneDateRange,
+            recurrenceDate = recurrenceDate,
         )
     }
 }
 
-fun String.findOccurrences(query: String) =
-    query.trim().split("""\s+""".toRegex()).flatMap {
-        Pattern.quote(it).toRegex(RegexOption.IGNORE_CASE)
-            .findAll(this)
-            .map(MatchResult::range)
-    }
+fun String.findOccurrences(query: String) = query.trim().split("""\s+""".toRegex()).flatMap {
+    Pattern.quote(it).toRegex(RegexOption.IGNORE_CASE).findAll(this).map(MatchResult::range)
+}

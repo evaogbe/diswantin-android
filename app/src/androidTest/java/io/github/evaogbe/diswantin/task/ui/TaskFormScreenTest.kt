@@ -16,9 +16,11 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isTrue
 import io.github.evaogbe.diswantin.R
+import io.github.evaogbe.diswantin.task.data.RecurrenceType
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskCategory
 import io.github.evaogbe.diswantin.task.data.TaskCategoryRepository
+import io.github.evaogbe.diswantin.task.data.TaskRecurrence
 import io.github.evaogbe.diswantin.task.data.TaskRepository
 import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTaskCategoryRepository
@@ -158,6 +160,368 @@ class TaskFormScreenTest {
     }
 
     @Test
+    fun displaysAllDateTimeButtonsInitially() {
+        val db = FakeDatabase()
+        val taskRepository = FakeTaskRepository(db)
+        val taskCategoryRepository = FakeTaskCategoryRepository(db)
+        val viewModel = createTaskFormViewModelForNew(taskRepository, taskCategoryRepository)
+
+        composeTestRule.setContent {
+            DiswantinTheme {
+                TaskFormScreen(
+                    onPopBackStack = {},
+                    setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
+                    setUserMessage = {},
+                    onSelectCategoryType = {},
+                    onEditRecurrence = {},
+                    taskFormViewModel = viewModel,
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(stringResource(R.string.add_deadline_date_button))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_deadline_time_button))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_start_after_date_button))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_start_after_time_button))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_scheduled_at_button))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_scheduled_time_button))
+            .assertDoesNotExist()
+    }
+
+    @Test
+    fun doesNotDisplayAddScheduleButton_whenNonRecurringTaskHasDeadline() {
+        val db = FakeDatabase().apply {
+            insertTask(genTask().copy(deadlineDate = faker.random.randomFutureDate().toLocalDate()))
+        }
+        val taskRepository = FakeTaskRepository(db)
+        val taskCategoryRepository = FakeTaskCategoryRepository(db)
+        val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
+
+        composeTestRule.setContent {
+            DiswantinTheme {
+                TaskFormScreen(
+                    onPopBackStack = {},
+                    setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
+                    setUserMessage = {},
+                    onSelectCategoryType = {},
+                    onEditRecurrence = {},
+                    taskFormViewModel = viewModel,
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(stringResource(R.string.deadline_date_label))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_deadline_time_button))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_start_after_date_button))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_start_after_time_button))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_scheduled_at_button))
+            .assertDoesNotExist()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_deadline_date_button))
+            .assertDoesNotExist()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_scheduled_time_button))
+            .assertDoesNotExist()
+    }
+
+
+    @Test
+    fun doesNotDisplayAddScheduleButton_whenNonRecurringTaskHasStartAfter() {
+        val db = FakeDatabase().apply {
+            insertTask(
+                genTask().copy(
+                    startAfterDate = faker.random.randomFutureDate().toLocalDate()
+                )
+            )
+        }
+        val taskRepository = FakeTaskRepository(db)
+        val taskCategoryRepository = FakeTaskCategoryRepository(db)
+        val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
+
+        composeTestRule.setContent {
+            DiswantinTheme {
+                TaskFormScreen(
+                    onPopBackStack = {},
+                    setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
+                    setUserMessage = {},
+                    onSelectCategoryType = {},
+                    onEditRecurrence = {},
+                    taskFormViewModel = viewModel,
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(stringResource(R.string.add_deadline_date_button))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_deadline_time_button))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(stringResource(R.string.start_after_date_label))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_start_after_time_button))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_start_after_date_button))
+            .assertDoesNotExist()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_scheduled_at_button))
+            .assertDoesNotExist()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_scheduled_time_button))
+            .assertDoesNotExist()
+    }
+
+    @Test
+    fun doesNotDisplayAddScheduleButton_whenRecurringTaskHasDeadline() {
+        val task = genTask().copy(deadlineTime = faker.random.randomFutureDate().toLocalTime())
+        val db = FakeDatabase().apply {
+            insertTask(task)
+            insertTaskRecurrence(
+                TaskRecurrence(
+                    taskId = task.id,
+                    start = faker.random.randomPastDate().toLocalDate(),
+                    type = RecurrenceType.Day,
+                    step = 1
+                )
+            )
+        }
+        val taskRepository = FakeTaskRepository(db)
+        val taskCategoryRepository = FakeTaskCategoryRepository(db)
+        val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
+
+        composeTestRule.setContent {
+            DiswantinTheme {
+                TaskFormScreen(
+                    onPopBackStack = {},
+                    setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
+                    setUserMessage = {},
+                    onSelectCategoryType = {},
+                    onEditRecurrence = {},
+                    taskFormViewModel = viewModel,
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(stringResource(R.string.deadline_time_label))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_start_after_time_button))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_deadline_date_button))
+            .assertDoesNotExist()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_deadline_time_button))
+            .assertDoesNotExist()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_start_after_date_button))
+            .assertDoesNotExist()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_scheduled_at_button))
+            .assertDoesNotExist()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_scheduled_time_button))
+            .assertDoesNotExist()
+    }
+
+    @Test
+    fun doesNotDisplayAddScheduleButton_whenRecurringTaskHasStartAfter() {
+        val task = genTask().copy(startAfterTime = faker.random.randomFutureDate().toLocalTime())
+        val db = FakeDatabase().apply {
+            insertTask(task)
+            insertTaskRecurrence(
+                TaskRecurrence(
+                    taskId = task.id,
+                    start = faker.random.randomPastDate().toLocalDate(),
+                    type = RecurrenceType.Day,
+                    step = 1
+                )
+            )
+        }
+        val taskRepository = FakeTaskRepository(db)
+        val taskCategoryRepository = FakeTaskCategoryRepository(db)
+        val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
+
+        composeTestRule.setContent {
+            DiswantinTheme {
+                TaskFormScreen(
+                    onPopBackStack = {},
+                    setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
+                    setUserMessage = {},
+                    onSelectCategoryType = {},
+                    onEditRecurrence = {},
+                    taskFormViewModel = viewModel,
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(stringResource(R.string.add_deadline_time_button))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(stringResource(R.string.start_after_time_label))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_deadline_date_button))
+            .assertDoesNotExist()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_start_after_date_button))
+            .assertDoesNotExist()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_start_after_time_button))
+            .assertDoesNotExist()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_scheduled_at_button))
+            .assertDoesNotExist()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_scheduled_time_button))
+            .assertDoesNotExist()
+    }
+
+    @Test
+    fun displaysAddScheduleTimeButton_whenNonRecurringTaskHasScheduledDate() {
+        val db = FakeDatabase().apply {
+            insertTask(
+                genTask().copy(
+                    scheduledDate = faker.random.randomFutureDate().toLocalDate()
+                )
+            )
+        }
+        val taskRepository = FakeTaskRepository(db)
+        val taskCategoryRepository = FakeTaskCategoryRepository(db)
+        val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
+
+        composeTestRule.setContent {
+            DiswantinTheme {
+                TaskFormScreen(
+                    onPopBackStack = {},
+                    setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
+                    setUserMessage = {},
+                    onSelectCategoryType = {},
+                    onEditRecurrence = {},
+                    taskFormViewModel = viewModel,
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(stringResource(R.string.scheduled_date_label))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_scheduled_time_button))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_deadline_date_button))
+            .assertDoesNotExist()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_deadline_time_button))
+            .assertDoesNotExist()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_start_after_date_button))
+            .assertDoesNotExist()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_start_after_time_button))
+            .assertDoesNotExist()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_scheduled_at_button))
+            .assertDoesNotExist()
+    }
+
+    @Test
+    fun displaysScheduleTime_whenNonRecurringTaskHasScheduledTime() {
+        val scheduledAt = faker.random.randomFutureDate()
+        val db = FakeDatabase().apply {
+            insertTask(
+                genTask().copy(
+                    scheduledDate = scheduledAt.toLocalDate(),
+                    scheduledTime = scheduledAt.toLocalTime()
+                )
+            )
+        }
+        val taskRepository = FakeTaskRepository(db)
+        val taskCategoryRepository = FakeTaskCategoryRepository(db)
+        val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
+
+        composeTestRule.setContent {
+            DiswantinTheme {
+                TaskFormScreen(
+                    onPopBackStack = {},
+                    setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
+                    setUserMessage = {},
+                    onSelectCategoryType = {},
+                    onEditRecurrence = {},
+                    taskFormViewModel = viewModel,
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(stringResource(R.string.scheduled_date_label))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(stringResource(R.string.scheduled_time_label))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_deadline_date_button))
+            .assertDoesNotExist()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_deadline_time_button))
+            .assertDoesNotExist()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_start_after_date_button))
+            .assertDoesNotExist()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_start_after_time_button))
+            .assertDoesNotExist()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_scheduled_at_button))
+            .assertDoesNotExist()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_scheduled_time_button))
+            .assertDoesNotExist()
+    }
+
+    @Test
+    fun displaysScheduledTime_whenRecurringTaskHasScheduledTime() {
+        val task = genTask().copy(scheduledTime = faker.random.randomFutureDate().toLocalTime())
+        val db = FakeDatabase().apply {
+            insertTask(task)
+            insertTaskRecurrence(
+                TaskRecurrence(
+                    taskId = task.id,
+                    start = faker.random.randomPastDate().toLocalDate(),
+                    type = RecurrenceType.Day,
+                    step = 1
+                )
+            )
+        }
+        val taskRepository = FakeTaskRepository(db)
+        val taskCategoryRepository = FakeTaskCategoryRepository(db)
+        val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
+
+        composeTestRule.setContent {
+            DiswantinTheme {
+                TaskFormScreen(
+                    onPopBackStack = {},
+                    setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
+                    setUserMessage = {},
+                    onSelectCategoryType = {},
+                    onEditRecurrence = {},
+                    taskFormViewModel = viewModel,
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(stringResource(R.string.scheduled_time_label))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_deadline_date_button))
+            .assertDoesNotExist()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_deadline_time_button))
+            .assertDoesNotExist()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_start_after_date_button))
+            .assertDoesNotExist()
+        composeTestRule.onNodeWithText(stringResource(R.string.start_after_time_label))
+            .assertDoesNotExist()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_start_after_time_button))
+            .assertDoesNotExist()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_scheduled_at_button))
+            .assertDoesNotExist()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_scheduled_time_button))
+            .assertDoesNotExist()
+    }
+
+    @Test
     fun displaysParentTaskField_whenHasOtherTasks() {
         val db = FakeDatabase().apply {
             insertTask(genTask())
@@ -183,8 +547,7 @@ class TaskFormScreenTest {
         }
 
         composeTestRule.onNodeWithText(
-            stringResource(R.string.parent_task_label),
-            useUnmergedTree = true
+            stringResource(R.string.parent_task_label), useUnmergedTree = true
         ).assertIsDisplayed()
     }
 
@@ -217,11 +580,9 @@ class TaskFormScreenTest {
         }
 
         composeTestRule.onNodeWithText(
-            stringResource(R.string.parent_task_label),
-            useUnmergedTree = true
+            stringResource(R.string.parent_task_label), useUnmergedTree = true
         ).assertDoesNotExist()
-        assertThat(userMessage)
-            .isEqualTo(UserMessage.String(R.string.task_form_fetch_parent_task_error))
+        assertThat(userMessage).isEqualTo(UserMessage.String(R.string.task_form_fetch_parent_task_error))
     }
 
     @Test
@@ -250,8 +611,7 @@ class TaskFormScreenTest {
         }
 
         composeTestRule.onNodeWithText(
-            stringResource(R.string.task_category_label),
-            useUnmergedTree = true
+            stringResource(R.string.task_category_label), useUnmergedTree = true
         ).assertIsDisplayed()
     }
 
@@ -286,11 +646,9 @@ class TaskFormScreenTest {
         }
 
         composeTestRule.onNodeWithText(
-            stringResource(R.string.task_category_label),
-            useUnmergedTree = true
+            stringResource(R.string.task_category_label), useUnmergedTree = true
         ).assertDoesNotExist()
-        assertThat(userMessage)
-            .isEqualTo(UserMessage.String(R.string.task_form_fetch_category_error))
+        assertThat(userMessage).isEqualTo(UserMessage.String(R.string.task_form_fetch_category_error))
     }
 
     @Test
@@ -326,11 +684,8 @@ class TaskFormScreenTest {
         }
 
         composeTestRule.onNodeWithText(
-            stringResource(R.string.parent_task_label),
-            useUnmergedTree = true
-        )
-            .onParent()
-            .performTextInput(query)
+            stringResource(R.string.parent_task_label), useUnmergedTree = true
+        ).onParent().performTextInput(query)
 
         composeTestRule.waitUntilExactlyOneExists(hasText(tasks[0].name))
         composeTestRule.onNodeWithText(tasks[0].name).assertIsDisplayed()
@@ -367,11 +722,8 @@ class TaskFormScreenTest {
         }
 
         composeTestRule.onNodeWithText(
-            stringResource(R.string.parent_task_label),
-            useUnmergedTree = true
-        )
-            .onParent()
-            .performTextInput(query)
+            stringResource(R.string.parent_task_label), useUnmergedTree = true
+        ).onParent().performTextInput(query)
 
         composeTestRule.waitUntil {
             userMessage == UserMessage.String(R.string.search_task_options_error)
@@ -408,12 +760,10 @@ class TaskFormScreenTest {
         }
 
         composeTestRule.onNodeWithText(
-            stringResource(R.string.task_category_label),
-            useUnmergedTree = true
-        )
-            .onParent()
-            .performTextInput(query)
+            stringResource(R.string.task_category_label), useUnmergedTree = true
+        ).onParent().performTextInput(query)
 
+        composeTestRule.waitForIdle()
         composeTestRule.waitUntilExactlyOneExists(hasText(categories[0].name))
         composeTestRule.onNodeWithText(categories[0].name).assertIsDisplayed()
         composeTestRule.onNodeWithText(categories[1].name).assertIsDisplayed()
@@ -453,11 +803,8 @@ class TaskFormScreenTest {
         }
 
         composeTestRule.onNodeWithText(
-            stringResource(R.string.task_category_label),
-            useUnmergedTree = true
-        )
-            .onParent()
-            .performTextInput(query)
+            stringResource(R.string.task_category_label), useUnmergedTree = true
+        ).onParent().performTextInput(query)
 
         composeTestRule.waitUntil {
             userMessage == UserMessage.String(R.string.search_task_category_options_error)
@@ -496,8 +843,7 @@ class TaskFormScreenTest {
             .assertIsDisplayed()
 
         composeTestRule.onNodeWithText(stringResource(R.string.name_label), useUnmergedTree = true)
-            .onParent()
-            .performTextInput(name)
+            .onParent().performTextInput(name)
         composeTestRule.onNodeWithText(stringResource(R.string.add_deadline_date_button))
             .performClick()
         composeTestRule.onNodeWithText(stringResource(R.string.ok_button)).performClick()
@@ -537,8 +883,7 @@ class TaskFormScreenTest {
             .assertDoesNotExist()
 
         composeTestRule.onNodeWithText(stringResource(R.string.name_label), useUnmergedTree = true)
-            .onParent()
-            .performTextInput(name)
+            .onParent().performTextInput(name)
         viewModel.saveTask()
 
         composeTestRule.waitUntil {
@@ -585,8 +930,7 @@ class TaskFormScreenTest {
             .assertDoesNotExist()
 
         composeTestRule.onNodeWithText(stringResource(R.string.name_label), useUnmergedTree = true)
-            .onParent()
-            .performTextReplacement(name)
+            .onParent().performTextReplacement(name)
         composeTestRule.onNodeWithContentDescription(stringResource(R.string.clear_button))
             .performClick()
         composeTestRule.onNodeWithText(stringResource(R.string.add_scheduled_at_button))
@@ -631,8 +975,7 @@ class TaskFormScreenTest {
             .assertDoesNotExist()
 
         composeTestRule.onNodeWithText(stringResource(R.string.name_label), useUnmergedTree = true)
-            .onParent()
-            .performTextReplacement(name)
+            .onParent().performTextReplacement(name)
         viewModel.saveTask()
 
         composeTestRule.waitUntil {
@@ -649,24 +992,22 @@ class TaskFormScreenTest {
     private fun createTaskFormViewModelForNew(
         taskRepository: TaskRepository,
         taskCategoryRepository: TaskCategoryRepository,
-    ) =
-        TaskFormViewModel(
-            SavedStateHandle(),
-            taskRepository,
-            taskCategoryRepository,
-            Clock.systemDefaultZone(),
-            Locale.getDefault(),
-        )
+    ) = TaskFormViewModel(
+        SavedStateHandle(),
+        taskRepository,
+        taskCategoryRepository,
+        Clock.systemDefaultZone(),
+        Locale.getDefault(),
+    )
 
     private fun createTaskFormViewModelForEdit(
         taskRepository: TaskRepository,
         taskCategoryRepository: TaskCategoryRepository,
-    ) =
-        TaskFormViewModel(
-            SavedStateHandle(mapOf(NavArguments.ID_KEY to 1L)),
-            taskRepository,
-            taskCategoryRepository,
-            Clock.systemDefaultZone(),
-            Locale.getDefault(),
-        )
+    ) = TaskFormViewModel(
+        SavedStateHandle(mapOf(NavArguments.ID_KEY to 1L)),
+        taskRepository,
+        taskCategoryRepository,
+        Clock.systemDefaultZone(),
+        Locale.getDefault(),
+    )
 }

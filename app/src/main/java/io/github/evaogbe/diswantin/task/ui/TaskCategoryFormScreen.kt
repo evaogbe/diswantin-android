@@ -153,8 +153,7 @@ fun TaskCategoryFormScreen(
     }
 
     when (val state = uiState) {
-        is TaskCategoryFormUiState.Pending,
-        is TaskCategoryFormUiState.Saved -> PendingLayout()
+        is TaskCategoryFormUiState.Pending, is TaskCategoryFormUiState.Saved -> PendingLayout()
 
         is TaskCategoryFormUiState.Failure -> {
             LoadFailureLayout(message = stringResource(R.string.task_category_form_fetch_error))
@@ -196,7 +195,7 @@ fun TaskCategoryFormLayout(
     val tasks = uiState.tasks
     val editingTaskIndex = uiState.editingTaskIndex
     var taskQuery by rememberSaveable(tasks, editingTaskIndex) {
-        mutableStateOf(editingTaskIndex?.let(tasks::getOrNull)?.name ?: "")
+        mutableStateOf(editingTaskIndex?.let(tasks::getOrNull)?.name.orEmpty())
     }
 
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
@@ -285,7 +284,7 @@ fun TaskCategoryFormLayout(
                     ) {
                         ListItem(
                             headlineContent = { Text(text = task.name) },
-                            modifier = Modifier.clickable { startEditTask(index) }
+                            modifier = Modifier.clickable { startEditTask(index) },
                         )
                     }
                 }

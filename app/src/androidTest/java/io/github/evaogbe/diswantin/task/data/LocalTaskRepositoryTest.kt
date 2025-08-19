@@ -40,8 +40,7 @@ class LocalTaskRepositoryTest {
     @Before
     fun setUp() {
         db = Room.inMemoryDatabaseBuilder(
-            ApplicationProvider.getApplicationContext(),
-            DiswantinDatabase::class.java
+            ApplicationProvider.getApplicationContext(), DiswantinDatabase::class.java
         ).build()
     }
 
@@ -59,50 +58,44 @@ class LocalTaskRepositoryTest {
         taskRepository.getCurrentTask(CurrentTaskParams(now)).test {
             assertThat(awaitItem()).isNull()
 
-            var task1 =
-                taskRepository.create(
-                    NewTaskForm(
-                        name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-                        note = "",
-                        deadlineDate = null,
-                        deadlineTime = null,
-                        startAfterDate = null,
-                        startAfterTime = null,
-                        scheduledDate = null,
-                        scheduledTime = null,
-                        categoryId = null,
-                        recurrences = emptyList(),
-                        parentTaskId = null,
-                        clock = clock,
-                    )
+            var task1 = taskRepository.create(
+                NewTaskForm(
+                    name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                    note = "",
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
+                    categoryId = null,
+                    recurrences = emptyList(),
+                    parentTaskId = null,
+                    clock = clock,
                 )
+            )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task1)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task1)
 
             // Created at ascending
-            var task2 =
-                taskRepository.create(
-                    NewTaskForm(
-                        name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-                        note = "",
-                        deadlineDate = null,
-                        deadlineTime = null,
-                        startAfterDate = null,
-                        startAfterTime = null,
-                        scheduledDate = null,
-                        scheduledTime = null,
-                        categoryId = null,
-                        recurrences = emptyList(),
-                        parentTaskId = null,
-                        clock = Clock.offset(clock, Duration.ofMillis(-1)),
-                    )
+            var task2 = taskRepository.create(
+                NewTaskForm(
+                    name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                    note = "",
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
+                    categoryId = null,
+                    recurrences = emptyList(),
+                    parentTaskId = null,
+                    clock = Clock.offset(clock, Duration.ofMillis(-1)),
                 )
+            )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task2)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task2)
 
             // Start after date nulls first
             task2 = taskRepository.update(
@@ -123,9 +116,7 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task1)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task1)
 
             // Start after date ascending
             task1 = taskRepository.update(
@@ -146,9 +137,7 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task2)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task2)
 
             // Deadline date before start after date
             task1 = taskRepository.update(
@@ -169,9 +158,7 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task1)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task1)
 
             // Deadline date ascending
             task2 = taskRepository.update(
@@ -192,9 +179,7 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task2)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task2)
 
             // Scheduled date before deadline date
             task1 = taskRepository.update(
@@ -215,9 +200,7 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task1)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task1)
 
             // Scheduled date ascending
             task2 = taskRepository.update(
@@ -238,9 +221,7 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task2)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task2)
 
             // Scheduled date before recurring
             task2 = taskRepository.update(
@@ -268,9 +249,7 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task1)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task1)
 
             // Recurring without start after time before non-recurring
             task1 = taskRepository.update(
@@ -291,9 +270,7 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task2)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task2)
 
             // Non-recurring before recurring with start after time
             var taskRecurrences2 = taskRepository.getTaskRecurrencesByTaskId(task2.id).first()
@@ -315,9 +292,7 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task1)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task1)
 
             // Start after time ascending
             task1 = taskRepository.update(
@@ -338,9 +313,7 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task2)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task2)
 
             // Default deadline time for recurring task is max time
             task1 = taskRepository.update(
@@ -361,9 +334,7 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task1)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task1)
 
             // Deadline time ascending
             task2 = taskRepository.update(
@@ -384,9 +355,7 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task2)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task2)
 
             // Deadline time before start after time
             task1 = taskRepository.update(
@@ -407,9 +376,7 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task1)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task1)
 
             // Overdue tasks before not due tasks
             task2 = taskRepository.update(
@@ -430,9 +397,7 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task2)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task2)
 
             // Scheduled time before deadline time
             task1 = taskRepository.update(
@@ -453,9 +418,7 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task1)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task1)
 
             // Scheduled time ascending
             task2 = taskRepository.update(
@@ -476,32 +439,27 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task2)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task2)
 
             // Earlier scheduled date with later scheduled time first
-            var task3 =
-                taskRepository.create(
-                    NewTaskForm(
-                        name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-                        note = "",
-                        deadlineDate = null,
-                        deadlineTime = null,
-                        startAfterDate = null,
-                        startAfterTime = null,
-                        scheduledDate = LocalDate.parse("2024-08-22"),
-                        scheduledTime = LocalTime.parse("13:01"),
-                        categoryId = null,
-                        recurrences = emptyList(),
-                        parentTaskId = null,
-                        clock = clock,
-                    )
+            var task3 = taskRepository.create(
+                NewTaskForm(
+                    name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                    note = "",
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = LocalDate.parse("2024-08-22"),
+                    scheduledTime = LocalTime.parse("13:01"),
+                    categoryId = null,
+                    recurrences = emptyList(),
+                    parentTaskId = null,
+                    clock = clock,
                 )
+            )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task3)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task3)
 
             // Parent task before child task
             task3 = taskRepository.update(
@@ -522,9 +480,7 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task2)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task2)
 
             // Scheduled time ordered by ancestor
             task2 = taskRepository.update(
@@ -545,9 +501,7 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task1)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task1)
 
             // Parent not occurring on day does not block child task
             task2 = taskRepository.update(
@@ -576,9 +530,7 @@ class LocalTaskRepositoryTest {
             )
             taskRecurrences2 = taskRepository.getTaskRecurrencesByTaskId(task2.id).first()
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task3)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task3)
 
             // Child task not occurring on day does not affect parent task priority
             taskRepository.update(
@@ -606,9 +558,7 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task1)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task1)
 
             task2 = taskRepository.update(
                 EditTaskForm(
@@ -635,9 +585,7 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task2)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task2)
         }
     }
 
@@ -650,27 +598,24 @@ class LocalTaskRepositoryTest {
         taskRepository.getCurrentTask(CurrentTaskParams(now)).test {
             assertThat(awaitItem()).isNull()
 
-            var task =
-                taskRepository.create(
-                    NewTaskForm(
-                        name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-                        note = "",
-                        deadlineDate = null,
-                        deadlineTime = null,
-                        startAfterDate = null,
-                        startAfterTime = null,
-                        scheduledDate = null,
-                        scheduledTime = null,
-                        categoryId = null,
-                        recurrences = emptyList(),
-                        parentTaskId = null,
-                        clock = clock,
-                    )
+            var task = taskRepository.create(
+                NewTaskForm(
+                    name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                    note = "",
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
+                    categoryId = null,
+                    recurrences = emptyList(),
+                    parentTaskId = null,
+                    clock = clock,
                 )
+            )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
 
             task = taskRepository.update(
                 EditTaskForm(
@@ -710,9 +655,7 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
 
             task = taskRepository.update(
                 EditTaskForm(
@@ -752,9 +695,7 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
 
             task = taskRepository.update(
                 EditTaskForm(
@@ -774,9 +715,7 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
 
             task = taskRepository.update(
                 EditTaskForm(
@@ -824,9 +763,7 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
         }
     }
 
@@ -839,27 +776,24 @@ class LocalTaskRepositoryTest {
         taskRepository.getCurrentTask(CurrentTaskParams(now)).test {
             assertThat(awaitItem()).isNull()
 
-            var task =
-                taskRepository.create(
-                    NewTaskForm(
-                        name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-                        note = "",
-                        deadlineDate = null,
-                        deadlineTime = null,
-                        startAfterDate = null,
-                        startAfterTime = null,
-                        scheduledDate = null,
-                        scheduledTime = null,
-                        categoryId = null,
-                        recurrences = emptyList(),
-                        parentTaskId = null,
-                        clock = clock,
-                    )
+            var task = taskRepository.create(
+                NewTaskForm(
+                    name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                    note = "",
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
+                    categoryId = null,
+                    recurrences = emptyList(),
+                    parentTaskId = null,
+                    clock = clock,
                 )
+            )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
 
             task = taskRepository.update(
                 EditTaskForm(
@@ -899,9 +833,7 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
 
             task = taskRepository.update(
                 EditTaskForm(
@@ -941,9 +873,7 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
 
             task = taskRepository.update(
                 EditTaskForm(
@@ -998,9 +928,7 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
         }
     }
 
@@ -1013,60 +941,54 @@ class LocalTaskRepositoryTest {
         taskRepository.getCurrentTask(CurrentTaskParams(now)).test {
             assertThat(awaitItem()).isNull()
 
-            val task1 =
-                taskRepository.create(
-                    NewTaskForm(
-                        name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-                        note = "",
-                        deadlineDate = null,
-                        deadlineTime = null,
-                        startAfterDate = null,
-                        startAfterTime = null,
-                        scheduledDate = null,
-                        scheduledTime = null,
-                        categoryId = null,
-                        recurrences = listOf(
-                            TaskRecurrence(
-                                taskId = 0L,
-                                start = LocalDate.parse("2024-08-23"),
-                                type = RecurrenceType.Day,
-                                step = 1,
-                            ),
+            val task1 = taskRepository.create(
+                NewTaskForm(
+                    name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                    note = "",
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
+                    categoryId = null,
+                    recurrences = listOf(
+                        TaskRecurrence(
+                            taskId = 0L,
+                            start = LocalDate.parse("2024-08-23"),
+                            type = RecurrenceType.Day,
+                            step = 1,
                         ),
-                        parentTaskId = null,
-                        clock = clock,
-                    )
+                    ),
+                    parentTaskId = null,
+                    clock = clock,
                 )
+            )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task1)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task1)
 
             taskRepository.skip(task1.id)
 
             assertThat(awaitItem()).isNull()
 
-            val task2 =
-                taskRepository.create(
-                    NewTaskForm(
-                        name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-                        note = "",
-                        deadlineDate = null,
-                        deadlineTime = null,
-                        startAfterDate = null,
-                        startAfterTime = null,
-                        scheduledDate = null,
-                        scheduledTime = null,
-                        categoryId = null,
-                        recurrences = emptyList(),
-                        parentTaskId = task1.id,
-                        clock = clock,
-                    )
+            val task2 = taskRepository.create(
+                NewTaskForm(
+                    name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                    note = "",
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
+                    categoryId = null,
+                    recurrences = emptyList(),
+                    parentTaskId = task1.id,
+                    clock = clock,
                 )
+            )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task2)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task2)
         }
     }
 
@@ -1085,181 +1007,162 @@ class LocalTaskRepositoryTest {
                     "2024-08-24T23:59:59.999-04:00[America/New_York]"
                 ),
             ),
-        )
-            .test {
-                assertThat(awaitItem()).isNull()
+        ).test {
+            assertThat(awaitItem()).isNull()
 
-                val task1 = taskRepository.create(
-                    NewTaskForm(
-                        name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-                        note = "",
-                        deadlineDate = null,
-                        deadlineTime = null,
-                        startAfterDate = null,
-                        startAfterTime = null,
-                        scheduledDate = null,
-                        scheduledTime = null,
-                        categoryId = null,
-                        recurrences = emptyList(),
-                        parentTaskId = null,
-                        clock = clock,
-                    )
+            val task1 = taskRepository.create(
+                NewTaskForm(
+                    name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                    note = "",
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
+                    categoryId = null,
+                    recurrences = emptyList(),
+                    parentTaskId = null,
+                    clock = clock,
                 )
+            )
 
-                assertThat(awaitItem())
-                    .isNotNull()
-                    .isDataClassEqualTo(task1)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task1)
 
-                val task2 = taskRepository.create(
-                    NewTaskForm(
-                        name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-                        note = "",
-                        deadlineDate = null,
-                        deadlineTime = null,
-                        startAfterDate = null,
-                        startAfterTime = null,
-                        scheduledDate = null,
-                        scheduledTime = null,
-                        categoryId = null,
-                        recurrences = emptyList(),
-                        parentTaskId = null,
-                        clock = clock,
-                    )
+            val task2 = taskRepository.create(
+                NewTaskForm(
+                    name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                    note = "",
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
+                    categoryId = null,
+                    recurrences = emptyList(),
+                    parentTaskId = null,
+                    clock = clock,
                 )
+            )
 
-                assertThat(awaitItem())
-                    .isNotNull()
-                    .isDataClassEqualTo(task1)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task1)
 
-                taskRepository.markDone(task1.id)
+            taskRepository.markDone(task1.id)
 
-                assertThat(awaitItem())
-                    .isNotNull()
-                    .isDataClassEqualTo(task2)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task2)
 
-                val task3 = taskRepository.create(
-                    NewTaskForm(
-                        name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-                        note = "",
-                        deadlineDate = null,
-                        deadlineTime = null,
-                        startAfterDate = null,
-                        startAfterTime = null,
-                        scheduledDate = null,
-                        scheduledTime = null,
-                        categoryId = null,
-                        recurrences = emptyList(),
-                        parentTaskId = null,
-                        clock = clock,
-                    )
+            val task3 = taskRepository.create(
+                NewTaskForm(
+                    name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                    note = "",
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
+                    categoryId = null,
+                    recurrences = emptyList(),
+                    parentTaskId = null,
+                    clock = clock,
                 )
+            )
 
-                assertThat(awaitItem())
-                    .isNotNull()
-                    .isDataClassEqualTo(task2)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task2)
 
-                taskRepository.update(
-                    EditTaskForm(
-                        name = task1.name,
-                        note = task1.note,
-                        deadlineDate = null,
-                        deadlineTime = null,
-                        startAfterDate = null,
-                        startAfterTime = null,
-                        scheduledDate = null,
-                        scheduledTime = null,
-                        categoryId = task1.categoryId,
-                        recurrences = emptyList(),
-                        parentUpdateType = PathUpdateType.Replace(task3.id),
-                        existingTask = task1,
-                        existingRecurrences = emptyList(),
-                    )
+            taskRepository.update(
+                EditTaskForm(
+                    name = task1.name,
+                    note = task1.note,
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
+                    categoryId = task1.categoryId,
+                    recurrences = emptyList(),
+                    parentUpdateType = PathUpdateType.Replace(task3.id),
+                    existingTask = task1,
+                    existingRecurrences = emptyList(),
                 )
+            )
 
-                assertThat(awaitItem())
-                    .isNotNull()
-                    .isDataClassEqualTo(task2)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task2)
 
-                taskRepository.update(
-                    EditTaskForm(
-                        name = task1.name,
-                        note = task1.note,
-                        deadlineDate = null,
-                        deadlineTime = null,
-                        startAfterDate = null,
-                        startAfterTime = null,
-                        scheduledDate = null,
-                        scheduledTime = null,
-                        categoryId = task1.categoryId,
-                        recurrences = listOf(
-                            TaskRecurrence(
-                                taskId = task1.id,
-                                start = LocalDate.parse("2024-08-23"),
-                                type = RecurrenceType.Day,
-                                step = 1,
-                            )
-                        ),
-                        parentUpdateType = PathUpdateType.Keep,
-                        existingTask = task1,
-                        existingRecurrences = emptyList(),
-                    )
+            taskRepository.update(
+                EditTaskForm(
+                    name = task1.name,
+                    note = task1.note,
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
+                    categoryId = task1.categoryId,
+                    recurrences = listOf(
+                        TaskRecurrence(
+                            taskId = task1.id,
+                            start = LocalDate.parse("2024-08-23"),
+                            type = RecurrenceType.Day,
+                            step = 1,
+                        )
+                    ),
+                    parentUpdateType = PathUpdateType.Keep,
+                    existingTask = task1,
+                    existingRecurrences = emptyList(),
                 )
+            )
 
-                assertThat(awaitItem())
-                    .isNotNull()
-                    .isDataClassEqualTo(task3)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task3)
 
-                taskRepository.update(
-                    EditTaskForm(
-                        name = task1.name,
-                        note = task1.note,
-                        deadlineDate = null,
-                        deadlineTime = null,
-                        startAfterDate = null,
-                        startAfterTime = null,
-                        scheduledDate = null,
-                        scheduledTime = null,
-                        categoryId = task1.categoryId,
-                        recurrences = emptyList(),
-                        parentUpdateType = PathUpdateType.Remove,
-                        existingTask = task1,
-                        existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task1.id)
-                            .first(),
-                    )
+            taskRepository.update(
+                EditTaskForm(
+                    name = task1.name,
+                    note = task1.note,
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
+                    categoryId = task1.categoryId,
+                    recurrences = emptyList(),
+                    parentUpdateType = PathUpdateType.Remove,
+                    existingTask = task1,
+                    existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task1.id)
+                        .first(),
                 )
+            )
 
-                assertThat(awaitItem())
-                    .isNotNull()
-                    .isDataClassEqualTo(task2)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task2)
 
-                taskRepository.update(
-                    EditTaskForm(
-                        name = task3.name,
-                        note = task3.note,
-                        deadlineDate = null,
-                        deadlineTime = null,
-                        startAfterDate = null,
-                        startAfterTime = null,
-                        scheduledDate = null,
-                        scheduledTime = null,
-                        categoryId = task3.categoryId,
-                        recurrences = emptyList(),
-                        parentUpdateType = PathUpdateType.Replace(task1.id),
-                        existingTask = task3,
-                        existingRecurrences = emptyList(),
-                    )
+            taskRepository.update(
+                EditTaskForm(
+                    name = task3.name,
+                    note = task3.note,
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
+                    categoryId = task3.categoryId,
+                    recurrences = emptyList(),
+                    parentUpdateType = PathUpdateType.Replace(task1.id),
+                    existingTask = task3,
+                    existingRecurrences = emptyList(),
                 )
+            )
 
-                assertThat(awaitItem())
-                    .isNotNull()
-                    .isDataClassEqualTo(task2)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task2)
 
-                taskRepository.markDone(task2.id)
+            taskRepository.markDone(task2.id)
 
-                assertThat(awaitItem())
-                    .isNotNull()
-                    .isDataClassEqualTo(task3)
-            }
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task3)
+        }
     }
 
     @Test
@@ -1271,34 +1174,31 @@ class LocalTaskRepositoryTest {
         taskRepository.getCurrentTask(CurrentTaskParams(now)).test {
             assertThat(awaitItem()).isNull()
 
-            var task =
-                taskRepository.create(
-                    NewTaskForm(
-                        name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-                        note = "",
-                        deadlineDate = null,
-                        deadlineTime = null,
-                        startAfterDate = null,
-                        startAfterTime = null,
-                        scheduledDate = null,
-                        scheduledTime = null,
-                        categoryId = null,
-                        recurrences = listOf(
-                            TaskRecurrence(
-                                taskId = 0L,
-                                start = LocalDate.parse("2024-08-22"),
-                                type = RecurrenceType.Day,
-                                step = 1,
-                            ),
+            var task = taskRepository.create(
+                NewTaskForm(
+                    name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                    note = "",
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
+                    categoryId = null,
+                    recurrences = listOf(
+                        TaskRecurrence(
+                            taskId = 0L,
+                            start = LocalDate.parse("2024-08-22"),
+                            type = RecurrenceType.Day,
+                            step = 1,
                         ),
-                        parentTaskId = null,
-                        clock = clock,
-                    )
+                    ),
+                    parentTaskId = null,
+                    clock = clock,
                 )
+            )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
 
             task = taskRepository.update(
                 EditTaskForm(
@@ -1354,9 +1254,7 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
         }
     }
 
@@ -1369,40 +1267,37 @@ class LocalTaskRepositoryTest {
         taskRepository.getCurrentTask(CurrentTaskParams(now)).test {
             assertThat(awaitItem()).isNull()
 
-            var task =
-                taskRepository.create(
-                    NewTaskForm(
-                        name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-                        note = "",
-                        deadlineDate = null,
-                        deadlineTime = null,
-                        startAfterDate = null,
-                        startAfterTime = null,
-                        scheduledDate = null,
-                        scheduledTime = null,
-                        categoryId = null,
-                        recurrences = listOf(
-                            TaskRecurrence(
-                                taskId = 0L,
-                                start = LocalDate.parse("2024-08-16"),
-                                type = RecurrenceType.Week,
-                                step = 1,
-                            ),
-                            TaskRecurrence(
-                                taskId = 0L,
-                                start = LocalDate.parse("2024-08-15"),
-                                type = RecurrenceType.Week,
-                                step = 1,
-                            ),
+            var task = taskRepository.create(
+                NewTaskForm(
+                    name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                    note = "",
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
+                    categoryId = null,
+                    recurrences = listOf(
+                        TaskRecurrence(
+                            taskId = 0L,
+                            start = LocalDate.parse("2024-08-16"),
+                            type = RecurrenceType.Week,
+                            step = 1,
                         ),
-                        parentTaskId = null,
-                        clock = clock,
-                    )
+                        TaskRecurrence(
+                            taskId = 0L,
+                            start = LocalDate.parse("2024-08-15"),
+                            type = RecurrenceType.Week,
+                            step = 1,
+                        ),
+                    ),
+                    parentTaskId = null,
+                    clock = clock,
                 )
+            )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
 
             task = taskRepository.update(
                 EditTaskForm(
@@ -1458,9 +1353,7 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
 
             task = taskRepository.update(
                 EditTaskForm(
@@ -1516,9 +1409,7 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
 
         }
     }
@@ -1532,34 +1423,31 @@ class LocalTaskRepositoryTest {
         taskRepository.getCurrentTask(CurrentTaskParams(now)).test {
             assertThat(awaitItem()).isNull()
 
-            var task =
-                taskRepository.create(
-                    NewTaskForm(
-                        name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-                        note = "",
-                        deadlineDate = null,
-                        deadlineTime = null,
-                        startAfterDate = null,
-                        startAfterTime = null,
-                        scheduledDate = null,
-                        scheduledTime = null,
-                        categoryId = null,
-                        recurrences = listOf(
-                            TaskRecurrence(
-                                taskId = 0L,
-                                start = LocalDate.parse("2023-07-23"),
-                                type = RecurrenceType.DayOfMonth,
-                                step = 1,
-                            ),
+            var task = taskRepository.create(
+                NewTaskForm(
+                    name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                    note = "",
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
+                    categoryId = null,
+                    recurrences = listOf(
+                        TaskRecurrence(
+                            taskId = 0L,
+                            start = LocalDate.parse("2023-07-23"),
+                            type = RecurrenceType.DayOfMonth,
+                            step = 1,
                         ),
-                        parentTaskId = null,
-                        clock = clock,
-                    )
+                    ),
+                    parentTaskId = null,
+                    clock = clock,
                 )
+            )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
 
             task = taskRepository.update(
                 EditTaskForm(
@@ -1615,9 +1503,7 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
         }
     }
 
@@ -1654,9 +1540,7 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
 
             listOf(
                 LocalDate.parse("2022-01-31"),
@@ -1698,8 +1582,7 @@ class LocalTaskRepositoryTest {
                     )
                 )
 
-                assertThat(awaitItem(), name = "task starting at $start")
-                    .isNotNull()
+                assertThat(awaitItem(), name = "task starting at $start").isNotNull()
                     .isDataClassEqualTo(task)
             }
         }
@@ -1738,9 +1621,7 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
 
             listOf(
                 LocalDate.parse("2023-03-31"),
@@ -1781,8 +1662,7 @@ class LocalTaskRepositoryTest {
                     )
                 )
 
-                assertThat(awaitItem(), name = "task starting at $start")
-                    .isNotNull()
+                assertThat(awaitItem(), name = "task starting at $start").isNotNull()
                     .isDataClassEqualTo(task)
             }
         }
@@ -1821,9 +1701,7 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
 
             listOf(
                 LocalDate.parse("2023-03-31"),
@@ -1863,8 +1741,7 @@ class LocalTaskRepositoryTest {
                     )
                 )
 
-                assertThat(awaitItem(), name = "task starting at $start")
-                    .isNotNull()
+                assertThat(awaitItem(), name = "task starting at $start").isNotNull()
                     .isDataClassEqualTo(task)
             }
         }
@@ -1903,9 +1780,7 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
 
             listOf(
                 LocalDate.parse("2023-03-31"),
@@ -1945,8 +1820,7 @@ class LocalTaskRepositoryTest {
                     )
                 )
 
-                assertThat(awaitItem(), name = "task starting at $start")
-                    .isNotNull()
+                assertThat(awaitItem(), name = "task starting at $start").isNotNull()
                     .isDataClassEqualTo(task)
             }
         }
@@ -1985,9 +1859,7 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
 
             listOf(
                 LocalDate.parse("2023-03-31"),
@@ -2027,8 +1899,7 @@ class LocalTaskRepositoryTest {
                     )
                 )
 
-                assertThat(awaitItem(), name = "task starting at $start")
-                    .isNotNull()
+                assertThat(awaitItem(), name = "task starting at $start").isNotNull()
                     .isDataClassEqualTo(task)
             }
         }
@@ -2067,9 +1938,7 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
 
             listOf(
                 LocalDate.parse("2023-03-31"),
@@ -2109,8 +1978,7 @@ class LocalTaskRepositoryTest {
                     )
                 )
 
-                assertThat(awaitItem(), name = "task starting at $start")
-                    .isNotNull()
+                assertThat(awaitItem(), name = "task starting at $start").isNotNull()
                     .isDataClassEqualTo(task)
             }
         }
@@ -2125,34 +1993,31 @@ class LocalTaskRepositoryTest {
         taskRepository.getCurrentTask(CurrentTaskParams(now)).test {
             assertThat(awaitItem()).isNull()
 
-            var task =
-                taskRepository.create(
-                    NewTaskForm(
-                        name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-                        note = "",
-                        deadlineDate = null,
-                        deadlineTime = null,
-                        startAfterDate = null,
-                        startAfterTime = null,
-                        scheduledDate = null,
-                        scheduledTime = null,
-                        categoryId = null,
-                        recurrences = listOf(
-                            TaskRecurrence(
-                                taskId = 0L,
-                                start = LocalDate.parse("2024-07-26"),
-                                type = RecurrenceType.WeekOfMonth,
-                                step = 1,
-                            ),
+            var task = taskRepository.create(
+                NewTaskForm(
+                    name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                    note = "",
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
+                    categoryId = null,
+                    recurrences = listOf(
+                        TaskRecurrence(
+                            taskId = 0L,
+                            start = LocalDate.parse("2024-07-26"),
+                            type = RecurrenceType.WeekOfMonth,
+                            step = 1,
                         ),
-                        parentTaskId = null,
-                        clock = clock,
-                    )
+                    ),
+                    parentTaskId = null,
+                    clock = clock,
                 )
+            )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
 
             task = taskRepository.update(
                 EditTaskForm(
@@ -2208,9 +2073,7 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
 
             taskRepository.update(
                 EditTaskForm(
@@ -2251,34 +2114,31 @@ class LocalTaskRepositoryTest {
         taskRepository.getCurrentTask(CurrentTaskParams(now)).test {
             assertThat(awaitItem()).isNull()
 
-            var task =
-                taskRepository.create(
-                    NewTaskForm(
-                        name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-                        note = "",
-                        deadlineDate = null,
-                        deadlineTime = null,
-                        startAfterDate = null,
-                        startAfterTime = null,
-                        scheduledDate = null,
-                        scheduledTime = null,
-                        categoryId = null,
-                        recurrences = listOf(
-                            TaskRecurrence(
-                                taskId = 0L,
-                                start = LocalDate.parse("2023-08-23"),
-                                type = RecurrenceType.Year,
-                                step = 1,
-                            ),
+            var task = taskRepository.create(
+                NewTaskForm(
+                    name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                    note = "",
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
+                    categoryId = null,
+                    recurrences = listOf(
+                        TaskRecurrence(
+                            taskId = 0L,
+                            start = LocalDate.parse("2023-08-23"),
+                            type = RecurrenceType.Year,
+                            step = 1,
                         ),
-                        parentTaskId = null,
-                        clock = clock,
-                    )
+                    ),
+                    parentTaskId = null,
+                    clock = clock,
                 )
+            )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
 
             task = taskRepository.update(
                 EditTaskForm(
@@ -2334,9 +2194,7 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
         }
     }
 
@@ -2373,9 +2231,7 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem())
-                .isNotNull()
-                .isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
         }
     }
 
@@ -3063,6 +2919,312 @@ class LocalTaskRepositoryTest {
                 recurring = true,
                 doneAt = Instant.parse("2024-08-23T17:00:00Z"),
             ),
+        )
+    }
+
+    @Test
+    fun searchTaskItems_emitsTasksMatchingRecurringDate() = runTest {
+        val clock =
+            Clock.fixed(Instant.parse("2024-08-23T17:00:00Z"), ZoneId.of("America/New_York"))
+        val taskRepository = createLocalTaskRepository(clock, testScheduler)
+
+        val task1 = taskRepository.create(
+            NewTaskForm(
+                name = "1. ${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                note = "",
+                deadlineDate = null,
+                deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
+                scheduledDate = null,
+                scheduledTime = null,
+                categoryId = null,
+                recurrences = listOf(
+                    TaskRecurrence(
+                        taskId = 0L,
+                        start = LocalDate.parse("2024-08-22"),
+                        type = RecurrenceType.Day,
+                        step = 1,
+                    ),
+                ),
+                parentTaskId = null,
+                clock = clock,
+            )
+        )
+        val task2 = taskRepository.create(
+            NewTaskForm(
+                name = "2. ${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                note = "",
+                deadlineDate = null,
+                deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
+                scheduledDate = null,
+                scheduledTime = null,
+                categoryId = null,
+                recurrences = listOf(
+                    TaskRecurrence(
+                        taskId = 0L,
+                        start = LocalDate.parse("2024-08-15"),
+                        type = RecurrenceType.Week,
+                        step = 1,
+                    ),
+                    TaskRecurrence(
+                        taskId = 0L,
+                        start = LocalDate.parse("2024-08-16"),
+                        type = RecurrenceType.Week,
+                        step = 1,
+                    ),
+                ),
+                parentTaskId = null,
+                clock = clock,
+            )
+        )
+        val task3 = taskRepository.create(
+            NewTaskForm(
+                name = "3. ${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                note = "",
+                deadlineDate = null,
+                deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
+                scheduledDate = null,
+                scheduledTime = null,
+                categoryId = null,
+                recurrences = listOf(
+                    TaskRecurrence(
+                        taskId = 0L,
+                        start = LocalDate.parse("2024-07-23"),
+                        type = RecurrenceType.DayOfMonth,
+                        step = 1,
+                    ),
+                ),
+                parentTaskId = null,
+                clock = clock,
+            )
+        )
+        val task4 = taskRepository.create(
+            NewTaskForm(
+                name = "4. ${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                note = "",
+                deadlineDate = null,
+                deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
+                scheduledDate = null,
+                scheduledTime = null,
+                categoryId = null,
+                recurrences = listOf(
+                    TaskRecurrence(
+                        taskId = 0L,
+                        start = LocalDate.parse("2024-07-26"),
+                        type = RecurrenceType.WeekOfMonth,
+                        step = 1,
+                    ),
+                ),
+                parentTaskId = null,
+                clock = clock,
+            )
+        )
+        val task5 = taskRepository.create(
+            NewTaskForm(
+                name = "5. ${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                note = "",
+                deadlineDate = null,
+                deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
+                scheduledDate = null,
+                scheduledTime = null,
+                categoryId = null,
+                recurrences = listOf(
+                    TaskRecurrence(
+                        taskId = 0L,
+                        start = LocalDate.parse("2023-08-23"),
+                        type = RecurrenceType.Year,
+                        step = 1,
+                    ),
+                ),
+                parentTaskId = null,
+                clock = clock,
+            )
+        )
+
+        taskRepository.create(
+            NewTaskForm(
+                name = "6. ${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                note = "",
+                deadlineDate = null,
+                deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
+                scheduledDate = null,
+                scheduledTime = null,
+                categoryId = null,
+                recurrences = emptyList(),
+                parentTaskId = null,
+                clock = clock,
+            )
+        )
+        taskRepository.create(
+            NewTaskForm(
+                name = "7. ${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                note = "",
+                deadlineDate = null,
+                deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
+                scheduledDate = null,
+                scheduledTime = null,
+                categoryId = null,
+                recurrences = listOf(
+                    TaskRecurrence(
+                        taskId = 0L,
+                        start = LocalDate.parse("2024-08-22"),
+                        type = RecurrenceType.Day,
+                        step = 2,
+                    ),
+                ),
+                parentTaskId = null,
+                clock = clock,
+            )
+        )
+        taskRepository.create(
+            NewTaskForm(
+                name = "8. ${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                note = "",
+                deadlineDate = null,
+                deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
+                scheduledDate = null,
+                scheduledTime = null,
+                categoryId = null,
+                recurrences = listOf(
+                    TaskRecurrence(
+                        taskId = 0L,
+                        start = LocalDate.parse("2024-08-24"),
+                        type = RecurrenceType.Day,
+                        step = 1,
+                    ),
+                ),
+                parentTaskId = null,
+                clock = clock,
+            )
+        )
+        taskRepository.create(
+            NewTaskForm(
+                name = "9. ${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                note = "",
+                deadlineDate = null,
+                deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
+                scheduledDate = null,
+                scheduledTime = null,
+                categoryId = null,
+                recurrences = listOf(
+                    TaskRecurrence(
+                        taskId = 0L,
+                        start = LocalDate.parse("2024-08-14"),
+                        type = RecurrenceType.Week,
+                        step = 1,
+                    ),
+                    TaskRecurrence(
+                        taskId = 0L,
+                        start = LocalDate.parse("2024-08-15"),
+                        type = RecurrenceType.Week,
+                        step = 1,
+                    ),
+                ),
+                parentTaskId = null,
+                clock = clock,
+            )
+        )
+        taskRepository.create(
+            NewTaskForm(
+                name = "10. ${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                note = "",
+                deadlineDate = null,
+                deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
+                scheduledDate = null,
+                scheduledTime = null,
+                categoryId = null,
+                recurrences = listOf(
+                    TaskRecurrence(
+                        taskId = 0L,
+                        start = LocalDate.parse("2024-07-23"),
+                        type = RecurrenceType.DayOfMonth,
+                        step = 2,
+                    ),
+                ),
+                parentTaskId = null,
+                clock = clock,
+            )
+        )
+        taskRepository.create(
+            NewTaskForm(
+                name = "11. ${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                note = "",
+                deadlineDate = null,
+                deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
+                scheduledDate = null,
+                scheduledTime = null,
+                categoryId = null,
+                recurrences = listOf(
+                    TaskRecurrence(
+                        taskId = 0L,
+                        start = LocalDate.parse("2024-07-26"),
+                        type = RecurrenceType.WeekOfMonth,
+                        step = 2,
+                    ),
+                ),
+                parentTaskId = null,
+                clock = clock,
+            )
+        )
+        taskRepository.create(
+            NewTaskForm(
+                name = "12. ${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                note = "",
+                deadlineDate = null,
+                deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
+                scheduledDate = null,
+                scheduledTime = null,
+                categoryId = null,
+                recurrences = listOf(
+                    TaskRecurrence(
+                        taskId = 0L,
+                        start = LocalDate.parse("2023-08-23"),
+                        type = RecurrenceType.Year,
+                        step = 2,
+                    ),
+                ),
+                parentTaskId = null,
+                clock = clock,
+            )
+        )
+
+        assertThat(
+            taskRepository.searchTaskItems(
+                TaskSearchCriteria(
+                    recurrenceDate = LocalDate.parse(
+                        "2024-08-23"
+                    )
+                )
+            ).asSnapshot()
+        ).containsExactly(
+            TaskItem(id = task1.id, name = task1.name, recurring = true, doneAt = null),
+            TaskItem(id = task2.id, name = task2.name, recurring = true, doneAt = null),
+            TaskItem(id = task3.id, name = task3.name, recurring = true, doneAt = null),
+            TaskItem(id = task4.id, name = task4.name, recurring = true, doneAt = null),
+            TaskItem(id = task5.id, name = task5.name, recurring = true, doneAt = null),
         )
     }
 
@@ -3833,6 +3995,337 @@ class LocalTaskRepositoryTest {
     }
 
     @Test
+    fun searchTaskItems_emitsTasksNameAndMatchingRecurringDate() = runTest {
+        val query = loremFaker.verbs.base()
+        val clock =
+            Clock.fixed(Instant.parse("2024-08-23T17:00:00Z"), ZoneId.of("America/New_York"))
+        val taskRepository = createLocalTaskRepository(clock, testScheduler)
+
+        val task1 = taskRepository.create(
+            NewTaskForm(
+                name = "1. $query ${loremFaker.lorem.words()}",
+                note = "",
+                deadlineDate = null,
+                deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
+                scheduledDate = null,
+                scheduledTime = null,
+                categoryId = null,
+                recurrences = listOf(
+                    TaskRecurrence(
+                        taskId = 0L,
+                        start = LocalDate.parse("2024-08-22"),
+                        type = RecurrenceType.Day,
+                        step = 1,
+                    ),
+                ),
+                parentTaskId = null,
+                clock = clock,
+            )
+        )
+        val task2 = taskRepository.create(
+            NewTaskForm(
+                name = "2. $query ${loremFaker.lorem.words()}",
+                note = "",
+                deadlineDate = null,
+                deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
+                scheduledDate = null,
+                scheduledTime = null,
+                categoryId = null,
+                recurrences = listOf(
+                    TaskRecurrence(
+                        taskId = 0L,
+                        start = LocalDate.parse("2024-08-15"),
+                        type = RecurrenceType.Week,
+                        step = 1,
+                    ),
+                    TaskRecurrence(
+                        taskId = 0L,
+                        start = LocalDate.parse("2024-08-16"),
+                        type = RecurrenceType.Week,
+                        step = 1,
+                    ),
+                ),
+                parentTaskId = null,
+                clock = clock,
+            )
+        )
+        val task3 = taskRepository.create(
+            NewTaskForm(
+                name = "3. $query ${loremFaker.lorem.words()}",
+                note = "",
+                deadlineDate = null,
+                deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
+                scheduledDate = null,
+                scheduledTime = null,
+                categoryId = null,
+                recurrences = listOf(
+                    TaskRecurrence(
+                        taskId = 0L,
+                        start = LocalDate.parse("2024-07-23"),
+                        type = RecurrenceType.DayOfMonth,
+                        step = 1,
+                    ),
+                ),
+                parentTaskId = null,
+                clock = clock,
+            )
+        )
+        val task4 = taskRepository.create(
+            NewTaskForm(
+                name = "4. $query ${loremFaker.lorem.words()}",
+                note = "",
+                deadlineDate = null,
+                deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
+                scheduledDate = null,
+                scheduledTime = null,
+                categoryId = null,
+                recurrences = listOf(
+                    TaskRecurrence(
+                        taskId = 0L,
+                        start = LocalDate.parse("2024-07-26"),
+                        type = RecurrenceType.WeekOfMonth,
+                        step = 1,
+                    ),
+                ),
+                parentTaskId = null,
+                clock = clock,
+            )
+        )
+        val task5 = taskRepository.create(
+            NewTaskForm(
+                name = "5. $query ${loremFaker.lorem.words()}",
+                note = "",
+                deadlineDate = null,
+                deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
+                scheduledDate = null,
+                scheduledTime = null,
+                categoryId = null,
+                recurrences = listOf(
+                    TaskRecurrence(
+                        taskId = 0L,
+                        start = LocalDate.parse("2023-08-23"),
+                        type = RecurrenceType.Year,
+                        step = 1,
+                    ),
+                ),
+                parentTaskId = null,
+                clock = clock,
+            )
+        )
+
+        taskRepository.create(
+            NewTaskForm(
+                name = "6. $query ${loremFaker.lorem.words()}",
+                note = "",
+                deadlineDate = null,
+                deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
+                scheduledDate = null,
+                scheduledTime = null,
+                categoryId = null,
+                recurrences = emptyList(),
+                parentTaskId = null,
+                clock = clock,
+            )
+        )
+        taskRepository.create(
+            NewTaskForm(
+                name = "7. $query ${loremFaker.lorem.words()}",
+                note = "",
+                deadlineDate = null,
+                deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
+                scheduledDate = null,
+                scheduledTime = null,
+                categoryId = null,
+                recurrences = listOf(
+                    TaskRecurrence(
+                        taskId = 0L,
+                        start = LocalDate.parse("2024-08-22"),
+                        type = RecurrenceType.Day,
+                        step = 2,
+                    ),
+                ),
+                parentTaskId = null,
+                clock = clock,
+            )
+        )
+        taskRepository.create(
+            NewTaskForm(
+                name = "8. $query ${loremFaker.lorem.words()}",
+                note = "",
+                deadlineDate = null,
+                deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
+                scheduledDate = null,
+                scheduledTime = null,
+                categoryId = null,
+                recurrences = listOf(
+                    TaskRecurrence(
+                        taskId = 0L,
+                        start = LocalDate.parse("2024-08-24"),
+                        type = RecurrenceType.Day,
+                        step = 1,
+                    ),
+                ),
+                parentTaskId = null,
+                clock = clock,
+            )
+        )
+        taskRepository.create(
+            NewTaskForm(
+                name = "9. $query ${loremFaker.lorem.words()}",
+                note = "",
+                deadlineDate = null,
+                deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
+                scheduledDate = null,
+                scheduledTime = null,
+                categoryId = null,
+                recurrences = listOf(
+                    TaskRecurrence(
+                        taskId = 0L,
+                        start = LocalDate.parse("2024-08-14"),
+                        type = RecurrenceType.Week,
+                        step = 1,
+                    ),
+                    TaskRecurrence(
+                        taskId = 0L,
+                        start = LocalDate.parse("2024-08-15"),
+                        type = RecurrenceType.Week,
+                        step = 1,
+                    ),
+                ),
+                parentTaskId = null,
+                clock = clock,
+            )
+        )
+        taskRepository.create(
+            NewTaskForm(
+                name = "10. $query ${loremFaker.lorem.words()}",
+                note = "",
+                deadlineDate = null,
+                deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
+                scheduledDate = null,
+                scheduledTime = null,
+                categoryId = null,
+                recurrences = listOf(
+                    TaskRecurrence(
+                        taskId = 0L,
+                        start = LocalDate.parse("2024-07-23"),
+                        type = RecurrenceType.DayOfMonth,
+                        step = 2,
+                    ),
+                ),
+                parentTaskId = null,
+                clock = clock,
+            )
+        )
+        taskRepository.create(
+            NewTaskForm(
+                name = "11. $query ${loremFaker.lorem.words()}",
+                note = "",
+                deadlineDate = null,
+                deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
+                scheduledDate = null,
+                scheduledTime = null,
+                categoryId = null,
+                recurrences = listOf(
+                    TaskRecurrence(
+                        taskId = 0L,
+                        start = LocalDate.parse("2024-07-26"),
+                        type = RecurrenceType.WeekOfMonth,
+                        step = 2,
+                    ),
+                ),
+                parentTaskId = null,
+                clock = clock,
+            )
+        )
+        taskRepository.create(
+            NewTaskForm(
+                name = "12. $query ${loremFaker.lorem.words()}",
+                note = "",
+                deadlineDate = null,
+                deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
+                scheduledDate = null,
+                scheduledTime = null,
+                categoryId = null,
+                recurrences = listOf(
+                    TaskRecurrence(
+                        taskId = 0L,
+                        start = LocalDate.parse("2023-08-23"),
+                        type = RecurrenceType.Year,
+                        step = 2,
+                    ),
+                ),
+                parentTaskId = null,
+                clock = clock,
+            )
+        )
+        taskRepository.create(
+            NewTaskForm(
+                name = "0",
+                note = "",
+                deadlineDate = null,
+                deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
+                scheduledDate = null,
+                scheduledTime = null,
+                categoryId = null,
+                recurrences = listOf(
+                    TaskRecurrence(
+                        taskId = 0L,
+                        start = LocalDate.parse("2024-08-22"),
+                        type = RecurrenceType.Day,
+                        step = 1,
+                    ),
+                ),
+                parentTaskId = null,
+                clock = clock,
+            )
+        )
+
+        assertThat(
+            taskRepository.searchTaskItems(
+                TaskSearchCriteria(
+                    name = query, recurrenceDate = LocalDate.parse(
+                        "2024-08-23"
+                    )
+                )
+            ).asSnapshot()
+        ).containsExactly(
+            TaskItem(id = task1.id, name = task1.name, recurring = true, doneAt = null),
+            TaskItem(id = task2.id, name = task2.name, recurring = true, doneAt = null),
+            TaskItem(id = task3.id, name = task3.name, recurring = true, doneAt = null),
+            TaskItem(id = task4.id, name = task4.name, recurring = true, doneAt = null),
+            TaskItem(id = task5.id, name = task5.name, recurring = true, doneAt = null),
+        )
+    }
+
+
+    @Test
     fun update_connectsTaskPaths() = runTest {
         val clock =
             Clock.fixed(Instant.parse("2024-08-23T17:00:00Z"), ZoneId.of("America/New_York"))
@@ -4337,12 +4830,10 @@ class LocalTaskRepositoryTest {
     }
 
     private fun createLocalTaskRepository(
-        clock: Clock,
-        testScheduler: TestCoroutineScheduler? = null
-    ) =
-        LocalTaskRepository(
-            db.taskDao(),
-            UnconfinedTestDispatcher(testScheduler),
-            clock,
-        )
+        clock: Clock, testScheduler: TestCoroutineScheduler? = null
+    ) = LocalTaskRepository(
+        db.taskDao(),
+        UnconfinedTestDispatcher(testScheduler),
+        clock,
+    )
 }

@@ -33,14 +33,13 @@ class TaskSearchViewModelTest {
         runTest(mainDispatcherRule.testDispatcher) {
             val blankQuery = faker.string.regexify(""" *""")
             val query = faker.string.regexify("""\S+""")
+            val namePattern =
+                """([^\r\n]* )?${Pattern.quote(query)}[^\r\n]*""".toRegex(RegexOption.IGNORE_CASE)
             val tasks = List(3) {
                 Task(
                     id = it + 1L,
                     createdAt = faker.random.randomPastDate().toInstant(),
-                    name = faker.string.regexify(
-                        """([^\r\n]* )?${Pattern.quote(query)}[^\r\n]*"""
-                            .toRegex(RegexOption.IGNORE_CASE)
-                    ),
+                    name = faker.string.regexify(namePattern),
                 )
             }
             val taskRepository = FakeTaskRepository.withTasks(tasks)
@@ -58,6 +57,7 @@ class TaskSearchViewModelTest {
                 startAfterDateRange = null,
                 scheduledDateRange = null,
                 doneDateRange = null,
+                recurrenceDate = null,
             )
 
             assertThat(viewModel.uiState.value).isEqualTo(TaskSearchUiState(hasCriteria = false))
@@ -68,6 +68,7 @@ class TaskSearchViewModelTest {
                 startAfterDateRange = null,
                 scheduledDateRange = null,
                 doneDateRange = null,
+                recurrenceDate = null,
             )
             advanceUntilIdle()
 
@@ -84,6 +85,7 @@ class TaskSearchViewModelTest {
                 startAfterDateRange = null,
                 scheduledDateRange = null,
                 doneDateRange = null,
+                recurrenceDate = null,
             )
             advanceUntilIdle()
 

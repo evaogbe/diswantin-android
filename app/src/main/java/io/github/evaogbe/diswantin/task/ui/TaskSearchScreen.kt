@@ -72,6 +72,7 @@ import androidx.paging.compose.itemKey
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.ui.components.AutoFocusTextField
 import io.github.evaogbe.diswantin.ui.components.ButtonWithIcon
+import io.github.evaogbe.diswantin.ui.components.DiswantinDatePickerDialog
 import io.github.evaogbe.diswantin.ui.components.DiswantinDateRangePickerDialog
 import io.github.evaogbe.diswantin.ui.components.LoadFailureLayout
 import io.github.evaogbe.diswantin.ui.components.PendingLayout
@@ -145,7 +146,7 @@ fun TaskSearchTopBar(
 }
 
 enum class FilterDialogType {
-    DeadlineDateRange, StartAfterDateRange, ScheduledDateRange, DoneDateRange
+    DeadlineDateRange, StartAfterDateRange, ScheduledDateRange, DoneDateRange, RecurrenceDate
 }
 
 @OptIn(FlowPreview::class)
@@ -167,13 +168,12 @@ fun TaskSearchScreen(
     }
     var scheduledDateRange by rememberSaveable { mutableStateOf<Pair<LocalDate, LocalDate>?>(null) }
     var doneDateRange by rememberSaveable { mutableStateOf<Pair<LocalDate, LocalDate>?>(null) }
+    var recurrenceDate by rememberSaveable { mutableStateOf<LocalDate?>(null) }
     var filterDialogType by rememberSaveable { mutableStateOf<FilterDialogType?>(null) }
     val currentQuery by rememberUpdatedState(query)
 
     LaunchedEffect(taskSearchViewModel) {
-        snapshotFlow { currentQuery }
-            .debounce(150.milliseconds)
-            .distinctUntilChanged()
+        snapshotFlow { currentQuery }.debounce(150.milliseconds).distinctUntilChanged()
             .collectLatest {
                 taskSearchViewModel.searchTasks(
                     name = it,
@@ -181,6 +181,7 @@ fun TaskSearchScreen(
                     startAfterDateRange = startAfterDateRange,
                     scheduledDateRange = scheduledDateRange,
                     doneDateRange = doneDateRange,
+                    recurrenceDate = recurrenceDate,
                 )
             }
     }
@@ -195,19 +196,27 @@ fun TaskSearchScreen(
                     startAfterDateRange = startAfterDateRange,
                     scheduledDateRange = scheduledDateRange,
                     doneDateRange = doneDateRange,
+                    recurrenceDate = recurrenceDate,
                 )
                 topBarActionHandled()
             }
         }
     }
 
-    LaunchedEffect(deadlineDateRange, startAfterDateRange, scheduledDateRange, doneDateRange) {
+    LaunchedEffect(
+        deadlineDateRange,
+        startAfterDateRange,
+        scheduledDateRange,
+        doneDateRange,
+        recurrenceDate,
+    ) {
         taskSearchViewModel.searchTasks(
             name = query,
             deadlineDateRange = deadlineDateRange,
             startAfterDateRange = startAfterDateRange,
             scheduledDateRange = scheduledDateRange,
             doneDateRange = doneDateRange,
+            recurrenceDate = recurrenceDate,
         )
     }
 
@@ -245,6 +254,14 @@ fun TaskSearchScreen(
                 doneDateRange = null
             }
         },
+        recurrenceDate = recurrenceDate,
+        onRecurrenceChipClick = {
+            if (recurrenceDate == null) {
+                filterDialogType = FilterDialogType.RecurrenceDate
+            } else {
+                recurrenceDate = null
+            }
+        },
         searchResultItems = searchResultPagingItems,
         uiState = uiState,
         onAddTask = onAddTask,
@@ -271,7 +288,7 @@ fun TaskSearchScreen(
                 onSelectDateRange = {
                     startAfterDateRange = it
                     scheduledDateRange = null
-                }
+                },
             )
         }
 
@@ -294,6 +311,14 @@ fun TaskSearchScreen(
                 onSelectDateRange = { doneDateRange = it },
             )
         }
+
+        FilterDialogType.RecurrenceDate -> {
+            DiswantinDatePickerDialog(
+                onDismiss = { filterDialogType = null },
+                date = recurrenceDate,
+                onSelectDate = { recurrenceDate = it },
+            )
+        }
     }
 }
 
@@ -308,6 +333,8 @@ fun TaskSearchScreen(
     onScheduledChipClick: () -> Unit,
     doneDateRange: Pair<LocalDate, LocalDate>?,
     onDoneChipClick: () -> Unit,
+    recurrenceDate: LocalDate?,
+    onRecurrenceChipClick: () -> Unit,
     searchResultItems: LazyPagingItems<TaskItemUiState>,
     uiState: TaskSearchUiState,
     onAddTask: (String) -> Unit,
@@ -375,12 +402,24 @@ fun TaskSearchScreen(
                     Text(
                         text = doneDateRange?.let {
                             stringResource(
-                                R.string.done_filter_chip_label_selected,
+                                R.string.done_chip_label_selected,
                                 it.first.format(dateFormatter),
                                 it.second.format(dateFormatter),
                             )
-                        } ?: stringResource(R.string.done_filter_chip_label_unselected),
+                        } ?: stringResource(R.string.done_chip_label_unselected),
                     )
+                },
+            )
+            FilterChip(
+                selected = recurrenceDate != null,
+                onClick = onRecurrenceChipClick,
+                label = {
+                    Text(text = recurrenceDate?.let {
+                        stringResource(
+                            R.string.recurrence_chip_label_selected,
+                            it.format(dateFormatter),
+                        )
+                    } ?: stringResource(R.string.recurrence_chip_label_unselected))
                 },
             )
         }
@@ -421,7 +460,7 @@ fun TaskSearchLayout(
 
     Box(
         modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.TopCenter
+        contentAlignment = Alignment.TopCenter,
     ) {
         LazyColumn(
             modifier = Modifier
@@ -430,7 +469,7 @@ fun TaskSearchLayout(
         ) {
             items(
                 searchResultItems.itemCount,
-                key = searchResultItems.itemKey(TaskItemUiState::id)
+                key = searchResultItems.itemKey(TaskItemUiState::id),
             ) { index ->
                 val searchResult = searchResultItems[index]!!
                 ListItem(
@@ -445,7 +484,7 @@ fun TaskSearchLayout(
                                             background = colorScheme.tertiary
                                         ),
                                         it.first,
-                                        it.last + 1
+                                        it.last + 1,
                                     )
                                 }
 
@@ -469,7 +508,7 @@ fun TaskSearchLayout(
                             },
                         )
                     },
-                    modifier = Modifier.clickable { onSelectSearchResult(searchResult.id) }
+                    modifier = Modifier.clickable { onSelectSearchResult(searchResult.id) },
                 )
                 HorizontalDivider()
             }
@@ -593,6 +632,8 @@ private fun TaskSearchScreenPreview_Present() {
                 onScheduledChipClick = {},
                 doneDateRange = null,
                 onDoneChipClick = {},
+                recurrenceDate = null,
+                onRecurrenceChipClick = {},
                 searchResultItems = searchResultItems,
                 uiState = TaskSearchUiState(hasCriteria = true),
                 onAddTask = {},
@@ -632,6 +673,8 @@ private fun TaskSearchScreenPreview_Initial() {
                 onScheduledChipClick = {},
                 doneDateRange = null,
                 onDoneChipClick = {},
+                recurrenceDate = null,
+                onRecurrenceChipClick = {},
                 searchResultItems = searchResultItems,
                 uiState = TaskSearchUiState(hasCriteria = false),
                 onAddTask = {},

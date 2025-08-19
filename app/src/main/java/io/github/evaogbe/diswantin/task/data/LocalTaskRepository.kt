@@ -21,56 +21,45 @@ class LocalTaskRepository @Inject constructor(
     @param:IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     private val clock: Clock,
 ) : TaskRepository {
-    override fun getCurrentTask(params: CurrentTaskParams) =
-        taskDao.getTaskPriorities(
-            today = params.today,
-            currentTime = params.currentTime,
-            startOfToday = params.startOfToday,
-        )
-            .map { priorities ->
-                priorities.sortedWith(
-                    compareBy<TaskPriority, ZonedDateTime?>(nullsLast()) {
-                        dateTimePartsToZonedDateTime(
-                            it.task.scheduledDate,
-                            it.task.scheduledTime,
-                            LocalTime.MIN,
-                        )
-                    }.thenComparing({
-                        dateTimePartsToZonedDateTime(
-                            it.scheduledDatePriority,
-                            it.scheduledTimePriority,
-                            LocalTime.MIN,
-                        )
-                    }, nullsLast())
-                        .thenComparing { priority ->
-                            !priority.recurringPriority || priority.deadlineTimePriority?.let {
-                                it > params.currentTime.plusHours(1)
-                            } != false
-                        }
-                        .thenComparing { it.startAfterTimePriority != null }
-                        .thenComparing({
-                            dateTimePartsToZonedDateTime(
-                                it.deadlineDatePriority,
-                                it.deadlineTimePriority,
-                                LocalTime.MAX,
-                            )
-                                ?: if (it.recurringPriority) params.endOfToday else null
-                        }, nullsLast())
-                        .thenComparing(TaskPriority::recurringPriority, reverseOrder())
-                        .thenComparing({
-                            dateTimePartsToZonedDateTime(
-                                it.startAfterDatePriority,
-                                it.startAfterTimePriority,
-                                LocalTime.MIN,
-                            )
-                        }, nullsFirst())
-                        .thenComparing(TaskPriority::createdAtPriority)
-                        .thenComparing(TaskPriority::idPriority)
+    override fun getCurrentTask(params: CurrentTaskParams) = taskDao.getTaskPriorities(
+        today = params.today,
+        currentTime = params.currentTime,
+        startOfToday = params.startOfToday,
+    ).map { priorities ->
+        priorities.sortedWith(
+            compareBy<TaskPriority, ZonedDateTime?>(nullsLast()) {
+                dateTimePartsToZonedDateTime(
+                    it.task.scheduledDate,
+                    it.task.scheduledTime,
+                    LocalTime.MIN,
                 )
-                    .firstOrNull()
-                    ?.task
-            }
-            .flowOn(ioDispatcher)
+            }.thenComparing({
+                dateTimePartsToZonedDateTime(
+                    it.scheduledDatePriority,
+                    it.scheduledTimePriority,
+                    LocalTime.MIN,
+                )
+            }, nullsLast()).thenComparing { priority ->
+                !priority.recurringPriority || priority.deadlineTimePriority?.let {
+                    it > params.currentTime.plusHours(1)
+                } != false
+            }.thenComparing { it.startAfterTimePriority != null }.thenComparing({
+                dateTimePartsToZonedDateTime(
+                    it.deadlineDatePriority,
+                    it.deadlineTimePriority,
+                    LocalTime.MAX,
+                ) ?: if (it.recurringPriority) params.endOfToday else null
+            }, nullsLast()).thenComparing(TaskPriority::recurringPriority, reverseOrder())
+                .thenComparing({
+                    dateTimePartsToZonedDateTime(
+                        it.startAfterDatePriority,
+                        it.startAfterTimePriority,
+                        LocalTime.MIN,
+                    )
+                }, nullsFirst()).thenComparing(TaskPriority::createdAtPriority)
+                .thenComparing(TaskPriority::idPriority)
+        ).firstOrNull()?.task
+    }.flowOn(ioDispatcher)
 
     private fun dateTimePartsToZonedDateTime(
         date: LocalDate?,
@@ -84,8 +73,7 @@ class LocalTaskRepository @Inject constructor(
 
     override fun getById(id: Long) = taskDao.getById(id).flowOn(ioDispatcher)
 
-    override fun getTaskDetailById(id: Long) =
-        taskDao.getTaskDetailById(id).flowOn(ioDispatcher)
+    override fun getTaskDetailById(id: Long) = taskDao.getTaskDetailById(id).flowOn(ioDispatcher)
 
     override fun search(query: String) = taskDao.search(escapeSql("$query*")).flowOn(ioDispatcher)
 
@@ -101,10 +89,9 @@ class LocalTaskRepository @Inject constructor(
                     scheduledEndDate = criteria.scheduledDateRange?.second,
                     doneStart = criteria.doneDateRange?.first?.atStartOfDay(clock.zone)
                         ?.toInstant(),
-                    doneEnd = criteria.doneDateRange?.second
-                        ?.atStartOfDay(clock.zone)
-                        ?.with(LocalTime.MAX)
-                        ?.toInstant(),
+                    doneEnd = criteria.doneDateRange?.second?.atStartOfDay(clock.zone)
+                        ?.with(LocalTime.MAX)?.toInstant(),
+                    recurrenceDate = criteria.recurrenceDate,
                 )
             } else {
                 taskDao.searchTaskItems(
@@ -117,33 +104,28 @@ class LocalTaskRepository @Inject constructor(
                     scheduledEndDate = criteria.scheduledDateRange?.second,
                     doneStart = criteria.doneDateRange?.first?.atStartOfDay(clock.zone)
                         ?.toInstant(),
-                    doneEnd = criteria.doneDateRange?.second
-                        ?.atStartOfDay(clock.zone)
-                        ?.with(LocalTime.MAX)
-                        ?.toInstant(),
+                    doneEnd = criteria.doneDateRange?.second?.atStartOfDay(clock.zone)
+                        ?.with(LocalTime.MAX)?.toInstant(),
+                    recurrenceDate = criteria.recurrenceDate,
                 )
             }
-        }
-            .flow
-            .map { results ->
-                results
-                    .filter { (task, recurrences) ->
-                        !task.recurring || (criteria.deadlineDateRange?.let { (start, end) ->
-                            generateSequence(start) { if (it < end) it.plusDays(1) else null }.any {
-                                doesRecurOnDate(recurrences, it)
-                            }
-                        } != false && criteria.startAfterDateRange?.let { (start, end) ->
-                            generateSequence(start) { if (it < end) it.plusDays(1) else null }.any {
-                                doesRecurOnDate(recurrences, it)
-                            }
-                        } != false && criteria.scheduledDateRange?.let { (start, end) ->
-                            generateSequence(start) { if (it < end) it.plusDays(1) else null }.any {
-                                doesRecurOnDate(recurrences, it)
-                            }
-                        } != false)
+        }.flow.map { results ->
+            results.filter { (task, recurrences) ->
+                !task.recurring || (criteria.deadlineDateRange?.let { (start, end) ->
+                    generateSequence(start) { if (it < end) it.plusDays(1) else null }.any {
+                        doesRecurOnDate(recurrences, it)
                     }
-                    .map { it.task }
-            }.flowOn(ioDispatcher)
+                } != false && criteria.startAfterDateRange?.let { (start, end) ->
+                    generateSequence(start) { if (it < end) it.plusDays(1) else null }.any {
+                        doesRecurOnDate(recurrences, it)
+                    }
+                } != false && criteria.scheduledDateRange?.let { (start, end) ->
+                    generateSequence(start) { if (it < end) it.plusDays(1) else null }.any {
+                        doesRecurOnDate(recurrences, it)
+                    }
+                } != false)
+            }.map { it.task }
+        }.flowOn(ioDispatcher)
 
     private fun escapeSql(str: String) = str.replace("'", "''").replace("\"", "\"\"")
 
@@ -165,11 +147,10 @@ class LocalTaskRepository @Inject constructor(
         }
     }
 
-    override suspend fun update(form: EditTaskForm) =
-        withContext(ioDispatcher) {
-            taskDao.update(form)
-            form.updatedTask
-        }
+    override suspend fun update(form: EditTaskForm) = withContext(ioDispatcher) {
+        taskDao.update(form)
+        form.updatedTask
+    }
 
     override suspend fun delete(id: Long) {
         withContext(ioDispatcher) {

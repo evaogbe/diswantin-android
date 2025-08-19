@@ -372,11 +372,7 @@ interface TaskDao {
             FROM task_completion
             GROUP BY task_id
         ) c ON c.task_id = t.id
-        LEFT JOIN (
-            SELECT task_id, MIN(start) AS start
-            FROM task_recurrence
-            GROUP BY task_id
-        ) r ON r.task_id = t.id
+        LEFT JOIN task_recurrence r ON r.task_id = t.id
         WHERE task_fts MATCH :query
             AND (
                 :deadlineStartDate IS NULL
@@ -404,6 +400,90 @@ interface TaskDao {
                     FROM task_completion c2
                     WHERE c2.task_id = t.id AND c2.done_at BETWEEN :doneStart AND :doneEnd
                 )
+            )
+            AND (
+                :recurrenceDate IS NULL
+                OR (
+                    r.start <= :recurrenceDate
+                    AND CASE r.type
+                        WHEN 0 THEN (julianday(:recurrenceDate) - julianday(r.start)) % r.step = 0
+                        WHEN 1 THEN (julianday(:recurrenceDate) - julianday(r.start)) % (r.step * 7) = 0
+                        WHEN 2 THEN (
+                                12
+                                + CAST(strftime('%m', :recurrenceDate) as INT)
+                                - CAST(strftime('%m', r.start) as INT)
+                            ) % r.step = 0
+                            AND (
+                                strftime('%d', r.start) = strftime('%d', :recurrenceDate)
+                                OR (
+                                    strftime('%m-%d', r.start)
+                                        IN (
+                                            '01-31', '03-31', '05-31', '07-31', '08-31',
+                                            '10-31', '12-31'
+                                        )
+                                    AND strftime('%m-%d', :recurrenceDate)
+                                        IN ('04-30', '06-30', '09-30', '11-30')
+                                )
+                                OR (
+                                    strftime('%m-%d', r.start)
+                                        IN (
+                                            '01-31', '02-29', '03-31', '04-30', '05-31',
+                                            '06-30', '07-31', '08-31', '09-30', '10-31',
+                                            '11-30', '12-31'
+                                        )
+                                    AND (
+                                        strftime('%m-%d', :recurrenceDate) = '02-29'
+                                        OR (
+                                            strftime('%m-%d', :recurrenceDate) = '02-28'
+                                            AND (
+                                                CAST(strftime('%Y', :recurrenceDate) as INT) & 3 != 0
+                                                OR (
+                                                    CAST(strftime('%Y', :recurrenceDate) as INT) % 25 = 0
+                                                    AND CAST(strftime('%Y', :recurrenceDate) as INT) & 15
+                                                        != 0
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        WHEN 3 THEN (
+                                12
+                                + CAST(strftime('%m', :recurrenceDate) as INT)
+                                - CAST(strftime('%m', r.start) as INT)
+                            ) % r.step = 0
+                            AND CAST((CAST(strftime('%d', :recurrenceDate) as REAL) / 7) as INT)
+                                + (
+                                    (CAST(strftime('%d', :recurrenceDate) as REAL) / 7)
+                                    > CAST((CAST(strftime('%d', :recurrenceDate) as REAL) / 7) as INT)
+                                )
+                                = CAST((CAST(strftime('%d', r.start) as REAL) / 7) as INT)
+                                    + (
+                                        (CAST(strftime('%d', r.start) as REAL) / 7)
+                                        > CAST((CAST(strftime('%d', r.start) as REAL) / 7) as INT)
+                                    )
+                            AND strftime('%w', r.start) = strftime('%w', :recurrenceDate)
+                        WHEN 4 THEN (
+                                CAST(strftime('%Y', :recurrenceDate) as INT)
+                                - CAST(strftime('%Y', r.start) as INT)
+                            ) % r.step = 0
+                            AND (
+                                strftime('%m-%d', r.start) = strftime('%m-%d', :recurrenceDate)
+                                OR (
+                                    strftime('%m-%d', r.start) = '02-29'
+                                    AND strftime('%m-%d', :recurrenceDate) = '02-28'
+                                    AND (
+                                        CAST(strftime('%Y', :recurrenceDate) as INT) & 3 != 0
+                                        OR (
+                                            CAST(strftime('%Y', :recurrenceDate) as INT) % 25 = 0
+                                            AND CAST(strftime('%Y', :recurrenceDate) as INT) & 15 != 0
+                                        )
+                                    )
+                                )
+                            )
+                        ELSE FALSE
+                        END
+                    )
             )
         ORDER BY
             recurring,
@@ -434,6 +514,7 @@ interface TaskDao {
         scheduledEndDate: LocalDate?,
         doneStart: Instant?,
         doneEnd: Instant?,
+        recurrenceDate: LocalDate?,
     ): PagingSource<Int, TaskItemWithRecurrences>
 
     @Transaction
@@ -445,11 +526,7 @@ interface TaskDao {
             FROM task_completion
             GROUP BY task_id
         ) c ON c.task_id = t.id
-        LEFT JOIN (
-            SELECT task_id, MIN(start) AS start
-            FROM task_recurrence
-            GROUP BY task_id
-        ) r ON r.task_id = t.id
+        LEFT JOIN task_recurrence r ON r.task_id = t.id
         WHERE (
                 :deadlineStartDate IS NULL
                 OR :deadlineEndDate IS NULL
@@ -476,6 +553,90 @@ interface TaskDao {
                     FROM task_completion c2
                     WHERE c2.task_id = t.id AND c2.done_at BETWEEN :doneStart AND :doneEnd
                 )
+            )
+            AND (
+                :recurrenceDate IS NULL
+                OR (
+                    r.start <= :recurrenceDate
+                    AND CASE r.type
+                        WHEN 0 THEN (julianday(:recurrenceDate) - julianday(r.start)) % r.step = 0
+                        WHEN 1 THEN (julianday(:recurrenceDate) - julianday(r.start)) % (r.step * 7) = 0
+                        WHEN 2 THEN (
+                                12
+                                + CAST(strftime('%m', :recurrenceDate) as INT)
+                                - CAST(strftime('%m', r.start) as INT)
+                            ) % r.step = 0
+                            AND (
+                                strftime('%d', r.start) = strftime('%d', :recurrenceDate)
+                                OR (
+                                    strftime('%m-%d', r.start)
+                                        IN (
+                                            '01-31', '03-31', '05-31', '07-31', '08-31',
+                                            '10-31', '12-31'
+                                        )
+                                    AND strftime('%m-%d', :recurrenceDate)
+                                        IN ('04-30', '06-30', '09-30', '11-30')
+                                )
+                                OR (
+                                    strftime('%m-%d', r.start)
+                                        IN (
+                                            '01-31', '02-29', '03-31', '04-30', '05-31',
+                                            '06-30', '07-31', '08-31', '09-30', '10-31',
+                                            '11-30', '12-31'
+                                        )
+                                    AND (
+                                        strftime('%m-%d', :recurrenceDate) = '02-29'
+                                        OR (
+                                            strftime('%m-%d', :recurrenceDate) = '02-28'
+                                            AND (
+                                                CAST(strftime('%Y', :recurrenceDate) as INT) & 3 != 0
+                                                OR (
+                                                    CAST(strftime('%Y', :recurrenceDate) as INT) % 25 = 0
+                                                    AND CAST(strftime('%Y', :recurrenceDate) as INT) & 15
+                                                        != 0
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        WHEN 3 THEN (
+                                12
+                                + CAST(strftime('%m', :recurrenceDate) as INT)
+                                - CAST(strftime('%m', r.start) as INT)
+                            ) % r.step = 0
+                            AND CAST((CAST(strftime('%d', :recurrenceDate) as REAL) / 7) as INT)
+                                + (
+                                    (CAST(strftime('%d', :recurrenceDate) as REAL) / 7)
+                                    > CAST((CAST(strftime('%d', :recurrenceDate) as REAL) / 7) as INT)
+                                )
+                                = CAST((CAST(strftime('%d', r.start) as REAL) / 7) as INT)
+                                    + (
+                                        (CAST(strftime('%d', r.start) as REAL) / 7)
+                                        > CAST((CAST(strftime('%d', r.start) as REAL) / 7) as INT)
+                                    )
+                            AND strftime('%w', r.start) = strftime('%w', :recurrenceDate)
+                        WHEN 4 THEN (
+                                CAST(strftime('%Y', :recurrenceDate) as INT)
+                                - CAST(strftime('%Y', r.start) as INT)
+                            ) % r.step = 0
+                            AND (
+                                strftime('%m-%d', r.start) = strftime('%m-%d', :recurrenceDate)
+                                OR (
+                                    strftime('%m-%d', r.start) = '02-29'
+                                    AND strftime('%m-%d', :recurrenceDate) = '02-28'
+                                    AND (
+                                        CAST(strftime('%Y', :recurrenceDate) as INT) & 3 != 0
+                                        OR (
+                                            CAST(strftime('%Y', :recurrenceDate) as INT) % 25 = 0
+                                            AND CAST(strftime('%Y', :recurrenceDate) as INT) & 15 != 0
+                                        )
+                                    )
+                                )
+                            )
+                        ELSE FALSE
+                        END
+                    )
             )
         ORDER BY
             recurring,
@@ -505,6 +666,7 @@ interface TaskDao {
         scheduledEndDate: LocalDate?,
         doneStart: Instant?,
         doneEnd: Instant?,
+        recurrenceDate: LocalDate?,
     ): PagingSource<Int, TaskItemWithRecurrences>
 
     @Query(
@@ -651,8 +813,7 @@ interface TaskDao {
 
             is PathUpdateType.Replace -> {
                 if (hasPath(
-                        ancestor = form.updatedTask.id,
-                        descendant = form.parentUpdateType.id
+                        ancestor = form.updatedTask.id, descendant = form.parentUpdateType.id
                     )
                 ) {
                     val existingParentId = getParent(form.updatedTask.id).first()?.id
