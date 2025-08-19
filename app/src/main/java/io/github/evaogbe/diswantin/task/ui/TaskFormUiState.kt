@@ -43,6 +43,8 @@ sealed interface TaskFormUiState {
     ) : TaskFormUiState {
         val canSchedule =
             listOf(deadlineDate, deadlineTime, startAfterDate, startAfterTime).all { it == null }
+
+        val isScheduled = if (recurrence == null) scheduledDate != null else scheduledTime != null
     }
 
     data object Saved : TaskFormUiState

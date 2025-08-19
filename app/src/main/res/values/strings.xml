@@ -38,8 +38,8 @@
     <string name="deadline_chip_label">Deadline: %1$s-%2$s</string>
     <string name="deadline_time_label">Deadline time</string>
     <string name="done_button">Done</string>
-    <string name="done_filter_chip_label_unselected">Marked done</string>
-    <string name="done_filter_chip_label_selected">Done: %1$s-%2$s</string>
+    <string name="done_chip_label_unselected">Marked done</string>
+    <string name="done_chip_label_selected">Done: %1$s-%2$s</string>
     <string name="form_type_button_category">Category</string>
     <string name="form_type_button_task">Task</string>
     <string name="mark_done_button">Mark done</string>
@@ -48,6 +48,8 @@
     <string name="note_label">Note</string>
     <string name="ok_button">OK</string>
     <string name="parent_task_label">Previous to-do</string>
+    <string name="recurrence_chip_label_unselected">Repeats on</string>
+    <string name="recurrence_chip_label_selected">Repeats: %1$s</string>
     <plurals name="recurrence_daily">
         <item quantity="one">Daily</item>
         <item quantity="other">Every %1$d days</item>

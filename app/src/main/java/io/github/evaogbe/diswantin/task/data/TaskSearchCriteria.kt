@@ -8,11 +8,13 @@ data class TaskSearchCriteria(
     val startAfterDateRange: Pair<LocalDate, LocalDate>? = null,
     val scheduledDateRange: Pair<LocalDate, LocalDate>? = null,
     val doneDateRange: Pair<LocalDate, LocalDate>? = null,
+    val recurrenceDate: LocalDate? = null,
 ) {
-    val isEmpty =
-        name.isBlank() &&
-                deadlineDateRange == null &&
-                startAfterDateRange == null &&
-                scheduledDateRange == null &&
-                doneDateRange == null
+    val isEmpty = name.isBlank() && listOf(
+        deadlineDateRange,
+        startAfterDateRange,
+        scheduledDateRange,
+        doneDateRange,
+        recurrenceDate,
+    ).all { it == null }
 }

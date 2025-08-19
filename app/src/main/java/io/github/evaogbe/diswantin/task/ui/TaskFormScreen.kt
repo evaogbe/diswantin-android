@@ -158,8 +158,7 @@ fun TaskFormScreen(
     }
 
     when (val state = uiState) {
-        is TaskFormUiState.Pending,
-        is TaskFormUiState.Saved -> {
+        is TaskFormUiState.Pending, is TaskFormUiState.Saved -> {
             PendingLayout()
         }
 
@@ -284,9 +283,7 @@ fun TaskFormLayout(
                 }
             }
 
-            if ((uiState.recurrence == null && uiState.scheduledDate == null)
-                || (uiState.recurrence != null && uiState.scheduledTime == null)
-            ) {
+            if (!uiState.isScheduled) {
                 if (uiState.deadlineDate != null) {
                     Column {
                         Text(
@@ -541,7 +538,7 @@ fun <T : Any> SelectableAutocompleteField(
     onSelectOption: (T?) -> Unit,
 ) {
     var query by rememberSaveable(selectedOption) {
-        mutableStateOf(selectedOption?.let(formatOption) ?: "")
+        mutableStateOf(selectedOption?.let(formatOption).orEmpty())
     }
 
     if (selectedOption == null) {
