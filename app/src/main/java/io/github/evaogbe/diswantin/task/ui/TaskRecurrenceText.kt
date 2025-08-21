@@ -38,6 +38,7 @@ fun taskRecurrenceText(recurrence: TaskRecurrenceUiState): String {
             pluralStringResource(
                 R.plurals.recurrence_monthly_on_day,
                 recurrence.step,
+                recurrence.start.dayOfMonth.ordinal,
                 recurrence.step,
             )
         }
@@ -71,6 +72,17 @@ fun taskRecurrenceText(recurrence: TaskRecurrenceUiState): String {
         }
     }
 }
+
+private val Int.ordinal: String
+    get() {
+        val suffix = when (if (this > 13) this % 10 else this) {
+            1 -> "st"
+            2 -> "nd"
+            3 -> "rd"
+            else -> "th"
+        }
+        return "$this$suffix"
+    }
 
 @Preview(showBackground = true)
 @Composable
