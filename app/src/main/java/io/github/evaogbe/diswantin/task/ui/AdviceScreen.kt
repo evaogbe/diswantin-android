@@ -79,6 +79,7 @@ fun AdviceScreen(modifier: Modifier = Modifier) {
                             )
                         }.toImmutableList()
                     ),
+                    BulletedItem(annotatedStringResource(R.string.suggestion_item_body_doubling)),
                     BulletedItem(annotatedStringResource(R.string.suggestion_item_journal)),
                     BulletedItem(
                         annotatedStringResource(R.string.suggestion_item_move),
@@ -87,6 +88,7 @@ fun AdviceScreen(modifier: Modifier = Modifier) {
                         }.toImmutableList()
                     ),
                     BulletedItem(annotatedStringResource(R.string.suggestion_item_snack)),
+                    BulletedItem(annotatedStringResource(R.string.suggestion_item_sleep)),
                     BulletedItem(annotatedStringResource(R.string.suggestion_item_friend)),
                     BulletedItem(annotatedStringResource(R.string.suggestion_item_meds)),
                     BulletedItem(annotatedStringResource(R.string.suggestion_item_day_off))
