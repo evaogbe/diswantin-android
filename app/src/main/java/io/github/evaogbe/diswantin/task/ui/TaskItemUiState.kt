@@ -8,11 +8,17 @@ data class TaskItemUiState(val id: Long, val name: String, val isDone: Boolean) 
         fun fromTaskItem(task: TaskItemData, doneBefore: Instant) = TaskItemUiState(
             id = task.id,
             name = task.name,
-            isDone = if (task.recurring) {
-                task.doneAt?.let { it < doneBefore } == false
-            } else {
-                task.doneAt != null
-            },
+            isDone = isTaskDone(
+                doneAt = task.doneAt,
+                doneBefore = doneBefore,
+                recurring = task.recurring,
+            ),
         )
     }
+}
+
+fun isTaskDone(doneAt: Instant?, doneBefore: Instant, recurring: Boolean) = if (recurring) {
+    doneAt?.let { it < doneBefore } == false
+} else {
+    doneAt != null
 }

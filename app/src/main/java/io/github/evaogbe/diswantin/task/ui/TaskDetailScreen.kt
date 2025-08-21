@@ -37,12 +37,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
@@ -52,7 +48,6 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.RecurrenceType
-import io.github.evaogbe.diswantin.task.data.TaskDetail
 import io.github.evaogbe.diswantin.ui.components.LoadFailureLayout
 import io.github.evaogbe.diswantin.ui.components.PendingLayout
 import io.github.evaogbe.diswantin.ui.components.pagedListFooter
@@ -64,8 +59,6 @@ import io.github.evaogbe.diswantin.ui.theme.SpaceSm
 import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.coroutines.flow.flowOf
-import java.time.Clock
-import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 import java.util.Locale
@@ -166,7 +159,7 @@ fun TaskDetailScreen(
     LaunchedEffect(setTopBarState, uiState) {
         setTopBarState(
             TaskDetailTopBarState(
-                taskId = (uiState as? TaskDetailUiState.Success)?.task?.id,
+                taskId = (uiState as? TaskDetailUiState.Success)?.id,
                 isDone = (uiState as? TaskDetailUiState.Success)?.isDone == true,
             ),
         )
@@ -236,8 +229,6 @@ fun TaskDetailLayout(
     onNavigateToCategory: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val resources = LocalResources.current
-
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         LazyColumn(
             modifier = Modifier
@@ -247,28 +238,16 @@ fun TaskDetailLayout(
         ) {
             item {
                 SelectionContainer(modifier = Modifier.padding(horizontal = SpaceMd)) {
-                    if (uiState.isDone) {
-                        Text(
-                            text = uiState.task.name,
-                            modifier = Modifier.semantics {
-                                contentDescription =
-                                    resources.getString(R.string.task_name_done, uiState.task.name)
-                            },
-                            textDecoration = TextDecoration.LineThrough,
-                            style = typography.displaySmall,
-                        )
-                    } else {
-                        Text(text = uiState.task.name, style = typography.displaySmall)
-                    }
+                    TaskItemName(task = uiState.taskItem, style = typography.displaySmall)
                 }
                 Spacer(Modifier.size(SpaceMd))
             }
 
-            if (uiState.task.note.isNotEmpty()) {
+            if (uiState.note.isNotEmpty()) {
                 item {
                     SelectionContainer(modifier = Modifier.padding(horizontal = SpaceMd)) {
                         Text(
-                            text = uiState.task.note,
+                            text = uiState.note,
                             color = colorScheme.onSurfaceVariant,
                             style = typography.bodyLarge,
                         )
@@ -328,17 +307,17 @@ fun TaskDetailLayout(
                 }
             }
 
-            if (uiState.task.categoryId != null && uiState.task.categoryName != null) {
+            if (uiState.categoryId != null && uiState.categoryName != null) {
                 item {
                     ListItem(
                         headlineContent = {
                             SelectionContainer {
-                                Text(text = uiState.task.categoryName)
+                                Text(text = uiState.categoryName)
                             }
                         },
                         overlineContent = { Text(stringResource(R.string.task_category_label)) },
                         supportingContent = {
-                            TextButton(onClick = { onNavigateToCategory(uiState.task.categoryId) }) {
+                            TextButton(onClick = { onNavigateToCategory(uiState.categoryId) }) {
                                 Text(stringResource(R.string.view_task_category_button))
                             }
                         },
@@ -346,17 +325,17 @@ fun TaskDetailLayout(
                 }
             }
 
-            if (uiState.task.parentId != null && uiState.task.parentName != null) {
+            if (uiState.parent != null) {
                 item {
                     ListItem(
                         headlineContent = {
                             SelectionContainer {
-                                Text(text = uiState.task.parentName)
+                                TaskItemName(task = uiState.parent)
                             }
                         },
                         overlineContent = { Text(stringResource(R.string.parent_task_label)) },
                         supportingContent = {
-                            TextButton(onClick = { onNavigateToTask(uiState.task.parentId) }) {
+                            TextButton(onClick = { onNavigateToTask(uiState.parent.id) }) {
                                 Text(stringResource(R.string.view_task_button))
                             }
                         },
@@ -414,25 +393,18 @@ private fun TaskDetailScreenPreview_Minimal() {
         ) { innerPadding ->
             TaskDetailLayout(
                 uiState = TaskDetailUiState.Success(
-                    task = TaskDetail(
-                        id = 2L,
-                        name = "Shower",
-                        note = "",
-                        deadlineDate = null,
-                        deadlineTime = null,
-                        startAfterDate = null,
-                        startAfterTime = null,
-                        scheduledDate = null,
-                        scheduledTime = null,
-                        doneAt = null,
-                        categoryId = null,
-                        categoryName = null,
-                        parentId = null,
-                        parentName = null,
-                    ),
+                    id = 2L,
+                    name = "Shower",
+                    note = "",
+                    formattedDeadline = null,
+                    formattedStartAfter = null,
+                    formattedScheduledAt = null,
                     recurrence = null,
+                    isDone = false,
+                    categoryId = null,
+                    categoryName = null,
+                    parent = null,
                     userMessage = null,
-                    clock = Clock.systemDefaultZone(),
                 ),
                 childTaskItems = childTaskItems,
                 onNavigateToTask = {},
@@ -470,25 +442,18 @@ private fun TaskDetailScreenPreview_Detailed() {
         ) { innerPadding ->
             TaskDetailLayout(
                 uiState = TaskDetailUiState.Success(
-                    task = TaskDetail(
-                        id = 2L,
-                        name = "Shower",
-                        note = "Wash hair and deep condition before appointment at hair salon",
-                        deadlineDate = LocalDate.now(),
-                        deadlineTime = null,
-                        startAfterDate = null,
-                        startAfterTime = LocalTime.now(),
-                        scheduledDate = null,
-                        scheduledTime = null,
-                        doneAt = Instant.now(),
-                        categoryId = 1L,
-                        categoryName = "Morning Routine",
-                        parentId = 1L,
-                        parentName = "Brush teeth",
-                    ),
+                    id = 2L,
+                    name = "Shower",
+                    note = "Wash hair and deep condition before appointment at hair salon",
+                    formattedDeadline = formatDateTime(LocalDate.now(), null),
+                    formattedStartAfter = formatDateTime(null, LocalTime.now()),
+                    formattedScheduledAt = null,
                     recurrence = null,
+                    isDone = true,
+                    categoryId = 1L,
+                    categoryName = "Morning Routine",
+                    parent = TaskItemUiState(id = 1L, name = "Brush teeth", isDone = false),
                     userMessage = null,
-                    clock = Clock.systemDefaultZone(),
                 ),
                 childTaskItems = childTaskItems,
                 onNavigateToTask = {},
@@ -508,22 +473,12 @@ private fun TaskDetailLayoutPreview() {
         Surface {
             TaskDetailLayout(
                 uiState = TaskDetailUiState.Success(
-                    task = TaskDetail(
-                        id = 2L,
-                        name = "Shower",
-                        note = "",
-                        deadlineDate = null,
-                        deadlineTime = null,
-                        startAfterDate = null,
-                        startAfterTime = null,
-                        scheduledDate = null,
-                        scheduledTime = LocalTime.now(),
-                        doneAt = null,
-                        categoryId = null,
-                        categoryName = null,
-                        parentId = null,
-                        parentName = null,
-                    ),
+                    id = 2L,
+                    name = "Shower",
+                    note = "",
+                    formattedDeadline = null,
+                    formattedStartAfter = null,
+                    formattedScheduledAt = formatDateTime(null, LocalTime.now()),
                     recurrence = TaskRecurrenceUiState(
                         start = LocalDate.now(),
                         type = RecurrenceType.Day,
@@ -531,8 +486,11 @@ private fun TaskDetailLayoutPreview() {
                         weekdays = persistentSetOf(),
                         locale = Locale.getDefault(),
                     ),
+                    isDone = false,
+                    categoryId = null,
+                    categoryName = null,
+                    parent = TaskItemUiState(id = 1L, name = "Brush teeth", isDone = true),
                     userMessage = null,
-                    clock = Clock.systemDefaultZone(),
                 ),
                 childTaskItems = childTaskItems,
                 onNavigateToTask = {},

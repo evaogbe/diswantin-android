@@ -4746,6 +4746,8 @@ class LocalTaskRepositoryTest {
                 categoryName = null,
                 parentId = task1.id,
                 parentName = task1.name,
+                parentRecurring = false,
+                parentDoneAt = null,
             )
         )
 
@@ -4783,6 +4785,8 @@ class LocalTaskRepositoryTest {
                 categoryName = null,
                 parentId = updatedTask2.id,
                 parentName = updatedTask2.name,
+                parentRecurring = false,
+                parentDoneAt = null,
             )
         )
 
@@ -4820,6 +4824,8 @@ class LocalTaskRepositoryTest {
                 categoryName = null,
                 parentId = null,
                 parentName = null,
+                parentRecurring = false,
+                parentDoneAt = null,
             )
         )
 
@@ -4857,6 +4863,8 @@ class LocalTaskRepositoryTest {
                 categoryName = null,
                 parentId = task1.id,
                 parentName = task1.name,
+                parentRecurring = false,
+                parentDoneAt = null,
             )
         )
 
@@ -4894,6 +4902,8 @@ class LocalTaskRepositoryTest {
                 categoryName = null,
                 parentId = task3.id,
                 parentName = task3.name,
+                parentRecurring = false,
+                parentDoneAt = null,
             )
         )
         assertThat(taskRepository.getTaskDetailById(task3.id).first()).isEqualTo(
@@ -4912,6 +4922,8 @@ class LocalTaskRepositoryTest {
                 categoryName = null,
                 parentId = null,
                 parentName = null,
+                parentRecurring = false,
+                parentDoneAt = null,
             )
         )
 
@@ -4949,6 +4961,8 @@ class LocalTaskRepositoryTest {
                 categoryName = null,
                 parentId = updatedTask2.id,
                 parentName = updatedTask2.name,
+                parentRecurring = false,
+                parentDoneAt = null,
             )
         )
 
@@ -4986,6 +5000,8 @@ class LocalTaskRepositoryTest {
                 categoryName = null,
                 parentId = updatedTask2.id,
                 parentName = updatedTask2.name,
+                parentRecurring = false,
+                parentDoneAt = null,
             )
         )
         assertThat(taskRepository.getTaskDetailById(task3.id).first()).isEqualTo(
@@ -5004,6 +5020,8 @@ class LocalTaskRepositoryTest {
                 categoryName = null,
                 parentId = updatedTask2.id,
                 parentName = updatedTask2.name,
+                parentRecurring = false,
+                parentDoneAt = null,
             )
         )
     }
@@ -5081,6 +5099,8 @@ class LocalTaskRepositoryTest {
                 categoryName = null,
                 parentId = null,
                 parentName = null,
+                parentRecurring = false,
+                parentDoneAt = null,
             )
         )
         assertThat(taskRepository.getTaskDetailById(task2.id).first()).isEqualTo(
@@ -5099,6 +5119,8 @@ class LocalTaskRepositoryTest {
                 categoryName = null,
                 parentId = task1.id,
                 parentName = task1.name,
+                parentRecurring = false,
+                parentDoneAt = null,
             )
         )
         assertThat(taskRepository.getTaskDetailById(task3.id).first()).isEqualTo(
@@ -5117,6 +5139,8 @@ class LocalTaskRepositoryTest {
                 categoryName = null,
                 parentId = task2.id,
                 parentName = task2.name,
+                parentRecurring = false,
+                parentDoneAt = null,
             )
         )
 
@@ -5139,6 +5163,8 @@ class LocalTaskRepositoryTest {
                 categoryName = null,
                 parentId = null,
                 parentName = null,
+                parentRecurring = false,
+                parentDoneAt = null,
             )
         )
         assertThat(taskRepository.getTaskDetailById(task3.id).first()).isEqualTo(
@@ -5157,6 +5183,8 @@ class LocalTaskRepositoryTest {
                 categoryName = null,
                 parentId = task1.id,
                 parentName = task1.name,
+                parentRecurring = false,
+                parentDoneAt = null,
             )
         )
     }

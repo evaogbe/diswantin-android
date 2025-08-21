@@ -680,17 +680,19 @@ private fun TaskSearchLayoutPreview() {
     )
 
     DiswantinTheme {
-        TaskSearchLayout(
-            searchResultItems = {
-                items(searchResults, TaskItemUiState::id) { searchResult ->
-                    SearchResultItem(
-                        searchResult = searchResult,
-                        query = "Bru",
-                        onSelectSearchResult = {},
-                    )
-                    HorizontalDivider()
-                }
-            },
-        )
+        Surface {
+            TaskSearchLayout(
+                searchResultItems = {
+                    items(searchResults, TaskItemUiState::id) { searchResult ->
+                        SearchResultItem(
+                            searchResult = searchResult,
+                            query = "Bru",
+                            onSelectSearchResult = {},
+                        )
+                        HorizontalDivider()
+                    }
+                },
+            )
+        }
     }
 }

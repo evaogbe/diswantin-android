@@ -1,6 +1,8 @@
 package io.github.evaogbe.diswantin.ui.components
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -9,11 +11,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme.colorScheme
+import androidx.compose.material3.MaterialTheme.typography
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -23,6 +28,7 @@ import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
+import io.github.evaogbe.diswantin.ui.theme.SpaceMd
 import io.github.evaogbe.diswantin.ui.theme.SpaceSm
 import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
 
@@ -60,9 +66,24 @@ private fun NextPagePendingLayout() {
 
 @Composable
 private fun NextPageErrorLayout(errorMessage: @Composable (() -> Unit), onRetry: () -> Unit) {
-    ListItem(
-        headlineContent = errorMessage,
-        supportingContent = {
+    Surface(
+        shape = ListItemDefaults.shape,
+        color = colorScheme.errorContainer,
+        contentColor = colorScheme.onErrorContainer,
+        tonalElevation = ListItemDefaults.Elevation,
+        shadowElevation = ListItemDefaults.Elevation,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = SpaceMd, vertical = SpaceSm),
+            verticalArrangement = Arrangement.spacedBy(SpaceSm)
+        ) {
+            val mergedStyle = LocalTextStyle.current.merge(typography.bodyLarge)
+            CompositionLocalProvider(
+                LocalTextStyle provides mergedStyle,
+                content = errorMessage,
+            )
             TextButtonWithIcon(
                 onClick = onRetry,
                 imageVector = Icons.Default.Refresh,
@@ -71,19 +92,17 @@ private fun NextPageErrorLayout(errorMessage: @Composable (() -> Unit), onRetry:
                     contentColor = colorScheme.error,
                 ),
             )
-        },
-        colors = ListItemDefaults.colors(
-            containerColor = colorScheme.errorContainer,
-            headlineColor = colorScheme.onErrorContainer,
-        ),
-    )
+        }
+    }
 }
 
 @Preview
 @Composable
 private fun NextPendingLayoutPreview() {
     DiswantinTheme {
-        NextPagePendingLayout()
+        Surface {
+            NextPagePendingLayout()
+        }
     }
 }
 

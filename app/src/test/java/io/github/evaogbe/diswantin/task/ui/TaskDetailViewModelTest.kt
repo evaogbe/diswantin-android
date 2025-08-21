@@ -10,7 +10,6 @@ import assertk.assertions.prop
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.RecurrenceType
 import io.github.evaogbe.diswantin.task.data.Task
-import io.github.evaogbe.diswantin.task.data.TaskDetail
 import io.github.evaogbe.diswantin.task.data.TaskRecurrence
 import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
@@ -82,7 +81,12 @@ class TaskDetailViewModelTest {
         )
         assertThat(viewModel.uiState.value).isEqualTo(
             TaskDetailUiState.Success(
-                task = task1.toTaskDetail(),
+                id = task1.id,
+                name = task1.name,
+                note = task1.note,
+                formattedDeadline = null,
+                formattedStartAfter = null,
+                formattedScheduledAt = null,
                 recurrence = TaskRecurrenceUiState(
                     start = LocalDate.parse("2024-08-22"),
                     type = RecurrenceType.Day,
@@ -90,8 +94,11 @@ class TaskDetailViewModelTest {
                     weekdays = persistentSetOf(),
                     locale = locale,
                 ),
+                isDone = false,
+                categoryId = null,
+                categoryName = null,
+                parent = null,
                 userMessage = null,
-                clock = clock,
             )
         )
     }
@@ -175,25 +182,18 @@ class TaskDetailViewModelTest {
 
         assertThat(viewModel.uiState.value).isEqualTo(
             TaskDetailUiState.Success(
-                task = TaskDetail(
-                    id = task.id,
-                    name = task.name,
-                    note = task.note,
-                    deadlineDate = task.deadlineDate,
-                    deadlineTime = task.deadlineTime,
-                    startAfterDate = task.startAfterDate,
-                    startAfterTime = task.startAfterTime,
-                    scheduledDate = task.scheduledDate,
-                    scheduledTime = task.scheduledTime,
-                    doneAt = null,
-                    categoryId = null,
-                    categoryName = null,
-                    parentId = null,
-                    parentName = null,
-                ),
+                id = task.id,
+                name = task.name,
+                note = task.note,
+                formattedDeadline = null,
+                formattedStartAfter = null,
+                formattedScheduledAt = null,
                 recurrence = null,
+                isDone = false,
+                categoryId = null,
+                categoryName = null,
+                parent = null,
                 userMessage = null,
-                clock = clock,
             )
         )
 
@@ -201,25 +201,18 @@ class TaskDetailViewModelTest {
 
         assertThat(viewModel.uiState.value).isEqualTo(
             TaskDetailUiState.Success(
-                task = TaskDetail(
-                    id = task.id,
-                    name = task.name,
-                    note = task.note,
-                    deadlineDate = task.deadlineDate,
-                    deadlineTime = task.deadlineTime,
-                    startAfterDate = task.startAfterDate,
-                    startAfterTime = task.startAfterTime,
-                    scheduledDate = task.scheduledDate,
-                    scheduledTime = task.scheduledTime,
-                    doneAt = Instant.parse("2024-08-22T08:00:00Z"),
-                    categoryId = null,
-                    categoryName = null,
-                    parentId = null,
-                    parentName = null,
-                ),
+                id = task.id,
+                name = task.name,
+                note = task.note,
+                formattedDeadline = null,
+                formattedStartAfter = null,
+                formattedScheduledAt = null,
                 recurrence = null,
+                isDone = true,
+                categoryId = null,
+                categoryName = null,
+                parent = null,
                 userMessage = null,
-                clock = clock,
             )
         )
 
@@ -227,25 +220,18 @@ class TaskDetailViewModelTest {
 
         assertThat(viewModel.uiState.value).isEqualTo(
             TaskDetailUiState.Success(
-                task = TaskDetail(
-                    id = task.id,
-                    name = task.name,
-                    note = task.note,
-                    deadlineDate = task.deadlineDate,
-                    deadlineTime = task.deadlineTime,
-                    startAfterDate = task.startAfterDate,
-                    startAfterTime = task.startAfterTime,
-                    scheduledDate = task.scheduledDate,
-                    scheduledTime = task.scheduledTime,
-                    doneAt = null,
-                    categoryId = null,
-                    categoryName = null,
-                    parentId = null,
-                    parentName = null,
-                ),
+                id = task.id,
+                name = task.name,
+                note = task.note,
+                formattedDeadline = null,
+                formattedStartAfter = null,
+                formattedScheduledAt = null,
                 recurrence = null,
+                isDone = false,
+                categoryId = null,
+                categoryName = null,
+                parent = null,
                 userMessage = null,
-                clock = clock,
             )
         )
     }
@@ -272,25 +258,18 @@ class TaskDetailViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskDetailUiState.Success(
-                    task = TaskDetail(
-                        id = task.id,
-                        name = task.name,
-                        note = task.note,
-                        deadlineDate = task.deadlineDate,
-                        deadlineTime = task.deadlineTime,
-                        startAfterDate = task.startAfterDate,
-                        startAfterTime = task.startAfterTime,
-                        scheduledDate = task.scheduledDate,
-                        scheduledTime = task.scheduledTime,
-                        doneAt = null,
-                        categoryId = null,
-                        categoryName = null,
-                        parentId = null,
-                        parentName = null,
-                    ),
+                    id = task.id,
+                    name = task.name,
+                    note = task.note,
+                    formattedDeadline = null,
+                    formattedStartAfter = null,
+                    formattedScheduledAt = null,
                     recurrence = null,
+                    isDone = false,
+                    categoryId = null,
+                    categoryName = null,
+                    parent = null,
                     userMessage = UserMessage.String(R.string.task_detail_mark_done_error),
-                    clock = clock,
                 )
             )
         }
@@ -319,25 +298,18 @@ class TaskDetailViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskDetailUiState.Success(
-                    task = TaskDetail(
-                        id = task.id,
-                        name = task.name,
-                        note = task.note,
-                        deadlineDate = task.deadlineDate,
-                        deadlineTime = task.deadlineTime,
-                        startAfterDate = task.startAfterDate,
-                        startAfterTime = task.startAfterTime,
-                        scheduledDate = task.scheduledDate,
-                        scheduledTime = task.scheduledTime,
-                        doneAt = Instant.parse("2024-08-22T08:00:00Z"),
-                        categoryId = null,
-                        categoryName = null,
-                        parentId = null,
-                        parentName = null,
-                    ),
+                    id = task.id,
+                    name = task.name,
+                    note = task.note,
+                    formattedDeadline = null,
+                    formattedStartAfter = null,
+                    formattedScheduledAt = null,
                     recurrence = null,
+                    isDone = true,
+                    categoryId = null,
+                    categoryName = null,
+                    parent = null,
                     userMessage = UserMessage.String(R.string.task_detail_unmark_done_error),
-                    clock = clock,
                 )
             )
         }
@@ -359,10 +331,18 @@ class TaskDetailViewModelTest {
 
         assertThat(viewModel.uiState.value).isEqualTo(
             TaskDetailUiState.Success(
-                task = task.toTaskDetail(),
+                id = task.id,
+                name = task.name,
+                note = task.note,
+                formattedDeadline = null,
+                formattedStartAfter = null,
+                formattedScheduledAt = null,
                 recurrence = null,
+                isDone = false,
+                categoryId = null,
+                categoryName = null,
+                parent = null,
                 userMessage = null,
-                clock = clock,
             )
         )
 
@@ -393,10 +373,18 @@ class TaskDetailViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskDetailUiState.Success(
-                    task = task.toTaskDetail(),
+                    id = task.id,
+                    name = task.name,
+                    note = task.note,
+                    formattedDeadline = null,
+                    formattedStartAfter = null,
+                    formattedScheduledAt = null,
                     recurrence = null,
+                    isDone = false,
+                    categoryId = null,
+                    categoryName = null,
+                    parent = null,
                     userMessage = UserMessage.String(R.string.task_detail_delete_error),
-                    clock = clock,
                 )
             )
         }
@@ -411,21 +399,4 @@ class TaskDetailViewModelTest {
 
     private fun createClock() =
         Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
-
-    private fun Task.toTaskDetail() = TaskDetail(
-        id = id,
-        name = name,
-        note = note,
-        deadlineDate = deadlineDate,
-        deadlineTime = deadlineTime,
-        startAfterDate = startAfterDate,
-        startAfterTime = startAfterTime,
-        scheduledDate = scheduledDate,
-        scheduledTime = scheduledTime,
-        doneAt = null,
-        categoryId = null,
-        categoryName = null,
-        parentId = null,
-        parentName = null,
-    )
 }
