@@ -67,46 +67,48 @@ class FakeTaskRepository(
             } else {
                 descendant to ancestor
             }
-        }.sortedWith(compareBy<Pair<Task, Task>, ZonedDateTime?>(nullsLast()) { (_, task) ->
-            dateTimePartsToZonedDateTime(
-                task.scheduledDate,
-                task.scheduledTime,
-                LocalTime.MIN,
-            )
-        }.thenComparing { (_, task) ->
-            task.deadlineDate?.let { it >= params.today } != false
-        }.thenComparing { (_, task) ->
-            task.deadlineTime?.let { it > params.currentTime.plusHours(1) } != false
-        }.thenComparing({ (task) ->
-            dateTimePartsToZonedDateTime(
-                task.scheduledDate,
-                task.scheduledTime,
-                LocalTime.MIN,
-            )
-        }, nullsLast()).thenComparing { (task) ->
-            task.deadlineDate?.let { it >= params.today } != false
-        }.thenComparing { (task) ->
-            task.deadlineTime?.let { it > params.currentTime.plusHours(1) } != false
-        }.thenComparing { (task) -> task.startAfterTime != null }.thenComparing({ (task) ->
-            dateTimePartsToZonedDateTime(
-                task.deadlineDate,
-                task.deadlineTime,
-                LocalTime.MAX,
-            ) ?: if (taskRecurrences.values.any { it.taskId == task.id }) {
-                params.endOfToday
-            } else {
-                null
-            }
-        }, nullsLast()).thenComparing { (task) ->
-            !taskRecurrences.values.any { it.taskId == task.id }
-        }.thenComparing({ (task) ->
-            dateTimePartsToZonedDateTime(
-                task.startAfterDate,
-                task.startAfterTime,
-                LocalTime.MIN,
-            )
-        }, nullsFirst()).thenComparing { (task) -> task.createdAt }
-            .thenComparing { (task) -> task.id }).firstNotNullOfOrNull { it.second }
+        }.sortedWith(
+            compareBy<Pair<Task, Task>, ZonedDateTime?>(nullsLast()) { (_, task) ->
+                dateTimePartsToZonedDateTime(
+                    task.scheduledDate,
+                    task.scheduledTime,
+                    LocalTime.MIN,
+                )
+            }.thenComparing { (_, task) ->
+                task.deadlineDate?.let { it >= params.today } != false
+            }.thenComparing { (_, task) ->
+                task.deadlineTime?.let { it > params.currentTime.plusHours(1) } != false
+            }.thenComparing({ (task) ->
+                dateTimePartsToZonedDateTime(
+                    task.scheduledDate,
+                    task.scheduledTime,
+                    LocalTime.MIN,
+                )
+            }, nullsLast()).thenComparing { (task) ->
+                task.deadlineDate?.let { it >= params.today } != false
+            }.thenComparing { (task) ->
+                task.deadlineTime?.let { it > params.currentTime.plusHours(1) } != false
+            }.thenComparing { (task) -> task.startAfterTime != null }.thenComparing({ (task) ->
+                dateTimePartsToZonedDateTime(
+                    task.deadlineDate,
+                    task.deadlineTime,
+                    LocalTime.MAX,
+                ) ?: if (taskRecurrences.values.any { it.taskId == task.id }) {
+                    params.endOfToday
+                } else {
+                    null
+                }
+            }, nullsLast()).thenComparing { (task) ->
+                !taskRecurrences.values.any { it.taskId == task.id }
+            }.thenComparing({ (task) ->
+                dateTimePartsToZonedDateTime(
+                    task.startAfterDate,
+                    task.startAfterTime,
+                    LocalTime.MIN,
+                )
+            }, nullsFirst()).thenComparing { (task) -> task.createdAt }
+                .thenComparing { (task) -> task.id },
+        ).firstNotNullOfOrNull { it.second }
     }
 
     private fun isScheduledAtFuture(task: Task, now: LocalDateTime): Boolean {
@@ -144,7 +146,8 @@ class FakeTaskRepository(
         db.taskTable,
         db.taskCompletionTable,
         db.taskPathTable,
-    ) { taskCategories, tasks, taskCompletions, taskPaths ->
+        db.taskRecurrenceTable,
+    ) { taskCategories, tasks, taskCompletions, taskPaths, taskRecurrences ->
         val parentId =
             taskPaths.values.firstOrNull { it.descendant == id && it.depth == 1 }?.ancestor
         tasks[id]?.let { task ->
@@ -164,6 +167,9 @@ class FakeTaskRepository(
                 categoryName = task.categoryId?.let { taskCategories[it] }?.name,
                 parentId = parentId,
                 parentName = parentId?.let { tasks[it] }?.name,
+                parentRecurring = taskRecurrences.values.any { it.taskId == parentId },
+                parentDoneAt = taskCompletions.values.filter { it.taskId == parentId }
+                    .maxOfOrNull { it.doneAt },
             )
         }
     }

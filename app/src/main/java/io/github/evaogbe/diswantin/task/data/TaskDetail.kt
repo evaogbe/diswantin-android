@@ -20,4 +20,6 @@ data class TaskDetail(
     @ColumnInfo("category_name") val categoryName: String?,
     @ColumnInfo("parent_id") val parentId: Long?,
     @ColumnInfo("parent_name") val parentName: String?,
+    @ColumnInfo("parent_recurring") val parentRecurring: Boolean,
+    @ColumnInfo("parent_done_at") val parentDoneAt: Instant?,
 )

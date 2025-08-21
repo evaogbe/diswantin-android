@@ -33,8 +33,8 @@ import javax.inject.Inject
 class TaskDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val taskRepository: TaskRepository,
-    private val clock: Clock,
-    private val locale: Locale,
+    clock: Clock,
+    locale: Locale,
 ) : ViewModel() {
     private val taskId: Long = checkNotNull(savedStateHandle[NavArguments.ID_KEY])
 
@@ -70,11 +70,12 @@ class TaskDetailViewModel @Inject constructor(
             when {
                 task != null -> {
                     recurrenceResult.map { recurrence ->
-                        TaskDetailUiState.Success(
+                        val doneBefore = ZonedDateTime.now(clock).with(LocalTime.MIN).toInstant()
+                        TaskDetailUiState.success(
                             task = task,
                             recurrence = recurrence,
                             userMessage = userMessage,
-                            clock = clock,
+                            doneBefore = doneBefore,
                         )
                     }
                 }
@@ -90,45 +91,45 @@ class TaskDetailViewModel @Inject constructor(
     )
 
     fun markTaskDone() {
-        val task = (uiState.value as? TaskDetailUiState.Success)?.task ?: return
+        val taskId = (uiState.value as? TaskDetailUiState.Success)?.id ?: return
 
         viewModelScope.launch {
             try {
-                taskRepository.markDone(task.id)
+                taskRepository.markDone(taskId)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Timber.e(e, "Failed to mark task done: %s", task)
+                Timber.e(e, "Failed to mark task done: %s", taskId)
                 userMessage.value = UserMessage.String(R.string.task_detail_mark_done_error)
             }
         }
     }
 
     fun unmarkTaskDone() {
-        val task = (uiState.value as? TaskDetailUiState.Success)?.task ?: return
+        val taskId = (uiState.value as? TaskDetailUiState.Success)?.id ?: return
 
         viewModelScope.launch {
             try {
-                taskRepository.unmarkDone(task.id)
+                taskRepository.unmarkDone(taskId)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Timber.e(e, "Failed to unmark task done: %s", task)
+                Timber.e(e, "Failed to unmark task done: %s", taskId)
                 userMessage.value = UserMessage.String(R.string.task_detail_unmark_done_error)
             }
         }
     }
 
     fun deleteTask() {
-        val task = (uiState.value as? TaskDetailUiState.Success)?.task ?: return
+        val taskId = (uiState.value as? TaskDetailUiState.Success)?.id ?: return
 
         viewModelScope.launch {
             try {
-                taskRepository.delete(task.id)
+                taskRepository.delete(taskId)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Timber.e(e, "Failed to delete task: %s", task)
+                Timber.e(e, "Failed to delete task: %s", taskId)
                 userMessage.value = UserMessage.String(R.string.task_detail_delete_error)
             }
         }

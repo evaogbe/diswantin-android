@@ -23,7 +23,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class TaskSearchViewModel @Inject constructor(
-    private val taskRepository: TaskRepository,
+    taskRepository: TaskRepository,
     clock: Clock,
 ) : ViewModel() {
     private val criteria = MutableStateFlow(TaskSearchCriteria())

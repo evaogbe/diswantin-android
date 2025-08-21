@@ -48,7 +48,7 @@ import javax.inject.Inject
 class TaskFormViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val taskRepository: TaskRepository,
-    private val taskCategoryRepository: TaskCategoryRepository,
+    taskCategoryRepository: TaskCategoryRepository,
     private val clock: Clock,
     val locale: Locale,
 ) : ViewModel() {

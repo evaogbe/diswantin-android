@@ -306,8 +306,10 @@ interface TaskDao {
             com.done_at,
             t.category_id,
             cat.name AS category_name,
-            t2.id AS parent_id,
-            t2.name AS parent_name
+            tp.id AS parent_id,
+            tp.name AS parent_name,
+            rp.task_id IS NOT NULL AS parent_recurring,
+            comp.done_at AS parent_done_at
         FROM task t
         LEFT JOIN (
             SELECT task_id, MAX(done_at) AS done_at
@@ -316,8 +318,14 @@ interface TaskDao {
         ) com ON com.task_id = t.id
         LEFT JOIN task_category cat ON cat.id = t.category_id
         LEFT JOIN task_path p ON p.descendant = t.id AND p.depth = 1
-        LEFT JOIN task t2 ON t2.id = p.ancestor
-        WHERE t.id = :id 
+        LEFT JOIN task tp ON tp.id = p.ancestor
+        LEFT JOIN (SELECT DISTINCT task_id FROM task_recurrence) rp ON rp.task_id = tp.id
+        LEFT JOIN (
+            SELECT task_id, MAX(done_at) AS done_at
+            FROM task_completion
+            GROUP BY task_id
+        ) comp ON comp.task_id = tp.id
+        WHERE t.id = :id
         LIMIT 1"""
     )
     fun getTaskDetailById(id: Long): Flow<TaskDetail?>
