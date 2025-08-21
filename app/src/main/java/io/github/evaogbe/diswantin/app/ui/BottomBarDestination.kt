@@ -6,8 +6,8 @@ import io.github.evaogbe.diswantin.R
 
 enum class BottomBarDestination(
     val route: String,
-    @StringRes val titleId: Int,
-    @DrawableRes val iconId: Int,
+    @param:StringRes val titleId: Int,
+    @param:DrawableRes val iconId: Int,
 ) {
     CurrentTask("currentTask", R.string.current_task_title, R.drawable.baseline_task_alt_24),
     Advice("advice", R.string.advice_title, R.drawable.psychiatry_24px),
