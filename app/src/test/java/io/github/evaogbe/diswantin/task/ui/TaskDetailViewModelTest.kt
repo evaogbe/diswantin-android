@@ -1,7 +1,9 @@
 package io.github.evaogbe.diswantin.task.ui
 
 import androidx.lifecycle.SavedStateHandle
+import androidx.paging.testing.asSnapshot
 import assertk.assertThat
+import assertk.assertions.containsExactly
 import assertk.assertions.isEqualTo
 import assertk.assertions.isInstanceOf
 import assertk.assertions.prop
@@ -20,7 +22,6 @@ import io.github.serpro69.kfaker.lorem.LoremFaker
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.spyk
-import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collect
@@ -76,6 +77,9 @@ class TaskDetailViewModelTest {
             viewModel.uiState.collect()
         }
 
+        assertThat(viewModel.childTaskPagingData.asSnapshot()).containsExactly(
+            TaskItemUiState(id = task2.id, name = task2.name, isDone = false)
+        )
         assertThat(viewModel.uiState.value).isEqualTo(
             TaskDetailUiState.Success(
                 task = task1.toTaskDetail(),
@@ -85,9 +89,6 @@ class TaskDetailViewModelTest {
                     step = 1,
                     weekdays = persistentSetOf(),
                     locale = locale,
-                ),
-                childTasks = persistentListOf(
-                    TaskItemUiState(id = task2.id, name = task2.name, isDone = false),
                 ),
                 userMessage = null,
                 clock = clock,
@@ -157,28 +158,6 @@ class TaskDetailViewModelTest {
         }
 
     @Test
-    fun `uiState emits failure when fetch child tasks throws`() =
-        runTest(mainDispatcherRule.testDispatcher) {
-            val clock = createClock()
-            val exception = RuntimeException("Test")
-            val task = genTask()
-            val db = FakeDatabase().apply {
-                insertTask(task)
-            }
-            val taskRepository = spyk(FakeTaskRepository(db, clock))
-            every { taskRepository.getChildren(any()) } returns flow { throw exception }
-
-            val viewModel =
-                TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock, Locale.US)
-
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-                viewModel.uiState.collect()
-            }
-
-            assertThat(viewModel.uiState.value).isEqualTo(TaskDetailUiState.Failure(exception))
-        }
-
-    @Test
     fun `can toggle task done`() = runTest(mainDispatcherRule.testDispatcher) {
         val clock =
             Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
@@ -213,7 +192,6 @@ class TaskDetailViewModelTest {
                     parentName = null,
                 ),
                 recurrence = null,
-                childTasks = persistentListOf(),
                 userMessage = null,
                 clock = clock,
             )
@@ -240,7 +218,6 @@ class TaskDetailViewModelTest {
                     parentName = null,
                 ),
                 recurrence = null,
-                childTasks = persistentListOf(),
                 userMessage = null,
                 clock = clock,
             )
@@ -267,7 +244,6 @@ class TaskDetailViewModelTest {
                     parentName = null,
                 ),
                 recurrence = null,
-                childTasks = persistentListOf(),
                 userMessage = null,
                 clock = clock,
             )
@@ -313,7 +289,6 @@ class TaskDetailViewModelTest {
                         parentName = null,
                     ),
                     recurrence = null,
-                    childTasks = persistentListOf(),
                     userMessage = UserMessage.String(R.string.task_detail_mark_done_error),
                     clock = clock,
                 )
@@ -361,7 +336,6 @@ class TaskDetailViewModelTest {
                         parentName = null,
                     ),
                     recurrence = null,
-                    childTasks = persistentListOf(),
                     userMessage = UserMessage.String(R.string.task_detail_unmark_done_error),
                     clock = clock,
                 )
@@ -387,7 +361,6 @@ class TaskDetailViewModelTest {
             TaskDetailUiState.Success(
                 task = task.toTaskDetail(),
                 recurrence = null,
-                childTasks = persistentListOf(),
                 userMessage = null,
                 clock = clock,
             )
@@ -422,7 +395,6 @@ class TaskDetailViewModelTest {
                 TaskDetailUiState.Success(
                     task = task.toTaskDetail(),
                     recurrence = null,
-                    childTasks = persistentListOf(),
                     userMessage = UserMessage.String(R.string.task_detail_delete_error),
                     clock = clock,
                 )

@@ -1,6 +1,5 @@
 package io.github.evaogbe.diswantin.task.ui
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -9,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
@@ -22,7 +22,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.Scaffold
@@ -36,23 +35,23 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.LoadState
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.TaskCategory
 import io.github.evaogbe.diswantin.ui.components.LoadFailureLayout
 import io.github.evaogbe.diswantin.ui.components.PendingLayout
+import io.github.evaogbe.diswantin.ui.components.pagedListFooter
 import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.evaogbe.diswantin.ui.theme.ScreenLg
 import io.github.evaogbe.diswantin.ui.theme.SpaceMd
 import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
-import kotlinx.collections.immutable.persistentListOf
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -105,7 +104,7 @@ fun TaskCategoryDetailTopBar(
                     )
                 }
             }
-        }
+        },
     )
 }
 
@@ -118,6 +117,7 @@ fun TaskCategoryDetailScreen(
     onSelectTask: (Long) -> Unit,
     taskCategoryDetailViewModel: TaskCategoryDetailViewModel = hiltViewModel(),
 ) {
+    val taskPagingItems = taskCategoryDetailViewModel.taskItemPagingData.collectAsLazyPagingItems()
     val uiState by taskCategoryDetailViewModel.uiState.collectAsStateWithLifecycle()
 
     if (uiState is TaskCategoryDetailUiState.Deleted) {
@@ -144,8 +144,7 @@ fun TaskCategoryDetailScreen(
     }
 
     when (val state = uiState) {
-        is TaskCategoryDetailUiState.Pending,
-        is TaskCategoryDetailUiState.Deleted -> {
+        is TaskCategoryDetailUiState.Pending, is TaskCategoryDetailUiState.Deleted -> {
             PendingLayout()
         }
 
@@ -154,7 +153,22 @@ fun TaskCategoryDetailScreen(
         }
 
         is TaskCategoryDetailUiState.Success -> {
-            TaskCategoryDetailLayout(uiState = state, onSelectTask = onSelectTask)
+            when (taskPagingItems.loadState.refresh) {
+                is LoadState.Loading -> PendingLayout()
+                is LoadState.Error -> {
+                    LoadFailureLayout(
+                        message = stringResource(R.string.task_category_detail_fetch_error),
+                    )
+                }
+
+                is LoadState.NotLoading -> {
+                    TaskCategoryDetailLayout(
+                        uiState = state,
+                        taskItems = taskPagingItems,
+                        onSelectTask = onSelectTask,
+                    )
+                }
+            }
         }
     }
 }
@@ -162,11 +176,38 @@ fun TaskCategoryDetailScreen(
 @Composable
 fun TaskCategoryDetailLayout(
     uiState: TaskCategoryDetailUiState.Success,
+    taskItems: LazyPagingItems<TaskItemUiState>,
     onSelectTask: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val resources = LocalResources.current
+    TaskCategoryDetailLayout(
+        uiState = uiState,
+        taskItems = if (taskItems.itemCount > 0) {
+            {
+                items(taskItems.itemCount, key = taskItems.itemKey(TaskItemUiState::id)) { index ->
+                    val task = taskItems[index]!!
+                    TaskItem(task = task, onSelectTask = onSelectTask)
+                    HorizontalDivider()
+                }
 
+                pagedListFooter(
+                    pagingItems = taskItems,
+                    errorMessage = {
+                        Text(stringResource(R.string.task_category_detail_fetch_tasks_error))
+                    },
+                )
+            }
+        } else null,
+        modifier = modifier,
+    )
+}
+
+@Composable
+private fun TaskCategoryDetailLayout(
+    uiState: TaskCategoryDetailUiState.Success,
+    taskItems: (LazyListScope.() -> Unit)?,
+    modifier: Modifier = Modifier,
+) {
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         LazyColumn(
             modifier = Modifier
@@ -180,7 +221,7 @@ fun TaskCategoryDetailLayout(
                 }
             }
 
-            if (uiState.tasks.isNotEmpty()) {
+            if (taskItems != null) {
                 item {
                     Spacer(Modifier.size(SpaceMd))
                     Text(
@@ -191,26 +232,7 @@ fun TaskCategoryDetailLayout(
                     )
                 }
 
-                items(uiState.tasks, key = TaskItemUiState::id) { task ->
-                    ListItem(
-                        headlineContent = {
-                            if (task.isDone) {
-                                Text(
-                                    text = task.name,
-                                    modifier = Modifier.semantics {
-                                        contentDescription =
-                                            resources.getString(R.string.task_name_done, task.name)
-                                    },
-                                    textDecoration = TextDecoration.LineThrough,
-                                )
-                            } else {
-                                Text(text = task.name)
-                            }
-                        },
-                        modifier = Modifier.clickable { onSelectTask(task.id) },
-                    )
-                    HorizontalDivider()
-                }
+                taskItems()
             }
         }
     }
@@ -219,6 +241,12 @@ fun TaskCategoryDetailLayout(
 @DevicePreviews
 @Composable
 private fun TaskCategoryDetailScreenPreview() {
+    val taskItems = listOf(
+        TaskItemUiState(id = 1L, name = "Brush teeth", isDone = true),
+        TaskItemUiState(id = 2L, name = "Shower", isDone = false),
+        TaskItemUiState(id = 3L, name = "Eat breakfast", isDone = false),
+    )
+
     DiswantinTheme {
         Scaffold(topBar = {
             TaskCategoryDetailTopBar(
@@ -231,22 +259,14 @@ private fun TaskCategoryDetailScreenPreview() {
             TaskCategoryDetailLayout(
                 uiState = TaskCategoryDetailUiState.Success(
                     category = TaskCategory(name = "Morning Routine"),
-                    tasks = persistentListOf(
-                        TaskItemUiState(
-                            id = 1L,
-                            name = "Brush teeth",
-                            isDone = true,
-                        ),
-                        TaskItemUiState(id = 2L, name = "Shower", isDone = false),
-                        TaskItemUiState(
-                            id = 3L,
-                            name = "Eat breakfast",
-                            isDone = false,
-                        ),
-                    ),
                     userMessage = null,
                 ),
-                onSelectTask = {},
+                taskItems = {
+                    items(taskItems, key = TaskItemUiState::id) { task ->
+                        TaskItem(task = task, onSelectTask = {})
+                        HorizontalDivider()
+                    }
+                },
                 modifier = Modifier.padding(innerPadding),
             )
         }

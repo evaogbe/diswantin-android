@@ -10,7 +10,7 @@ import io.github.evaogbe.diswantin.task.data.PathUpdateType
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskCompletion
 import io.github.evaogbe.diswantin.task.data.TaskDetail
-import io.github.evaogbe.diswantin.task.data.TaskItem
+import io.github.evaogbe.diswantin.task.data.TaskItemData
 import io.github.evaogbe.diswantin.task.data.TaskRepository
 import io.github.evaogbe.diswantin.task.data.TaskSearchCriteria
 import io.github.evaogbe.diswantin.task.data.TaskSkip
@@ -168,6 +168,51 @@ class FakeTaskRepository(
         }
     }
 
+    override fun getTasksByCategoryId(categoryId: Long) = db.taskTable.map { tasks ->
+        PagingData.from(
+            tasks.values.filter { it.categoryId == categoryId }.sortedBy(Task::name),
+            LoadStates(
+                refresh = LoadState.NotLoading(endOfPaginationReached = true),
+                prepend = LoadState.NotLoading(endOfPaginationReached = true),
+                append = LoadState.NotLoading(endOfPaginationReached = true),
+            ),
+        )
+    }
+
+    override fun getTaskItemsByCategoryId(categoryId: Long) = combine(
+        db.taskTable,
+        db.taskCompletionTable,
+        db.taskRecurrenceTable,
+    ) { tasks, taskCompletions, taskRecurrences ->
+        PagingData.from(
+            tasks.values.filter { it.categoryId == categoryId }.sortedWith(
+                compareBy<Task> { task ->
+                    taskCompletions.values.any { it.taskId == task.id }
+                }.thenComparing(Task::scheduledDate, nullsLast())
+                    .thenComparing(Task::scheduledTime, nullsLast()).thenComparing { task ->
+                        !taskRecurrences.values.any { it.taskId == task.id }
+                    }.thenComparing(Task::deadlineDate, nullsLast())
+                    .thenComparing(Task::deadlineTime, nullsLast())
+                    .thenComparing(Task::startAfterDate, nullsFirst())
+                    .thenComparing(Task::startAfterTime, nullsFirst())
+                    .thenComparing(Task::createdAt).thenComparing(Task::id)
+            ).map { task ->
+                TaskItemData(
+                    id = task.id,
+                    name = task.name,
+                    recurring = taskRecurrences.values.any { it.taskId == task.id },
+                    doneAt = taskCompletions.values.filter { it.taskId == task.id }
+                        .maxOfOrNull { it.doneAt },
+                )
+            },
+            LoadStates(
+                refresh = LoadState.NotLoading(endOfPaginationReached = true),
+                prepend = LoadState.NotLoading(endOfPaginationReached = true),
+                append = LoadState.NotLoading(endOfPaginationReached = true),
+            ),
+        )
+    }
+
     override fun search(query: String) = db.taskTable.map { tasks ->
         tasks.values.filter { it.name.contains(query, ignoreCase = true) }
     }
@@ -211,7 +256,7 @@ class FakeTaskRepository(
                     doesRecurOnDate(recurrences, it)
                 } != false
             }.map { (task, recurrences) ->
-                TaskItem(
+                TaskItemData(
                     id = task.id,
                     name = task.name,
                     recurring = recurrences.isNotEmpty(),
@@ -239,26 +284,33 @@ class FakeTaskRepository(
         db.taskRecurrenceTable,
         db.taskCompletionTable,
     ) { tasks, taskPaths, taskRecurrences, taskCompletions ->
-        taskPaths.values.filter { it.ancestor == id && it.depth == 1 }
-            .mapNotNull { tasks[it.descendant] }.sortedWith(
-                compareBy(nullsLast(), Task::scheduledDate).thenComparing(
-                    Task::scheduledTime, nullsLast()
-                ).thenComparing { task ->
-                    !taskRecurrences.values.any { it.taskId == task.id }
-                }.thenComparing(Task::deadlineDate, nullsLast())
-                    .thenComparing(Task::deadlineTime, nullsLast())
-                    .thenComparing(Task::startAfterDate, nullsFirst())
-                    .thenComparing(Task::startAfterTime, nullsFirst())
-                    .thenComparing(Task::createdAt).thenComparing(Task::id)
-            ).map { task ->
-                TaskItem(
-                    id = task.id,
-                    name = task.name,
-                    recurring = taskRecurrences.values.any { it.taskId == task.id },
-                    doneAt = taskCompletions.values.filter { it.taskId == task.id }
-                        .maxOfOrNull { it.doneAt },
-                )
-            }
+        PagingData.from(
+            taskPaths.values.filter { it.ancestor == id && it.depth == 1 }
+                .mapNotNull { tasks[it.descendant] }.sortedWith(
+                    compareBy(nullsLast(), Task::scheduledDate).thenComparing(
+                        Task::scheduledTime, nullsLast()
+                    ).thenComparing { task ->
+                        !taskRecurrences.values.any { it.taskId == task.id }
+                    }.thenComparing(Task::deadlineDate, nullsLast())
+                        .thenComparing(Task::deadlineTime, nullsLast())
+                        .thenComparing(Task::startAfterDate, nullsFirst())
+                        .thenComparing(Task::startAfterTime, nullsFirst())
+                        .thenComparing(Task::createdAt).thenComparing(Task::id)
+                ).map { task ->
+                    TaskItemData(
+                        id = task.id,
+                        name = task.name,
+                        recurring = taskRecurrences.values.any { it.taskId == task.id },
+                        doneAt = taskCompletions.values.filter { it.taskId == task.id }
+                            .maxOfOrNull { it.doneAt },
+                    )
+                },
+            LoadStates(
+                refresh = LoadState.NotLoading(endOfPaginationReached = true),
+                prepend = LoadState.NotLoading(endOfPaginationReached = true),
+                append = LoadState.NotLoading(endOfPaginationReached = true),
+            ),
+        )
     }
 
     override fun getTaskRecurrencesByTaskId(taskId: Long) =

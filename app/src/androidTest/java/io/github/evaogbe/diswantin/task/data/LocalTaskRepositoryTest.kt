@@ -2419,8 +2419,8 @@ class LocalTaskRepositoryTest {
                 ),
             ).asSnapshot()
         ).containsExactly(
-            TaskItem(id = task1.id, name = task1.name, recurring = false, doneAt = null),
-            TaskItem(id = task2.id, name = task2.name, recurring = true, doneAt = null),
+            TaskItemData(id = task1.id, name = task1.name, recurring = false, doneAt = null),
+            TaskItemData(id = task2.id, name = task2.name, recurring = true, doneAt = null),
         )
     }
 
@@ -2587,8 +2587,8 @@ class LocalTaskRepositoryTest {
                 ),
             ).asSnapshot()
         ).containsExactly(
-            TaskItem(id = task1.id, name = task1.name, recurring = false, doneAt = null),
-            TaskItem(id = task2.id, name = task2.name, recurring = true, doneAt = null),
+            TaskItemData(id = task1.id, name = task1.name, recurring = false, doneAt = null),
+            TaskItemData(id = task2.id, name = task2.name, recurring = true, doneAt = null),
         )
     }
 
@@ -2755,8 +2755,8 @@ class LocalTaskRepositoryTest {
                 ),
             ).asSnapshot()
         ).containsExactly(
-            TaskItem(id = task1.id, name = task1.name, recurring = false, doneAt = null),
-            TaskItem(id = task2.id, name = task2.name, recurring = true, doneAt = null),
+            TaskItemData(id = task1.id, name = task1.name, recurring = false, doneAt = null),
+            TaskItemData(id = task2.id, name = task2.name, recurring = true, doneAt = null),
         )
     }
 
@@ -2928,13 +2928,13 @@ class LocalTaskRepositoryTest {
                 ),
             ).asSnapshot()
         ).containsExactly(
-            TaskItem(
+            TaskItemData(
                 id = task1.id,
                 name = task1.name,
                 recurring = false,
                 doneAt = Instant.parse("2024-08-21T17:00:00Z"),
             ),
-            TaskItem(
+            TaskItemData(
                 id = task2.id,
                 name = task2.name,
                 recurring = true,
@@ -3241,11 +3241,11 @@ class LocalTaskRepositoryTest {
                 )
             ).asSnapshot()
         ).containsExactly(
-            TaskItem(id = task1.id, name = task1.name, recurring = true, doneAt = null),
-            TaskItem(id = task2.id, name = task2.name, recurring = true, doneAt = null),
-            TaskItem(id = task3.id, name = task3.name, recurring = true, doneAt = null),
-            TaskItem(id = task4.id, name = task4.name, recurring = true, doneAt = null),
-            TaskItem(id = task5.id, name = task5.name, recurring = true, doneAt = null),
+            TaskItemData(id = task1.id, name = task1.name, recurring = true, doneAt = null),
+            TaskItemData(id = task2.id, name = task2.name, recurring = true, doneAt = null),
+            TaskItemData(id = task3.id, name = task3.name, recurring = true, doneAt = null),
+            TaskItemData(id = task4.id, name = task4.name, recurring = true, doneAt = null),
+            TaskItemData(id = task5.id, name = task5.name, recurring = true, doneAt = null),
         )
     }
 
@@ -3430,8 +3430,8 @@ class LocalTaskRepositoryTest {
                 ),
             ).asSnapshot()
         ).containsExactly(
-            TaskItem(id = task1.id, name = task1.name, recurring = false, doneAt = null),
-            TaskItem(id = task2.id, name = task2.name, recurring = true, doneAt = null),
+            TaskItemData(id = task1.id, name = task1.name, recurring = false, doneAt = null),
+            TaskItemData(id = task2.id, name = task2.name, recurring = true, doneAt = null),
         )
     }
 
@@ -3616,8 +3616,8 @@ class LocalTaskRepositoryTest {
                 ),
             ).asSnapshot()
         ).containsExactly(
-            TaskItem(id = task1.id, name = task1.name, recurring = false, doneAt = null),
-            TaskItem(id = task2.id, name = task2.name, recurring = true, doneAt = null),
+            TaskItemData(id = task1.id, name = task1.name, recurring = false, doneAt = null),
+            TaskItemData(id = task2.id, name = task2.name, recurring = true, doneAt = null),
         )
     }
 
@@ -3802,8 +3802,8 @@ class LocalTaskRepositoryTest {
                 ),
             ).asSnapshot()
         ).containsExactly(
-            TaskItem(id = task1.id, name = task1.name, recurring = false, doneAt = null),
-            TaskItem(id = task2.id, name = task2.name, recurring = true, doneAt = null),
+            TaskItemData(id = task1.id, name = task1.name, recurring = false, doneAt = null),
+            TaskItemData(id = task2.id, name = task2.name, recurring = true, doneAt = null),
         )
     }
 
@@ -4000,13 +4000,13 @@ class LocalTaskRepositoryTest {
                 ),
             ).asSnapshot()
         ).containsExactly(
-            TaskItem(
+            TaskItemData(
                 id = task1.id,
                 name = task1.name,
                 recurring = false,
                 doneAt = Instant.parse("2024-08-21T17:00:00Z"),
             ),
-            TaskItem(
+            TaskItemData(
                 id = task2.id,
                 name = task2.name,
                 recurring = true,
@@ -4337,11 +4337,11 @@ class LocalTaskRepositoryTest {
                 )
             ).asSnapshot()
         ).containsExactly(
-            TaskItem(id = task1.id, name = task1.name, recurring = true, doneAt = null),
-            TaskItem(id = task2.id, name = task2.name, recurring = true, doneAt = null),
-            TaskItem(id = task3.id, name = task3.name, recurring = true, doneAt = null),
-            TaskItem(id = task4.id, name = task4.name, recurring = true, doneAt = null),
-            TaskItem(id = task5.id, name = task5.name, recurring = true, doneAt = null),
+            TaskItemData(id = task1.id, name = task1.name, recurring = true, doneAt = null),
+            TaskItemData(id = task2.id, name = task2.name, recurring = true, doneAt = null),
+            TaskItemData(id = task3.id, name = task3.name, recurring = true, doneAt = null),
+            TaskItemData(id = task4.id, name = task4.name, recurring = true, doneAt = null),
+            TaskItemData(id = task5.id, name = task5.name, recurring = true, doneAt = null),
         )
     }
 

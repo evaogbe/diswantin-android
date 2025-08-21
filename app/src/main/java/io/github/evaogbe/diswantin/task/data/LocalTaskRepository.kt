@@ -28,44 +28,44 @@ class LocalTaskRepository @Inject constructor(
     ).map { priorities ->
         priorities.sortedWith(
             compareBy<TaskPriority, ZonedDateTime?>(nullsLast()) {
+            dateTimePartsToZonedDateTime(
+                it.task.scheduledDate,
+                it.task.scheduledTime,
+                LocalTime.MIN,
+            )
+        }.thenComparing({
+            dateTimePartsToZonedDateTime(
+                it.scheduledDatePriority,
+                it.scheduledTimePriority,
+                LocalTime.MIN,
+            )
+        }, nullsLast()).thenComparing { priority ->
+            priority.task.deadlineDate?.let { it >= params.today } != false
+        }.thenComparing { priority ->
+            priority.task.deadlineTime?.let {
+                it > params.currentTime.plusHours(1)
+            } != false
+        }.thenComparing { priority ->
+            priority.deadlineDatePriority?.let { it >= params.today } != false
+        }.thenComparing { priority ->
+            priority.deadlineTimePriority?.let {
+                it > params.currentTime.plusHours(1)
+            } != false
+        }.thenComparing { it.startAfterTimePriority != null }.thenComparing({
+            dateTimePartsToZonedDateTime(
+                it.deadlineDatePriority,
+                it.deadlineTimePriority,
+                LocalTime.MAX,
+            ) ?: if (it.recurringPriority) params.endOfToday else null
+        }, nullsLast()).thenComparing(TaskPriority::recurringPriority, reverseOrder())
+            .thenComparing({
                 dateTimePartsToZonedDateTime(
-                    it.task.scheduledDate,
-                    it.task.scheduledTime,
+                    it.startAfterDatePriority,
+                    it.startAfterTimePriority,
                     LocalTime.MIN,
                 )
-            }.thenComparing({
-                dateTimePartsToZonedDateTime(
-                    it.scheduledDatePriority,
-                    it.scheduledTimePriority,
-                    LocalTime.MIN,
-                )
-            }, nullsLast()).thenComparing { priority ->
-                priority.task.deadlineDate?.let { it >= params.today } != false
-            }.thenComparing { priority ->
-                priority.task.deadlineTime?.let {
-                    it > params.currentTime.plusHours(1)
-                } != false
-            }.thenComparing { priority ->
-                priority.deadlineDatePriority?.let { it >= params.today } != false
-            }.thenComparing { priority ->
-                priority.deadlineTimePriority?.let {
-                    it > params.currentTime.plusHours(1)
-                } != false
-            }.thenComparing { it.startAfterTimePriority != null }.thenComparing({
-                dateTimePartsToZonedDateTime(
-                    it.deadlineDatePriority,
-                    it.deadlineTimePriority,
-                    LocalTime.MAX,
-                ) ?: if (it.recurringPriority) params.endOfToday else null
-            }, nullsLast()).thenComparing(TaskPriority::recurringPriority, reverseOrder())
-                .thenComparing({
-                    dateTimePartsToZonedDateTime(
-                        it.startAfterDatePriority,
-                        it.startAfterTimePriority,
-                        LocalTime.MIN,
-                    )
-                }, nullsFirst()).thenComparing(TaskPriority::createdAtPriority)
-                .thenComparing(TaskPriority::idPriority)
+            }, nullsFirst()).thenComparing(TaskPriority::createdAtPriority)
+            .thenComparing(TaskPriority::idPriority)
         ).firstOrNull()?.task
     }.flowOn(ioDispatcher)
 
@@ -82,6 +82,14 @@ class LocalTaskRepository @Inject constructor(
     override fun getById(id: Long) = taskDao.getById(id).flowOn(ioDispatcher)
 
     override fun getTaskDetailById(id: Long) = taskDao.getTaskDetailById(id).flowOn(ioDispatcher)
+
+    override fun getTasksByCategoryId(categoryId: Long) = Pager(PagingConfig(pageSize = 20)) {
+        taskDao.getTasksByCategoryId(categoryId)
+    }.flow.flowOn(ioDispatcher)
+
+    override fun getTaskItemsByCategoryId(categoryId: Long) = Pager(PagingConfig(pageSize = 20)) {
+        taskDao.getTaskItemsByCategoryId(categoryId)
+    }.flow.flowOn(ioDispatcher)
 
     override fun search(query: String) = taskDao.search(escapeSql("$query*")).flowOn(ioDispatcher)
 
@@ -139,7 +147,9 @@ class LocalTaskRepository @Inject constructor(
 
     override fun getParent(id: Long) = taskDao.getParent(id).flowOn(ioDispatcher)
 
-    override fun getChildren(id: Long) = taskDao.getChildren(id).flowOn(ioDispatcher)
+    override fun getChildren(id: Long) = Pager(PagingConfig(pageSize = 20)) {
+        taskDao.getChildren(id)
+    }.flow.flowOn(ioDispatcher)
 
     override fun getTaskRecurrencesByTaskId(taskId: Long) =
         taskDao.getTaskRecurrencesByTaskId(taskId).flowOn(ioDispatcher)

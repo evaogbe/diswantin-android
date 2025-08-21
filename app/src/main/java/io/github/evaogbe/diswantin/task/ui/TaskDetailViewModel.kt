@@ -3,16 +3,16 @@ package io.github.evaogbe.diswantin.task.ui
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.cachedIn
+import androidx.paging.map
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.data.Result
 import io.github.evaogbe.diswantin.task.data.TaskDetail
-import io.github.evaogbe.diswantin.task.data.TaskItem
 import io.github.evaogbe.diswantin.task.data.TaskRecurrence
 import io.github.evaogbe.diswantin.task.data.TaskRepository
 import io.github.evaogbe.diswantin.ui.navigation.NavArguments
 import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
-import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -42,6 +42,11 @@ class TaskDetailViewModel @Inject constructor(
 
     private val userMessage = MutableStateFlow<UserMessage?>(null)
 
+    val childTaskPagingData = taskRepository.getChildren(taskId).map { pagingData ->
+        val doneBefore = ZonedDateTime.now(clock).with(LocalTime.MIN).toInstant()
+        pagingData.map { TaskItemUiState.fromTaskItem(it, doneBefore) }
+    }.cachedIn(viewModelScope)
+
     val uiState = combine(
         initialized,
         taskRepository.getTaskDetailById(taskId).onEach {
@@ -59,30 +64,18 @@ class TaskDetailViewModel @Inject constructor(
                 Timber.e(e, "Failed to fetch task recurrences by task id: %d", taskId)
                 emit(Result.Failure(e))
             },
-        taskRepository.getChildren(taskId)
-            .map<List<TaskItem>, Result<List<TaskItem>>> { Result.Success(it) }.catch { e ->
-                Timber.e(e, "Failed to fetch task children by id: %d", taskId)
-                emit(Result.Failure(e))
-            },
         userMessage,
-    ) { initialized, taskResult, recurrenceResult, childTasksResult, userMessage ->
+    ) { initialized, taskResult, recurrenceResult, userMessage ->
         taskResult.andThen { task ->
             when {
                 task != null -> {
-                    recurrenceResult.andThen { recurrence ->
-                        childTasksResult.map { childTasks ->
-                            val doneBefore =
-                                ZonedDateTime.now(clock).with(LocalTime.MIN).toInstant()
-                            TaskDetailUiState.Success(
-                                task = task,
-                                recurrence = recurrence,
-                                childTasks = childTasks.map {
-                                    TaskItemUiState.fromTaskItem(it, doneBefore)
-                                }.toImmutableList(),
-                                userMessage = userMessage,
-                                clock = clock,
-                            )
-                        }
+                    recurrenceResult.map { recurrence ->
+                        TaskDetailUiState.Success(
+                            task = task,
+                            recurrence = recurrence,
+                            userMessage = userMessage,
+                            clock = clock,
+                        )
                     }
                 }
 

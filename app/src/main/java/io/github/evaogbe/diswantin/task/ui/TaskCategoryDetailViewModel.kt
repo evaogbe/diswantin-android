@@ -3,14 +3,16 @@ package io.github.evaogbe.diswantin.task.ui
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.cachedIn
+import androidx.paging.map
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.data.Result
+import io.github.evaogbe.diswantin.task.data.TaskCategory
 import io.github.evaogbe.diswantin.task.data.TaskCategoryRepository
-import io.github.evaogbe.diswantin.task.data.TaskCategoryWithTaskItems
+import io.github.evaogbe.diswantin.task.data.TaskRepository
 import io.github.evaogbe.diswantin.ui.navigation.NavArguments
 import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
-import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -30,6 +32,7 @@ import javax.inject.Inject
 class TaskCategoryDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val taskCategoryRepository: TaskCategoryRepository,
+    taskRepository: TaskRepository,
     clock: Clock,
 ) : ViewModel() {
     private val categoryId: Long = checkNotNull(savedStateHandle[NavArguments.ID_KEY])
@@ -38,54 +41,50 @@ class TaskCategoryDetailViewModel @Inject constructor(
 
     private val userMessage = MutableStateFlow<UserMessage?>(null)
 
-    val uiState =
-        combine(
-            initialized,
-            taskCategoryRepository.getCategoryWithTaskItemsById(categoryId)
-                .onEach {
-                    if (it != null) {
-                        initialized.value = true
-                    }
-                }
-                .map<TaskCategoryWithTaskItems?, Result<TaskCategoryWithTaskItems?>> {
-                    Result.Success(it)
-                }
-                .catch { e ->
-                    Timber.e(e, "Failed to fetch task category by id: %d", categoryId)
-                    emit(Result.Failure(e))
-                },
-            userMessage,
-        ) { initialized, categoryWithTasksResults, userMessage ->
-            categoryWithTasksResults.fold(
-                onSuccess = { categoryWithTasks ->
-                    when {
-                        categoryWithTasks != null -> {
-                            val doneBefore =
-                                ZonedDateTime.now(clock).with(LocalTime.MIN).toInstant()
-                            TaskCategoryDetailUiState.Success(
-                                category = categoryWithTasks.category,
-                                tasks = categoryWithTasks.tasks.map { task ->
-                                    TaskItemUiState.fromTaskItem(task, doneBefore)
-                                }.toImmutableList(),
-                                userMessage = userMessage,
-                            )
-                        }
+    val taskItemPagingData = taskRepository.getTaskItemsByCategoryId(categoryId).map { pagingData ->
+        val doneBefore = ZonedDateTime.now(clock).with(LocalTime.MIN).toInstant()
+        pagingData.map { TaskItemUiState.fromTaskItem(it, doneBefore) }
+    }.cachedIn(viewModelScope)
 
-                        initialized -> TaskCategoryDetailUiState.Deleted
-                        else -> {
-                            TaskCategoryDetailUiState.Failure(
-                                NullPointerException("Category with id $categoryId not found"),
-                            )
-                        }
+    val uiState = combine(
+        initialized,
+        taskCategoryRepository.getById(categoryId).onEach {
+            if (it != null) {
+                initialized.value = true
+            }
+        }.map<TaskCategory?, Result<TaskCategory?>> {
+            Result.Success(it)
+        }.catch { e ->
+            Timber.e(e, "Failed to fetch task category by id: %d", categoryId)
+            emit(Result.Failure(e))
+        },
+        userMessage,
+    ) { initialized, categoryResult, userMessage ->
+        categoryResult.fold(
+            onSuccess = { category ->
+                when {
+                    category != null -> {
+                        TaskCategoryDetailUiState.Success(
+                            category = category,
+                            userMessage = userMessage,
+                        )
                     }
-                },
-                onFailure = TaskCategoryDetailUiState::Failure,
-            )
-        }.stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000L),
-            initialValue = TaskCategoryDetailUiState.Pending,
+
+                    initialized -> TaskCategoryDetailUiState.Deleted
+                    else -> {
+                        TaskCategoryDetailUiState.Failure(
+                            NullPointerException("Category with id $categoryId not found"),
+                        )
+                    }
+                }
+            },
+            onFailure = TaskCategoryDetailUiState::Failure,
         )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000L),
+        initialValue = TaskCategoryDetailUiState.Pending,
+    )
 
     fun deleteCategory() {
         val category = (uiState.value as? TaskCategoryDetailUiState.Success)?.category ?: return

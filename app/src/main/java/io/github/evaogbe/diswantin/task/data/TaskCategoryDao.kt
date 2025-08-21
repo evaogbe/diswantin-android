@@ -58,13 +58,13 @@ interface TaskCategoryDao {
     }
 
     @Query("UPDATE task SET category_id = NULL WHERE id in (:taskIds)")
-    suspend fun removeCategoryFromTasks(taskIds: List<Long>)
+    suspend fun removeCategoryFromTasks(taskIds: Set<Long>)
 
     @Transaction
     suspend fun updateWithTasks(
         category: TaskCategory,
         taskIdsToInsert: List<Long>,
-        taskIdsToRemove: List<Long>,
+        taskIdsToRemove: Set<Long>,
     ) {
         update(category)
         removeCategoryFromTasks(taskIdsToRemove)

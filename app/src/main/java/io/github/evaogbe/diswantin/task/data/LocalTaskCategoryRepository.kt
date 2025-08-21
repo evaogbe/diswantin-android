@@ -4,14 +4,12 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import io.github.evaogbe.diswantin.data.IoDispatcher
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class LocalTaskCategoryRepository @Inject constructor(
     private val taskCategoryDao: TaskCategoryDao,
-    private val taskDao: TaskDao,
     @param:IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : TaskCategoryRepository {
     override val categoryPagingData = Pager(PagingConfig(pageSize = 20)) {
@@ -20,21 +18,10 @@ class LocalTaskCategoryRepository @Inject constructor(
 
     override val hasCategoriesStream = taskCategoryDao.hasCategories().flowOn(ioDispatcher)
 
+    override fun getById(id: Long) = taskCategoryDao.getById(id).flowOn(ioDispatcher)
+
     override fun getByTaskId(taskId: Long) =
         taskCategoryDao.getByTaskId(taskId).flowOn(ioDispatcher)
-
-    override fun getCategoryWithTasksById(id: Long) =
-        combine(taskCategoryDao.getById(id), taskDao.getTasksByCategoryId(id)) { category, tasks ->
-            TaskCategoryWithTasks(checkNotNull(category), tasks)
-        }.flowOn(ioDispatcher)
-
-    override fun getCategoryWithTaskItemsById(id: Long) =
-        combine(
-            taskCategoryDao.getById(id),
-            taskDao.getTaskItemsByCategoryId(id),
-        ) { category, tasks ->
-            category?.let { TaskCategoryWithTaskItems(it, tasks) }
-        }.flowOn(ioDispatcher)
 
     override fun search(query: String) =
         taskCategoryDao.search(escapeSql("$query*")).flowOn(ioDispatcher)
@@ -48,7 +35,7 @@ class LocalTaskCategoryRepository @Inject constructor(
         )
         TaskCategoryWithTasks(
             form.newCategory.copy(id = id),
-            form.tasks.map { it.copy(categoryId = id) },
+            form.newTasks.map { it.copy(categoryId = id) },
         )
     }
 
@@ -60,7 +47,7 @@ class LocalTaskCategoryRepository @Inject constructor(
         )
         TaskCategoryWithTasks(
             form.updatedCategory,
-            form.tasks.map { it.copy(categoryId = form.updatedCategory.id) },
+            form.newTasks.map { it.copy(categoryId = form.updatedCategory.id) },
         )
     }
 

@@ -8,11 +8,9 @@ interface TaskCategoryRepository {
 
     val hasCategoriesStream: Flow<Boolean>
 
+    fun getById(id: Long): Flow<TaskCategory?>
+
     fun getByTaskId(taskId: Long): Flow<TaskCategory?>
-
-    fun getCategoryWithTasksById(id: Long): Flow<TaskCategoryWithTasks>
-
-    fun getCategoryWithTaskItemsById(id: Long): Flow<TaskCategoryWithTaskItems?>
 
     fun search(query: String): Flow<List<TaskCategory>>
 

@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -23,17 +25,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.Scaffold
@@ -61,7 +59,6 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
@@ -76,13 +73,12 @@ import io.github.evaogbe.diswantin.ui.components.DiswantinDatePickerDialog
 import io.github.evaogbe.diswantin.ui.components.DiswantinDateRangePickerDialog
 import io.github.evaogbe.diswantin.ui.components.LoadFailureLayout
 import io.github.evaogbe.diswantin.ui.components.PendingLayout
-import io.github.evaogbe.diswantin.ui.components.TextButtonWithIcon
+import io.github.evaogbe.diswantin.ui.components.pagedListFooter
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.evaogbe.diswantin.ui.theme.IconSizeLg
 import io.github.evaogbe.diswantin.ui.theme.ScreenLg
 import io.github.evaogbe.diswantin.ui.theme.SpaceLg
 import io.github.evaogbe.diswantin.ui.theme.SpaceMd
-import io.github.evaogbe.diswantin.ui.theme.SpaceSm
 import io.github.evaogbe.diswantin.ui.theme.SpaceXl
 import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
 import kotlinx.coroutines.FlowPreview
@@ -456,8 +452,37 @@ fun TaskSearchLayout(
     onSelectSearchResult: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val resources = LocalResources.current
+    TaskSearchLayout(
+        searchResultItems = {
+            items(
+                searchResultItems.itemCount,
+                key = searchResultItems.itemKey(TaskItemUiState::id),
+            ) { index ->
+                val searchResult = searchResultItems[index]!!
+                SearchResultItem(
+                    searchResult = searchResult,
+                    query = query,
+                    onSelectSearchResult = onSelectSearchResult,
+                )
+                HorizontalDivider()
+            }
 
+            pagedListFooter(
+                pagingItems = searchResultItems,
+                errorMessage = {
+                    Text(stringResource(R.string.task_search_error))
+                },
+            )
+        },
+        modifier = modifier,
+    )
+}
+
+@Composable
+fun TaskSearchLayout(
+    searchResultItems: LazyListScope.() -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Box(
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.TopCenter,
@@ -467,94 +492,54 @@ fun TaskSearchLayout(
                 .widthIn(max = ScreenLg)
                 .fillMaxSize(),
         ) {
-            items(
-                searchResultItems.itemCount,
-                key = searchResultItems.itemKey(TaskItemUiState::id),
-            ) { index ->
-                val searchResult = searchResultItems[index]!!
-                ListItem(
-                    headlineContent = {
-                        Text(
-                            text = buildAnnotatedString {
-                                append(searchResult.name)
-                                searchResult.name.findOccurrences(query).forEach {
-                                    addStyle(
-                                        SpanStyle(
-                                            color = colorScheme.onTertiary,
-                                            background = colorScheme.tertiary
-                                        ),
-                                        it.first,
-                                        it.last + 1,
-                                    )
-                                }
-
-                                if (searchResult.isDone) {
-                                    addStyle(
-                                        SpanStyle(textDecoration = TextDecoration.LineThrough),
-                                        0,
-                                        searchResult.name.length,
-                                    )
-                                }
-                            },
-                            modifier = if (searchResult.isDone) {
-                                Modifier.semantics {
-                                    contentDescription = resources.getString(
-                                        R.string.task_name_done,
-                                        searchResult.name,
-                                    )
-                                }
-                            } else {
-                                Modifier
-                            },
-                        )
-                    },
-                    modifier = Modifier.clickable { onSelectSearchResult(searchResult.id) },
-                )
-                HorizontalDivider()
-            }
-
-            when (searchResultItems.loadState.append) {
-                is LoadState.Loading -> {
-                    item {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(SpaceSm),
-                            contentAlignment = Alignment.TopCenter,
-                        ) {
-                            CircularProgressIndicator(modifier = Modifier.size(32.dp))
-                        }
-                    }
-                }
-
-                is LoadState.Error -> {
-                    item {
-                        ListItem(
-                            headlineContent = {
-                                Text(stringResource(R.string.task_search_error))
-                            },
-                            supportingContent = {
-                                TextButtonWithIcon(
-                                    onClick = { searchResultItems.retry() },
-                                    imageVector = Icons.Default.Refresh,
-                                    text = stringResource(R.string.retry_button),
-                                    colors = ButtonDefaults.textButtonColors(
-                                        contentColor = colorScheme.error,
-                                    ),
-                                )
-                            },
-                            colors = ListItemDefaults.colors(
-                                containerColor = colorScheme.errorContainer,
-                                headlineColor = colorScheme.onErrorContainer,
-                            ),
-                        )
-                    }
-                }
-
-                is LoadState.NotLoading -> {}
-            }
+            searchResultItems()
         }
     }
+}
+
+@Composable
+private fun SearchResultItem(
+    searchResult: TaskItemUiState, query: String, onSelectSearchResult: (Long) -> Unit
+) {
+    val resources = LocalResources.current
+
+    ListItem(
+        headlineContent = {
+            Text(
+                text = buildAnnotatedString {
+                    append(searchResult.name)
+                    searchResult.name.findOccurrences(query).forEach {
+                        addStyle(
+                            SpanStyle(
+                                color = colorScheme.onTertiary, background = colorScheme.tertiary
+                            ),
+                            it.first,
+                            it.last + 1,
+                        )
+                    }
+
+                    if (searchResult.isDone) {
+                        addStyle(
+                            SpanStyle(textDecoration = TextDecoration.LineThrough),
+                            0,
+                            searchResult.name.length,
+                        )
+                    }
+                },
+                modifier = if (searchResult.isDone) {
+                    Modifier.semantics {
+                        contentDescription = resources.getString(
+                            R.string.task_name_done,
+                            searchResult.name,
+                        )
+                    }
+                } else {
+                    Modifier
+                },
+            )
+        },
+        modifier = Modifier.clickable { onSelectSearchResult(searchResult.id) },
+    )
 }
 
 @Composable
@@ -682,5 +667,30 @@ private fun TaskSearchScreenPreview_Initial() {
                 modifier = Modifier.padding(innerPadding),
             )
         }
+    }
+}
+
+@DevicePreviews
+@Composable
+private fun TaskSearchLayoutPreview() {
+    val searchResults = listOf(
+        TaskItemUiState(id = 1L, name = "Brush teeth", isDone = true),
+        TaskItemUiState(id = 2L, name = "Brush hair", isDone = false),
+        TaskItemUiState(id = 3L, name = "Eat brunch", isDone = false),
+    )
+
+    DiswantinTheme {
+        TaskSearchLayout(
+            searchResultItems = {
+                items(searchResults, TaskItemUiState::id) { searchResult ->
+                    SearchResultItem(
+                        searchResult = searchResult,
+                        query = "Bru",
+                        onSelectSearchResult = {},
+                    )
+                    HorizontalDivider()
+                }
+            },
+        )
     }
 }

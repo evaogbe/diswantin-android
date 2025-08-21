@@ -322,8 +322,8 @@ interface TaskDao {
     )
     fun getTaskDetailById(id: Long): Flow<TaskDetail?>
 
-    @Query("SELECT * FROM task WHERE category_id = :categoryId ORDER BY name LIMIT 20")
-    fun getTasksByCategoryId(categoryId: Long): Flow<List<Task>>
+    @Query("SELECT * FROM task WHERE category_id = :categoryId ORDER BY name")
+    fun getTasksByCategoryId(categoryId: Long): PagingSource<Int, Task>
 
     @Query(
         """SELECT t.id, t.name, r.task_id IS NOT NULL AS recurring, c.done_at
@@ -349,10 +349,9 @@ interface TaskDao {
             t.start_after_date,
             t.start_after_time,
             t.created_at,
-            t.id
-        LIMIT 20"""
+            t.id"""
     )
-    fun getTaskItemsByCategoryId(categoryId: Long): Flow<List<TaskItem>>
+    fun getTaskItemsByCategoryId(categoryId: Long): PagingSource<Int, TaskItemData>
 
     @Query(
         """SELECT DISTINCT task.*
@@ -704,12 +703,11 @@ interface TaskDao {
             t.start_after_date,
             t.start_after_time,
             t.created_at,
-            t.id
-        LIMIT 20"""
+            t.id"""
     )
-    fun getChildren(id: Long): Flow<List<TaskItem>>
+    fun getChildren(id: Long): PagingSource<Int, TaskItemData>
 
-    @Query("SELECT * FROM task_recurrence WHERE task_id = :taskId ORDER BY start")
+    @Query("SELECT * FROM task_recurrence WHERE task_id = :taskId ORDER BY start LIMIT 7")
     fun getTaskRecurrencesByTaskId(taskId: Long): Flow<List<TaskRecurrence>>
 
     @Query("SELECT COUNT(*) FROM task")
