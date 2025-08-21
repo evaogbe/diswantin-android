@@ -2,10 +2,12 @@ package io.github.evaogbe.diswantin.task.data
 
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
+import androidx.paging.PagingData
 import androidx.paging.filter
 import androidx.paging.map
 import io.github.evaogbe.diswantin.data.IoDispatcher
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
@@ -87,9 +89,12 @@ class LocalTaskRepository @Inject constructor(
         taskDao.getTasksByCategoryId(categoryId)
     }.flow.flowOn(ioDispatcher)
 
-    override fun getTaskItemsByCategoryId(categoryId: Long) = Pager(PagingConfig(pageSize = 20)) {
-        taskDao.getTaskItemsByCategoryId(categoryId)
-    }.flow.flowOn(ioDispatcher)
+    override fun getTaskItemsByCategoryId(categoryId: Long): Flow<PagingData<TaskItemData>> {
+        val startOfToday = ZonedDateTime.now(clock).with(LocalTime.MIN).toInstant()
+        return Pager(PagingConfig(pageSize = 20)) {
+            taskDao.getTaskItemsByCategoryId(categoryId, startOfToday)
+        }.flow.flowOn(ioDispatcher)
+    }
 
     override fun search(query: String) = taskDao.search(escapeSql("$query*")).flowOn(ioDispatcher)
 

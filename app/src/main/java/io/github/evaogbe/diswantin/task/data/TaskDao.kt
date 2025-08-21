@@ -335,7 +335,8 @@ interface TaskDao {
         ) c ON c.task_id = t.id
         LEFT JOIN (SELECT DISTINCT task_id FROM task_recurrence) r ON r.task_id = t.id
         WHERE t.category_id = :categoryId
-        ORDER BY 
+        ORDER BY
+            c.done_at IS NOT NULL AND (r.task_id IS NULL OR c.done_at >= :startOfToday),
             c.done_at,
             t.scheduled_date IS NULL,
             t.scheduled_date,
@@ -351,7 +352,10 @@ interface TaskDao {
             t.created_at,
             t.id"""
     )
-    fun getTaskItemsByCategoryId(categoryId: Long): PagingSource<Int, TaskItemData>
+    fun getTaskItemsByCategoryId(
+        categoryId: Long,
+        startOfToday: Instant
+    ): PagingSource<Int, TaskItemData>
 
     @Query(
         """SELECT DISTINCT task.*
