@@ -73,17 +73,17 @@ class FakeTaskRepository(
                 task.scheduledTime,
                 LocalTime.MIN,
             )
+        }.thenComparing { (_, task) ->
+            task.deadlineDate?.let { it >= params.today } != false
+        }.thenComparing { (_, task) ->
+            task.deadlineTime?.let { it > params.currentTime.plusHours(1) } != false
         }.thenComparing({ (task) ->
             dateTimePartsToZonedDateTime(
                 task.scheduledDate,
                 task.scheduledTime,
                 LocalTime.MIN,
             )
-        }, nullsLast()).thenComparing { (_, task) ->
-            task.deadlineDate?.let { it >= params.today } != false
-        }.thenComparing { (_, task) ->
-            task.deadlineTime?.let { it > params.currentTime.plusHours(1) } != false
-        }.thenComparing { (task) ->
+        }, nullsLast()).thenComparing { (task) ->
             task.deadlineDate?.let { it >= params.today } != false
         }.thenComparing { (task) ->
             task.deadlineTime?.let { it > params.currentTime.plusHours(1) } != false

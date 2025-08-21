@@ -28,44 +28,44 @@ class LocalTaskRepository @Inject constructor(
     ).map { priorities ->
         priorities.sortedWith(
             compareBy<TaskPriority, ZonedDateTime?>(nullsLast()) {
-            dateTimePartsToZonedDateTime(
-                it.task.scheduledDate,
-                it.task.scheduledTime,
-                LocalTime.MIN,
-            )
-        }.thenComparing({
-            dateTimePartsToZonedDateTime(
-                it.scheduledDatePriority,
-                it.scheduledTimePriority,
-                LocalTime.MIN,
-            )
-        }, nullsLast()).thenComparing { priority ->
-            priority.task.deadlineDate?.let { it >= params.today } != false
-        }.thenComparing { priority ->
-            priority.task.deadlineTime?.let {
-                it > params.currentTime.plusHours(1)
-            } != false
-        }.thenComparing { priority ->
-            priority.deadlineDatePriority?.let { it >= params.today } != false
-        }.thenComparing { priority ->
-            priority.deadlineTimePriority?.let {
-                it > params.currentTime.plusHours(1)
-            } != false
-        }.thenComparing { it.startAfterTimePriority != null }.thenComparing({
-            dateTimePartsToZonedDateTime(
-                it.deadlineDatePriority,
-                it.deadlineTimePriority,
-                LocalTime.MAX,
-            ) ?: if (it.recurringPriority) params.endOfToday else null
-        }, nullsLast()).thenComparing(TaskPriority::recurringPriority, reverseOrder())
-            .thenComparing({
                 dateTimePartsToZonedDateTime(
-                    it.startAfterDatePriority,
-                    it.startAfterTimePriority,
+                    it.task.scheduledDate,
+                    it.task.scheduledTime,
                     LocalTime.MIN,
                 )
-            }, nullsFirst()).thenComparing(TaskPriority::createdAtPriority)
-            .thenComparing(TaskPriority::idPriority)
+            }.thenComparing { priority ->
+                priority.task.deadlineDate?.let { it >= params.today } != false
+            }.thenComparing { priority ->
+                priority.task.deadlineTime?.let {
+                    it > params.currentTime.plusHours(1)
+                } != false
+            }.thenComparing({
+                dateTimePartsToZonedDateTime(
+                    it.scheduledDatePriority,
+                    it.scheduledTimePriority,
+                    LocalTime.MIN,
+                )
+            }, nullsLast()).thenComparing { priority ->
+                priority.deadlineDatePriority?.let { it >= params.today } != false
+            }.thenComparing { priority ->
+                priority.deadlineTimePriority?.let {
+                    it > params.currentTime.plusHours(1)
+                } != false
+            }.thenComparing { it.startAfterTimePriority != null }.thenComparing({
+                dateTimePartsToZonedDateTime(
+                    it.deadlineDatePriority,
+                    it.deadlineTimePriority,
+                    LocalTime.MAX,
+                ) ?: if (it.recurringPriority) params.endOfToday else null
+            }, nullsLast()).thenComparing(TaskPriority::recurringPriority, reverseOrder())
+                .thenComparing({
+                    dateTimePartsToZonedDateTime(
+                        it.startAfterDatePriority,
+                        it.startAfterTimePriority,
+                        LocalTime.MIN,
+                    )
+                }, nullsFirst()).thenComparing(TaskPriority::createdAtPriority)
+                .thenComparing(TaskPriority::idPriority)
         ).firstOrNull()?.task
     }.flowOn(ioDispatcher)
 
