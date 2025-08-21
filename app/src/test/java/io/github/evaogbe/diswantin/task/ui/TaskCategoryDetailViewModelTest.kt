@@ -1,6 +1,7 @@
 package io.github.evaogbe.diswantin.task.ui
 
 import androidx.lifecycle.SavedStateHandle
+import androidx.paging.testing.asSnapshot
 import assertk.assertThat
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
@@ -9,8 +10,11 @@ import assertk.assertions.prop
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskCategory
-import io.github.evaogbe.diswantin.task.data.TaskCategoryWithTasks
+import io.github.evaogbe.diswantin.task.data.TaskCategoryRepository
+import io.github.evaogbe.diswantin.task.data.TaskRepository
+import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTaskCategoryRepository
+import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.MainDispatcherRule
 import io.github.evaogbe.diswantin.ui.navigation.NavArguments
 import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
@@ -19,12 +23,13 @@ import io.github.serpro69.kfaker.lorem.LoremFaker
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.spyk
-import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
@@ -33,7 +38,7 @@ import java.time.Clock
 @OptIn(ExperimentalCoroutinesApi::class)
 class TaskCategoryDetailViewModelTest {
     @get:Rule
-    val mainDispatcherRule = MainDispatcherRule()
+    val mainDispatcherRule = MainDispatcherRule(StandardTestDispatcher())
 
     private val loremFaker = LoremFaker()
 
@@ -41,36 +46,52 @@ class TaskCategoryDetailViewModelTest {
 
     @Test
     fun `uiState fetches task category by id`() = runTest(mainDispatcherRule.testDispatcher) {
-        val categoryWithTasks = genTaskCategoryWithTasks()
-        val taskCategoryRepository =
-            FakeTaskCategoryRepository.withCategories(categoryWithTasks)
-        val viewModel = createTaskCategoryDetailViewModel(taskCategoryRepository)
+        val category = genTaskCategory()
+        val tasks = genTasks()
+        val db = FakeDatabase().apply {
+            tasks.forEach(::insertTask)
+            insertTaskCategory(taskCategory = category, taskIds = tasks.map { it.id }.toSet())
+        }
+        val taskRepository = FakeTaskRepository(db)
+        val taskCategoryRepository = FakeTaskCategoryRepository(db)
+        val viewModel = createTaskCategoryDetailViewModel(taskCategoryRepository, taskRepository)
 
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect()
         }
 
+        assertThat(viewModel.uiState.value).isEqualTo(TaskCategoryDetailUiState.Pending)
+
+        advanceUntilIdle()
+
+        val taskItems = tasks.map { it.toTaskItemUiState() }
         assertThat(viewModel.uiState.value).isEqualTo(
             TaskCategoryDetailUiState.Success(
-                category = categoryWithTasks.category,
-                tasks = categoryWithTasks.tasks.map { it.toTaskItemUiState() }.toImmutableList(),
+                category = category,
                 userMessage = null,
             )
         )
+        assertThat(viewModel.taskItemPagingData.asSnapshot()).isEqualTo(taskItems)
     }
 
     @Test
     fun `uiState emits failure when task category not found`() =
         runTest(mainDispatcherRule.testDispatcher) {
-            val taskCategoryRepository = FakeTaskCategoryRepository()
-            val viewModel = createTaskCategoryDetailViewModel(taskCategoryRepository)
+            val db = FakeDatabase()
+            val taskRepository = FakeTaskRepository(db)
+            val taskCategoryRepository = FakeTaskCategoryRepository(db)
+            val viewModel =
+                createTaskCategoryDetailViewModel(taskCategoryRepository, taskRepository)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
             }
 
-            assertThat(viewModel.uiState.value)
-                .isInstanceOf<TaskCategoryDetailUiState.Failure>()
+            assertThat(viewModel.uiState.value).isEqualTo(TaskCategoryDetailUiState.Pending)
+
+            advanceUntilIdle()
+
+            assertThat(viewModel.uiState.value).isInstanceOf<TaskCategoryDetailUiState.Failure>()
                 .prop(TaskCategoryDetailUiState.Failure::exception)
                 .isInstanceOf<NullPointerException>()
         }
@@ -79,43 +100,65 @@ class TaskCategoryDetailViewModelTest {
     fun `uiState emits failure when repository throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val exception = RuntimeException("Test")
-            val categoryWithTasks = genTaskCategoryWithTasks()
-            val taskCategoryRepository =
-                spyk(FakeTaskCategoryRepository.withCategories(categoryWithTasks))
-            every { taskCategoryRepository.getCategoryWithTaskItemsById(any()) } returns flow {
+            val category = genTaskCategory()
+            val tasks = genTasks()
+            val db = FakeDatabase().apply {
+                tasks.forEach(::insertTask)
+                insertTaskCategory(taskCategory = category, taskIds = tasks.map { it.id }.toSet())
+            }
+            val taskRepository = FakeTaskRepository(db)
+            val taskCategoryRepository = spyk(FakeTaskCategoryRepository(db))
+            every { taskCategoryRepository.getById(any()) } returns flow {
                 throw exception
             }
 
-            val viewModel = createTaskCategoryDetailViewModel(taskCategoryRepository)
+            val viewModel =
+                createTaskCategoryDetailViewModel(taskCategoryRepository, taskRepository)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
             }
 
-            assertThat(viewModel.uiState.value)
-                .isEqualTo(TaskCategoryDetailUiState.Failure(exception))
+            assertThat(viewModel.uiState.value).isEqualTo(TaskCategoryDetailUiState.Pending)
+
+            advanceUntilIdle()
+
+            assertThat(viewModel.uiState.value).isEqualTo(
+                TaskCategoryDetailUiState.Failure(exception)
+            )
         }
 
     @Test
     fun `deleteCategory sets uiState to deleted`() = runTest(mainDispatcherRule.testDispatcher) {
-        val categoryWithTasks = genTaskCategoryWithTasks()
-        val taskCategoryRepository =
-            FakeTaskCategoryRepository.withCategories(categoryWithTasks)
-        val viewModel = createTaskCategoryDetailViewModel(taskCategoryRepository)
+        val category = genTaskCategory()
+        val tasks = genTasks()
+        val db = FakeDatabase().apply {
+            tasks.forEach(::insertTask)
+            insertTaskCategory(taskCategory = category, taskIds = tasks.map { it.id }.toSet())
+        }
+        val taskRepository = FakeTaskRepository(db)
+        val taskCategoryRepository = FakeTaskCategoryRepository(db)
+        val viewModel = createTaskCategoryDetailViewModel(taskCategoryRepository, taskRepository)
 
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect()
         }
 
+        assertThat(viewModel.uiState.value).isEqualTo(TaskCategoryDetailUiState.Pending)
+
+        advanceUntilIdle()
+
+        val taskItems = tasks.map { it.toTaskItemUiState() }
         assertThat(viewModel.uiState.value).isEqualTo(
             TaskCategoryDetailUiState.Success(
-                category = categoryWithTasks.category,
-                tasks = categoryWithTasks.tasks.map { it.toTaskItemUiState() }.toImmutableList(),
+                category = category,
                 userMessage = null,
             )
         )
+        assertThat(viewModel.taskItemPagingData.asSnapshot()).isEqualTo(taskItems)
 
         viewModel.deleteCategory()
+        advanceUntilIdle()
 
         assertThat(taskCategoryRepository.taskCategories).isEmpty()
         assertThat(viewModel.uiState.value).isEqualTo(TaskCategoryDetailUiState.Deleted)
@@ -124,56 +167,75 @@ class TaskCategoryDetailViewModelTest {
     @Test
     fun `deleteCategory shows error message when repository throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
-            val categoryWithTasks = genTaskCategoryWithTasks()
-            val taskCategoryRepository =
-                spyk(FakeTaskCategoryRepository.withCategories(categoryWithTasks))
+            val category = genTaskCategory()
+            val tasks = genTasks()
+            val db = FakeDatabase().apply {
+                tasks.forEach(::insertTask)
+                insertTaskCategory(taskCategory = category, taskIds = tasks.map { it.id }.toSet())
+            }
+            val taskRepository = FakeTaskRepository(db)
+            val taskCategoryRepository = spyk(FakeTaskCategoryRepository(db))
             coEvery { taskCategoryRepository.delete(any()) } throws RuntimeException("Test")
 
-            val viewModel = createTaskCategoryDetailViewModel(taskCategoryRepository)
+            val viewModel =
+                createTaskCategoryDetailViewModel(taskCategoryRepository, taskRepository)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
             }
 
+            assertThat(viewModel.uiState.value).isEqualTo(TaskCategoryDetailUiState.Pending)
+
+            advanceUntilIdle()
+
+            val taskItems = tasks.map { it.toTaskItemUiState() }
+            assertThat(viewModel.uiState.value).isEqualTo(
+                TaskCategoryDetailUiState.Success(
+                    category = category,
+                    userMessage = null,
+                )
+            )
+            assertThat(viewModel.taskItemPagingData.asSnapshot()).isEqualTo(taskItems)
+
             viewModel.deleteCategory()
+            advanceUntilIdle()
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskCategoryDetailUiState.Success(
-                    category = categoryWithTasks.category,
-                    tasks = categoryWithTasks.tasks.map { it.toTaskItemUiState() }
-                        .toImmutableList(),
+                    category = category,
                     userMessage = UserMessage.String(R.string.task_category_detail_delete_error),
                 )
             )
+            assertThat(viewModel.taskItemPagingData.asSnapshot()).isEqualTo(taskItems)
         }
 
     private fun Task.toTaskItemUiState() = TaskItemUiState(id = id, name = name, isDone = false)
 
-    private fun genTaskCategoryWithTasks() = TaskCategoryWithTasks(
-        TaskCategory(id = 1L, name = loremFaker.lorem.words()),
-        generateSequence(
-            Task(
-                id = 1L,
-                createdAt = faker.random.randomPastDate().toInstant(),
-                name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-                categoryId = 1L,
-            )
-        ) {
-            Task(
-                id = it.id + 1L,
-                createdAt = faker.random.randomPastDate(min = it.createdAt).toInstant(),
-                name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-                categoryId = 1L,
-            )
-        }.take(faker.random.nextInt(bound = 5)).toList(),
-    )
+    private fun genTaskCategory() = TaskCategory(id = 1L, name = loremFaker.lorem.words())
+
+    private fun genTasks() = generateSequence(
+        Task(
+            id = 1L,
+            createdAt = faker.random.randomPastDate().toInstant(),
+            name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+            categoryId = 1L,
+        )
+    ) {
+        Task(
+            id = it.id + 1L,
+            createdAt = faker.random.randomPastDate(min = it.createdAt).toInstant(),
+            name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+            categoryId = 1L,
+        )
+    }.take(faker.random.nextInt(bound = 5)).toList()
 
     private fun createTaskCategoryDetailViewModel(
-        taskCategoryRepository: FakeTaskCategoryRepository,
-    ) =
-        TaskCategoryDetailViewModel(
-            SavedStateHandle(mapOf(NavArguments.ID_KEY to 1L)),
-            taskCategoryRepository,
-            Clock.systemDefaultZone(),
-        )
+        taskCategoryRepository: TaskCategoryRepository,
+        taskRepository: TaskRepository,
+    ) = TaskCategoryDetailViewModel(
+        SavedStateHandle(mapOf(NavArguments.ID_KEY to 1L)),
+        taskCategoryRepository,
+        taskRepository,
+        Clock.systemDefaultZone(),
+    )
 }

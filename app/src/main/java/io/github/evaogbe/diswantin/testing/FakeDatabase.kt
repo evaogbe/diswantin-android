@@ -53,12 +53,11 @@ class FakeDatabase {
         } else {
             taskCategory.copy(id = ++taskCategoryIdGen)
         }
-        _taskCategoryTable.update { it + (taskCategory.id to taskCategory) }
+        _taskCategoryTable.update { it + (newTaskCategory.id to newTaskCategory) }
         _taskTable.update { taskTable ->
-            taskTable + taskTable.values
-                .filter { it.id in taskIds }
-                .map { it.copy(categoryId = taskCategory.id) }
-                .associateBy { it.id }
+            val newTasks = taskTable.values.filter { it.id in taskIds }
+                .map { it.copy(categoryId = newTaskCategory.id) }.associateBy { it.id }
+            taskTable + newTasks
         }
         return newTaskCategory
     }
@@ -66,24 +65,24 @@ class FakeDatabase {
     fun updateTaskCategory(
         taskCategory: TaskCategory,
         taskIdsToInsert: List<Long>,
-        taskIdsToRemove: List<Long>,
+        taskIdsToRemove: Set<Long>,
     ) {
         _taskCategoryTable.update { it + (taskCategory.id to taskCategory) }
         _taskTable.update { taskTable ->
-            taskTable +
-                    taskIdsToRemove.mapNotNull { taskTable[it]?.copy(categoryId = null) }
-                        .associateBy { it.id } +
-                    taskIdsToInsert.mapNotNull { taskTable[it]?.copy(categoryId = taskCategory.id) }
-                        .associateBy { it.id }
+            val tasksToRemove =
+                taskIdsToRemove.mapNotNull { taskTable[it]?.copy(categoryId = null) }
+                    .associateBy { it.id }
+            val tasksToInsert =
+                taskIdsToInsert.mapNotNull { taskTable[it]?.copy(categoryId = taskCategory.id) }
+                    .associateBy { it.id }
+            taskTable + tasksToRemove + tasksToInsert
         }
     }
 
     fun deleteTaskCategory(id: Long) {
         _taskTable.update { taskTable ->
-            taskTable + taskTable.values
-                .filter<Task> { it.categoryId == id }
-                .map { it.copy(categoryId = null) }
-                .associateBy { it.id }
+            taskTable + taskTable.values.filter { it.categoryId == id }
+                .map { it.copy(categoryId = null) }.associateBy { it.id }
         }
         _taskCategoryTable.update { it - id }
     }
@@ -94,7 +93,7 @@ class FakeDatabase {
             id = ++taskPathIdGen,
             ancestor = newTask.id,
             descendant = newTask.id,
-            depth = 0
+            depth = 0,
         )
         _taskTable.update { it + (newTask.id to newTask) }
         _taskPathTable.update { it + (path.id to path) }
@@ -108,8 +107,9 @@ class FakeDatabase {
     fun deleteTask(id: Long) {
         _taskTable.update { it - id }
         _taskPathTable.update { taskPathTable ->
-            taskPathTable.filterValues { it.ancestor != id && it.descendant != id } +
-                    getDecrementedPaths(id)
+            taskPathTable.filterValues {
+                it.ancestor != id && it.descendant != id
+            } + getDecrementedPaths(id)
         }
         _taskCompletionTable.update { taskCompletionTable ->
             taskCompletionTable.filterValues { it.taskId != id }
@@ -143,11 +143,8 @@ class FakeDatabase {
 
     fun deleteLatestTaskCompletionByTaskId(taskId: Long) {
         _taskCompletionTable.update { taskCompletionTable ->
-            taskCompletionTable.values
-                .filter { it.taskId == taskId }
-                .maxByOrNull { it.doneAt }
-                ?.id
-                ?.let { taskCompletionTable - it }
+            taskCompletionTable.values.filter { it.taskId == taskId }
+                .maxByOrNull { it.doneAt }?.id?.let { taskCompletionTable - it }
                 ?: taskCompletionTable
         }
     }
@@ -161,13 +158,13 @@ class FakeDatabase {
             if (taskPathTable.values.any { it.ancestor == childId && it.descendant == parentId }) {
                 taskPathTable.filterValues {
                     (it.ancestor != childId && it.descendant != childId) || it.depth == 0
-                } +
-                        getDecrementedPaths(childId) +
-                        createTaskPathChain(parentId = parentId, childId = childId)
+                } + getDecrementedPaths(childId) + createTaskPathChain(
+                    parentId = parentId, childId = childId
+                )
             } else {
-                taskPathTable -
-                        getAncestorIds(childId) +
-                        createTaskPathChain(parentId = parentId, childId = childId)
+                taskPathTable - getAncestorIds(childId) + createTaskPathChain(
+                    parentId = parentId, childId = childId
+                )
             }
         }
     }
@@ -182,58 +179,44 @@ class FakeDatabase {
         val parentId = taskPathTable.value.values.firstOrNull {
             it.descendant == taskId && it.depth == 1
         }?.ancestor
-        val childIds = taskPathTable.value.values
-            .filter { it.ancestor == taskId && it.depth == 1 }
-            .map { it.descendant }
-            .toSet()
+        val childIds = taskPathTable.value.values.filter { it.ancestor == taskId && it.depth == 1 }
+            .map { it.descendant }.toSet()
         return if (parentId != null && childIds.isNotEmpty()) {
-            val ancestors = taskPathTable.value.values
-                .filter { it.descendant == parentId }
-                .map { it.ancestor }
-                .toSet()
-            val descendants = taskPathTable.value.values
-                .filter { it.ancestor in childIds }
-                .map { it.descendant }
-                .toSet()
-            taskPathTable.value.values
-                .filter { it.ancestor in ancestors && it.descendant in descendants }
-                .map { it.copy(depth = it.depth - 1) }
-                .associateBy { it.id }
+            val ancestors =
+                taskPathTable.value.values.filter { it.descendant == parentId }.map { it.ancestor }
+                    .toSet()
+            val descendants =
+                taskPathTable.value.values.filter { it.ancestor in childIds }.map { it.descendant }
+                    .toSet()
+            taskPathTable.value.values.filter {
+                it.ancestor in ancestors && it.descendant in descendants
+            }.map { it.copy(depth = it.depth - 1) }.associateBy { it.id }
         } else {
             emptyMap()
         }
     }
 
     private fun createTaskPathChain(parentId: Long, childId: Long) =
-        taskPathTable.value.values
-            .filter { it.descendant == parentId }
-            .flatMap { ancestorPath ->
-                taskPathTable.value.values
-                    .filter { it.ancestor == childId }
-                    .map { descendantPath ->
-                        TaskPath(
-                            id = ++taskPathIdGen,
-                            ancestor = ancestorPath.ancestor,
-                            descendant = descendantPath.descendant,
-                            depth = ancestorPath.depth + descendantPath.depth + 1,
-                        )
-                    }
+        taskPathTable.value.values.filter { it.descendant == parentId }.flatMap { ancestorPath ->
+            taskPathTable.value.values.filter { it.ancestor == childId }.map { descendantPath ->
+                TaskPath(
+                    id = ++taskPathIdGen,
+                    ancestor = ancestorPath.ancestor,
+                    descendant = descendantPath.descendant,
+                    depth = ancestorPath.depth + descendantPath.depth + 1,
+                )
             }
-            .associateBy { it.id }
+        }.associateBy { it.id }
 
     private fun getAncestorIds(descendant: Long): List<Long> {
         val ancestors =
-            taskPathTable.value.values
-                .filter { it.descendant == descendant && it.depth > 0 }
-                .map { it.ancestor }
-                .toSet()
+            taskPathTable.value.values.filter { it.descendant == descendant && it.depth > 0 }
+                .map { it.ancestor }.toSet()
         val descendants =
-            taskPathTable.value.values
-                .filter { it.ancestor == descendant }
-                .map { it.descendant }
+            taskPathTable.value.values.filter { it.ancestor == descendant }.map { it.descendant }
                 .toSet()
-        return taskPathTable.value.values
-            .filter { it.ancestor in ancestors && it.descendant in descendants }
-            .map { it.id }
+        return taskPathTable.value.values.filter {
+            it.ancestor in ancestors && it.descendant in descendants
+        }.map { it.id }
     }
 }

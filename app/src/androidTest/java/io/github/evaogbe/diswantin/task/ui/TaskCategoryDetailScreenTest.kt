@@ -10,8 +10,11 @@ import assertk.assertions.isTrue
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskCategory
-import io.github.evaogbe.diswantin.task.data.TaskCategoryWithTasks
+import io.github.evaogbe.diswantin.task.data.TaskCategoryRepository
+import io.github.evaogbe.diswantin.task.data.TaskRepository
+import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTaskCategoryRepository
+import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.stringResource
 import io.github.evaogbe.diswantin.ui.components.PendingLayoutTestTag
 import io.github.evaogbe.diswantin.ui.navigation.NavArguments
@@ -35,9 +38,15 @@ class TaskCategoryDetailScreenTest {
 
     @Test
     fun displaysCategoryNameWithTasks() {
-        val categoryWithTasks = genTaskCategoryWithTasks()
-        val taskCategoryRepository = FakeTaskCategoryRepository.withCategories(categoryWithTasks)
-        val viewModel = createTaskCategoryDetailViewModel(taskCategoryRepository)
+        val category = genTaskCategory()
+        val tasks = genTasks()
+        val db = FakeDatabase().apply {
+            tasks.forEach(::insertTask)
+            insertTaskCategory(taskCategory = category, taskIds = tasks.map { it.id }.toSet())
+        }
+        val taskRepository = FakeTaskRepository(db)
+        val taskCategoryRepository = FakeTaskCategoryRepository(db)
+        val viewModel = createTaskCategoryDetailViewModel(taskCategoryRepository, taskRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -52,16 +61,18 @@ class TaskCategoryDetailScreenTest {
             }
         }
 
-        composeTestRule.onNodeWithText(categoryWithTasks.category.name).assertIsDisplayed()
-        composeTestRule.onNodeWithText(categoryWithTasks.tasks[0].name).assertIsDisplayed()
-        composeTestRule.onNodeWithText(categoryWithTasks.tasks[1].name).assertIsDisplayed()
-        composeTestRule.onNodeWithText(categoryWithTasks.tasks[2].name).assertIsDisplayed()
+        composeTestRule.onNodeWithText(category.name).assertIsDisplayed()
+        composeTestRule.onNodeWithText(tasks[0].name).assertIsDisplayed()
+        composeTestRule.onNodeWithText(tasks[1].name).assertIsDisplayed()
+        composeTestRule.onNodeWithText(tasks[2].name).assertIsDisplayed()
     }
 
     @Test
     fun displaysErrorMessage_withFailureUi() {
-        val taskCategoryRepository = FakeTaskCategoryRepository()
-        val viewModel = createTaskCategoryDetailViewModel(taskCategoryRepository)
+        val db = FakeDatabase()
+        val taskRepository = FakeTaskRepository(db)
+        val taskCategoryRepository = FakeTaskCategoryRepository(db)
+        val viewModel = createTaskCategoryDetailViewModel(taskCategoryRepository, taskRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -83,9 +94,15 @@ class TaskCategoryDetailScreenTest {
     @Test
     fun popsBackStack_whenCategoryDeleted() {
         var onPopBackStackCalled = false
-        val categoryWithTasks = genTaskCategoryWithTasks()
-        val taskCategoryRepository = FakeTaskCategoryRepository.withCategories(categoryWithTasks)
-        val viewModel = createTaskCategoryDetailViewModel(taskCategoryRepository)
+        val category = genTaskCategory()
+        val tasks = genTasks()
+        val db = FakeDatabase().apply {
+            tasks.forEach(::insertTask)
+            insertTaskCategory(taskCategory = category, taskIds = tasks.map { it.id }.toSet())
+        }
+        val taskRepository = FakeTaskRepository(db)
+        val taskCategoryRepository = FakeTaskCategoryRepository(db)
+        val viewModel = createTaskCategoryDetailViewModel(taskCategoryRepository, taskRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -109,12 +126,17 @@ class TaskCategoryDetailScreenTest {
     @Test
     fun displaysErrorMessage_whenDeleteCategoryFails() {
         var userMessage: UserMessage? = null
-        val categoryWithTasks = genTaskCategoryWithTasks()
-        val taskCategoryRepository =
-            spyk(FakeTaskCategoryRepository.withCategories(categoryWithTasks))
+        val category = genTaskCategory()
+        val tasks = genTasks()
+        val db = FakeDatabase().apply {
+            tasks.forEach(::insertTask)
+            insertTaskCategory(taskCategory = category, taskIds = tasks.map { it.id }.toSet())
+        }
+        val taskRepository = FakeTaskRepository(db)
+        val taskCategoryRepository = spyk(FakeTaskCategoryRepository(db))
         coEvery { taskCategoryRepository.delete(any()) } throws RuntimeException("Test")
 
-        val viewModel = createTaskCategoryDetailViewModel(taskCategoryRepository)
+        val viewModel = createTaskCategoryDetailViewModel(taskCategoryRepository, taskRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -136,31 +158,31 @@ class TaskCategoryDetailScreenTest {
         }
     }
 
-    private fun genTaskCategoryWithTasks() = TaskCategoryWithTasks(
-        TaskCategory(id = 1L, name = loremFaker.lorem.words()),
-        generateSequence(
-            Task(
-                id = 1L,
-                createdAt = faker.random.randomPastDate().toInstant(),
-                name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-                categoryId = 1L,
-            )
-        ) {
-            Task(
-                id = it.id + 1L,
-                createdAt = faker.random.randomPastDate(min = it.createdAt).toInstant(),
-                name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-                categoryId = 1L,
-            )
-        }.take(3).toList(),
-    )
+    private fun genTaskCategory() = TaskCategory(id = 1L, name = loremFaker.lorem.words())
+
+    private fun genTasks() = generateSequence(
+        Task(
+            id = 1L,
+            createdAt = faker.random.randomPastDate().toInstant(),
+            name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+            categoryId = 1L,
+        )
+    ) {
+        Task(
+            id = it.id + 1L,
+            createdAt = faker.random.randomPastDate(min = it.createdAt).toInstant(),
+            name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+            categoryId = 1L,
+        )
+    }.take(3).toList()
 
     private fun createTaskCategoryDetailViewModel(
-        taskCategoryRepository: FakeTaskCategoryRepository,
-    ) =
-        TaskCategoryDetailViewModel(
-            SavedStateHandle(mapOf(NavArguments.ID_KEY to 1L)),
-            taskCategoryRepository,
-            Clock.systemDefaultZone(),
-        )
+        taskCategoryRepository: TaskCategoryRepository,
+        taskRepository: TaskRepository,
+    ) = TaskCategoryDetailViewModel(
+        SavedStateHandle(mapOf(NavArguments.ID_KEY to 1L)),
+        taskCategoryRepository,
+        taskRepository,
+        Clock.systemDefaultZone(),
+    )
 }

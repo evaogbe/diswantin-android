@@ -1,16 +1,14 @@
 package io.github.evaogbe.diswantin.task.ui
 
 import androidx.lifecycle.SavedStateHandle
+import androidx.paging.testing.asSnapshot
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
-import assertk.assertions.isNotNull
 import assertk.assertions.isTrue
-import assertk.assertions.prop
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskCategory
-import io.github.evaogbe.diswantin.task.data.TaskCategoryWithTasks
 import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTaskCategoryRepository
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
@@ -29,7 +27,9 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
@@ -37,7 +37,7 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class TaskCategoryFormViewModelTest {
     @get:Rule
-    val mainDispatcherRule = MainDispatcherRule()
+    val mainDispatcherRule = MainDispatcherRule(StandardTestDispatcher())
 
     private val loremFaker = LoremFaker()
 
@@ -55,11 +55,15 @@ class TaskCategoryFormViewModelTest {
             viewModel.uiState.collect()
         }
 
+        assertThat(viewModel.uiState.value).isEqualTo(TaskCategoryFormUiState.Pending)
+
+        advanceUntilIdle()
+
         assertThat(viewModel.isNew).isTrue()
         assertThat(viewModel.uiState.value).isEqualTo(
             TaskCategoryFormUiState.Success(
-                tasks = persistentListOf(),
-                editingTaskIndex = 0,
+                newTasks = persistentListOf(),
+                isEditing = true,
                 taskOptions = persistentListOf(),
                 userMessage = null,
             )
@@ -88,10 +92,11 @@ class TaskCategoryFormViewModelTest {
         }
 
         assertThat(viewModel.isNew).isFalse()
+        assertThat(viewModel.existingTaskPagingData.asSnapshot()).isEqualTo(tasks)
         assertThat(viewModel.uiState.value).isEqualTo(
             TaskCategoryFormUiState.Success(
-                tasks = tasks.toImmutableList(),
-                editingTaskIndex = null,
+                newTasks = persistentListOf(),
+                isEditing = false,
                 taskOptions = persistentListOf(),
                 userMessage = null,
             )
@@ -106,7 +111,7 @@ class TaskCategoryFormViewModelTest {
             val db = FakeDatabase()
             val taskRepository = FakeTaskRepository(db)
             val taskCategoryRepository = spyk(FakeTaskCategoryRepository(db))
-            every { taskCategoryRepository.getCategoryWithTasksById(any()) } returns flow {
+            every { taskCategoryRepository.getById(any()) } returns flow {
                 throw exception
             }
 
@@ -120,9 +125,12 @@ class TaskCategoryFormViewModelTest {
                 viewModel.uiState.collect()
             }
 
+            assertThat(viewModel.uiState.value).isEqualTo(TaskCategoryFormUiState.Pending)
+
+            advanceUntilIdle()
+
             assertThat(viewModel.isNew).isFalse()
-            assertThat(viewModel.uiState.value)
-                .isEqualTo(TaskCategoryFormUiState.Failure(exception))
+            assertThat(viewModel.uiState.value).isEqualTo(TaskCategoryFormUiState.Failure(exception))
         }
 
     @Test
@@ -147,12 +155,17 @@ class TaskCategoryFormViewModelTest {
             viewModel.uiState.collect()
         }
 
+        assertThat(viewModel.uiState.value).isEqualTo(TaskCategoryFormUiState.Pending)
+
+        advanceUntilIdle()
+
         viewModel.searchTasks(query)
+        advanceUntilIdle()
 
         assertThat(viewModel.uiState.value).isEqualTo(
             TaskCategoryFormUiState.Success(
-                tasks = persistentListOf(),
-                editingTaskIndex = 0,
+                newTasks = persistentListOf(),
+                isEditing = true,
                 taskOptions = tasks.toImmutableList(),
                 userMessage = null,
             )
@@ -178,12 +191,17 @@ class TaskCategoryFormViewModelTest {
                 viewModel.uiState.collect()
             }
 
+            assertThat(viewModel.uiState.value).isEqualTo(TaskCategoryFormUiState.Pending)
+
+            advanceUntilIdle()
+
             viewModel.searchTasks(query)
+            advanceUntilIdle()
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskCategoryFormUiState.Success(
-                    tasks = persistentListOf(),
-                    editingTaskIndex = 0,
+                    newTasks = persistentListOf(),
+                    isEditing = true,
                     taskOptions = persistentListOf(),
                     userMessage = UserMessage.String(R.string.search_task_options_error),
                 )
@@ -210,29 +228,31 @@ class TaskCategoryFormViewModelTest {
                 viewModel.uiState.collect()
             }
 
+            assertThat(viewModel.uiState.value).isEqualTo(TaskCategoryFormUiState.Pending)
+
+            advanceUntilIdle()
+
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskCategoryFormUiState.Success(
-                    tasks = persistentListOf(),
-                    editingTaskIndex = 0,
+                    newTasks = persistentListOf(),
+                    isEditing = true,
                     taskOptions = persistentListOf(),
                     userMessage = null,
                 )
             )
 
             viewModel.updateNameInput(name)
-            tasks.forEachIndexed { index, task ->
-                viewModel.setTask(index, task)
-            }
+            tasks.forEach(viewModel::addTask)
+            advanceUntilIdle()
             viewModel.saveCategory()
+            advanceUntilIdle()
 
             assertThat(viewModel.uiState.value).isEqualTo(TaskCategoryFormUiState.Saved)
 
             val category = taskCategoryRepository.taskCategories.single()
             assertThat(category.name).isEqualTo(name)
-            assertThat(taskCategoryRepository.getCategoryWithTasksById(category.id).first())
-                .isNotNull()
-                .prop(TaskCategoryWithTasks::tasks)
-                .isEqualTo(tasks.map { it.copy(categoryId = category.id) })
+            assertThat(taskRepository.getTasksByCategoryId(category.id).asSnapshot()).isEqualTo(
+                tasks.map { it.copy(categoryId = category.id) })
         }
 
     @Test
@@ -254,13 +274,18 @@ class TaskCategoryFormViewModelTest {
                 viewModel.uiState.collect()
             }
 
+            assertThat(viewModel.uiState.value).isEqualTo(TaskCategoryFormUiState.Pending)
+
+            advanceUntilIdle()
+
             viewModel.updateNameInput(name)
             viewModel.saveCategory()
+            advanceUntilIdle()
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskCategoryFormUiState.Success(
-                    tasks = persistentListOf(),
-                    editingTaskIndex = 0,
+                    newTasks = persistentListOf(),
+                    isEditing = true,
                     taskOptions = persistentListOf(),
                     userMessage = UserMessage.String(R.string.task_category_form_save_error_new),
                 )
@@ -289,10 +314,11 @@ class TaskCategoryFormViewModelTest {
                 viewModel.uiState.collect()
             }
 
+            assertThat(viewModel.existingTaskPagingData.asSnapshot()).isEqualTo(tasks)
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskCategoryFormUiState.Success(
-                    tasks = tasks.toImmutableList(),
-                    editingTaskIndex = null,
+                    newTasks = persistentListOf(),
+                    isEditing = false,
                     taskOptions = persistentListOf(),
                     userMessage = null,
                 )
@@ -300,11 +326,13 @@ class TaskCategoryFormViewModelTest {
 
             viewModel.updateNameInput(name)
             viewModel.saveCategory()
+            advanceUntilIdle()
 
+            val updatedCategory = taskCategoryRepository.getById(category.id).first()
+            val updatedTasks = taskRepository.getTasksByCategoryId(category.id).asSnapshot()
             assertThat(viewModel.uiState.value).isEqualTo(TaskCategoryFormUiState.Saved)
-            assertThat(taskCategoryRepository.getCategoryWithTasksById(category.id).first())
-                .isNotNull()
-                .isEqualTo(TaskCategoryWithTasks(category.copy(name = name), tasks))
+            assertThat(updatedCategory).isEqualTo(category.copy(name = name))
+            assertThat(updatedTasks).isEqualTo(tasks)
         }
 
     @Test
@@ -331,13 +359,18 @@ class TaskCategoryFormViewModelTest {
                 viewModel.uiState.collect()
             }
 
+            assertThat(viewModel.uiState.value).isEqualTo(TaskCategoryFormUiState.Pending)
+
+            advanceUntilIdle()
+
             viewModel.updateNameInput(name)
             viewModel.saveCategory()
+            advanceUntilIdle()
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskCategoryFormUiState.Success(
-                    tasks = tasks.toImmutableList(),
-                    editingTaskIndex = null,
+                    newTasks = persistentListOf(),
+                    isEditing = false,
                     taskOptions = persistentListOf(),
                     userMessage = UserMessage.String(R.string.task_category_form_save_error_edit),
                 )
@@ -346,16 +379,14 @@ class TaskCategoryFormViewModelTest {
 
     private fun genTaskCategory() = TaskCategory(id = 1L, name = loremFaker.lorem.words())
 
-    private fun genTasks(categoryId: Long? = null) =
-        List(3) {
-            Task(
-                id = it + 1L,
-                createdAt = faker.random.randomPastDate().toInstant(),
-                name = "${it + 1}. ${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-                categoryId = categoryId,
-            )
-        }
+    private fun genTasks(categoryId: Long? = null) = List(3) {
+        Task(
+            id = it + 1L,
+            createdAt = faker.random.randomPastDate().toInstant(),
+            name = "${it + 1}. ${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+            categoryId = categoryId,
+        )
+    }
 
-    private fun createSavedStateHandleForEdit() =
-        SavedStateHandle(mapOf(NavArguments.ID_KEY to 1L))
+    private fun createSavedStateHandleForEdit() = SavedStateHandle(mapOf(NavArguments.ID_KEY to 1L))
 }

@@ -2,7 +2,6 @@ package io.github.evaogbe.diswantin.task.ui
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -12,7 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -47,13 +46,18 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.LoadState
+import androidx.paging.PagingData
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.ui.components.AutocompleteField
-import io.github.evaogbe.diswantin.ui.components.ClearableLayout
 import io.github.evaogbe.diswantin.ui.components.LoadFailureLayout
 import io.github.evaogbe.diswantin.ui.components.PendingLayout
 import io.github.evaogbe.diswantin.ui.components.TextButtonWithIcon
+import io.github.evaogbe.diswantin.ui.components.pagedListFooter
 import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.evaogbe.diswantin.ui.theme.ScreenLg
@@ -62,6 +66,7 @@ import io.github.evaogbe.diswantin.ui.theme.SpaceMd
 import io.github.evaogbe.diswantin.ui.theme.SpaceSm
 import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.flow.flowOf
 import java.time.Instant
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -118,6 +123,8 @@ fun TaskCategoryFormScreen(
     val uiState by taskCategoryFormViewModel.uiState.collectAsStateWithLifecycle()
     val isNew = taskCategoryFormViewModel.isNew
     val nameInput = taskCategoryFormViewModel.nameInput
+    val existingTaskPagingItems =
+        taskCategoryFormViewModel.existingTaskPagingData.collectAsLazyPagingItems()
 
     if (uiState is TaskCategoryFormUiState.Saved) {
         LaunchedEffect(onPopBackStack) {
@@ -160,18 +167,30 @@ fun TaskCategoryFormScreen(
         }
 
         is TaskCategoryFormUiState.Success -> {
-            TaskCategoryFormLayout(
-                isNew = taskCategoryFormViewModel.isNew,
-                uiState = state,
-                name = nameInput,
-                onNameChange = taskCategoryFormViewModel::updateNameInput,
-                onSelectTaskType = onSelectTaskType,
-                onRemoveTask = taskCategoryFormViewModel::removeTask,
-                onTaskSearch = taskCategoryFormViewModel::searchTasks,
-                onSelectTaskOption = taskCategoryFormViewModel::setTask,
-                startEditTask = taskCategoryFormViewModel::startEditTask,
-                stopEditTask = taskCategoryFormViewModel::stopEditTask,
-            )
+            when (existingTaskPagingItems.loadState.refresh) {
+                is LoadState.Loading -> PendingLayout()
+
+                is LoadState.Error -> {
+                    LoadFailureLayout(
+                        message = stringResource(R.string.task_category_form_fetch_error),
+                    )
+                }
+
+                else -> {
+                    TaskCategoryFormLayout(
+                        isNew = taskCategoryFormViewModel.isNew,
+                        uiState = state,
+                        name = nameInput,
+                        onNameChange = taskCategoryFormViewModel::updateNameInput,
+                        existingTaskItems = existingTaskPagingItems,
+                        onSelectTaskType = onSelectTaskType,
+                        onRemoveTask = taskCategoryFormViewModel::removeTask,
+                        onTaskSearch = taskCategoryFormViewModel::searchTasks,
+                        onSelectTaskOption = taskCategoryFormViewModel::addTask,
+                        startEditTask = taskCategoryFormViewModel::startEditTask,
+                    )
+                }
+            }
         }
     }
 }
@@ -184,19 +203,17 @@ fun TaskCategoryFormLayout(
     uiState: TaskCategoryFormUiState.Success,
     name: String,
     onNameChange: (String) -> Unit,
+    existingTaskItems: LazyPagingItems<Task>,
     onSelectTaskType: (String) -> Unit,
     onRemoveTask: (Task) -> Unit,
     onTaskSearch: (String) -> Unit,
-    onSelectTaskOption: (Int, Task) -> Unit,
-    startEditTask: (Int) -> Unit,
-    stopEditTask: () -> Unit,
+    onSelectTaskOption: (Task) -> Unit,
+    startEditTask: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val tasks = uiState.tasks
-    val editingTaskIndex = uiState.editingTaskIndex
-    var taskQuery by rememberSaveable(tasks, editingTaskIndex) {
-        mutableStateOf(editingTaskIndex?.let(tasks::getOrNull)?.name.orEmpty())
-    }
+    val newTasks = uiState.newTasks
+    val isEditing = uiState.isEditing
+    var taskQuery by rememberSaveable(isEditing) { mutableStateOf("") }
 
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         LazyColumn(
@@ -236,64 +253,27 @@ fun TaskCategoryFormLayout(
                 Text(stringResource(R.string.tasks_label), style = typography.titleMedium)
             }
 
-            itemsIndexed(tasks, key = { _, task -> task.id }) { index, task ->
-                if (index == editingTaskIndex) {
-                    Spacer(Modifier.size(SpaceSm))
-                    ClearableLayout(onClear = stopEditTask, invert = true) {
-                        AutocompleteField(
-                            query = taskQuery,
-                            onQueryChange = { taskQuery = it },
-                            label = { Text(stringResource(R.string.task_name_label)) },
-                            onSearch = onTaskSearch,
-                            options = uiState.taskOptions,
-                            formatOption = Task::name,
-                            onSelectOption = { onSelectTaskOption(index, it) },
-                            autoFocus = true,
-                            modifier = Modifier.weight(1f),
-                        )
-                    }
-                    Spacer(Modifier.size(SpaceSm))
-                } else {
-                    val dismissState = rememberSwipeToDismissBoxState(confirmValueChange = {
-                        if (it == SwipeToDismissBoxValue.EndToStart) {
-                            onRemoveTask(task)
-                            true
-                        } else {
-                            false
-                        }
-                    })
-
-                    SwipeToDismissBox(
-                        state = dismissState,
-                        backgroundContent = {
-                            val color by animateColorAsState(
-                                if (dismissState.targetValue == SwipeToDismissBoxValue.EndToStart) {
-                                    colorScheme.error
-                                } else {
-                                    colorScheme.surfaceDim
-                                },
-                                label = "dismissColor",
-                            )
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(color),
-                            )
-                        },
-                        enableDismissFromStartToEnd = false,
-                    ) {
-                        ListItem(
-                            headlineContent = { Text(text = task.name) },
-                            modifier = Modifier.clickable { startEditTask(index) },
-                        )
-                    }
-                }
+            items(existingTaskItems.itemCount, key = existingTaskItems.itemKey(Task::id)) { index ->
+                val task = existingTaskItems[index]!!
+                TaskCategoryFormTaskItem(task = task, onRemoveTask = onRemoveTask)
                 HorizontalDivider()
             }
 
-            if (tasks.size < 20) {
+            items(newTasks, key = Task::id) { task ->
+                TaskCategoryFormTaskItem(task = task, onRemoveTask = onRemoveTask)
+                HorizontalDivider()
+            }
+
+            pagedListFooter(
+                pagingItems = existingTaskItems,
+                errorMessage = {
+                    Text(stringResource(R.string.task_category_form_fetch_tasks_error))
+                },
+            )
+
+            if (existingTaskItems.itemCount + newTasks.size < 20) {
                 item {
-                    if (editingTaskIndex == tasks.size) {
+                    if (isEditing) {
                         Spacer(Modifier.size(SpaceSm))
                         AutocompleteField(
                             query = taskQuery,
@@ -302,12 +282,12 @@ fun TaskCategoryFormLayout(
                             onSearch = onTaskSearch,
                             options = uiState.taskOptions,
                             formatOption = Task::name,
-                            onSelectOption = { onSelectTaskOption(tasks.size, it) },
-                            autoFocus = editingTaskIndex > 0,
+                            onSelectOption = onSelectTaskOption,
+                            autoFocus = true,
                         )
                     } else {
                         TextButtonWithIcon(
-                            onClick = { startEditTask(tasks.size) },
+                            onClick = startEditTask,
                             imageVector = Icons.Default.Add,
                             text = stringResource(R.string.add_task_button),
                         )
@@ -318,9 +298,45 @@ fun TaskCategoryFormLayout(
     }
 }
 
+@Composable
+private fun TaskCategoryFormTaskItem(task: Task, onRemoveTask: (Task) -> Unit) {
+    val dismissState = rememberSwipeToDismissBoxState(confirmValueChange = {
+        if (it == SwipeToDismissBoxValue.EndToStart) {
+            onRemoveTask(task)
+            true
+        } else {
+            false
+        }
+    })
+
+    SwipeToDismissBox(
+        state = dismissState,
+        backgroundContent = {
+            val color by animateColorAsState(
+                if (dismissState.targetValue == SwipeToDismissBoxValue.EndToStart) {
+                    colorScheme.error
+                } else {
+                    colorScheme.surfaceDim
+                },
+                label = "dismissColor",
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(color),
+            )
+        },
+        enableDismissFromStartToEnd = false,
+    ) {
+        ListItem(headlineContent = { Text(text = task.name) })
+    }
+}
+
 @DevicePreviews
 @Composable
 private fun TaskCategoryFormScreenPreview_New() {
+    val existingTaskItems = flowOf(PagingData.empty<Task>()).collectAsLazyPagingItems()
+
     DiswantinTheme {
         Scaffold(topBar = {
             TaskCategoryFormTopBar(
@@ -336,19 +352,19 @@ private fun TaskCategoryFormScreenPreview_New() {
             TaskCategoryFormLayout(
                 isNew = true,
                 uiState = TaskCategoryFormUiState.Success(
-                    tasks = persistentListOf(),
-                    editingTaskIndex = 0,
+                    newTasks = persistentListOf(),
+                    isEditing = true,
                     taskOptions = persistentListOf(),
                     userMessage = null,
                 ),
                 name = "",
                 onNameChange = {},
+                existingTaskItems = existingTaskItems,
                 onSelectTaskType = {},
                 onRemoveTask = {},
                 onTaskSearch = {},
-                onSelectTaskOption = { _, _ -> },
+                onSelectTaskOption = {},
                 startEditTask = {},
-                stopEditTask = {},
                 modifier = Modifier.padding(innerPadding),
             )
         }
@@ -358,6 +374,16 @@ private fun TaskCategoryFormScreenPreview_New() {
 @DevicePreviews
 @Composable
 private fun TaskCategoryFormScreenPreview_Edit() {
+    val existingTaskItems = flowOf(
+        PagingData.from(
+            listOf(
+                Task(id = 1L, createdAt = Instant.now(), name = "Go to work"),
+                Task(id = 2L, createdAt = Instant.now(), name = "Do laundry"),
+                Task(id = 3L, createdAt = Instant.now(), name = "Go shopping"),
+            )
+        )
+    ).collectAsLazyPagingItems()
+
     DiswantinTheme {
         Scaffold(topBar = {
             TaskCategoryFormTopBar(
@@ -373,35 +399,35 @@ private fun TaskCategoryFormScreenPreview_Edit() {
             TaskCategoryFormLayout(
                 isNew = false,
                 uiState = TaskCategoryFormUiState.Success(
-                    tasks = persistentListOf(
+                    newTasks = persistentListOf(
                         Task(
-                            id = 1L,
+                            id = 4L,
                             createdAt = Instant.now(),
                             name = "Brush teeth",
                         ),
                         Task(
-                            id = 2L,
+                            id = 5L,
                             createdAt = Instant.now(),
                             name = "Shower",
                         ),
                         Task(
-                            id = 3L,
+                            id = 6L,
                             createdAt = Instant.now(),
                             name = "Eat breakfast",
                         ),
                     ),
-                    editingTaskIndex = null,
+                    isEditing = false,
                     taskOptions = persistentListOf(),
                     userMessage = null,
                 ),
                 name = "Morning routine",
                 onNameChange = {},
+                existingTaskItems = existingTaskItems,
                 onSelectTaskType = {},
                 onRemoveTask = {},
                 onTaskSearch = {},
-                onSelectTaskOption = { _, _ -> },
+                onSelectTaskOption = {},
                 startEditTask = {},
-                stopEditTask = {},
                 modifier = Modifier.padding(innerPadding),
             )
         }
@@ -411,30 +437,32 @@ private fun TaskCategoryFormScreenPreview_Edit() {
 @DevicePreviews
 @Composable
 private fun TaskCategoryFormLayoutPreview() {
+    val existingTaskItems = flowOf(PagingData.empty<Task>()).collectAsLazyPagingItems()
+
     DiswantinTheme {
         Surface {
             TaskCategoryFormLayout(
                 isNew = true,
                 uiState = TaskCategoryFormUiState.Success(
-                    tasks = persistentListOf(
+                    newTasks = persistentListOf(
                         Task(
                             id = 1L,
                             createdAt = Instant.now(),
                             name = "Brush teeth",
                         )
                     ),
-                    editingTaskIndex = 0,
+                    isEditing = true,
                     taskOptions = persistentListOf(),
                     userMessage = null,
                 ),
                 name = "",
                 onNameChange = {},
+                existingTaskItems = existingTaskItems,
                 onSelectTaskType = {},
                 onRemoveTask = {},
                 onTaskSearch = {},
-                onSelectTaskOption = { _, _ -> },
+                onSelectTaskOption = {},
                 startEditTask = {},
-                stopEditTask = {},
             )
         }
     }

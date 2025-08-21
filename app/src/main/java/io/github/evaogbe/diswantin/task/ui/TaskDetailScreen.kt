@@ -1,6 +1,5 @@
 package io.github.evaogbe.diswantin.task.ui
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -9,7 +8,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -47,19 +45,25 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.LoadState
+import androidx.paging.PagingData
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.RecurrenceType
 import io.github.evaogbe.diswantin.task.data.TaskDetail
 import io.github.evaogbe.diswantin.ui.components.LoadFailureLayout
 import io.github.evaogbe.diswantin.ui.components.PendingLayout
+import io.github.evaogbe.diswantin.ui.components.pagedListFooter
 import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.evaogbe.diswantin.ui.theme.ScreenLg
 import io.github.evaogbe.diswantin.ui.theme.SpaceMd
 import io.github.evaogbe.diswantin.ui.theme.SpaceSm
 import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
-import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
+import kotlinx.coroutines.flow.flowOf
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -150,6 +154,7 @@ fun TaskDetailScreen(
     onNavigateToCategory: (Long) -> Unit,
     taskDetailViewModel: TaskDetailViewModel = hiltViewModel(),
 ) {
+    val childTaskPagingItems = taskDetailViewModel.childTaskPagingData.collectAsLazyPagingItems()
     val uiState by taskDetailViewModel.uiState.collectAsStateWithLifecycle()
 
     if (uiState is TaskDetailUiState.Deleted) {
@@ -195,8 +200,7 @@ fun TaskDetailScreen(
     }
 
     when (val state = uiState) {
-        is TaskDetailUiState.Pending,
-        is TaskDetailUiState.Deleted -> {
+        is TaskDetailUiState.Pending, is TaskDetailUiState.Deleted -> {
             PendingLayout()
         }
 
@@ -205,11 +209,21 @@ fun TaskDetailScreen(
         }
 
         is TaskDetailUiState.Success -> {
-            TaskDetailLayout(
-                uiState = state,
-                onNavigateToTask = onNavigateToTask,
-                onNavigateToCategory = onNavigateToCategory,
-            )
+            when (childTaskPagingItems.loadState.refresh) {
+                is LoadState.Loading -> PendingLayout()
+                is LoadState.Error -> {
+                    LoadFailureLayout(message = stringResource(R.string.task_detail_fetch_error))
+                }
+
+                is LoadState.NotLoading -> {
+                    TaskDetailLayout(
+                        uiState = state,
+                        childTaskItems = childTaskPagingItems,
+                        onNavigateToTask = onNavigateToTask,
+                        onNavigateToCategory = onNavigateToCategory,
+                    )
+                }
+            }
         }
     }
 }
@@ -217,6 +231,7 @@ fun TaskDetailScreen(
 @Composable
 fun TaskDetailLayout(
     uiState: TaskDetailUiState.Success,
+    childTaskItems: LazyPagingItems<TaskItemUiState>,
     onNavigateToTask: (Long) -> Unit,
     onNavigateToCategory: (Long) -> Unit,
     modifier: Modifier = Modifier,
@@ -349,7 +364,7 @@ fun TaskDetailLayout(
                 }
             }
 
-            if (uiState.childTasks.isNotEmpty()) {
+            if (childTaskItems.itemCount > 0) {
                 item {
                     Spacer(Modifier.size(SpaceSm))
                     Text(
@@ -360,26 +375,20 @@ fun TaskDetailLayout(
                     )
                 }
 
-                items(uiState.childTasks, key = TaskItemUiState::id) { task ->
-                    ListItem(
-                        headlineContent = {
-                            if (task.isDone) {
-                                Text(
-                                    text = task.name,
-                                    modifier = Modifier.semantics {
-                                        contentDescription =
-                                            resources.getString(R.string.task_name_done, task.name)
-                                    },
-                                    textDecoration = TextDecoration.LineThrough,
-                                )
-                            } else {
-                                Text(text = task.name)
-                            }
-                        },
-                        modifier = Modifier.clickable { onNavigateToTask(task.id) },
-                    )
+                items(
+                    childTaskItems.itemCount, key = childTaskItems.itemKey(TaskItemUiState::id)
+                ) { index ->
+                    val task = childTaskItems[index]!!
+                    TaskItem(task = task, onSelectTask = onNavigateToTask)
                     HorizontalDivider()
                 }
+
+                pagedListFooter(
+                    pagingItems = childTaskItems,
+                    errorMessage = {
+                        Text(stringResource(R.string.task_detail_fetch_children_error))
+                    },
+                )
             }
         }
     }
@@ -388,6 +397,8 @@ fun TaskDetailLayout(
 @DevicePreviews
 @Composable
 private fun TaskDetailScreenPreview_Minimal() {
+    val childTaskItems = flowOf(PagingData.empty<TaskItemUiState>()).collectAsLazyPagingItems()
+
     DiswantinTheme {
         Scaffold(
             topBar = {
@@ -420,10 +431,10 @@ private fun TaskDetailScreenPreview_Minimal() {
                         parentName = null,
                     ),
                     recurrence = null,
-                    childTasks = persistentListOf(),
                     userMessage = null,
                     clock = Clock.systemDefaultZone(),
                 ),
+                childTaskItems = childTaskItems,
                 onNavigateToTask = {},
                 onNavigateToCategory = {},
                 modifier = Modifier.padding(innerPadding),
@@ -435,6 +446,15 @@ private fun TaskDetailScreenPreview_Minimal() {
 @DevicePreviews
 @Composable
 private fun TaskDetailScreenPreview_Detailed() {
+    val childTaskItems = flowOf(
+        PagingData.from(
+            listOf(
+                TaskItemUiState(id = 3L, name = "Eat breakfast", isDone = false),
+                TaskItemUiState(id = 4L, name = "Go to work", isDone = true),
+            )
+        )
+    ).collectAsLazyPagingItems()
+
     DiswantinTheme {
         Scaffold(
             topBar = {
@@ -467,13 +487,10 @@ private fun TaskDetailScreenPreview_Detailed() {
                         parentName = "Brush teeth",
                     ),
                     recurrence = null,
-                    childTasks = persistentListOf(
-                        TaskItemUiState(id = 3L, name = "Eat breakfast", isDone = false),
-                        TaskItemUiState(id = 4L, name = "Go to work", isDone = true),
-                    ),
                     userMessage = null,
                     clock = Clock.systemDefaultZone(),
                 ),
+                childTaskItems = childTaskItems,
                 onNavigateToTask = {},
                 onNavigateToCategory = {},
                 modifier = Modifier.padding(innerPadding),
@@ -485,6 +502,8 @@ private fun TaskDetailScreenPreview_Detailed() {
 @DevicePreviews
 @Composable
 private fun TaskDetailLayoutPreview() {
+    val childTaskItems = flowOf(PagingData.empty<TaskItemUiState>()).collectAsLazyPagingItems()
+
     DiswantinTheme {
         Surface {
             TaskDetailLayout(
@@ -512,10 +531,10 @@ private fun TaskDetailLayoutPreview() {
                         weekdays = persistentSetOf(),
                         locale = Locale.getDefault(),
                     ),
-                    childTasks = persistentListOf(),
                     userMessage = null,
                     clock = Clock.systemDefaultZone(),
                 ),
+                childTaskItems = childTaskItems,
                 onNavigateToTask = {},
                 onNavigateToCategory = {},
             )

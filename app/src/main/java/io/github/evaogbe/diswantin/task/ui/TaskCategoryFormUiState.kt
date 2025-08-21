@@ -23,8 +23,8 @@ sealed interface TaskCategoryFormUiState {
     data class Failure(val exception: Throwable) : TaskCategoryFormUiState
 
     data class Success(
-        val tasks: ImmutableList<Task>,
-        val editingTaskIndex: Int?,
+        val newTasks: ImmutableList<Task>,
+        val isEditing: Boolean,
         val taskOptions: ImmutableList<Task>,
         val userMessage: UserMessage?,
     ) : TaskCategoryFormUiState

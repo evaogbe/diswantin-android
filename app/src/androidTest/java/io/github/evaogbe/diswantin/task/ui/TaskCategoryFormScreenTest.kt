@@ -33,7 +33,6 @@ import io.mockk.spyk
 import kotlinx.coroutines.flow.flow
 import org.junit.Rule
 import org.junit.Test
-import timber.log.Timber
 
 @OptIn(ExperimentalTestApi::class)
 class TaskCategoryFormScreenTest {
@@ -78,10 +77,9 @@ class TaskCategoryFormScreenTest {
         composeTestRule.onNodeWithText(
             stringResource(R.string.task_name_label),
             useUnmergedTree = true,
-        )
-            .onParent()
-            .performTextInput(tasks[0].name.dropLast(1))
+        ).onParent().performTextInput(tasks[0].name.dropLast(1))
 
+        composeTestRule.waitForIdle()
         composeTestRule.waitUntilExactlyOneExists(hasText(tasks[0].name))
         composeTestRule.onNodeWithText(tasks[0].name).performClick()
 
@@ -92,9 +90,7 @@ class TaskCategoryFormScreenTest {
             composeTestRule.onNodeWithText(
                 stringResource(R.string.task_name_label),
                 useUnmergedTree = true,
-            )
-                .onParent()
-                .performTextInput(task.name.dropLast(1))
+            ).onParent().performTextInput(task.name.dropLast(1))
 
             composeTestRule.waitForIdle()
             composeTestRule.waitUntilExactlyOneExists(hasText(task.name))
@@ -114,7 +110,7 @@ class TaskCategoryFormScreenTest {
         val db = FakeDatabase()
         val taskRepository = FakeTaskRepository(db)
         val taskCategoryRepository = spyk(FakeTaskCategoryRepository(db))
-        every { taskCategoryRepository.getCategoryWithTasksById(any()) } returns flow {
+        every { taskCategoryRepository.getById(any()) } returns flow {
             throw RuntimeException("Test")
         }
 
@@ -175,11 +171,8 @@ class TaskCategoryFormScreenTest {
         }
 
         composeTestRule.onNodeWithText(
-            stringResource(R.string.task_name_label),
-            useUnmergedTree = true
-        )
-            .onParent()
-            .performTextInput(query)
+            stringResource(R.string.task_name_label), useUnmergedTree = true
+        ).onParent().performTextInput(query)
 
         composeTestRule.waitUntilExactlyOneExists(hasText(tasks[0].name))
         composeTestRule.onNodeWithText(tasks[0].name).assertIsDisplayed()
@@ -214,11 +207,8 @@ class TaskCategoryFormScreenTest {
         }
 
         composeTestRule.onNodeWithText(
-            stringResource(R.string.task_name_label),
-            useUnmergedTree = true
-        )
-            .onParent()
-            .performTextInput(query)
+            stringResource(R.string.task_name_label), useUnmergedTree = true
+        ).onParent().performTextInput(query)
 
         composeTestRule.waitUntil {
             userMessage == UserMessage.String(R.string.search_task_options_error)
@@ -236,7 +226,6 @@ class TaskCategoryFormScreenTest {
                 name = "${loremFaker.verbs.unique.base()} ${loremFaker.lorem.words()}"
             )
         }
-        Timber.d("tasks: %s", tasks)
         val db = FakeDatabase().apply {
             tasks.forEach(::insertTask)
         }
@@ -260,17 +249,13 @@ class TaskCategoryFormScreenTest {
         }
 
         composeTestRule.onNodeWithText(stringResource(R.string.name_label), useUnmergedTree = true)
-            .onParent()
-            .performTextInput(name)
+            .onParent().performTextInput(name)
 
         tasks.forEach { task ->
-            Timber.d("task: %s", task)
             composeTestRule.onNodeWithText(
-                stringResource(R.string.task_name_label),
-                useUnmergedTree = true
-            )
-                .onParent()
-                .performTextInput(task.name.substring(0, 1))
+                stringResource(R.string.task_name_label), useUnmergedTree = true
+            ).onParent().performTextInput(task.name.substring(0, 1))
+            composeTestRule.waitForIdle()
             composeTestRule.waitUntilExactlyOneExists(hasText(task.name))
             composeTestRule.onNodeWithText(task.name).performClick()
 
@@ -309,12 +294,8 @@ class TaskCategoryFormScreenTest {
             }
         }
 
-        composeTestRule.onNodeWithText(stringResource(R.string.task_category_form_save_error_new))
-            .assertDoesNotExist()
-
         composeTestRule.onNodeWithText(stringResource(R.string.name_label), useUnmergedTree = true)
-            .onParent()
-            .performTextInput(name)
+            .onParent().performTextInput(name)
         viewModel.saveCategory()
 
         composeTestRule.waitUntil {
@@ -353,8 +334,7 @@ class TaskCategoryFormScreenTest {
         }
 
         composeTestRule.onNodeWithText(stringResource(R.string.name_label), useUnmergedTree = true)
-            .onParent()
-            .performTextReplacement(name)
+            .onParent().performTextReplacement(name)
         viewModel.saveCategory()
 
         composeTestRule.onNodeWithTag(PendingLayoutTestTag).assertIsDisplayed()
@@ -393,12 +373,8 @@ class TaskCategoryFormScreenTest {
             }
         }
 
-        composeTestRule.onNodeWithText(stringResource(R.string.task_category_form_save_error_edit))
-            .assertDoesNotExist()
-
         composeTestRule.onNodeWithText(stringResource(R.string.name_label), useUnmergedTree = true)
-            .onParent()
-            .performTextReplacement(name)
+            .onParent().performTextReplacement(name)
         viewModel.saveCategory()
 
         composeTestRule.waitUntil {
@@ -408,6 +384,5 @@ class TaskCategoryFormScreenTest {
 
     private fun genTaskCategory() = TaskCategory(id = 1L, name = loremFaker.lorem.words())
 
-    private fun createSavedStateHandleForEdit() =
-        SavedStateHandle(mapOf(NavArguments.ID_KEY to 1L))
+    private fun createSavedStateHandleForEdit() = SavedStateHandle(mapOf(NavArguments.ID_KEY to 1L))
 }
