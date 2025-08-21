@@ -269,7 +269,7 @@ fun CurrentTaskLayout(
         PullToRefreshBox(isRefreshing = isRefreshing, onRefresh = onRefresh) {
             Column(
                 modifier = Modifier
-                    .padding(SpaceMd)
+                    .padding(horizontal = SpaceLg, vertical = SpaceMd)
                     .widthIn(max = ScreenLg)
                     .fillMaxHeight()
                     .verticalScroll(rememberScrollState()),
@@ -278,13 +278,18 @@ fun CurrentTaskLayout(
             ) {
                 SelectionContainer {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(text = uiState.currentTask.name, style = typography.displaySmall)
+                        Text(
+                            text = uiState.currentTask.name,
+                            textAlign = TextAlign.Center,
+                            style = typography.displaySmall
+                        )
                         Spacer(Modifier.size(SpaceMd))
 
                         if (uiState.currentTask.note.isNotEmpty()) {
                             Text(
                                 text = uiState.currentTask.note,
                                 color = colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center,
                                 style = typography.titleLarge,
                             )
                             Spacer(Modifier.size(SpaceMd))
@@ -297,7 +302,7 @@ fun CurrentTaskLayout(
                 ) {
                     OutlinedButtonWithIcon(
                         onClick = { onNavigateToTask(uiState.currentTask.id) },
-                        painter = painterResource(R.drawable.baseline_details_24),
+                        painter = painterResource(R.drawable.baseline_receipt_24),
                         text = stringResource(R.string.current_task_view_details_button),
                     )
                     FilledTonalButtonWithIcon(
