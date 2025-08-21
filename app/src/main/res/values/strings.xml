@@ -59,8 +59,8 @@
         <item quantity="other">months</item>
     </plurals>
     <plurals name="recurrence_monthly_on_day">
-        <item quantity="one">Monthly</item>
-        <item quantity="other">Every %1$d months</item>
+        <item quantity="one">Monthly on the %1$s</item>
+        <item quantity="other">Every %2$d months on the %1$s</item>
     </plurals>
     <plurals name="recurrence_monthly_on_week_1">
         <item quantity="one">Monthly on the first %2$s</item>
