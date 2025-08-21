@@ -43,9 +43,9 @@ class CurrentTaskViewModel @Inject constructor(
     val userMessage = _userMessage.asStateFlow()
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val uiState = currentTaskParams.flatMapLatest {
+    val uiState = currentTaskParams.flatMapLatest { params ->
         _isRefreshing.value = true
-        taskRepository.getCurrentTask(it).onEach { _isRefreshing.value = false }
+        taskRepository.getCurrentTask(params).onEach { _isRefreshing.value = false }
             .map<Task?, Result<Task?>> { Result.Success(it) }.catch { e ->
                 Timber.e(e, "Failed to fetch current task")
                 emit(Result.Failure(e))

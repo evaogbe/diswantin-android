@@ -116,7 +116,7 @@ fun TaskRecurrentFormScreen(
     val (start, setStart) = rememberSaveable(uiState) { mutableStateOf(uiState.start) }
     var type by rememberSaveable(uiState) { mutableStateOf(uiState.type) }
     val (step, setStep) = rememberSaveable(uiState) { mutableIntStateOf(uiState.step) }
-    var weekdays by rememberSaveable(uiState, saver = persistentSetStateSaver<DayOfWeek>()) {
+    var weekdays by rememberSaveable(uiState, saver = persistentSetStateSaver()) {
         mutableStateOf(uiState.weekdays)
     }
 

@@ -14,5 +14,5 @@ object TimeModule {
     fun provideClock(): Clock = Clock.systemDefaultZone()
 
     @Provides
-    fun provideLocale() = Locale.getDefault()
+    fun provideLocale(): Locale = Locale.getDefault()
 }
