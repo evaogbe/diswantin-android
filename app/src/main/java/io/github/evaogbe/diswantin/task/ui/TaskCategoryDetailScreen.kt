@@ -120,13 +120,7 @@ fun TaskCategoryDetailScreen(
     val taskPagingItems = taskCategoryDetailViewModel.taskItemPagingData.collectAsLazyPagingItems()
     val uiState by taskCategoryDetailViewModel.uiState.collectAsStateWithLifecycle()
 
-    if (uiState is TaskCategoryDetailUiState.Deleted) {
-        LaunchedEffect(onPopBackStack) {
-            onPopBackStack()
-        }
-    }
-
-    LaunchedEffect(topBarAction, taskCategoryDetailViewModel) {
+    LaunchedEffect(topBarAction) {
         when (topBarAction) {
             null -> {}
             TaskCategoryDetailTopBarAction.Delete -> {
@@ -136,20 +130,21 @@ fun TaskCategoryDetailScreen(
         }
     }
 
-    (uiState as? TaskCategoryDetailUiState.Success)?.userMessage?.let { message ->
-        LaunchedEffect(message, setUserMessage) {
-            setUserMessage(message)
-            taskCategoryDetailViewModel.userMessageShown()
-        }
-    }
-
     when (val state = uiState) {
-        is TaskCategoryDetailUiState.Pending, is TaskCategoryDetailUiState.Deleted -> {
+        is TaskCategoryDetailUiState.Pending -> {
             PendingLayout()
         }
 
         is TaskCategoryDetailUiState.Failure -> {
             LoadFailureLayout(message = stringResource(R.string.task_category_detail_fetch_error))
+        }
+
+        is TaskCategoryDetailUiState.Deleted -> {
+            LaunchedEffect(Unit) {
+                onPopBackStack()
+            }
+
+            PendingLayout()
         }
 
         is TaskCategoryDetailUiState.Success -> {
@@ -162,6 +157,13 @@ fun TaskCategoryDetailScreen(
                 }
 
                 is LoadState.NotLoading -> {
+                    LaunchedEffect(state.userMessage) {
+                        if (state.userMessage != null) {
+                            setUserMessage(state.userMessage)
+                            taskCategoryDetailViewModel.userMessageShown()
+                        }
+                    }
+
                     TaskCategoryDetailLayout(
                         uiState = state,
                         taskItems = taskPagingItems,

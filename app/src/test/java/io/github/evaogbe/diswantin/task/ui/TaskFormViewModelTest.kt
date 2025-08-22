@@ -4,7 +4,6 @@ import androidx.lifecycle.SavedStateHandle
 import assertk.assertThat
 import assertk.assertions.containsExactly
 import assertk.assertions.containsExactlyInAnyOrder
-import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isEqualToIgnoringGivenProperties
 import assertk.assertions.isFalse
@@ -71,6 +70,8 @@ class TaskFormViewModelTest {
         assertThat(viewModel.isNew).isTrue()
         assertThat(viewModel.uiState.value).isEqualTo(
             TaskFormUiState.Success(
+                name = "",
+                note = "",
                 recurrence = null,
                 deadlineDate = null,
                 deadlineTime = null,
@@ -84,10 +85,10 @@ class TaskFormViewModelTest {
                 showParentTaskField = false,
                 parentTask = null,
                 parentTaskOptions = persistentListOf(),
+                changed = false,
                 userMessage = null,
             )
         )
-        assertThat(viewModel.nameInput).isEmpty()
     }
 
     @Test
@@ -95,14 +96,17 @@ class TaskFormViewModelTest {
         val clock = createClock()
         val locale = Locale.US
         val task = genTask().copy(
+            note = loremFaker.quote.famousLastWords(),
             deadlineDate = LocalDate.parse("2024-08-23"),
             deadlineTime = LocalTime.parse("18:00"),
             startAfterDate = LocalDate.parse("2024-08-22"),
             startAfterTime = LocalTime.parse("17:00"),
         )
+        val parentTask = genTask(id = 2L)
         val category = TaskCategory(id = 1L, name = loremFaker.lorem.words())
         val db = FakeDatabase().apply {
             insertTask(task)
+            insertTask(parentTask)
             insertTaskRecurrence(
                 TaskRecurrence(
                     taskId = task.id,
@@ -111,6 +115,7 @@ class TaskFormViewModelTest {
                     step = 1,
                 )
             )
+            insertChain(parentTask.id, task.id)
             insertTaskCategory(category, setOf(task.id))
         }
         val taskRepository = FakeTaskRepository(db, clock)
@@ -130,6 +135,8 @@ class TaskFormViewModelTest {
         assertThat(viewModel.isNew).isFalse()
         assertThat(viewModel.uiState.value).isEqualTo(
             TaskFormUiState.Success(
+                name = task.name,
+                note = task.note,
                 recurrence = TaskRecurrenceUiState(
                     start = LocalDate.parse("2024-08-22"),
                     type = RecurrenceType.Day,
@@ -146,13 +153,13 @@ class TaskFormViewModelTest {
                 showCategoryField = true,
                 category = category,
                 categoryOptions = persistentListOf(),
-                showParentTaskField = false,
-                parentTask = null,
+                showParentTaskField = true,
+                parentTask = parentTask,
                 parentTaskOptions = persistentListOf(),
+                changed = false,
                 userMessage = null,
             )
         )
-        assertThat(viewModel.nameInput).isEqualTo(task.name)
     }
 
     @Test
@@ -202,6 +209,898 @@ class TaskFormViewModelTest {
         }
 
     @Test
+    fun `uiState emits changed when new form and name changed`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
+            val db = FakeDatabase()
+            val taskRepository = FakeTaskRepository(db)
+            val taskCategoryRepository = FakeTaskCategoryRepository(db)
+            val viewModel = createTaskFormViewModelForNew(taskRepository, taskCategoryRepository)
+
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect()
+            }
+
+            viewModel.updateName(name)
+
+            assertThat(viewModel.uiState.value).isEqualTo(
+                TaskFormUiState.Success(
+                    name = name,
+                    note = "",
+                    recurrence = null,
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
+                    showCategoryField = false,
+                    category = null,
+                    categoryOptions = persistentListOf(),
+                    showParentTaskField = false,
+                    parentTask = null,
+                    parentTaskOptions = persistentListOf(),
+                    changed = true,
+                    userMessage = null,
+                )
+            )
+        }
+
+    @Test
+    fun `uiState emits changed when new form and note changed`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val note = loremFaker.quote.famousLastWords()
+            val db = FakeDatabase()
+            val taskRepository = FakeTaskRepository(db)
+            val taskCategoryRepository = FakeTaskCategoryRepository(db)
+            val viewModel = createTaskFormViewModelForNew(taskRepository, taskCategoryRepository)
+
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect()
+            }
+
+            viewModel.updateNote(note)
+
+            assertThat(viewModel.uiState.value).isEqualTo(
+                TaskFormUiState.Success(
+                    name = "",
+                    note = note,
+                    recurrence = null,
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
+                    showCategoryField = false,
+                    category = null,
+                    categoryOptions = persistentListOf(),
+                    showParentTaskField = false,
+                    parentTask = null,
+                    parentTaskOptions = persistentListOf(),
+                    changed = true,
+                    userMessage = null,
+                )
+            )
+        }
+
+    @Test
+    fun `uiState emits changed when new form and deadline date changed`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val deadlineDate = faker.random.randomFutureDate().toLocalDate()
+            val db = FakeDatabase()
+            val taskRepository = FakeTaskRepository(db)
+            val taskCategoryRepository = FakeTaskCategoryRepository(db)
+            val viewModel = createTaskFormViewModelForNew(taskRepository, taskCategoryRepository)
+
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect()
+            }
+
+            viewModel.updateDeadlineDate(deadlineDate)
+
+            assertThat(viewModel.uiState.value).isEqualTo(
+                TaskFormUiState.Success(
+                    name = "",
+                    note = "",
+                    recurrence = null,
+                    deadlineDate = deadlineDate,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
+                    showCategoryField = false,
+                    category = null,
+                    categoryOptions = persistentListOf(),
+                    showParentTaskField = false,
+                    parentTask = null,
+                    parentTaskOptions = persistentListOf(),
+                    changed = true,
+                    userMessage = null,
+                )
+            )
+        }
+
+    @Test
+    fun `uiState emits changed when new form and deadline time changed`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val deadlineTime = faker.random.randomFutureDate().toLocalTime()
+            val db = FakeDatabase()
+            val taskRepository = FakeTaskRepository(db)
+            val taskCategoryRepository = FakeTaskCategoryRepository(db)
+            val viewModel = createTaskFormViewModelForNew(taskRepository, taskCategoryRepository)
+
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect()
+            }
+
+            viewModel.updateDeadlineTime(deadlineTime)
+
+            assertThat(viewModel.uiState.value).isEqualTo(
+                TaskFormUiState.Success(
+                    name = "",
+                    note = "",
+                    recurrence = null,
+                    deadlineDate = null,
+                    deadlineTime = deadlineTime,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
+                    showCategoryField = false,
+                    category = null,
+                    categoryOptions = persistentListOf(),
+                    showParentTaskField = false,
+                    parentTask = null,
+                    parentTaskOptions = persistentListOf(),
+                    changed = true,
+                    userMessage = null,
+                )
+            )
+        }
+
+    @Test
+    fun `uiState emits changed when new form and start after date changed`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val startAfterDate = faker.random.randomFutureDate().toLocalDate()
+            val db = FakeDatabase()
+            val taskRepository = FakeTaskRepository(db)
+            val taskCategoryRepository = FakeTaskCategoryRepository(db)
+            val viewModel = createTaskFormViewModelForNew(taskRepository, taskCategoryRepository)
+
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect()
+            }
+
+            viewModel.updateStartAfterDate(startAfterDate)
+
+            assertThat(viewModel.uiState.value).isEqualTo(
+                TaskFormUiState.Success(
+                    name = "",
+                    note = "",
+                    recurrence = null,
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = startAfterDate,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
+                    showCategoryField = false,
+                    category = null,
+                    categoryOptions = persistentListOf(),
+                    showParentTaskField = false,
+                    parentTask = null,
+                    parentTaskOptions = persistentListOf(),
+                    changed = true,
+                    userMessage = null,
+                )
+            )
+        }
+
+    @Test
+    fun `uiState emits changed when new form and start after time changed`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val startAfterTime = faker.random.randomFutureDate().toLocalTime()
+            val db = FakeDatabase()
+            val taskRepository = FakeTaskRepository(db)
+            val taskCategoryRepository = FakeTaskCategoryRepository(db)
+            val viewModel = createTaskFormViewModelForNew(taskRepository, taskCategoryRepository)
+
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect()
+            }
+
+            viewModel.updateStartAfterTime(startAfterTime)
+
+            assertThat(viewModel.uiState.value).isEqualTo(
+                TaskFormUiState.Success(
+                    name = "",
+                    note = "",
+                    recurrence = null,
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = startAfterTime,
+                    scheduledDate = null,
+                    scheduledTime = null,
+                    showCategoryField = false,
+                    category = null,
+                    categoryOptions = persistentListOf(),
+                    showParentTaskField = false,
+                    parentTask = null,
+                    parentTaskOptions = persistentListOf(),
+                    changed = true,
+                    userMessage = null,
+                )
+            )
+        }
+
+    @Test
+    fun `uiState emits changed when new form and scheduled date changed`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val scheduledDate = faker.random.randomFutureDate().toLocalDate()
+            val db = FakeDatabase()
+            val taskRepository = FakeTaskRepository(db)
+            val taskCategoryRepository = FakeTaskCategoryRepository(db)
+            val viewModel = createTaskFormViewModelForNew(taskRepository, taskCategoryRepository)
+
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect()
+            }
+
+            viewModel.updateScheduledDate(scheduledDate)
+
+            assertThat(viewModel.uiState.value).isEqualTo(
+                TaskFormUiState.Success(
+                    name = "",
+                    note = "",
+                    recurrence = null,
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = scheduledDate,
+                    scheduledTime = null,
+                    showCategoryField = false,
+                    category = null,
+                    categoryOptions = persistentListOf(),
+                    showParentTaskField = false,
+                    parentTask = null,
+                    parentTaskOptions = persistentListOf(),
+                    changed = true,
+                    userMessage = null,
+                )
+            )
+        }
+
+    @Test
+    fun `uiState emits changed when new form and scheduled time changed`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val scheduledAt = faker.random.randomFutureDate()
+            val db = FakeDatabase()
+            val taskRepository = FakeTaskRepository(db)
+            val taskCategoryRepository = FakeTaskCategoryRepository(db)
+            val viewModel = createTaskFormViewModelForNew(taskRepository, taskCategoryRepository)
+
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect()
+            }
+
+            viewModel.updateScheduledDate(scheduledAt.toLocalDate())
+            viewModel.updateScheduledTime(scheduledAt.toLocalTime())
+
+            assertThat(viewModel.uiState.value).isEqualTo(
+                TaskFormUiState.Success(
+                    name = "",
+                    note = "",
+                    recurrence = null,
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = scheduledAt.toLocalDate(),
+                    scheduledTime = scheduledAt.toLocalTime(),
+                    showCategoryField = false,
+                    category = null,
+                    categoryOptions = persistentListOf(),
+                    showParentTaskField = false,
+                    parentTask = null,
+                    parentTaskOptions = persistentListOf(),
+                    changed = true,
+                    userMessage = null,
+                )
+            )
+        }
+
+    @Test
+    fun `uiState emits changed when new form and category changed`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val category = TaskCategory(id = 1L, name = loremFaker.lorem.words())
+            val db = FakeDatabase().apply {
+                insertTaskCategory(category, emptySet())
+            }
+            val taskRepository = FakeTaskRepository(db)
+            val taskCategoryRepository = FakeTaskCategoryRepository(db)
+            val viewModel = createTaskFormViewModelForNew(taskRepository, taskCategoryRepository)
+
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect()
+            }
+
+            viewModel.updateCategory(category)
+
+            assertThat(viewModel.uiState.value).isEqualTo(
+                TaskFormUiState.Success(
+                    name = "",
+                    note = "",
+                    recurrence = null,
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
+                    showCategoryField = true,
+                    category = category,
+                    categoryOptions = persistentListOf(),
+                    showParentTaskField = false,
+                    parentTask = null,
+                    parentTaskOptions = persistentListOf(),
+                    changed = true,
+                    userMessage = null,
+                )
+            )
+        }
+
+    @Test
+    fun `uiState emits changed when new form and recurrence changed`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val db = FakeDatabase()
+            val taskRepository = FakeTaskRepository(db)
+            val taskCategoryRepository = FakeTaskCategoryRepository(db)
+            val viewModel = createTaskFormViewModelForNew(taskRepository, taskCategoryRepository)
+            val recurrence = TaskRecurrenceUiState(
+                start = faker.random.randomPastDate().toLocalDate(),
+                type = RecurrenceType.Day,
+                step = 1,
+                weekdays = persistentSetOf(),
+                locale = viewModel.locale
+            )
+
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect()
+            }
+
+            viewModel.updateRecurrence(recurrence)
+
+            assertThat(viewModel.uiState.value).isEqualTo(
+                TaskFormUiState.Success(
+                    name = "",
+                    note = "",
+                    recurrence = recurrence,
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
+                    showCategoryField = false,
+                    category = null,
+                    categoryOptions = persistentListOf(),
+                    showParentTaskField = false,
+                    parentTask = null,
+                    parentTaskOptions = persistentListOf(),
+                    changed = true,
+                    userMessage = null,
+                )
+            )
+        }
+
+    @Test
+    fun `uiState emits changed when new form and parent task changed`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val parentTask = genTask()
+            val db = FakeDatabase().apply {
+                insertTask(parentTask)
+            }
+            val taskRepository = FakeTaskRepository(db)
+            val taskCategoryRepository = FakeTaskCategoryRepository(db)
+            val viewModel = createTaskFormViewModelForNew(taskRepository, taskCategoryRepository)
+
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect()
+            }
+
+            viewModel.updateParentTask(parentTask)
+
+            assertThat(viewModel.uiState.value).isEqualTo(
+                TaskFormUiState.Success(
+                    name = "",
+                    note = "",
+                    recurrence = null,
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
+                    showCategoryField = false,
+                    category = null,
+                    categoryOptions = persistentListOf(),
+                    showParentTaskField = true,
+                    parentTask = parentTask,
+                    parentTaskOptions = persistentListOf(),
+                    changed = true,
+                    userMessage = null,
+                )
+            )
+        }
+
+    @Test
+    fun `uiState emits changed when edit form and name changed`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val task = genTask()
+            val db = FakeDatabase().apply {
+                insertTask(task)
+            }
+            val taskRepository = FakeTaskRepository(db)
+            val taskCategoryRepository = FakeTaskCategoryRepository(db)
+            val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
+
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect()
+            }
+
+            viewModel.updateName("")
+
+            assertThat(viewModel.uiState.value).isEqualTo(
+                TaskFormUiState.Success(
+                    name = "",
+                    note = "",
+                    recurrence = null,
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
+                    showCategoryField = false,
+                    category = null,
+                    categoryOptions = persistentListOf(),
+                    showParentTaskField = false,
+                    parentTask = null,
+                    parentTaskOptions = persistentListOf(),
+                    changed = true,
+                    userMessage = null,
+                )
+            )
+        }
+
+    @Test
+    fun `uiState emits changed when edit form and note changed`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val note = loremFaker.quote.famousLastWords()
+            val task = genTask().copy(note = note)
+            val db = FakeDatabase().apply {
+                insertTask(task)
+            }
+            val taskRepository = FakeTaskRepository(db)
+            val taskCategoryRepository = FakeTaskCategoryRepository(db)
+            val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
+
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect()
+            }
+
+            viewModel.updateNote("")
+
+            assertThat(viewModel.uiState.value).isEqualTo(
+                TaskFormUiState.Success(
+                    name = task.name,
+                    note = "",
+                    recurrence = null,
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
+                    showCategoryField = false,
+                    category = null,
+                    categoryOptions = persistentListOf(),
+                    showParentTaskField = false,
+                    parentTask = null,
+                    parentTaskOptions = persistentListOf(),
+                    changed = true,
+                    userMessage = null,
+                )
+            )
+        }
+
+    @Test
+    fun `uiState emits changed when edit form and deadline date changed`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val deadlineDate = faker.random.randomFutureDate().toLocalDate()
+            val task = genTask().copy(deadlineDate = deadlineDate)
+            val db = FakeDatabase().apply {
+                insertTask(task)
+            }
+            val taskRepository = FakeTaskRepository(db)
+            val taskCategoryRepository = FakeTaskCategoryRepository(db)
+            val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
+
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect()
+            }
+
+            viewModel.updateDeadlineDate(null)
+
+            assertThat(viewModel.uiState.value).isEqualTo(
+                TaskFormUiState.Success(
+                    name = task.name,
+                    note = "",
+                    recurrence = null,
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
+                    showCategoryField = false,
+                    category = null,
+                    categoryOptions = persistentListOf(),
+                    showParentTaskField = false,
+                    parentTask = null,
+                    parentTaskOptions = persistentListOf(),
+                    changed = true,
+                    userMessage = null,
+                )
+            )
+        }
+
+    @Test
+    fun `uiState emits changed when edit form and deadline time changed`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val deadlineTime = faker.random.randomFutureDate().toLocalTime()
+            val task = genTask().copy(deadlineTime = deadlineTime)
+            val db = FakeDatabase().apply {
+                insertTask(task)
+            }
+            val taskRepository = FakeTaskRepository(db)
+            val taskCategoryRepository = FakeTaskCategoryRepository(db)
+            val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
+
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect()
+            }
+
+            viewModel.updateDeadlineTime(null)
+
+            assertThat(viewModel.uiState.value).isEqualTo(
+                TaskFormUiState.Success(
+                    name = task.name,
+                    note = "",
+                    recurrence = null,
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
+                    showCategoryField = false,
+                    category = null,
+                    categoryOptions = persistentListOf(),
+                    showParentTaskField = false,
+                    parentTask = null,
+                    parentTaskOptions = persistentListOf(),
+                    changed = true,
+                    userMessage = null,
+                )
+            )
+        }
+
+    @Test
+    fun `uiState emits changed when edit form and start after date changed`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val startAfterDate = faker.random.randomFutureDate().toLocalDate()
+            val task = genTask().copy(startAfterDate = startAfterDate)
+            val db = FakeDatabase().apply {
+                insertTask(task)
+            }
+            val taskRepository = FakeTaskRepository(db)
+            val taskCategoryRepository = FakeTaskCategoryRepository(db)
+            val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
+
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect()
+            }
+
+            viewModel.updateStartAfterDate(null)
+
+            assertThat(viewModel.uiState.value).isEqualTo(
+                TaskFormUiState.Success(
+                    name = task.name,
+                    note = "",
+                    recurrence = null,
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
+                    showCategoryField = false,
+                    category = null,
+                    categoryOptions = persistentListOf(),
+                    showParentTaskField = false,
+                    parentTask = null,
+                    parentTaskOptions = persistentListOf(),
+                    changed = true,
+                    userMessage = null,
+                )
+            )
+        }
+
+    @Test
+    fun `uiState emits changed when edit form and start after time changed`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val startAfterTime = faker.random.randomFutureDate().toLocalTime()
+            val task = genTask().copy(startAfterTime = startAfterTime)
+            val db = FakeDatabase().apply {
+                insertTask(task)
+            }
+            val taskRepository = FakeTaskRepository(db)
+            val taskCategoryRepository = FakeTaskCategoryRepository(db)
+            val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
+
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect()
+            }
+
+            viewModel.updateStartAfterTime(null)
+
+            assertThat(viewModel.uiState.value).isEqualTo(
+                TaskFormUiState.Success(
+                    name = task.name,
+                    note = "",
+                    recurrence = null,
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
+                    showCategoryField = false,
+                    category = null,
+                    categoryOptions = persistentListOf(),
+                    showParentTaskField = false,
+                    parentTask = null,
+                    parentTaskOptions = persistentListOf(),
+                    changed = true,
+                    userMessage = null,
+                )
+            )
+        }
+
+    @Test
+    fun `uiState emits changed when edit form and scheduled date changed`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val scheduledDate = faker.random.randomFutureDate().toLocalDate()
+            val task = genTask().copy(scheduledDate = scheduledDate)
+            val db = FakeDatabase().apply {
+                insertTask(task)
+            }
+            val taskRepository = FakeTaskRepository(db)
+            val taskCategoryRepository = FakeTaskCategoryRepository(db)
+            val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
+
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect()
+            }
+
+            viewModel.updateScheduledDate(null)
+
+            assertThat(viewModel.uiState.value).isEqualTo(
+                TaskFormUiState.Success(
+                    name = task.name,
+                    note = "",
+                    recurrence = null,
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
+                    showCategoryField = false,
+                    category = null,
+                    categoryOptions = persistentListOf(),
+                    showParentTaskField = false,
+                    parentTask = null,
+                    parentTaskOptions = persistentListOf(),
+                    changed = true,
+                    userMessage = null,
+                )
+            )
+        }
+
+    @Test
+    fun `uiState emits changed when edit form and scheduled time changed`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val scheduledAt = faker.random.randomFutureDate()
+            val task = genTask().copy(
+                scheduledDate = scheduledAt.toLocalDate(),
+                scheduledTime = scheduledAt.toLocalTime(),
+            )
+            val db = FakeDatabase().apply {
+                insertTask(task)
+            }
+            val taskRepository = FakeTaskRepository(db)
+            val taskCategoryRepository = FakeTaskCategoryRepository(db)
+            val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
+
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect()
+            }
+
+            viewModel.updateScheduledTime(null)
+
+            assertThat(viewModel.uiState.value).isEqualTo(
+                TaskFormUiState.Success(
+                    name = task.name,
+                    note = "",
+                    recurrence = null,
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = scheduledAt.toLocalDate(),
+                    scheduledTime = null,
+                    showCategoryField = false,
+                    category = null,
+                    categoryOptions = persistentListOf(),
+                    showParentTaskField = false,
+                    parentTask = null,
+                    parentTaskOptions = persistentListOf(),
+                    changed = true,
+                    userMessage = null,
+                )
+            )
+        }
+
+    @Test
+    fun `uiState emits changed when edit form and category changed`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val task = genTask()
+            val category = TaskCategory(id = 1L, name = loremFaker.lorem.words())
+            val db = FakeDatabase().apply {
+                insertTask(task)
+                insertTaskCategory(category, setOf(task.id))
+            }
+            val taskRepository = FakeTaskRepository(db)
+            val taskCategoryRepository = FakeTaskCategoryRepository(db)
+            val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
+
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect()
+            }
+
+            viewModel.updateCategory(null)
+
+            assertThat(viewModel.uiState.value).isEqualTo(
+                TaskFormUiState.Success(
+                    name = task.name,
+                    note = "",
+                    recurrence = null,
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
+                    showCategoryField = true,
+                    category = null,
+                    categoryOptions = persistentListOf(),
+                    showParentTaskField = false,
+                    parentTask = null,
+                    parentTaskOptions = persistentListOf(),
+                    changed = true,
+                    userMessage = null,
+                )
+            )
+        }
+
+    @Test
+    fun `uiState emits changed when edit form and recurrence changed`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val task = genTask()
+            val db = FakeDatabase().apply {
+                insertTask(task)
+                insertTaskRecurrence(
+                    TaskRecurrence(
+                        taskId = task.id,
+                        start = faker.random.randomPastDate().toLocalDate(),
+                        type = RecurrenceType.Day,
+                        step = 1
+                    )
+                )
+            }
+            val taskRepository = FakeTaskRepository(db)
+            val taskCategoryRepository = FakeTaskCategoryRepository(db)
+            val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
+
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect()
+            }
+
+            viewModel.updateRecurrence(null)
+
+            assertThat(viewModel.uiState.value).isEqualTo(
+                TaskFormUiState.Success(
+                    name = task.name,
+                    note = "",
+                    recurrence = null,
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
+                    showCategoryField = false,
+                    category = null,
+                    categoryOptions = persistentListOf(),
+                    showParentTaskField = false,
+                    parentTask = null,
+                    parentTaskOptions = persistentListOf(),
+                    changed = true,
+                    userMessage = null,
+                )
+            )
+        }
+
+    @Test
+    fun `uiState emits changed when edit form and parent task changed`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val task = genTask()
+            val parentTask = genTask(id = 2L)
+            val db = FakeDatabase().apply {
+                insertTask(task)
+                insertTask(parentTask)
+                insertChain(parentTask.id, task.id)
+            }
+            val taskRepository = FakeTaskRepository(db)
+            val taskCategoryRepository = FakeTaskCategoryRepository(db)
+            val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
+
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect()
+            }
+
+            viewModel.updateParentTask(null)
+
+            assertThat(viewModel.uiState.value).isEqualTo(
+                TaskFormUiState.Success(
+                    name = task.name,
+                    note = "",
+                    recurrence = null,
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
+                    showCategoryField = false,
+                    category = null,
+                    categoryOptions = persistentListOf(),
+                    showParentTaskField = true,
+                    parentTask = null,
+                    parentTaskOptions = persistentListOf(),
+                    changed = true,
+                    userMessage = null,
+                )
+            )
+        }
+
+    @Test
     fun `uiState shows parent task field when taskId is null and repository has tasks`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val db = FakeDatabase().apply {
@@ -217,6 +1116,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
+                    name = "",
+                    note = "",
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -230,6 +1131,7 @@ class TaskFormViewModelTest {
                     showParentTaskField = true,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
+                    changed = false,
                     userMessage = null,
                 )
             )
@@ -238,9 +1140,11 @@ class TaskFormViewModelTest {
     @Test
     fun `uiState shows parent task field when taskId is present and repository has other tasks`() =
         runTest(mainDispatcherRule.testDispatcher) {
+            val task = genTask()
+            val parentTask = genTask(id = 2L)
             val db = FakeDatabase().apply {
-                insertTask(genTask())
-                insertTask(genTask(id = 2L))
+                insertTask(task)
+                insertTask(parentTask)
             }
             val taskRepository = FakeTaskRepository(db)
             val taskCategoryRepository = FakeTaskCategoryRepository(db)
@@ -253,6 +1157,8 @@ class TaskFormViewModelTest {
             assertThat(viewModel.isNew).isFalse()
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
+                    name = task.name,
+                    note = "",
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -266,6 +1172,7 @@ class TaskFormViewModelTest {
                     showParentTaskField = true,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
+                    changed = false,
                     userMessage = null,
                 )
             )
@@ -289,6 +1196,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
+                    name = "",
+                    note = "",
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -302,6 +1211,7 @@ class TaskFormViewModelTest {
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
+                    changed = false,
                     userMessage = UserMessage.String(R.string.task_form_fetch_parent_task_error),
                 )
             )
@@ -328,6 +1238,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
+                    name = task.name,
+                    note = "",
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -341,6 +1253,7 @@ class TaskFormViewModelTest {
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
+                    changed = false,
                     userMessage = UserMessage.String(R.string.task_form_fetch_parent_task_error),
                 )
             )
@@ -363,6 +1276,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
+                    name = "",
+                    note = "",
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -376,6 +1291,7 @@ class TaskFormViewModelTest {
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
+                    changed = false,
                     userMessage = null,
                 )
             )
@@ -395,6 +1311,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
+                    name = "",
+                    note = "",
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -408,6 +1326,7 @@ class TaskFormViewModelTest {
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
+                    changed = false,
                     userMessage = null,
                 )
             )
@@ -434,6 +1353,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
+                    name = "",
+                    note = "",
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -447,6 +1368,7 @@ class TaskFormViewModelTest {
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
+                    changed = false,
                     userMessage = UserMessage.String(R.string.task_form_fetch_category_error),
                 )
             )
@@ -475,6 +1397,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
+                    name = task.name,
+                    note = "",
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -488,6 +1412,7 @@ class TaskFormViewModelTest {
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
+                    changed = false,
                     userMessage = UserMessage.String(R.string.task_form_fetch_category_error),
                 )
             )
@@ -519,6 +1444,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
+                    name = "",
+                    note = "",
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -532,6 +1459,7 @@ class TaskFormViewModelTest {
                     showParentTaskField = true,
                     parentTask = null,
                     parentTaskOptions = tasks.toPersistentList(),
+                    changed = false,
                     userMessage = null,
                 )
             )
@@ -558,6 +1486,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
+                    name = "",
+                    note = "",
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -571,6 +1501,7 @@ class TaskFormViewModelTest {
                     showParentTaskField = true,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
+                    changed = false,
                     userMessage = UserMessage.String(R.string.search_task_options_error),
                 )
             )
@@ -597,6 +1528,8 @@ class TaskFormViewModelTest {
 
         assertThat(viewModel.uiState.value).isEqualTo(
             TaskFormUiState.Success(
+                name = "",
+                note = "",
                 recurrence = null,
                 deadlineDate = null,
                 deadlineTime = null,
@@ -610,6 +1543,7 @@ class TaskFormViewModelTest {
                 showParentTaskField = false,
                 parentTask = null,
                 parentTaskOptions = persistentListOf(),
+                changed = false,
                 userMessage = null,
             )
         )
@@ -639,6 +1573,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
+                    name = "",
+                    note = "",
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -652,6 +1588,7 @@ class TaskFormViewModelTest {
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
+                    changed = false,
                     userMessage = UserMessage.String(R.string.search_task_category_options_error),
                 )
             )
@@ -680,6 +1617,8 @@ class TaskFormViewModelTest {
 
         assertThat(viewModel.uiState.value).isEqualTo(
             TaskFormUiState.Success(
+                name = "",
+                note = "",
                 recurrence = null,
                 deadlineDate = null,
                 deadlineTime = null,
@@ -693,11 +1632,12 @@ class TaskFormViewModelTest {
                 showParentTaskField = false,
                 parentTask = null,
                 parentTaskOptions = persistentListOf(),
+                changed = false,
                 userMessage = null,
             )
         )
 
-        viewModel.updateNameInput(name)
+        viewModel.updateName(name)
         viewModel.updateDeadlineDate(LocalDate.parse("2024-08-23"))
         viewModel.updateDeadlineTime(LocalTime.parse("17:00"))
         viewModel.updateRecurrence(
@@ -750,11 +1690,13 @@ class TaskFormViewModelTest {
                 viewModel.uiState.collect()
             }
 
-            viewModel.updateNameInput(name)
+            viewModel.updateName(name)
             viewModel.saveTask()
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
+                    name = name,
+                    note = "",
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -768,6 +1710,7 @@ class TaskFormViewModelTest {
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
+                    changed = true,
                     userMessage = UserMessage.String(R.string.task_form_save_error_new),
                 )
             )
@@ -805,6 +1748,8 @@ class TaskFormViewModelTest {
 
         assertThat(viewModel.uiState.value).isEqualTo(
             TaskFormUiState.Success(
+                name = task.name,
+                note = "",
                 recurrence = null,
                 deadlineDate = LocalDate.parse("2024-08-23"),
                 deadlineTime = LocalTime.parse("22:00"),
@@ -818,11 +1763,12 @@ class TaskFormViewModelTest {
                 showParentTaskField = false,
                 parentTask = null,
                 parentTaskOptions = persistentListOf(),
+                changed = false,
                 userMessage = null,
             )
         )
 
-        viewModel.updateNameInput(name)
+        viewModel.updateName(name)
         viewModel.updateDeadlineDate(null)
         viewModel.updateDeadlineTime(null)
         viewModel.updateStartAfterDate(null)
@@ -890,11 +1836,13 @@ class TaskFormViewModelTest {
                 viewModel.uiState.collect()
             }
 
-            viewModel.updateNameInput(name)
+            viewModel.updateName(name)
             viewModel.saveTask()
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
+                    name = name,
+                    note = "",
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -908,6 +1856,7 @@ class TaskFormViewModelTest {
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
+                    changed = true,
                     userMessage = UserMessage.String(R.string.task_form_save_error_edit),
                 )
             )
@@ -936,6 +1885,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
+                    name = task.name,
+                    note = "",
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -949,16 +1900,17 @@ class TaskFormViewModelTest {
                     showParentTaskField = false,
                     parentTask = parentTask,
                     parentTaskOptions = persistentListOf(),
+                    changed = false,
                     userMessage = UserMessage.String(R.string.task_form_fetch_parent_task_error),
                 )
             )
 
-            viewModel.updateNameInput(name)
+            viewModel.updateName(name)
             viewModel.saveTask()
 
             assertThat(taskRepository.tasks).containsExactlyInAnyOrder(
                 task.copy(name = name),
-                parentTask
+                parentTask,
             )
             assertThat(taskRepository.getParent(task.id).first()).isEqualTo(parentTask)
         }
@@ -988,6 +1940,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
+                    name = task.name,
+                    note = "",
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -1001,16 +1955,17 @@ class TaskFormViewModelTest {
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
+                    changed = false,
                     userMessage = UserMessage.String(R.string.task_form_fetch_parent_task_error),
                 )
             )
 
-            viewModel.updateNameInput(name)
+            viewModel.updateName(name)
             viewModel.saveTask()
 
             assertThat(taskRepository.tasks).containsExactlyInAnyOrder(
                 task.copy(name = name),
-                parentTask
+                parentTask,
             )
             assertThat(FakeTaskRepository(db).getParent(task.id).first()).isEqualTo(parentTask)
         }
@@ -1039,6 +1994,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
+                    name = task.name,
+                    note = "",
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -1052,11 +2009,12 @@ class TaskFormViewModelTest {
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
+                    changed = false,
                     userMessage = UserMessage.String(R.string.task_form_fetch_category_error),
                 )
             )
 
-            viewModel.updateNameInput(name)
+            viewModel.updateName(name)
             viewModel.saveTask()
 
             assertThat(taskRepository.tasks).containsExactlyInAnyOrder(
@@ -1088,6 +2046,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
+                    name = task.name,
+                    note = "",
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -1101,11 +2061,12 @@ class TaskFormViewModelTest {
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
+                    changed = false,
                     userMessage = UserMessage.String(R.string.task_form_fetch_category_error),
                 )
             )
 
-            viewModel.updateNameInput(name)
+            viewModel.updateName(name)
             viewModel.saveTask()
 
             assertThat(taskRepository.tasks).containsExactlyInAnyOrder(

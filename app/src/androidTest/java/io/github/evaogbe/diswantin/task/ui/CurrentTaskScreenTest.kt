@@ -187,7 +187,7 @@ class CurrentTaskScreenTest {
             }
         }
 
-        composeTestRule.onNodeWithText(stringResource(R.string.skip_dialog_confirm_button))
+        composeTestRule.onNodeWithText(stringResource(R.string.skip_sheet_confirm_button))
             .performClick()
 
         composeTestRule.onNodeWithText(task2.name).assertIsDisplayed()
@@ -230,7 +230,7 @@ class CurrentTaskScreenTest {
             }
         }
 
-        composeTestRule.onNodeWithText(stringResource(R.string.skip_dialog_confirm_button))
+        composeTestRule.onNodeWithText(stringResource(R.string.skip_sheet_confirm_button))
             .performClick()
 
         composeTestRule.onNodeWithText(task.name).assertIsDisplayed()

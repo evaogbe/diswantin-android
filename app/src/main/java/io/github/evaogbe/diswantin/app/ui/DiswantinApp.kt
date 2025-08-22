@@ -174,7 +174,9 @@ fun DiswantinApp() {
                 is TopBarState.TaskForm -> {
                     TaskFormTopBar(
                         uiState = state.uiState,
-                        onClose = navController::popBackStack,
+                        onClose = {
+                            topBarState = state.copy(action = TaskFormTopBarAction.Close)
+                        },
                         onSave = {
                             topBarState = state.copy(action = TaskFormTopBarAction.Save)
                         },
@@ -211,7 +213,9 @@ fun DiswantinApp() {
                 is TopBarState.TaskCategoryForm -> {
                     TaskCategoryFormTopBar(
                         uiState = state.uiState,
-                        onClose = navController::popBackStack,
+                        onClose = {
+                            topBarState = state.copy(action = TaskCategoryFormTopBarAction.Close)
+                        },
                         onSave = {
                             topBarState = state.copy(action = TaskCategoryFormTopBarAction.Save)
                         }
@@ -399,6 +403,8 @@ fun DiswantinApp() {
                         }
                     },
                     setUserMessage = { userMessage = it },
+                    initialName = backStackEntry.arguments?.getString(NavArguments.NAME_KEY)
+                        .orEmpty(),
                     onSelectTaskType = {
                         navController.navigate(
                             route = MainDestination.NewTaskForm.Main(name = it).route,
@@ -428,6 +434,7 @@ fun DiswantinApp() {
                         }
                     },
                     setUserMessage = { userMessage = it },
+                    initialName = "",
                     onSelectTaskType = {},
                 )
             }
@@ -483,6 +490,8 @@ fun DiswantinApp() {
                             }
                         },
                         setUserMessage = { userMessage = it },
+                        initialName = backStackEntry.arguments?.getString(NavArguments.NAME_KEY)
+                            .orEmpty(),
                         onSelectCategoryType = {
                             navController.navigate(
                                 route = MainDestination.NewTaskCategoryForm(name = it).route,
@@ -547,6 +556,7 @@ fun DiswantinApp() {
                             }
                         },
                         setUserMessage = { userMessage = it },
+                        initialName = "",
                         onSelectCategoryType = {},
                         onEditRecurrence = {
                             navController.navigate(

@@ -1,8 +1,5 @@
 package io.github.evaogbe.diswantin.task.ui
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -56,11 +53,9 @@ class TaskFormViewModel @Inject constructor(
 
     val isNew = taskId == null
 
-    var nameInput by mutableStateOf(savedStateHandle[NavArguments.NAME_KEY] ?: "")
-        private set
+    private val name = MutableStateFlow(savedStateHandle[NavArguments.NAME_KEY] ?: "")
 
-    var noteInput by mutableStateOf("")
-        private set
+    private val note = MutableStateFlow("")
 
     private val recurrenceUiState = MutableStateFlow<TaskRecurrenceUiState?>(null)
 
@@ -139,6 +134,8 @@ class TaskFormViewModel @Inject constructor(
     @OptIn(ExperimentalCoroutinesApi::class)
     @Suppress("UNCHECKED_CAST")
     val uiState = combine(
+        name,
+        note,
         recurrenceUiState,
         deadlineDate,
         deadlineTime,
@@ -180,33 +177,35 @@ class TaskFormViewModel @Inject constructor(
         existingCategoryStream,
         existingParentTaskStream,
     ) { args ->
-        val recurrenceUiState = args[0] as TaskRecurrenceUiState?
-        val deadlineDate = args[1] as LocalDate?
-        val deadlineTime = args[2] as LocalTime?
-        val startAfterDate = args[3] as LocalDate?
-        val startAfterTime = args[4] as LocalTime?
-        val scheduledDate = args[5] as LocalDate?
-        val scheduledTime = args[6] as LocalTime?
-        val taskCountResult = args[7] as Result<Long>
-        val parentTask = args[8] as Task?
-        val parentTaskQuery = (args[9] as String).trim()
-        val parentTaskOptions = args[10] as List<Task>
-        val hasCategoriesResult = args[11] as Result<Boolean>
-        val category = args[12] as TaskCategory?
-        val categoryQuery = (args[13] as String).trim()
-        val categoryOptions = args[14] as List<TaskCategory>
-        val isSaved = args[15] as Boolean
-        val userMessage = args[16] as UserMessage?
-        val existingTaskResult = args[17] as Result<Task?>
-        val existingRecurrencesResult = args[18] as Result<List<TaskRecurrence>>
-        val existingCategoryResult = args[19] as Result<TaskCategory?>
-        val existingParentTaskResult = args[20] as Result<Task?>
+        val name = args[0] as String
+        val note = args[1] as String
+        val recurrenceUiState = args[2] as TaskRecurrenceUiState?
+        val deadlineDate = args[3] as LocalDate?
+        val deadlineTime = args[4] as LocalTime?
+        val startAfterDate = args[5] as LocalDate?
+        val startAfterTime = args[6] as LocalTime?
+        val scheduledDate = args[7] as LocalDate?
+        val scheduledTime = args[8] as LocalTime?
+        val taskCountResult = args[9] as Result<Long>
+        val parentTask = args[10] as Task?
+        val parentTaskQuery = (args[11] as String).trim()
+        val parentTaskOptions = args[12] as List<Task>
+        val hasCategoriesResult = args[13] as Result<Boolean>
+        val category = args[14] as TaskCategory?
+        val categoryQuery = (args[15] as String).trim()
+        val categoryOptions = args[16] as List<TaskCategory>
+        val isSaved = args[17] as Boolean
+        val userMessage = args[18] as UserMessage?
+        val existingTaskResult = args[19] as Result<Task?>
+        val existingRecurrencesResult = args[20] as Result<List<TaskRecurrence>>
+        val existingCategoryResult = args[21] as Result<TaskCategory?>
+        val existingParentTaskResult = args[22] as Result<Task?>
 
         if (isSaved) {
             TaskFormUiState.Saved
         } else {
-            existingTaskResult.andThen { existingRecurrencesResult }.fold(
-                onSuccess = {
+            existingTaskResult.zip(existingRecurrencesResult).fold(
+                onSuccess = { (existingTask, existingRecurrences) ->
                     val showCategoryField =
                         existingCategoryResult.isSuccess && hasCategoriesResult.getOrDefault(false)
                     val singleCategoryOption = categoryOptions.singleOrNull()?.name
@@ -219,7 +218,11 @@ class TaskFormViewModel @Inject constructor(
                     val singleParentTaskOption = parentTaskOptions.singleOrNull()?.name
                     val hasParentTaskOptions =
                         parentTaskQuery != parentTask?.name || parentTaskQuery != singleParentTaskOption
+                    val existingRecurrenceUiState =
+                        TaskRecurrenceUiState.tryFromEntities(existingRecurrences, locale)
                     TaskFormUiState.Success(
+                        name = name,
+                        note = note,
                         recurrence = recurrenceUiState,
                         deadlineDate = deadlineDate,
                         deadlineTime = deadlineTime,
@@ -241,6 +244,19 @@ class TaskFormViewModel @Inject constructor(
                         } else {
                             persistentListOf()
                         },
+                        changed = listOf(
+                            name == existingTask?.name.orEmpty(),
+                            note == existingTask?.note.orEmpty(),
+                            deadlineDate == existingTask?.deadlineDate,
+                            deadlineTime == existingTask?.deadlineTime,
+                            startAfterDate == existingTask?.startAfterDate,
+                            startAfterTime == existingTask?.startAfterTime,
+                            scheduledDate == existingTask?.scheduledDate,
+                            scheduledTime == existingTask?.scheduledTime,
+                            category == existingCategoryResult.getOrNull(),
+                            recurrenceUiState == existingRecurrenceUiState,
+                            parentTask == existingParentTaskResult.getOrNull(),
+                        ).contains(false),
                         userMessage = userMessage,
                     )
                 },
@@ -278,8 +294,8 @@ class TaskFormViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             val existingTask = existingTaskStream.first().getOrNull() ?: return@launch
-            nameInput = existingTask.name
-            noteInput = existingTask.note
+            name.value = existingTask.name
+            note.value = existingTask.note
             deadlineDate.value = existingTask.deadlineDate
             deadlineTime.value = existingTask.deadlineTime
             startAfterDate.value = existingTask.startAfterDate
@@ -294,12 +310,12 @@ class TaskFormViewModel @Inject constructor(
         }
     }
 
-    fun updateNameInput(value: String) {
-        nameInput = value
+    fun updateName(value: String) {
+        name.value = value
     }
 
-    fun updateNoteInput(value: String) {
-        noteInput = value
+    fun updateNote(value: String) {
+        note.value = value
     }
 
     fun updateDeadlineDate(value: LocalDate?) {
@@ -363,8 +379,8 @@ class TaskFormViewModel @Inject constructor(
     }
 
     fun saveTask() {
-        if (nameInput.isBlank()) return
         val state = (uiState.value as? TaskFormUiState.Success) ?: return
+        if (state.name.isBlank()) return
         val nonRecurringHasScheduledTime =
             state.scheduledDate == null && state.scheduledTime != null && state.recurrence == null
         val scheduledDate = if (nonRecurringHasScheduledTime) {
@@ -402,8 +418,8 @@ class TaskFormViewModel @Inject constructor(
 
         if (taskId == null) {
             val form = NewTaskForm(
-                name = nameInput,
-                note = noteInput,
+                name = state.name,
+                note = state.note,
                 deadlineDate = state.deadlineDate,
                 deadlineTime = state.deadlineTime,
                 startAfterDate = state.startAfterDate,
@@ -439,8 +455,8 @@ class TaskFormViewModel @Inject constructor(
                     val canUpdateCategory = existingCategory.isSuccess && hasCategories.isSuccess
                     taskRepository.update(
                         EditTaskForm(
-                            name = nameInput,
-                            note = noteInput,
+                            name = state.name,
+                            note = state.note,
                             deadlineDate = state.deadlineDate,
                             deadlineTime = state.deadlineTime,
                             startAfterDate = state.startAfterDate,

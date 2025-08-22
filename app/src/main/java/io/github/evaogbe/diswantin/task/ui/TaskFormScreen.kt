@@ -32,6 +32,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -46,6 +47,7 @@ import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskCategory
 import io.github.evaogbe.diswantin.ui.components.AutocompleteField
 import io.github.evaogbe.diswantin.ui.components.ClearableLayout
+import io.github.evaogbe.diswantin.ui.components.DiscardConfirmationDialog
 import io.github.evaogbe.diswantin.ui.components.DiswantinDatePickerDialog
 import io.github.evaogbe.diswantin.ui.components.DiswantinTimePickerDialog
 import io.github.evaogbe.diswantin.ui.components.EditFieldButton
@@ -61,6 +63,8 @@ import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
@@ -116,21 +120,18 @@ fun TaskFormScreen(
     topBarAction: TaskFormTopBarAction?,
     topBarActionHandled: () -> Unit,
     setUserMessage: (UserMessage) -> Unit,
+    initialName: String,
     onSelectCategoryType: (String) -> Unit,
     onEditRecurrence: () -> Unit,
     taskFormViewModel: TaskFormViewModel = hiltViewModel(),
 ) {
     val uiState by taskFormViewModel.uiState.collectAsStateWithLifecycle()
     val isNew = taskFormViewModel.isNew
-    val nameInput = taskFormViewModel.nameInput
+    var nameInput by rememberSaveable { mutableStateOf(initialName) }
+    var noteInput by rememberSaveable { mutableStateOf("") }
+    var showDialog by rememberSaveable { mutableStateOf(false) }
 
-    if (uiState is TaskFormUiState.Saved) {
-        LaunchedEffect(onPopBackStack) {
-            onPopBackStack()
-        }
-    }
-
-    LaunchedEffect(setTopBarState, uiState, nameInput, isNew) {
+    LaunchedEffect(uiState, nameInput, isNew) {
         setTopBarState(
             TaskFormTopBarState(
                 isNew = isNew,
@@ -140,25 +141,39 @@ fun TaskFormScreen(
         )
     }
 
-    LaunchedEffect(topBarAction, taskFormViewModel) {
+    LaunchedEffect(topBarAction) {
         when (topBarAction) {
             null -> {}
             TaskFormTopBarAction.Save -> {
                 taskFormViewModel.saveTask()
                 topBarActionHandled()
             }
+
+            TaskFormTopBarAction.Close -> {
+                if ((uiState as? TaskFormUiState.Success)?.changed == true) {
+                    showDialog = true
+                } else {
+                    onPopBackStack()
+                }
+                topBarActionHandled()
+            }
         }
     }
 
-    (uiState as? TaskFormUiState.Success)?.userMessage?.let { message ->
-        LaunchedEffect(message, setUserMessage) {
-            setUserMessage(message)
-            taskFormViewModel.userMessageShown()
+    LaunchedEffect(Unit) {
+        snapshotFlow { nameInput }.distinctUntilChanged().collectLatest {
+            taskFormViewModel.updateName(it)
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        snapshotFlow { noteInput }.distinctUntilChanged().collectLatest {
+            taskFormViewModel.updateNote(it)
         }
     }
 
     when (val state = uiState) {
-        is TaskFormUiState.Pending, is TaskFormUiState.Saved -> {
+        is TaskFormUiState.Pending -> {
             PendingLayout()
         }
 
@@ -166,14 +181,41 @@ fun TaskFormScreen(
             LoadFailureLayout(message = stringResource(R.string.task_form_fetch_error))
         }
 
+        is TaskFormUiState.Saved -> {
+            LaunchedEffect(Unit) {
+                onPopBackStack()
+            }
+
+            PendingLayout()
+        }
+
         is TaskFormUiState.Success -> {
+            LaunchedEffect(state.name) {
+                if (state.name != nameInput) {
+                    nameInput = state.name
+                }
+            }
+
+            LaunchedEffect(state.note) {
+                if (state.note != noteInput) {
+                    noteInput = state.note
+                }
+            }
+
+            LaunchedEffect(state.userMessage) {
+                if (state.userMessage != null) {
+                    setUserMessage(state.userMessage)
+                    taskFormViewModel.userMessageShown()
+                }
+            }
+
             TaskFormLayout(
                 isNew = taskFormViewModel.isNew,
                 uiState = state,
                 name = nameInput,
-                onNameChange = taskFormViewModel::updateNameInput,
-                note = taskFormViewModel.noteInput,
-                onNoteChange = taskFormViewModel::updateNoteInput,
+                onNameChange = { nameInput = it },
+                note = noteInput,
+                onNoteChange = { noteInput = it },
                 onSelectCategoryType = onSelectCategoryType,
                 onDeadlineDateChange = taskFormViewModel::updateDeadlineDate,
                 onDeadlineTimeChange = taskFormViewModel::updateDeadlineTime,
@@ -189,6 +231,16 @@ fun TaskFormScreen(
                 onTaskSearch = taskFormViewModel::searchParentTasks,
             )
         }
+    }
+
+    if (showDialog) {
+        DiscardConfirmationDialog(
+            confirm = {
+                showDialog = false
+                onPopBackStack()
+            },
+            dismiss = { showDialog = false },
+        )
     }
 }
 
@@ -594,6 +646,9 @@ fun <T : Any> SelectableAutocompleteField(
 @DevicePreviews
 @Composable
 private fun TaskFormScreenPreview_New() {
+    val name = ""
+    val note = ""
+
     DiswantinTheme {
         Scaffold(topBar = {
             TaskFormTopBar(
@@ -605,6 +660,8 @@ private fun TaskFormScreenPreview_New() {
             TaskFormLayout(
                 isNew = true,
                 uiState = TaskFormUiState.Success(
+                    name = name,
+                    note = note,
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -618,11 +675,12 @@ private fun TaskFormScreenPreview_New() {
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
+                    changed = false,
                     userMessage = null,
                 ),
-                name = "",
+                name = name,
                 onNameChange = {},
-                note = "",
+                note = note,
                 onNoteChange = {},
                 onSelectCategoryType = {},
                 onDeadlineDateChange = {},
@@ -646,6 +704,9 @@ private fun TaskFormScreenPreview_New() {
 @DevicePreviews
 @Composable
 private fun TaskFormScreenPreview_Edit() {
+    val name = "Shower"
+    val note = "Wash hair and deep condition before appointment at hair salon"
+
     DiswantinTheme {
         Scaffold(topBar = {
             TaskFormTopBar(
@@ -657,6 +718,8 @@ private fun TaskFormScreenPreview_Edit() {
             TaskFormLayout(
                 isNew = false,
                 uiState = TaskFormUiState.Success(
+                    name = name,
+                    note = note,
                     recurrence = TaskRecurrenceUiState(
                         start = LocalDate.now(),
                         type = RecurrenceType.Day,
@@ -676,11 +739,12 @@ private fun TaskFormScreenPreview_Edit() {
                     showParentTaskField = true,
                     parentTask = Task(id = 1L, createdAt = Instant.now(), name = "Brush teeth"),
                     parentTaskOptions = persistentListOf(),
+                    changed = false,
                     userMessage = null,
                 ),
-                name = "Shower",
+                name = name,
                 onNameChange = {},
-                note = "Wash hair and deep condition before appointment at hair salon",
+                note = note,
                 onNoteChange = {},
                 onSelectCategoryType = {},
                 onDeadlineDateChange = {},
@@ -704,11 +768,16 @@ private fun TaskFormScreenPreview_Edit() {
 @DevicePreviews
 @Composable
 private fun TaskFormLayoutPreview_ScheduledAt() {
+    val name = "Shower"
+    val note = ""
+
     DiswantinTheme {
         Surface {
             TaskFormLayout(
                 isNew = true,
                 uiState = TaskFormUiState.Success(
+                    name = name,
+                    note = note,
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -722,11 +791,12 @@ private fun TaskFormLayoutPreview_ScheduledAt() {
                     showParentTaskField = true,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
+                    changed = true,
                     userMessage = null,
                 ),
-                name = "Shower",
+                name = name,
                 onNameChange = {},
-                note = "",
+                note = note,
                 onNoteChange = {},
                 onSelectCategoryType = {},
                 onDeadlineDateChange = {},
@@ -748,30 +818,36 @@ private fun TaskFormLayoutPreview_ScheduledAt() {
 
 @DevicePreviews
 @Composable
-private fun TaskFormLayoutPreview_ScheduledTime() {
+private fun TaskFormLayoutPreview_ScheduledDate() {
+    val name = ""
+    val note = ""
+
     DiswantinTheme {
         Surface {
             TaskFormLayout(
                 isNew = false,
                 uiState = TaskFormUiState.Success(
+                    name = name,
+                    note = note,
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
                     startAfterDate = null,
                     startAfterTime = null,
-                    scheduledDate = null,
-                    scheduledTime = LocalTime.now(),
+                    scheduledDate = LocalDate.now(),
+                    scheduledTime = null,
                     showCategoryField = false,
                     category = null,
                     categoryOptions = persistentListOf(),
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
+                    changed = false,
                     userMessage = null,
                 ),
-                name = "",
+                name = name,
                 onNameChange = {},
-                note = "",
+                note = note,
                 onNoteChange = {},
                 onSelectCategoryType = {},
                 onDeadlineDateChange = {},

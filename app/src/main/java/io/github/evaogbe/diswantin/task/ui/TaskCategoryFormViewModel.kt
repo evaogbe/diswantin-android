@@ -1,8 +1,5 @@
 package io.github.evaogbe.diswantin.task.ui
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -51,27 +48,9 @@ class TaskCategoryFormViewModel @Inject constructor(
 
     val isNew = categoryId == null
 
-    var nameInput by mutableStateOf(savedStateHandle[NavArguments.NAME_KEY] ?: "")
-        private set
+    private val name = MutableStateFlow(savedStateHandle[NavArguments.NAME_KEY] ?: "")
 
     private val removedTaskIds = MutableStateFlow(emptySet<Long>())
-
-    val existingTaskPagingData = categoryId?.let { id ->
-        combine(
-            taskRepository.getTasksByCategoryId(id).cachedIn(viewModelScope),
-            removedTaskIds
-        ) { all, removed ->
-            all.filter { it.id !in removed }
-        }
-    } ?: flowOf(
-        PagingData.empty(
-            LoadStates(
-                refresh = LoadState.NotLoading(endOfPaginationReached = true),
-                prepend = LoadState.NotLoading(endOfPaginationReached = true),
-                append = LoadState.NotLoading(endOfPaginationReached = true),
-            )
-        )
-    )
 
     private val newTasks = MutableStateFlow(persistentListOf<Task>())
 
@@ -91,10 +70,28 @@ class TaskCategoryFormViewModel @Inject constructor(
             }
     } ?: flowOf(Result.Success(null))
 
+    val existingTaskPagingData = categoryId?.let { id ->
+        combine(
+            taskRepository.getTasksByCategoryId(id).cachedIn(viewModelScope),
+            removedTaskIds,
+        ) { all, removed ->
+            all.filter { it.id !in removed }
+        }
+    } ?: flowOf(
+        PagingData.empty(
+            LoadStates(
+                refresh = LoadState.NotLoading(endOfPaginationReached = true),
+                prepend = LoadState.NotLoading(endOfPaginationReached = true),
+                append = LoadState.NotLoading(endOfPaginationReached = true),
+            )
+        )
+    )
+
     @Suppress("UNCHECKED_CAST")
     @OptIn(ExperimentalCoroutinesApi::class)
     val uiState = combine(
         existingCategoryStream,
+        name,
         newTasks,
         removedTaskIds,
         isEditing,
@@ -113,13 +110,14 @@ class TaskCategoryFormViewModel @Inject constructor(
         userMessage,
     ) { args ->
         val existingCategoryResult = args[0] as Result<TaskCategory?>
-        val newTasks = args[1] as ImmutableList<Task>
-        val removedTaskIds = args[2] as Set<Long>
-        val isEditing = args[3] as Boolean
-        val taskQuery = (args[4] as String).trim()
-        val taskSearchResults = args[5] as List<Task>
-        val isSaved = args[6] as Boolean
-        val userMessage = args[7] as UserMessage?
+        val name = args[1] as String
+        val newTasks = args[2] as ImmutableList<Task>
+        val removedTaskIds = args[3] as Set<Long>
+        val isEditing = args[4] as Boolean
+        val taskQuery = (args[5] as String).trim()
+        val taskSearchResults = args[6] as List<Task>
+        val isSaved = args[7] as Boolean
+        val userMessage = args[8] as UserMessage?
 
         if (isSaved) {
             TaskCategoryFormUiState.Saved
@@ -128,6 +126,7 @@ class TaskCategoryFormViewModel @Inject constructor(
                 onSuccess = { existingCategory ->
                     val hasTaskOptions = taskQuery != taskSearchResults.singleOrNull()?.name
                     TaskCategoryFormUiState.Success(
+                        name = name,
                         newTasks = newTasks,
                         isEditing = isEditing,
                         taskOptions = if (hasTaskOptions) {
@@ -139,6 +138,11 @@ class TaskCategoryFormViewModel @Inject constructor(
                         } else {
                             persistentListOf()
                         },
+                        changed = listOf(
+                            name == existingCategory?.name.orEmpty(),
+                            removedTaskIds.isEmpty(),
+                            newTasks.isEmpty()
+                        ).contains(false),
                         userMessage = userMessage,
                     )
                 },
@@ -154,13 +158,13 @@ class TaskCategoryFormViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             val existingCategory = existingCategoryStream.first().getOrNull() ?: return@launch
-            nameInput = existingCategory.name
+            name.value = existingCategory.name
             isEditing.value = false
         }
     }
 
-    fun updateNameInput(value: String) {
-        nameInput = value
+    fun updateName(value: String) {
+        name.value = value
     }
 
     fun startEditTask() {
@@ -183,12 +187,12 @@ class TaskCategoryFormViewModel @Inject constructor(
     }
 
     fun saveCategory() {
-        if (nameInput.isBlank()) return
         val state = (uiState.value as? TaskCategoryFormUiState.Success) ?: return
+        if (state.name.isBlank()) return
 
         if (categoryId == null) {
             val form = NewTaskCategoryForm(
-                name = nameInput,
+                name = state.name,
                 newTasks = state.newTasks.take(20),
             )
             viewModelScope.launch {
@@ -209,7 +213,7 @@ class TaskCategoryFormViewModel @Inject constructor(
                     val existingCategory = checkNotNull(existingCategoryStream.first().getOrNull())
                     taskCategoryRepository.update(
                         EditTaskCategoryForm(
-                            name = nameInput,
+                            name = state.name,
                             newTasks = state.newTasks.take(20),
                             taskIdsToRemove = removedTaskIds.value,
                             existingCategory = existingCategory,

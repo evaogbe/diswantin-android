@@ -38,6 +38,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -54,6 +55,7 @@ import androidx.paging.compose.itemKey
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.ui.components.AutocompleteField
+import io.github.evaogbe.diswantin.ui.components.DiscardConfirmationDialog
 import io.github.evaogbe.diswantin.ui.components.LoadFailureLayout
 import io.github.evaogbe.diswantin.ui.components.PendingLayout
 import io.github.evaogbe.diswantin.ui.components.TextButtonWithIcon
@@ -66,6 +68,8 @@ import io.github.evaogbe.diswantin.ui.theme.SpaceMd
 import io.github.evaogbe.diswantin.ui.theme.SpaceSm
 import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOf
 import java.time.Instant
 
@@ -117,22 +121,18 @@ fun TaskCategoryFormScreen(
     topBarAction: TaskCategoryFormTopBarAction?,
     topBarActionHandled: () -> Unit,
     setUserMessage: (UserMessage) -> Unit,
+    initialName: String,
     onSelectTaskType: (String) -> Unit,
     taskCategoryFormViewModel: TaskCategoryFormViewModel = hiltViewModel(),
 ) {
     val uiState by taskCategoryFormViewModel.uiState.collectAsStateWithLifecycle()
     val isNew = taskCategoryFormViewModel.isNew
-    val nameInput = taskCategoryFormViewModel.nameInput
+    var nameInput by rememberSaveable { mutableStateOf(initialName) }
     val existingTaskPagingItems =
         taskCategoryFormViewModel.existingTaskPagingData.collectAsLazyPagingItems()
+    var showDialog by rememberSaveable { mutableStateOf(false) }
 
-    if (uiState is TaskCategoryFormUiState.Saved) {
-        LaunchedEffect(onPopBackStack) {
-            onPopBackStack()
-        }
-    }
-
-    LaunchedEffect(setTopBarState, uiState, isNew, nameInput) {
+    LaunchedEffect(uiState, isNew, nameInput) {
         setTopBarState(
             TaskCategoryFormTopBarState(
                 isNew = isNew,
@@ -142,28 +142,44 @@ fun TaskCategoryFormScreen(
         )
     }
 
-    LaunchedEffect(topBarAction, taskCategoryFormViewModel) {
+    LaunchedEffect(topBarAction) {
         when (topBarAction) {
             null -> {}
             TaskCategoryFormTopBarAction.Save -> {
                 taskCategoryFormViewModel.saveCategory()
                 topBarActionHandled()
             }
+
+            TaskCategoryFormTopBarAction.Close -> {
+                if ((uiState as? TaskCategoryFormUiState.Success)?.changed == true) {
+                    showDialog = true
+                } else {
+                    onPopBackStack()
+                }
+                topBarActionHandled()
+            }
         }
     }
 
-    (uiState as? TaskCategoryFormUiState.Success)?.userMessage?.let { message ->
-        LaunchedEffect(message, setUserMessage) {
-            setUserMessage(message)
-            taskCategoryFormViewModel.userMessageShown()
+    LaunchedEffect(Unit) {
+        snapshotFlow { nameInput }.distinctUntilChanged().collectLatest {
+            taskCategoryFormViewModel.updateName(it)
         }
     }
 
     when (val state = uiState) {
-        is TaskCategoryFormUiState.Pending, is TaskCategoryFormUiState.Saved -> PendingLayout()
+        is TaskCategoryFormUiState.Pending -> PendingLayout()
 
         is TaskCategoryFormUiState.Failure -> {
             LoadFailureLayout(message = stringResource(R.string.task_category_form_fetch_error))
+        }
+
+        is TaskCategoryFormUiState.Saved -> {
+            LaunchedEffect(Unit) {
+                onPopBackStack()
+            }
+
+            PendingLayout()
         }
 
         is TaskCategoryFormUiState.Success -> {
@@ -177,11 +193,24 @@ fun TaskCategoryFormScreen(
                 }
 
                 else -> {
+                    LaunchedEffect(state.name) {
+                        if (nameInput != state.name) {
+                            nameInput = state.name
+                        }
+                    }
+
+                    LaunchedEffect(state.userMessage) {
+                        if (state.userMessage != null) {
+                            setUserMessage(state.userMessage)
+                            taskCategoryFormViewModel.userMessageShown()
+                        }
+                    }
+
                     TaskCategoryFormLayout(
                         isNew = taskCategoryFormViewModel.isNew,
                         uiState = state,
                         name = nameInput,
-                        onNameChange = taskCategoryFormViewModel::updateNameInput,
+                        onNameChange = { nameInput = it },
                         existingTaskItems = existingTaskPagingItems,
                         onSelectTaskType = onSelectTaskType,
                         onRemoveTask = taskCategoryFormViewModel::removeTask,
@@ -192,6 +221,16 @@ fun TaskCategoryFormScreen(
                 }
             }
         }
+    }
+
+    if (showDialog) {
+        DiscardConfirmationDialog(
+            confirm = {
+                showDialog = false
+                onPopBackStack()
+            },
+            dismiss = { showDialog = false },
+        )
     }
 }
 
@@ -335,6 +374,7 @@ private fun TaskCategoryFormTaskItem(task: Task, onRemoveTask: (Task) -> Unit) {
 @DevicePreviews
 @Composable
 private fun TaskCategoryFormScreenPreview_New() {
+    val name = ""
     val existingTaskItems = flowOf(PagingData.empty<Task>()).collectAsLazyPagingItems()
 
     DiswantinTheme {
@@ -352,12 +392,14 @@ private fun TaskCategoryFormScreenPreview_New() {
             TaskCategoryFormLayout(
                 isNew = true,
                 uiState = TaskCategoryFormUiState.Success(
+                    name = name,
                     newTasks = persistentListOf(),
                     isEditing = true,
                     taskOptions = persistentListOf(),
+                    changed = false,
                     userMessage = null,
                 ),
-                name = "",
+                name = name,
                 onNameChange = {},
                 existingTaskItems = existingTaskItems,
                 onSelectTaskType = {},
@@ -374,6 +416,7 @@ private fun TaskCategoryFormScreenPreview_New() {
 @DevicePreviews
 @Composable
 private fun TaskCategoryFormScreenPreview_Edit() {
+    val name = "Morning routine"
     val existingTaskItems = flowOf(
         PagingData.from(
             listOf(
@@ -399,6 +442,7 @@ private fun TaskCategoryFormScreenPreview_Edit() {
             TaskCategoryFormLayout(
                 isNew = false,
                 uiState = TaskCategoryFormUiState.Success(
+                    name = name,
                     newTasks = persistentListOf(
                         Task(
                             id = 4L,
@@ -418,9 +462,10 @@ private fun TaskCategoryFormScreenPreview_Edit() {
                     ),
                     isEditing = false,
                     taskOptions = persistentListOf(),
+                    changed = true,
                     userMessage = null,
                 ),
-                name = "Morning routine",
+                name = name,
                 onNameChange = {},
                 existingTaskItems = existingTaskItems,
                 onSelectTaskType = {},
@@ -437,6 +482,7 @@ private fun TaskCategoryFormScreenPreview_Edit() {
 @DevicePreviews
 @Composable
 private fun TaskCategoryFormLayoutPreview() {
+    val name = ""
     val existingTaskItems = flowOf(PagingData.empty<Task>()).collectAsLazyPagingItems()
 
     DiswantinTheme {
@@ -444,6 +490,7 @@ private fun TaskCategoryFormLayoutPreview() {
             TaskCategoryFormLayout(
                 isNew = true,
                 uiState = TaskCategoryFormUiState.Success(
+                    name = name,
                     newTasks = persistentListOf(
                         Task(
                             id = 1L,
@@ -453,9 +500,10 @@ private fun TaskCategoryFormLayoutPreview() {
                     ),
                     isEditing = true,
                     taskOptions = persistentListOf(),
+                    changed = true,
                     userMessage = null,
                 ),
-                name = "",
+                name = name,
                 onNameChange = {},
                 existingTaskItems = existingTaskItems,
                 onSelectTaskType = {},
