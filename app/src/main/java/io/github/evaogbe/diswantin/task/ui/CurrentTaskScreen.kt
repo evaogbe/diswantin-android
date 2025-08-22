@@ -20,25 +20,28 @@ import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.typography
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -65,11 +68,13 @@ import io.github.evaogbe.diswantin.ui.theme.IconSizeLg
 import io.github.evaogbe.diswantin.ui.theme.ScreenLg
 import io.github.evaogbe.diswantin.ui.theme.SpaceLg
 import io.github.evaogbe.diswantin.ui.theme.SpaceMd
+import io.github.evaogbe.diswantin.ui.theme.SpaceSm
 import io.github.evaogbe.diswantin.ui.theme.SpaceXl
 import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.launch
 import java.time.Instant
 import kotlin.time.Duration.Companion.hours
 
@@ -137,6 +142,10 @@ fun CurrentTaskTopBar(
     )
 }
 
+enum class DismissSkipSheetReason {
+    ClickOutside, Skip, ShowAdvice
+}
+
 @Composable
 fun CurrentTaskScreen(
     setTopBarState: (CurrentTaskTopBarState) -> Unit,
@@ -152,7 +161,7 @@ fun CurrentTaskScreen(
     val isRefreshing by currentTaskViewModel.isRefreshing.collectAsStateWithLifecycle()
     val userMessage by currentTaskViewModel.userMessage.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
-    var showDialog by rememberSaveable { mutableStateOf(false) }
+    var showBottomSheet by rememberSaveable { mutableStateOf(false) }
 
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         currentTaskViewModel.refresh()
@@ -164,11 +173,9 @@ fun CurrentTaskScreen(
                 delay(1.hours)
                 emit(Unit)
             }
+        }.flowWithLifecycle(lifecycleOwner.lifecycle).collectLatest {
+            currentTaskViewModel.refresh()
         }
-            .flowWithLifecycle(lifecycleOwner.lifecycle)
-            .collectLatest {
-                currentTaskViewModel.refresh()
-            }
     }
 
     LaunchedEffect(setTopBarState, uiState) {
@@ -188,7 +195,7 @@ fun CurrentTaskScreen(
             }
 
             CurrentTaskTopBarAction.Skip -> {
-                showDialog = true
+                showBottomSheet = true
                 topBarActionHandled()
             }
         }
@@ -226,32 +233,68 @@ fun CurrentTaskScreen(
         }
     }
 
-    if (showDialog) {
-        AlertDialog(
-            onDismissRequest = { showDialog = false },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showDialog = false
-                        currentTaskViewModel.skipCurrentTask()
-                    },
-                ) {
-                    Text(stringResource(R.string.skip_dialog_confirm_button))
+    if (showBottomSheet) {
+        SkipSheet(
+            onDismiss = { reason ->
+                showBottomSheet = false
+                when (reason) {
+                    DismissSkipSheetReason.Skip -> currentTaskViewModel.skipCurrentTask()
+                    DismissSkipSheetReason.ShowAdvice -> onNavigateToAdvice()
+                    DismissSkipSheetReason.ClickOutside -> {}
                 }
             },
-            dismissButton = {
-                TextButton(
-                    onClick = {
-                        showDialog = false
-                        onNavigateToAdvice()
-                    },
-                ) {
-                    Text(stringResource(R.string.skip_dialog_dismiss_button))
-                }
-            },
-            title = { Text(stringResource(R.string.skip_dialog_title)) },
-            text = { Text(stringResource(R.string.skip_dialog_text)) },
         )
+    }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun SkipSheet(
+    onDismiss: (DismissSkipSheetReason) -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState()
+    val coroutineScope = rememberCoroutineScope()
+
+    ModalBottomSheet(
+        onDismissRequest = { onDismiss(DismissSkipSheetReason.ClickOutside) },
+        sheetState = sheetState
+    ) {
+        SkipSheetContent(
+            onDismiss = { reason ->
+                coroutineScope.launch { sheetState.hide() }.invokeOnCompletion {
+                    onDismiss(reason)
+                }
+            })
+    }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun SkipSheetContent(
+    onDismiss: (DismissSkipSheetReason) -> Unit
+) {
+    Column(
+        modifier = Modifier.padding(SpaceMd),
+    ) {
+        Text(stringResource(R.string.skip_dialog_title), style = typography.titleLarge)
+        Spacer(Modifier.size(SpaceSm))
+        Text(stringResource(R.string.skip_dialog_text))
+        Spacer(Modifier.size(SpaceMd))
+        HorizontalDivider()
+        Spacer(Modifier.size(SpaceMd))
+        TextButton(
+            onClick = { onDismiss(DismissSkipSheetReason.ShowAdvice) },
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(stringResource(R.string.skip_dialog_dismiss_button))
+        }
+        Spacer(Modifier.size(SpaceSm))
+        TextButton(
+            onClick = { onDismiss(DismissSkipSheetReason.Skip) },
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(stringResource(R.string.skip_dialog_confirm_button))
+        }
     }
 }
 
@@ -446,6 +489,16 @@ private fun CurrentTaskScreenPreview_Empty() {
                 onAddTask = {},
                 modifier = Modifier.padding(innerPadding),
             )
+        }
+    }
+}
+
+@DevicePreviews
+@Composable
+private fun SkipSheetContentPreview() {
+    DiswantinTheme {
+        Surface {
+            SkipSheetContent(onDismiss = {})
         }
     }
 }
