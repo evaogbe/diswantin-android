@@ -17,7 +17,7 @@ data class TaskFormTopBarState(
 ) : Parcelable
 
 enum class TaskFormTopBarAction {
-    Save
+    Save, Close
 }
 
 sealed interface TaskFormUiState {
@@ -26,6 +26,8 @@ sealed interface TaskFormUiState {
     data class Failure(val exception: Throwable) : TaskFormUiState
 
     data class Success(
+        val name: String,
+        val note: String,
         val recurrence: TaskRecurrenceUiState?,
         val deadlineDate: LocalDate?,
         val deadlineTime: LocalTime?,
@@ -39,6 +41,7 @@ sealed interface TaskFormUiState {
         val showParentTaskField: Boolean,
         val parentTask: Task?,
         val parentTaskOptions: ImmutableList<Task>,
+        val changed: Boolean,
         val userMessage: UserMessage?,
     ) : TaskFormUiState {
         val canSchedule =

@@ -150,13 +150,7 @@ fun TaskDetailScreen(
     val childTaskPagingItems = taskDetailViewModel.childTaskPagingData.collectAsLazyPagingItems()
     val uiState by taskDetailViewModel.uiState.collectAsStateWithLifecycle()
 
-    if (uiState is TaskDetailUiState.Deleted) {
-        LaunchedEffect(onPopBackStack) {
-            onPopBackStack()
-        }
-    }
-
-    LaunchedEffect(setTopBarState, uiState) {
+    LaunchedEffect(uiState) {
         setTopBarState(
             TaskDetailTopBarState(
                 taskId = (uiState as? TaskDetailUiState.Success)?.id,
@@ -165,7 +159,7 @@ fun TaskDetailScreen(
         )
     }
 
-    LaunchedEffect(topBarAction, taskDetailViewModel) {
+    LaunchedEffect(topBarAction) {
         when (topBarAction) {
             null -> {}
             TaskDetailTopBarAction.MarkDone -> {
@@ -185,20 +179,21 @@ fun TaskDetailScreen(
         }
     }
 
-    (uiState as? TaskDetailUiState.Success)?.userMessage?.let { message ->
-        LaunchedEffect(message, setUserMessage) {
-            setUserMessage(message)
-            taskDetailViewModel.userMessageShown()
-        }
-    }
-
     when (val state = uiState) {
-        is TaskDetailUiState.Pending, is TaskDetailUiState.Deleted -> {
+        is TaskDetailUiState.Pending -> {
             PendingLayout()
         }
 
         is TaskDetailUiState.Failure -> {
             LoadFailureLayout(message = stringResource(R.string.task_detail_fetch_error))
+        }
+
+        is TaskDetailUiState.Deleted -> {
+            LaunchedEffect(Unit) {
+                onPopBackStack()
+            }
+
+            PendingLayout()
         }
 
         is TaskDetailUiState.Success -> {
@@ -209,6 +204,13 @@ fun TaskDetailScreen(
                 }
 
                 is LoadState.NotLoading -> {
+                    LaunchedEffect(state.userMessage) {
+                        if (state.userMessage != null) {
+                            setUserMessage(state.userMessage)
+                            taskDetailViewModel.userMessageShown()
+                        }
+                    }
+
                     TaskDetailLayout(
                         uiState = state,
                         childTaskItems = childTaskPagingItems,

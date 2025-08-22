@@ -14,7 +14,7 @@ data class TaskCategoryFormTopBarState(
 ) : Parcelable
 
 enum class TaskCategoryFormTopBarAction {
-    Save
+    Save, Close
 }
 
 sealed interface TaskCategoryFormUiState {
@@ -23,9 +23,11 @@ sealed interface TaskCategoryFormUiState {
     data class Failure(val exception: Throwable) : TaskCategoryFormUiState
 
     data class Success(
+        val name: String,
         val newTasks: ImmutableList<Task>,
         val isEditing: Boolean,
         val taskOptions: ImmutableList<Task>,
+        val changed: Boolean,
         val userMessage: UserMessage?,
     ) : TaskCategoryFormUiState
 

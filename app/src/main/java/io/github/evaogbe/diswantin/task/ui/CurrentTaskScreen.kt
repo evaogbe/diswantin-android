@@ -178,7 +178,7 @@ fun CurrentTaskScreen(
         }
     }
 
-    LaunchedEffect(setTopBarState, uiState) {
+    LaunchedEffect(uiState) {
         setTopBarState(
             CurrentTaskTopBarState(
                 canSkip = (uiState as? CurrentTaskUiState.Present)?.canSkip == true,
@@ -202,7 +202,7 @@ fun CurrentTaskScreen(
     }
 
     userMessage?.let { message ->
-        LaunchedEffect(message, setUserMessage) {
+        LaunchedEffect(message) {
             setUserMessage(message)
             currentTaskViewModel.userMessageShown()
         }
@@ -276,9 +276,9 @@ private fun SkipSheetContent(
     Column(
         modifier = Modifier.padding(SpaceMd),
     ) {
-        Text(stringResource(R.string.skip_dialog_title), style = typography.titleLarge)
+        Text(stringResource(R.string.skip_sheet_title), style = typography.titleLarge)
         Spacer(Modifier.size(SpaceSm))
-        Text(stringResource(R.string.skip_dialog_text))
+        Text(stringResource(R.string.skip_sheet_text))
         Spacer(Modifier.size(SpaceMd))
         HorizontalDivider()
         Spacer(Modifier.size(SpaceMd))
@@ -286,14 +286,14 @@ private fun SkipSheetContent(
             onClick = { onDismiss(DismissSkipSheetReason.ShowAdvice) },
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text(stringResource(R.string.skip_dialog_dismiss_button))
+            Text(stringResource(R.string.skip_sheet_dismiss_button))
         }
         Spacer(Modifier.size(SpaceSm))
         TextButton(
             onClick = { onDismiss(DismissSkipSheetReason.Skip) },
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text(stringResource(R.string.skip_dialog_confirm_button))
+            Text(stringResource(R.string.skip_sheet_confirm_button))
         }
     }
 }

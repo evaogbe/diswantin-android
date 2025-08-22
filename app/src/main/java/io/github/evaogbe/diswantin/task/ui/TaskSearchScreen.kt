@@ -168,7 +168,7 @@ fun TaskSearchScreen(
     var filterDialogType by rememberSaveable { mutableStateOf<FilterDialogType?>(null) }
     val currentQuery by rememberUpdatedState(query)
 
-    LaunchedEffect(taskSearchViewModel) {
+    LaunchedEffect(Unit) {
         snapshotFlow { currentQuery }.debounce(150.milliseconds).distinctUntilChanged()
             .collectLatest {
                 taskSearchViewModel.searchTasks(
@@ -182,7 +182,7 @@ fun TaskSearchScreen(
             }
     }
 
-    LaunchedEffect(topBarAction, taskSearchViewModel) {
+    LaunchedEffect(topBarAction) {
         when (topBarAction) {
             null -> {}
             TaskSearchTopBarAction.Search -> {

@@ -56,7 +56,7 @@ class FakeTaskRepository(
             !isDone && !isSkipped && doesRecurToday && !isScheduledFuture && !doesStartFuture
 
         }.map { it.id }.toSet()
-        taskPaths.values.filter { path ->
+        taskPaths.values.asSequence().filter { path ->
             path.ancestor in availableTaskIds && path.descendant in availableTaskIds
         }.groupBy { it.descendant }.mapNotNull { (_, paths) ->
             val leaf = paths.maxBy { it.depth }
@@ -191,7 +191,7 @@ class FakeTaskRepository(
         db.taskRecurrenceTable,
     ) { tasks, taskCompletions, taskRecurrences ->
         PagingData.from(
-            tasks.values.filter { it.categoryId == categoryId }.sortedWith(
+            tasks.values.asSequence().filter { it.categoryId == categoryId }.sortedWith(
                 compareBy<Task> { task ->
                     taskCompletions.values.any { it.taskId == task.id }
                 }.thenComparing(Task::scheduledDate, nullsLast())
@@ -201,7 +201,7 @@ class FakeTaskRepository(
                     .thenComparing(Task::deadlineTime, nullsLast())
                     .thenComparing(Task::startAfterDate, nullsFirst())
                     .thenComparing(Task::startAfterTime, nullsFirst())
-                    .thenComparing(Task::createdAt).thenComparing(Task::id)
+                    .thenComparing(Task::createdAt).thenComparing(Task::id),
             ).map { task ->
                 TaskItemData(
                     id = task.id,
@@ -210,7 +210,7 @@ class FakeTaskRepository(
                     doneAt = taskCompletions.values.filter { it.taskId == task.id }
                         .maxOfOrNull { it.doneAt },
                 )
-            },
+            }.toList(),
             LoadStates(
                 refresh = LoadState.NotLoading(endOfPaginationReached = true),
                 prepend = LoadState.NotLoading(endOfPaginationReached = true),
@@ -229,7 +229,7 @@ class FakeTaskRepository(
         db.taskRecurrenceTable,
     ) { tasks, taskCompletions, taskRecurrences ->
         PagingData.from(
-            tasks.values.map { task ->
+            tasks.values.asSequence().map { task ->
                 task to taskRecurrences.values.filter { it.taskId == task.id }
             }.filter { (task, recurrences) ->
                 task.name.contains(
@@ -269,7 +269,7 @@ class FakeTaskRepository(
                     doneAt = taskCompletions.values.filter { it.taskId == task.id }
                         .maxOfOrNull { it.doneAt },
                 )
-            },
+            }.toList(),
             LoadStates(
                 refresh = LoadState.NotLoading(endOfPaginationReached = true),
                 prepend = LoadState.NotLoading(endOfPaginationReached = true),
@@ -291,7 +291,7 @@ class FakeTaskRepository(
         db.taskCompletionTable,
     ) { tasks, taskPaths, taskRecurrences, taskCompletions ->
         PagingData.from(
-            taskPaths.values.filter { it.ancestor == id && it.depth == 1 }
+            taskPaths.values.asSequence().filter { it.ancestor == id && it.depth == 1 }
                 .mapNotNull { tasks[it.descendant] }.sortedWith(
                     compareBy(nullsLast(), Task::scheduledDate).thenComparing(
                         Task::scheduledTime, nullsLast()
@@ -310,7 +310,7 @@ class FakeTaskRepository(
                         doneAt = taskCompletions.values.filter { it.taskId == task.id }
                             .maxOfOrNull { it.doneAt },
                     )
-                },
+                }.toList(),
             LoadStates(
                 refresh = LoadState.NotLoading(endOfPaginationReached = true),
                 prepend = LoadState.NotLoading(endOfPaginationReached = true),

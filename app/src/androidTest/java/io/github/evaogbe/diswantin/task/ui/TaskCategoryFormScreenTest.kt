@@ -17,6 +17,8 @@ import assertk.assertions.isTrue
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskCategory
+import io.github.evaogbe.diswantin.task.data.TaskCategoryRepository
+import io.github.evaogbe.diswantin.task.data.TaskRepository
 import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTaskCategoryRepository
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
@@ -58,7 +60,7 @@ class TaskCategoryFormScreenTest {
         val taskRepository = FakeTaskRepository(db)
         val taskCategoryRepository = FakeTaskCategoryRepository(db)
         val viewModel =
-            TaskCategoryFormViewModel(SavedStateHandle(), taskCategoryRepository, taskRepository)
+            createTaskCategoryFormViewModelForNew(taskCategoryRepository, taskRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -68,6 +70,7 @@ class TaskCategoryFormScreenTest {
                     topBarAction = null,
                     topBarActionHandled = {},
                     setUserMessage = {},
+                    initialName = "",
                     onSelectTaskType = {},
                     taskCategoryFormViewModel = viewModel,
                 )
@@ -114,11 +117,8 @@ class TaskCategoryFormScreenTest {
             throw RuntimeException("Test")
         }
 
-        val viewModel = TaskCategoryFormViewModel(
-            createSavedStateHandleForEdit(),
-            taskCategoryRepository,
-            taskRepository,
-        )
+        val viewModel =
+            createTaskCategoryFormViewModelForEdit(taskCategoryRepository, taskRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -128,6 +128,7 @@ class TaskCategoryFormScreenTest {
                     topBarAction = null,
                     topBarActionHandled = {},
                     setUserMessage = {},
+                    initialName = "",
                     onSelectTaskType = {},
                     taskCategoryFormViewModel = viewModel,
                 )
@@ -154,7 +155,7 @@ class TaskCategoryFormScreenTest {
         val taskRepository = FakeTaskRepository(db)
         val taskCategoryRepository = FakeTaskCategoryRepository(db)
         val viewModel =
-            TaskCategoryFormViewModel(SavedStateHandle(), taskCategoryRepository, taskRepository)
+            createTaskCategoryFormViewModelForNew(taskCategoryRepository, taskRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -164,6 +165,7 @@ class TaskCategoryFormScreenTest {
                     topBarAction = null,
                     topBarActionHandled = {},
                     setUserMessage = {},
+                    initialName = "",
                     onSelectTaskType = {},
                     taskCategoryFormViewModel = viewModel,
                 )
@@ -190,7 +192,7 @@ class TaskCategoryFormScreenTest {
 
         val taskCategoryRepository = FakeTaskCategoryRepository(db)
         val viewModel =
-            TaskCategoryFormViewModel(SavedStateHandle(), taskCategoryRepository, taskRepository)
+            createTaskCategoryFormViewModelForNew(taskCategoryRepository, taskRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -200,6 +202,7 @@ class TaskCategoryFormScreenTest {
                     topBarAction = null,
                     topBarActionHandled = {},
                     setUserMessage = { userMessage = it },
+                    initialName = "",
                     onSelectTaskType = {},
                     taskCategoryFormViewModel = viewModel,
                 )
@@ -232,7 +235,7 @@ class TaskCategoryFormScreenTest {
         val taskRepository = FakeTaskRepository(db)
         val taskCategoryRepository = FakeTaskCategoryRepository(db)
         val viewModel =
-            TaskCategoryFormViewModel(SavedStateHandle(), taskCategoryRepository, taskRepository)
+            createTaskCategoryFormViewModelForNew(taskCategoryRepository, taskRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -242,6 +245,7 @@ class TaskCategoryFormScreenTest {
                     topBarAction = null,
                     topBarActionHandled = {},
                     setUserMessage = {},
+                    initialName = "",
                     onSelectTaskType = {},
                     taskCategoryFormViewModel = viewModel,
                 )
@@ -278,7 +282,7 @@ class TaskCategoryFormScreenTest {
         coEvery { taskCategoryRepository.create(any()) } throws RuntimeException("Test")
 
         val viewModel =
-            TaskCategoryFormViewModel(SavedStateHandle(), taskCategoryRepository, taskRepository)
+            createTaskCategoryFormViewModelForNew(taskCategoryRepository, taskRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -288,6 +292,7 @@ class TaskCategoryFormScreenTest {
                     topBarAction = null,
                     topBarActionHandled = {},
                     setUserMessage = { userMessage = it },
+                    initialName = "",
                     onSelectTaskType = {},
                     taskCategoryFormViewModel = viewModel,
                 )
@@ -298,6 +303,7 @@ class TaskCategoryFormScreenTest {
             .onParent().performTextInput(name)
         viewModel.saveCategory()
 
+        composeTestRule.waitForIdle()
         composeTestRule.waitUntil {
             userMessage == UserMessage.String(R.string.task_category_form_save_error_new)
         }
@@ -313,11 +319,8 @@ class TaskCategoryFormScreenTest {
         }
         val taskRepository = FakeTaskRepository(db)
         val taskCategoryRepository = FakeTaskCategoryRepository(db)
-        val viewModel = TaskCategoryFormViewModel(
-            createSavedStateHandleForEdit(),
-            taskCategoryRepository,
-            taskRepository,
-        )
+        val viewModel =
+            createTaskCategoryFormViewModelForEdit(taskCategoryRepository, taskRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -327,6 +330,7 @@ class TaskCategoryFormScreenTest {
                     topBarAction = null,
                     topBarActionHandled = {},
                     setUserMessage = {},
+                    initialName = "",
                     onSelectTaskType = {},
                     taskCategoryFormViewModel = viewModel,
                 )
@@ -353,11 +357,8 @@ class TaskCategoryFormScreenTest {
         val taskCategoryRepository = spyk(FakeTaskCategoryRepository(db))
         coEvery { taskCategoryRepository.update(any()) } throws RuntimeException("Test")
 
-        val viewModel = TaskCategoryFormViewModel(
-            createSavedStateHandleForEdit(),
-            taskCategoryRepository,
-            taskRepository,
-        )
+        val viewModel =
+            createTaskCategoryFormViewModelForEdit(taskCategoryRepository, taskRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -367,6 +368,7 @@ class TaskCategoryFormScreenTest {
                     topBarAction = null,
                     topBarActionHandled = {},
                     setUserMessage = { userMessage = it },
+                    initialName = "",
                     onSelectTaskType = {},
                     taskCategoryFormViewModel = viewModel,
                 )
@@ -384,5 +386,21 @@ class TaskCategoryFormScreenTest {
 
     private fun genTaskCategory() = TaskCategory(id = 1L, name = loremFaker.lorem.words())
 
-    private fun createSavedStateHandleForEdit() = SavedStateHandle(mapOf(NavArguments.ID_KEY to 1L))
+    private fun createTaskCategoryFormViewModelForNew(
+        taskCategoryRepository: TaskCategoryRepository,
+        taskRepository: TaskRepository,
+    ) = TaskCategoryFormViewModel(
+        SavedStateHandle(),
+        taskCategoryRepository,
+        taskRepository,
+    )
+
+    private fun createTaskCategoryFormViewModelForEdit(
+        taskCategoryRepository: TaskCategoryRepository,
+        taskRepository: TaskRepository,
+    ) = TaskCategoryFormViewModel(
+        SavedStateHandle(mapOf(NavArguments.ID_KEY to 1L)),
+        taskCategoryRepository,
+        taskRepository,
+    )
 }

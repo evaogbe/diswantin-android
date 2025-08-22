@@ -120,7 +120,7 @@ fun TaskRecurrentFormScreen(
         mutableStateOf(uiState.weekdays)
     }
 
-    LaunchedEffect(topBarAction, taskFormViewModel) {
+    LaunchedEffect(topBarAction) {
         when (topBarAction) {
             null -> {}
             TaskRecurrenceFormTopBarAction.Confirm -> {
