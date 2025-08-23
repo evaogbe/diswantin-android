@@ -1,4 +1,4 @@
-package io.github.evaogbe.diswantin.ui.components
+package io.github.evaogbe.diswantin.ui.form
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll

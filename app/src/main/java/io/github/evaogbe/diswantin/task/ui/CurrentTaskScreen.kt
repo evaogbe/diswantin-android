@@ -57,11 +57,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.flowWithLifecycle
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.Task
-import io.github.evaogbe.diswantin.ui.components.ButtonWithIcon
-import io.github.evaogbe.diswantin.ui.components.FilledTonalButtonWithIcon
-import io.github.evaogbe.diswantin.ui.components.LoadFailureLayout
-import io.github.evaogbe.diswantin.ui.components.OutlinedButtonWithIcon
-import io.github.evaogbe.diswantin.ui.components.PendingLayout
+import io.github.evaogbe.diswantin.ui.button.ButtonWithIcon
+import io.github.evaogbe.diswantin.ui.button.FilledTonalButtonWithIcon
+import io.github.evaogbe.diswantin.ui.button.OutlinedButtonWithIcon
+import io.github.evaogbe.diswantin.ui.loadstate.LoadFailureLayout
+import io.github.evaogbe.diswantin.ui.loadstate.PendingLayout
 import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.evaogbe.diswantin.ui.theme.IconSizeLg

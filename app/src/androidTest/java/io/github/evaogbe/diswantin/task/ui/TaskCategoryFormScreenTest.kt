@@ -23,7 +23,7 @@ import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTaskCategoryRepository
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.stringResource
-import io.github.evaogbe.diswantin.ui.components.PendingLayoutTestTag
+import io.github.evaogbe.diswantin.ui.loadstate.PendingLayoutTestTag
 import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.serpro69.kfaker.Faker

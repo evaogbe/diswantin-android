@@ -1,4 +1,4 @@
-package io.github.evaogbe.diswantin.ui.components
+package io.github.evaogbe.diswantin.ui.button
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Spacer

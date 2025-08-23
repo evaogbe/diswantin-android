@@ -1,4 +1,4 @@
-package io.github.evaogbe.diswantin.ui.components
+package io.github.evaogbe.diswantin.ui.form
 
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults

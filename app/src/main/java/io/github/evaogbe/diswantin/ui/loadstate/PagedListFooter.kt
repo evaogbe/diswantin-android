@@ -1,4 +1,4 @@
-package io.github.evaogbe.diswantin.ui.components
+package io.github.evaogbe.diswantin.ui.loadstate
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import io.github.evaogbe.diswantin.R
+import io.github.evaogbe.diswantin.ui.button.TextButtonWithIcon
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.evaogbe.diswantin.ui.theme.SpaceMd
 import io.github.evaogbe.diswantin.ui.theme.SpaceSm

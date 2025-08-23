@@ -1,4 +1,4 @@
-package io.github.evaogbe.diswantin.ui.components
+package io.github.evaogbe.diswantin.ui.dialog
 
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
