@@ -3,6 +3,7 @@ package io.github.evaogbe.diswantin.task.ui
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.toRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.data.Result
@@ -16,7 +17,6 @@ import io.github.evaogbe.diswantin.task.data.TaskCategory
 import io.github.evaogbe.diswantin.task.data.TaskCategoryRepository
 import io.github.evaogbe.diswantin.task.data.TaskRecurrence
 import io.github.evaogbe.diswantin.task.data.TaskRepository
-import io.github.evaogbe.diswantin.ui.navigation.NavArguments
 import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
@@ -49,11 +49,13 @@ class TaskFormViewModel @Inject constructor(
     private val clock: Clock,
     val locale: Locale,
 ) : ViewModel() {
-    private val taskId: Long? = savedStateHandle[NavArguments.ID_KEY]
+    private val route = savedStateHandle.toRoute<TaskFormRoute.Main>()
+
+    private val taskId = route.id
 
     val isNew = taskId == null
 
-    private val name = MutableStateFlow(savedStateHandle[NavArguments.NAME_KEY] ?: "")
+    private val name = MutableStateFlow(route.name.orEmpty())
 
     private val note = MutableStateFlow("")
 

@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.google.dagger.hilt.android)
     alias(libs.plugins.kotlin.parcelize)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -82,6 +83,7 @@ dependencies {
     implementation(libs.androidx.paging.runtime)
     implementation(libs.androidx.paging.compose)
     implementation(libs.androidx.room.paging)
+    implementation(libs.kotlin.serialization.json)
     annotationProcessor(libs.androidx.room.compiler)
     ksp(libs.hilt.compiler)
     ksp(libs.androidx.room.compiler)

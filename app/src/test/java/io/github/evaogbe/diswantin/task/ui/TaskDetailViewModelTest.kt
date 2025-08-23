@@ -1,6 +1,7 @@
 package io.github.evaogbe.diswantin.task.ui
 
 import androidx.lifecycle.SavedStateHandle
+import androidx.navigation.toRoute
 import androidx.paging.testing.asSnapshot
 import assertk.assertThat
 import assertk.assertions.containsExactly
@@ -14,12 +15,13 @@ import io.github.evaogbe.diswantin.task.data.TaskRecurrence
 import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.MainDispatcherRule
-import io.github.evaogbe.diswantin.ui.navigation.NavArguments
 import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
 import io.mockk.coEvery
 import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkStatic
 import io.mockk.spyk
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -47,8 +49,6 @@ class TaskDetailViewModelTest {
 
     @Test
     fun `uiState fetches task by id`() = runTest(mainDispatcherRule.testDispatcher) {
-        val clock = createClock()
-        val locale = Locale.US
         val (task1, task2) = List(2) {
             Task(
                 id = it + 1L,
@@ -56,6 +56,8 @@ class TaskDetailViewModelTest {
                 name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
             )
         }
+        val clock = createClock()
+        val locale = createLocale()
         val db = FakeDatabase().apply {
             insertTask(task1)
             insertTask(task2)
@@ -105,11 +107,7 @@ class TaskDetailViewModelTest {
 
     @Test
     fun `uiState emits failure when task not found`() = runTest(mainDispatcherRule.testDispatcher) {
-        val clock = createClock()
-        val db = FakeDatabase()
-        val taskRepository = FakeTaskRepository(db, clock)
-        val viewModel =
-            TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock, Locale.US)
+        val viewModel = createTaskDetailViewModel {}
 
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect()
@@ -122,8 +120,8 @@ class TaskDetailViewModelTest {
     @Test
     fun `uiState emits failure when fetch task detail throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
-            val clock = createClock()
             val exception = RuntimeException("Test")
+            val clock = createClock()
             val db = FakeDatabase().apply {
                 insertTask(genTask())
             }
@@ -131,7 +129,7 @@ class TaskDetailViewModelTest {
             every { taskRepository.getTaskDetailById(any()) } returns flow { throw exception }
 
             val viewModel =
-                TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock, Locale.US)
+                TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock, createLocale())
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -143,9 +141,9 @@ class TaskDetailViewModelTest {
     @Test
     fun `uiState emits failure when fetch task recurrences throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
-            val clock = createClock()
             val exception = RuntimeException("Test")
             val task = genTask()
+            val clock = createClock()
             val db = FakeDatabase().apply {
                 insertTask(task)
             }
@@ -155,7 +153,7 @@ class TaskDetailViewModelTest {
             }
 
             val viewModel =
-                TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock, Locale.US)
+                TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock, createLocale())
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -166,15 +164,15 @@ class TaskDetailViewModelTest {
 
     @Test
     fun `can toggle task done`() = runTest(mainDispatcherRule.testDispatcher) {
+        val task = genTask()
         val clock =
             Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
-        val task = genTask()
         val db = FakeDatabase().apply {
             insertTask(task)
         }
         val taskRepository = FakeTaskRepository(db, clock)
         val viewModel =
-            TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock, Locale.US)
+            TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock, createLocale())
 
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect()
@@ -239,8 +237,8 @@ class TaskDetailViewModelTest {
     @Test
     fun `markTaskDone shows error message when repository throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
-            val clock = createClock()
             val task = genTask()
+            val clock = createClock()
             val db = FakeDatabase().apply {
                 insertTask(task)
             }
@@ -248,7 +246,7 @@ class TaskDetailViewModelTest {
             coEvery { taskRepository.markDone(any()) } throws RuntimeException("Test")
 
             val viewModel =
-                TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock, Locale.US)
+                TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock, createLocale())
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -277,9 +275,9 @@ class TaskDetailViewModelTest {
     @Test
     fun `unmarkTaskDone shows error message when repository throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
+            val task = genTask()
             val clock =
                 Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
-            val task = genTask()
             val db = FakeDatabase().apply {
                 insertTask(task)
             }
@@ -288,7 +286,7 @@ class TaskDetailViewModelTest {
             coEvery { taskRepository.unmarkDone(any()) } throws RuntimeException("Test")
 
             val viewModel =
-                TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock, Locale.US)
+                TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock, createLocale())
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -316,14 +314,10 @@ class TaskDetailViewModelTest {
 
     @Test
     fun `deleteTask sets uiState to deleted`() = runTest(mainDispatcherRule.testDispatcher) {
-        val clock = createClock()
         val task = genTask()
-        val db = FakeDatabase().apply {
-            insertTask(task)
+        val viewModel = createTaskDetailViewModel { db ->
+            db.insertTask(task)
         }
-        val taskRepository = FakeTaskRepository(db, clock)
-        val viewModel =
-            TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock, Locale.US)
 
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect()
@@ -354,8 +348,8 @@ class TaskDetailViewModelTest {
     @Test
     fun `deleteTask shows error message when repository throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
-            val clock = createClock()
             val task = genTask()
+            val clock = createClock()
             val db = FakeDatabase().apply {
                 insertTask(task)
             }
@@ -363,7 +357,7 @@ class TaskDetailViewModelTest {
             coEvery { taskRepository.delete(any()) } throws RuntimeException("Test")
 
             val viewModel =
-                TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock, Locale.US)
+                TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock, createLocale())
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -395,8 +389,22 @@ class TaskDetailViewModelTest {
         name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
     )
 
-    private fun createSavedStateHandle() = SavedStateHandle(mapOf(NavArguments.ID_KEY to 1L))
+    private fun createSavedStateHandle(): SavedStateHandle {
+        mockkStatic("androidx.navigation.SavedStateHandleKt")
+        val savedStateHandle = mockk<SavedStateHandle>()
+        every { savedStateHandle.toRoute<TaskDetailRoute>() } returns TaskDetailRoute(id = 1L)
+        return savedStateHandle
+    }
 
     private fun createClock() =
         Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
+
+    private fun createLocale(): Locale = Locale.US
+
+    private fun createTaskDetailViewModel(initDatabase: (FakeDatabase) -> Unit): TaskDetailViewModel {
+        val clock = createClock()
+        val db = FakeDatabase().also(initDatabase)
+        val taskRepository = FakeTaskRepository(db, clock)
+        return TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock, createLocale())
+    }
 }

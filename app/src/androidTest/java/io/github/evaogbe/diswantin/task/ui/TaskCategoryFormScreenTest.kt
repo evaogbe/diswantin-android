@@ -24,7 +24,6 @@ import io.github.evaogbe.diswantin.testing.FakeTaskCategoryRepository
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.stringResource
 import io.github.evaogbe.diswantin.ui.components.PendingLayoutTestTag
-import io.github.evaogbe.diswantin.ui.navigation.NavArguments
 import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.serpro69.kfaker.Faker
@@ -54,13 +53,9 @@ class TaskCategoryFormScreenTest {
                 name = "${loremFaker.verbs.unique.base()} ${loremFaker.lorem.words()}",
             )
         }
-        val db = FakeDatabase().apply {
-            tasks.forEach(::insertTask)
+        val viewModel = createTaskCategoryFormViewModelForNew { db ->
+            tasks.forEach(db::insertTask)
         }
-        val taskRepository = FakeTaskRepository(db)
-        val taskCategoryRepository = FakeTaskCategoryRepository(db)
-        val viewModel =
-            createTaskCategoryFormViewModelForNew(taskCategoryRepository, taskRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -149,13 +144,9 @@ class TaskCategoryFormScreenTest {
                 name = "$query ${loremFaker.lorem.unique.words()}",
             )
         }
-        val db = FakeDatabase().apply {
-            tasks.forEach(::insertTask)
+        val viewModel = createTaskCategoryFormViewModelForNew { db ->
+            tasks.forEach(db::insertTask)
         }
-        val taskRepository = FakeTaskRepository(db)
-        val taskCategoryRepository = FakeTaskCategoryRepository(db)
-        val viewModel =
-            createTaskCategoryFormViewModelForNew(taskCategoryRepository, taskRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -229,13 +220,9 @@ class TaskCategoryFormScreenTest {
                 name = "${loremFaker.verbs.unique.base()} ${loremFaker.lorem.words()}"
             )
         }
-        val db = FakeDatabase().apply {
-            tasks.forEach(::insertTask)
+        val viewModel = createTaskCategoryFormViewModelForNew { db ->
+            tasks.forEach(db::insertTask)
         }
-        val taskRepository = FakeTaskRepository(db)
-        val taskCategoryRepository = FakeTaskCategoryRepository(db)
-        val viewModel =
-            createTaskCategoryFormViewModelForNew(taskCategoryRepository, taskRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -314,13 +301,9 @@ class TaskCategoryFormScreenTest {
         var onPopBackStackCalled = false
         val name = loremFaker.lorem.words()
         val category = genTaskCategory()
-        val db = FakeDatabase().apply {
-            insertTaskCategory(category, emptySet())
+        val viewModel = createTaskCategoryFormViewModelForEdit { db ->
+            db.insertTaskCategory(category, emptySet())
         }
-        val taskRepository = FakeTaskRepository(db)
-        val taskCategoryRepository = FakeTaskCategoryRepository(db)
-        val viewModel =
-            createTaskCategoryFormViewModelForEdit(taskCategoryRepository, taskRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -386,6 +369,18 @@ class TaskCategoryFormScreenTest {
 
     private fun genTaskCategory() = TaskCategory(id = 1L, name = loremFaker.lorem.words())
 
+    private fun createSavedStateHandleForEdit() = SavedStateHandle(mapOf("id" to 1L))
+
+    private fun createTaskCategoryFormViewModelForNew(
+        initDatabase: (FakeDatabase) -> Unit = {},
+    ): TaskCategoryFormViewModel {
+        val db = FakeDatabase().also(initDatabase)
+        return createTaskCategoryFormViewModelForNew(
+            FakeTaskCategoryRepository(db),
+            FakeTaskRepository(db),
+        )
+    }
+
     private fun createTaskCategoryFormViewModelForNew(
         taskCategoryRepository: TaskCategoryRepository,
         taskRepository: TaskRepository,
@@ -396,10 +391,20 @@ class TaskCategoryFormScreenTest {
     )
 
     private fun createTaskCategoryFormViewModelForEdit(
+        initDatabase: (FakeDatabase) -> Unit
+    ): TaskCategoryFormViewModel {
+        val db = FakeDatabase().also(initDatabase)
+        return createTaskCategoryFormViewModelForEdit(
+            FakeTaskCategoryRepository(db),
+            FakeTaskRepository(db),
+        )
+    }
+
+    private fun createTaskCategoryFormViewModelForEdit(
         taskCategoryRepository: TaskCategoryRepository,
         taskRepository: TaskRepository,
     ) = TaskCategoryFormViewModel(
-        SavedStateHandle(mapOf(NavArguments.ID_KEY to 1L)),
+        createSavedStateHandleForEdit(),
         taskCategoryRepository,
         taskRepository,
     )

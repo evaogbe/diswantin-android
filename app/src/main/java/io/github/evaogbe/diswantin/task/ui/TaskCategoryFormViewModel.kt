@@ -3,6 +3,7 @@ package io.github.evaogbe.diswantin.task.ui
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.toRoute
 import androidx.paging.LoadState
 import androidx.paging.LoadStates
 import androidx.paging.PagingData
@@ -17,7 +18,6 @@ import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskCategory
 import io.github.evaogbe.diswantin.task.data.TaskCategoryRepository
 import io.github.evaogbe.diswantin.task.data.TaskRepository
-import io.github.evaogbe.diswantin.ui.navigation.NavArguments
 import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
@@ -44,11 +44,13 @@ class TaskCategoryFormViewModel @Inject constructor(
     private val taskCategoryRepository: TaskCategoryRepository,
     taskRepository: TaskRepository
 ) : ViewModel() {
-    private val categoryId: Long? = savedStateHandle[NavArguments.ID_KEY]
+    private val route = savedStateHandle.toRoute<TaskCategoryFormRoute>()
+
+    private val categoryId = route.id
 
     val isNew = categoryId == null
 
-    private val name = MutableStateFlow(savedStateHandle[NavArguments.NAME_KEY] ?: "")
+    private val name = MutableStateFlow(route.name.orEmpty())
 
     private val removedTaskIds = MutableStateFlow(emptySet<Long>())
 

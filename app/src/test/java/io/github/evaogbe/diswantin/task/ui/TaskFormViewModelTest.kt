@@ -1,6 +1,7 @@
 package io.github.evaogbe.diswantin.task.ui
 
 import androidx.lifecycle.SavedStateHandle
+import androidx.navigation.toRoute
 import assertk.assertThat
 import assertk.assertions.containsExactly
 import assertk.assertions.containsExactlyInAnyOrder
@@ -12,19 +13,18 @@ import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.RecurrenceType
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskCategory
-import io.github.evaogbe.diswantin.task.data.TaskCategoryRepository
 import io.github.evaogbe.diswantin.task.data.TaskRecurrence
-import io.github.evaogbe.diswantin.task.data.TaskRepository
 import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTaskCategoryRepository
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.MainDispatcherRule
-import io.github.evaogbe.diswantin.ui.navigation.NavArguments
 import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
 import io.mockk.coEvery
 import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkStatic
 import io.mockk.spyk
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
@@ -58,10 +58,7 @@ class TaskFormViewModelTest {
 
     @Test
     fun `initializes for new without taskId`() = runTest(mainDispatcherRule.testDispatcher) {
-        val db = FakeDatabase()
-        val taskRepository = FakeTaskRepository(db)
-        val taskCategoryRepository = FakeTaskCategoryRepository(db)
-        val viewModel = createTaskFormViewModelForNew(taskRepository, taskCategoryRepository)
+        val viewModel = createTaskFormViewModelForNew()
 
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect()
@@ -93,8 +90,6 @@ class TaskFormViewModelTest {
 
     @Test
     fun `initializes for edit with taskId`() = runTest(mainDispatcherRule.testDispatcher) {
-        val clock = createClock()
-        val locale = Locale.US
         val task = genTask().copy(
             note = loremFaker.quote.famousLastWords(),
             deadlineDate = LocalDate.parse("2024-08-23"),
@@ -104,6 +99,8 @@ class TaskFormViewModelTest {
         )
         val parentTask = genTask(id = 2L)
         val category = TaskCategory(id = 1L, name = loremFaker.lorem.words())
+        val clock = createClock()
+        val locale = createLocale()
         val db = FakeDatabase().apply {
             insertTask(task)
             insertTask(parentTask)
@@ -167,14 +164,21 @@ class TaskFormViewModelTest {
         runTest(mainDispatcherRule.testDispatcher) {
             val exception = RuntimeException("Test")
             val task = genTask()
+            val clock = createClock()
             val db = FakeDatabase().apply {
                 insertTask(task)
             }
-            val taskRepository = spyk(FakeTaskRepository(db))
+            val taskRepository = spyk(FakeTaskRepository(db, clock))
             val taskCategoryRepository = FakeTaskCategoryRepository(db)
             every { taskRepository.getById(any()) } returns flow { throw exception }
 
-            val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
+            val viewModel = TaskFormViewModel(
+                createSavedStateHandleForEdit(),
+                taskRepository,
+                taskCategoryRepository,
+                clock,
+                createLocale(),
+            )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -189,16 +193,23 @@ class TaskFormViewModelTest {
         runTest(mainDispatcherRule.testDispatcher) {
             val exception = RuntimeException("Test")
             val task = genTask()
+            val clock = createClock()
             val db = FakeDatabase().apply {
                 insertTask(task)
             }
-            val taskRepository = spyk(FakeTaskRepository(db))
+            val taskRepository = spyk(FakeTaskRepository(db, clock))
             every { taskRepository.getTaskRecurrencesByTaskId(any()) } returns flow {
                 throw exception
             }
 
             val taskCategoryRepository = FakeTaskCategoryRepository(db)
-            val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
+            val viewModel = TaskFormViewModel(
+                createSavedStateHandleForEdit(),
+                taskRepository,
+                taskCategoryRepository,
+                clock,
+                createLocale(),
+            )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -212,10 +223,7 @@ class TaskFormViewModelTest {
     fun `uiState emits changed when new form and name changed`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
-            val db = FakeDatabase()
-            val taskRepository = FakeTaskRepository(db)
-            val taskCategoryRepository = FakeTaskCategoryRepository(db)
-            val viewModel = createTaskFormViewModelForNew(taskRepository, taskCategoryRepository)
+            val viewModel = createTaskFormViewModelForNew()
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -250,10 +258,7 @@ class TaskFormViewModelTest {
     fun `uiState emits changed when new form and note changed`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val note = loremFaker.quote.famousLastWords()
-            val db = FakeDatabase()
-            val taskRepository = FakeTaskRepository(db)
-            val taskCategoryRepository = FakeTaskCategoryRepository(db)
-            val viewModel = createTaskFormViewModelForNew(taskRepository, taskCategoryRepository)
+            val viewModel = createTaskFormViewModelForNew()
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -288,10 +293,7 @@ class TaskFormViewModelTest {
     fun `uiState emits changed when new form and deadline date changed`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val deadlineDate = faker.random.randomFutureDate().toLocalDate()
-            val db = FakeDatabase()
-            val taskRepository = FakeTaskRepository(db)
-            val taskCategoryRepository = FakeTaskCategoryRepository(db)
-            val viewModel = createTaskFormViewModelForNew(taskRepository, taskCategoryRepository)
+            val viewModel = createTaskFormViewModelForNew()
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -326,10 +328,7 @@ class TaskFormViewModelTest {
     fun `uiState emits changed when new form and deadline time changed`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val deadlineTime = faker.random.randomFutureDate().toLocalTime()
-            val db = FakeDatabase()
-            val taskRepository = FakeTaskRepository(db)
-            val taskCategoryRepository = FakeTaskCategoryRepository(db)
-            val viewModel = createTaskFormViewModelForNew(taskRepository, taskCategoryRepository)
+            val viewModel = createTaskFormViewModelForNew()
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -364,10 +363,7 @@ class TaskFormViewModelTest {
     fun `uiState emits changed when new form and start after date changed`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val startAfterDate = faker.random.randomFutureDate().toLocalDate()
-            val db = FakeDatabase()
-            val taskRepository = FakeTaskRepository(db)
-            val taskCategoryRepository = FakeTaskCategoryRepository(db)
-            val viewModel = createTaskFormViewModelForNew(taskRepository, taskCategoryRepository)
+            val viewModel = createTaskFormViewModelForNew()
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -402,10 +398,7 @@ class TaskFormViewModelTest {
     fun `uiState emits changed when new form and start after time changed`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val startAfterTime = faker.random.randomFutureDate().toLocalTime()
-            val db = FakeDatabase()
-            val taskRepository = FakeTaskRepository(db)
-            val taskCategoryRepository = FakeTaskCategoryRepository(db)
-            val viewModel = createTaskFormViewModelForNew(taskRepository, taskCategoryRepository)
+            val viewModel = createTaskFormViewModelForNew()
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -440,10 +433,7 @@ class TaskFormViewModelTest {
     fun `uiState emits changed when new form and scheduled date changed`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val scheduledDate = faker.random.randomFutureDate().toLocalDate()
-            val db = FakeDatabase()
-            val taskRepository = FakeTaskRepository(db)
-            val taskCategoryRepository = FakeTaskCategoryRepository(db)
-            val viewModel = createTaskFormViewModelForNew(taskRepository, taskCategoryRepository)
+            val viewModel = createTaskFormViewModelForNew()
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -478,10 +468,7 @@ class TaskFormViewModelTest {
     fun `uiState emits changed when new form and scheduled time changed`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val scheduledAt = faker.random.randomFutureDate()
-            val db = FakeDatabase()
-            val taskRepository = FakeTaskRepository(db)
-            val taskCategoryRepository = FakeTaskCategoryRepository(db)
-            val viewModel = createTaskFormViewModelForNew(taskRepository, taskCategoryRepository)
+            val viewModel = createTaskFormViewModelForNew()
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -517,12 +504,9 @@ class TaskFormViewModelTest {
     fun `uiState emits changed when new form and category changed`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val category = TaskCategory(id = 1L, name = loremFaker.lorem.words())
-            val db = FakeDatabase().apply {
-                insertTaskCategory(category, emptySet())
+            val viewModel = createTaskFormViewModelForNew { db ->
+                db.insertTaskCategory(category, emptySet())
             }
-            val taskRepository = FakeTaskRepository(db)
-            val taskCategoryRepository = FakeTaskCategoryRepository(db)
-            val viewModel = createTaskFormViewModelForNew(taskRepository, taskCategoryRepository)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -556,16 +540,24 @@ class TaskFormViewModelTest {
     @Test
     fun `uiState emits changed when new form and recurrence changed`() =
         runTest(mainDispatcherRule.testDispatcher) {
-            val db = FakeDatabase()
-            val taskRepository = FakeTaskRepository(db)
-            val taskCategoryRepository = FakeTaskCategoryRepository(db)
-            val viewModel = createTaskFormViewModelForNew(taskRepository, taskCategoryRepository)
+            val clock = createClock()
+            val locale = createLocale()
             val recurrence = TaskRecurrenceUiState(
                 start = faker.random.randomPastDate().toLocalDate(),
                 type = RecurrenceType.Day,
                 step = 1,
                 weekdays = persistentSetOf(),
-                locale = viewModel.locale
+                locale = locale
+            )
+            val db = FakeDatabase()
+            val taskRepository = FakeTaskRepository(db, clock)
+            val taskCategoryRepository = FakeTaskCategoryRepository(db)
+            val viewModel = TaskFormViewModel(
+                createSavedStateHandleForNew(),
+                taskRepository,
+                taskCategoryRepository,
+                clock,
+                locale,
             )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
@@ -601,12 +593,9 @@ class TaskFormViewModelTest {
     fun `uiState emits changed when new form and parent task changed`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val parentTask = genTask()
-            val db = FakeDatabase().apply {
-                insertTask(parentTask)
+            val viewModel = createTaskFormViewModelForNew { db ->
+                db.insertTask(parentTask)
             }
-            val taskRepository = FakeTaskRepository(db)
-            val taskCategoryRepository = FakeTaskCategoryRepository(db)
-            val viewModel = createTaskFormViewModelForNew(taskRepository, taskCategoryRepository)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -641,12 +630,9 @@ class TaskFormViewModelTest {
     fun `uiState emits changed when edit form and name changed`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val task = genTask()
-            val db = FakeDatabase().apply {
-                insertTask(task)
+            val viewModel = createTaskFormViewModelForEdit { db ->
+                db.insertTask(task)
             }
-            val taskRepository = FakeTaskRepository(db)
-            val taskCategoryRepository = FakeTaskCategoryRepository(db)
-            val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -682,12 +668,9 @@ class TaskFormViewModelTest {
         runTest(mainDispatcherRule.testDispatcher) {
             val note = loremFaker.quote.famousLastWords()
             val task = genTask().copy(note = note)
-            val db = FakeDatabase().apply {
-                insertTask(task)
+            val viewModel = createTaskFormViewModelForEdit { db ->
+                db.insertTask(task)
             }
-            val taskRepository = FakeTaskRepository(db)
-            val taskCategoryRepository = FakeTaskCategoryRepository(db)
-            val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -723,12 +706,9 @@ class TaskFormViewModelTest {
         runTest(mainDispatcherRule.testDispatcher) {
             val deadlineDate = faker.random.randomFutureDate().toLocalDate()
             val task = genTask().copy(deadlineDate = deadlineDate)
-            val db = FakeDatabase().apply {
-                insertTask(task)
+            val viewModel = createTaskFormViewModelForEdit { db ->
+                db.insertTask(task)
             }
-            val taskRepository = FakeTaskRepository(db)
-            val taskCategoryRepository = FakeTaskCategoryRepository(db)
-            val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -764,12 +744,9 @@ class TaskFormViewModelTest {
         runTest(mainDispatcherRule.testDispatcher) {
             val deadlineTime = faker.random.randomFutureDate().toLocalTime()
             val task = genTask().copy(deadlineTime = deadlineTime)
-            val db = FakeDatabase().apply {
-                insertTask(task)
+            val viewModel = createTaskFormViewModelForEdit { db ->
+                db.insertTask(task)
             }
-            val taskRepository = FakeTaskRepository(db)
-            val taskCategoryRepository = FakeTaskCategoryRepository(db)
-            val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -805,12 +782,9 @@ class TaskFormViewModelTest {
         runTest(mainDispatcherRule.testDispatcher) {
             val startAfterDate = faker.random.randomFutureDate().toLocalDate()
             val task = genTask().copy(startAfterDate = startAfterDate)
-            val db = FakeDatabase().apply {
-                insertTask(task)
+            val viewModel = createTaskFormViewModelForEdit { db ->
+                db.insertTask(task)
             }
-            val taskRepository = FakeTaskRepository(db)
-            val taskCategoryRepository = FakeTaskCategoryRepository(db)
-            val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -846,12 +820,9 @@ class TaskFormViewModelTest {
         runTest(mainDispatcherRule.testDispatcher) {
             val startAfterTime = faker.random.randomFutureDate().toLocalTime()
             val task = genTask().copy(startAfterTime = startAfterTime)
-            val db = FakeDatabase().apply {
-                insertTask(task)
+            val viewModel = createTaskFormViewModelForEdit { db ->
+                db.insertTask(task)
             }
-            val taskRepository = FakeTaskRepository(db)
-            val taskCategoryRepository = FakeTaskCategoryRepository(db)
-            val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -887,12 +858,9 @@ class TaskFormViewModelTest {
         runTest(mainDispatcherRule.testDispatcher) {
             val scheduledDate = faker.random.randomFutureDate().toLocalDate()
             val task = genTask().copy(scheduledDate = scheduledDate)
-            val db = FakeDatabase().apply {
-                insertTask(task)
+            val viewModel = createTaskFormViewModelForEdit { db ->
+                db.insertTask(task)
             }
-            val taskRepository = FakeTaskRepository(db)
-            val taskCategoryRepository = FakeTaskCategoryRepository(db)
-            val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -931,12 +899,9 @@ class TaskFormViewModelTest {
                 scheduledDate = scheduledAt.toLocalDate(),
                 scheduledTime = scheduledAt.toLocalTime(),
             )
-            val db = FakeDatabase().apply {
-                insertTask(task)
+            val viewModel = createTaskFormViewModelForEdit { db ->
+                db.insertTask(task)
             }
-            val taskRepository = FakeTaskRepository(db)
-            val taskCategoryRepository = FakeTaskCategoryRepository(db)
-            val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -972,13 +937,10 @@ class TaskFormViewModelTest {
         runTest(mainDispatcherRule.testDispatcher) {
             val task = genTask()
             val category = TaskCategory(id = 1L, name = loremFaker.lorem.words())
-            val db = FakeDatabase().apply {
-                insertTask(task)
-                insertTaskCategory(category, setOf(task.id))
+            val viewModel = createTaskFormViewModelForEdit { db ->
+                db.insertTask(task)
+                db.insertTaskCategory(category, setOf(task.id))
             }
-            val taskRepository = FakeTaskRepository(db)
-            val taskCategoryRepository = FakeTaskCategoryRepository(db)
-            val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -1013,9 +975,9 @@ class TaskFormViewModelTest {
     fun `uiState emits changed when edit form and recurrence changed`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val task = genTask()
-            val db = FakeDatabase().apply {
-                insertTask(task)
-                insertTaskRecurrence(
+            val viewModel = createTaskFormViewModelForEdit { db ->
+                db.insertTask(task)
+                db.insertTaskRecurrence(
                     TaskRecurrence(
                         taskId = task.id,
                         start = faker.random.randomPastDate().toLocalDate(),
@@ -1024,9 +986,6 @@ class TaskFormViewModelTest {
                     )
                 )
             }
-            val taskRepository = FakeTaskRepository(db)
-            val taskCategoryRepository = FakeTaskCategoryRepository(db)
-            val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -1062,14 +1021,11 @@ class TaskFormViewModelTest {
         runTest(mainDispatcherRule.testDispatcher) {
             val task = genTask()
             val parentTask = genTask(id = 2L)
-            val db = FakeDatabase().apply {
-                insertTask(task)
-                insertTask(parentTask)
-                insertChain(parentTask.id, task.id)
+            val viewModel = createTaskFormViewModelForEdit { db ->
+                db.insertTask(task)
+                db.insertTask(parentTask)
+                db.insertChain(parentTask.id, task.id)
             }
-            val taskRepository = FakeTaskRepository(db)
-            val taskCategoryRepository = FakeTaskCategoryRepository(db)
-            val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -1103,12 +1059,9 @@ class TaskFormViewModelTest {
     @Test
     fun `uiState shows parent task field when taskId is null and repository has tasks`() =
         runTest(mainDispatcherRule.testDispatcher) {
-            val db = FakeDatabase().apply {
-                insertTask(genTask())
+            val viewModel = createTaskFormViewModelForNew { db ->
+                db.insertTask(genTask())
             }
-            val taskRepository = FakeTaskRepository(db)
-            val taskCategoryRepository = FakeTaskCategoryRepository(db)
-            val viewModel = createTaskFormViewModelForNew(taskRepository, taskCategoryRepository)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -1142,13 +1095,10 @@ class TaskFormViewModelTest {
         runTest(mainDispatcherRule.testDispatcher) {
             val task = genTask()
             val parentTask = genTask(id = 2L)
-            val db = FakeDatabase().apply {
-                insertTask(task)
-                insertTask(parentTask)
+            val viewModel = createTaskFormViewModelForEdit { db ->
+                db.insertTask(task)
+                db.insertTask(parentTask)
             }
-            val taskRepository = FakeTaskRepository(db)
-            val taskCategoryRepository = FakeTaskCategoryRepository(db)
-            val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -1181,14 +1131,21 @@ class TaskFormViewModelTest {
     @Test
     fun `uiState hides parent task field when fetch count fails`() =
         runTest(mainDispatcherRule.testDispatcher) {
+            val clock = createClock()
             val db = FakeDatabase().apply {
                 insertTask(genTask())
             }
-            val taskRepository = spyk(FakeTaskRepository(db))
+            val taskRepository = spyk(FakeTaskRepository(db, clock))
             every { taskRepository.getCount() } returns flow { throw RuntimeException("Test") }
 
             val taskCategoryRepository = FakeTaskCategoryRepository(db)
-            val viewModel = createTaskFormViewModelForNew(taskRepository, taskCategoryRepository)
+            val viewModel = TaskFormViewModel(
+                createSavedStateHandleForNew(),
+                taskRepository,
+                taskCategoryRepository,
+                clock,
+                createLocale(),
+            )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -1221,16 +1178,23 @@ class TaskFormViewModelTest {
     fun `uiState hides parent task field when fetch existing task parent fails`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val task = genTask()
+            val clock = createClock()
             val db = FakeDatabase().apply {
                 insertTask(task)
             }
-            val taskRepository = spyk(FakeTaskRepository(db))
+            val taskRepository = spyk(FakeTaskRepository(db, clock))
             every { taskRepository.getParent(any()) } returns flow {
                 throw RuntimeException("Test")
             }
 
             val taskCategoryRepository = FakeTaskCategoryRepository(db)
-            val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
+            val viewModel = TaskFormViewModel(
+                createSavedStateHandleForEdit(),
+                taskRepository,
+                taskCategoryRepository,
+                clock,
+                createLocale(),
+            )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -1263,12 +1227,9 @@ class TaskFormViewModelTest {
     fun `uiState shows category field when has categories`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val category = TaskCategory(name = loremFaker.lorem.words())
-            val db = FakeDatabase().apply {
-                insertTaskCategory(category, emptySet())
+            val viewModel = createTaskFormViewModelForNew { db ->
+                db.insertTaskCategory(category, emptySet())
             }
-            val taskRepository = FakeTaskRepository(db)
-            val taskCategoryRepository = FakeTaskCategoryRepository(db)
-            val viewModel = createTaskFormViewModelForNew(taskRepository, taskCategoryRepository)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -1300,10 +1261,7 @@ class TaskFormViewModelTest {
     @Test
     fun `uiState hides category field when does not have categories`() =
         runTest(mainDispatcherRule.testDispatcher) {
-            val db = FakeDatabase()
-            val taskRepository = FakeTaskRepository(db)
-            val taskCategoryRepository = FakeTaskCategoryRepository(db)
-            val viewModel = createTaskFormViewModelForNew(taskRepository, taskCategoryRepository)
+            val viewModel = createTaskFormViewModelForNew()
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -1336,16 +1294,23 @@ class TaskFormViewModelTest {
     fun `uiState hides category field when query has categories fails`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val category = TaskCategory(name = loremFaker.lorem.words())
+            val clock = createClock()
             val db = FakeDatabase().apply {
                 insertTaskCategory(category, emptySet())
             }
-            val taskRepository = FakeTaskRepository(db)
+            val taskRepository = FakeTaskRepository(db, clock)
             val taskCategoryRepository = spyk(FakeTaskCategoryRepository(db))
             every { taskCategoryRepository.hasCategoriesStream } returns flow {
                 throw RuntimeException("Test")
             }
 
-            val viewModel = createTaskFormViewModelForNew(taskRepository, taskCategoryRepository)
+            val viewModel = TaskFormViewModel(
+                createSavedStateHandleForNew(),
+                taskRepository,
+                taskCategoryRepository,
+                clock,
+                createLocale(),
+            )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -1379,17 +1344,24 @@ class TaskFormViewModelTest {
         runTest(mainDispatcherRule.testDispatcher) {
             val task = genTask()
             val category = TaskCategory(name = loremFaker.lorem.words())
+            val clock = createClock()
             val db = FakeDatabase().apply {
                 insertTask(task)
                 insertTaskCategory(category, setOf(task.id))
             }
-            val taskRepository = FakeTaskRepository(db)
+            val taskRepository = FakeTaskRepository(db, clock)
             val taskCategoryRepository = spyk(FakeTaskCategoryRepository(db))
             every { taskCategoryRepository.getByTaskId(any()) } returns flow {
                 throw RuntimeException("Test")
             }
 
-            val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
+            val viewModel = TaskFormViewModel(
+                createSavedStateHandleForEdit(),
+                taskRepository,
+                taskCategoryRepository,
+                clock,
+                createLocale(),
+            )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -1429,12 +1401,9 @@ class TaskFormViewModelTest {
                     name = "$query ${loremFaker.lorem.words()}",
                 )
             }
-            val db = FakeDatabase().apply {
-                tasks.forEach(::insertTask)
+            val viewModel = createTaskFormViewModelForNew { db ->
+                tasks.forEach(db::insertTask)
             }
-            val taskRepository = FakeTaskRepository(db)
-            val taskCategoryRepository = FakeTaskCategoryRepository(db)
-            val viewModel = createTaskFormViewModelForNew(taskRepository, taskCategoryRepository)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -1469,14 +1438,21 @@ class TaskFormViewModelTest {
     fun `searchParentTasks shows error message when repository throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val query = loremFaker.verbs.base()
+            val clock = createClock()
             val db = FakeDatabase().apply {
                 insertTask(genTask())
             }
-            val taskRepository = spyk(FakeTaskRepository(db))
+            val taskRepository = spyk(FakeTaskRepository(db, clock))
             every { taskRepository.search(any()) } returns flow { throw RuntimeException("Test") }
 
             val taskCategoryRepository = FakeTaskCategoryRepository(db)
-            val viewModel = createTaskFormViewModelForNew(taskRepository, taskCategoryRepository)
+            val viewModel = TaskFormViewModel(
+                createSavedStateHandleForNew(),
+                taskRepository,
+                taskCategoryRepository,
+                clock,
+                createLocale(),
+            )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -1513,12 +1489,9 @@ class TaskFormViewModelTest {
         val categories = List(faker.random.nextInt(min = 1, max = 5)) {
             TaskCategory(id = it + 1L, name = faker.string.regexify("""$query \w+"""))
         }
-        val db = FakeDatabase().apply {
-            categories.forEach { insertTaskCategory(it, emptySet()) }
+        val viewModel = createTaskFormViewModelForNew { db ->
+            categories.forEach { db.insertTaskCategory(it, emptySet()) }
         }
-        val taskRepository = FakeTaskRepository(db)
-        val taskCategoryRepository = FakeTaskCategoryRepository(db)
-        val viewModel = createTaskFormViewModelForNew(taskRepository, taskCategoryRepository)
 
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect()
@@ -1554,16 +1527,23 @@ class TaskFormViewModelTest {
         runTest(mainDispatcherRule.testDispatcher) {
             val query = loremFaker.verbs.base()
             val category = TaskCategory(name = faker.string.regexify("""$query \w+"""))
+            val clock = createClock()
             val db = FakeDatabase().apply {
                 insertTaskCategory(category, emptySet())
             }
-            val taskRepository = FakeTaskRepository(db)
+            val taskRepository = FakeTaskRepository(db, clock)
             val taskCategoryRepository = spyk(FakeTaskCategoryRepository(db))
             every { taskCategoryRepository.search(any()) } returns flow {
                 throw RuntimeException("Test")
             }
 
-            val viewModel = createTaskFormViewModelForNew(taskRepository, taskCategoryRepository)
+            val viewModel = TaskFormViewModel(
+                createSavedStateHandleForNew(),
+                taskRepository,
+                taskCategoryRepository,
+                clock,
+                createLocale(),
+            )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -1599,12 +1579,12 @@ class TaskFormViewModelTest {
         val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
         val clock =
             Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
-        val locale = Locale.US
+        val locale = createLocale()
         val db = FakeDatabase()
         val taskRepository = FakeTaskRepository(db, clock)
         val taskCategoryRepository = FakeTaskCategoryRepository(db)
         val viewModel = TaskFormViewModel(
-            SavedStateHandle(),
+            createSavedStateHandleForNew(),
             taskRepository,
             taskCategoryRepository,
             clock,
@@ -1679,12 +1659,19 @@ class TaskFormViewModelTest {
     fun `saveTask shows error message when create throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
+            val clock = createClock()
             val db = FakeDatabase()
-            val taskRepository = spyk(FakeTaskRepository(db))
+            val taskRepository = spyk(FakeTaskRepository(db, clock))
             coEvery { taskRepository.create(any()) } throws RuntimeException("Test")
 
             val taskCategoryRepository = FakeTaskCategoryRepository(db)
-            val viewModel = createTaskFormViewModelForNew(taskRepository, taskCategoryRepository)
+            val viewModel = TaskFormViewModel(
+                createSavedStateHandleForNew(),
+                taskRepository,
+                taskCategoryRepository,
+                clock,
+                createLocale(),
+            )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -1720,7 +1707,7 @@ class TaskFormViewModelTest {
     fun `saveTask updates task with taskId`() = runTest(mainDispatcherRule.testDispatcher) {
         val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
         val clock = createClock()
-        val locale = Locale.US
+        val locale = createLocale()
         val task = genTask().copy(
             deadlineDate = LocalDate.parse("2024-08-23"),
             deadlineTime = LocalTime.parse("22:00"),
@@ -1823,14 +1810,21 @@ class TaskFormViewModelTest {
         runTest(mainDispatcherRule.testDispatcher) {
             val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
             val task = genTask()
+            val clock = createClock()
             val db = FakeDatabase().apply {
                 insertTask(task)
             }
-            val taskRepository = spyk(FakeTaskRepository(db))
+            val taskRepository = spyk(FakeTaskRepository(db, clock))
             coEvery { taskRepository.update(any()) } throws RuntimeException("Test")
 
             val taskCategoryRepository = FakeTaskCategoryRepository(db)
-            val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
+            val viewModel = TaskFormViewModel(
+                createSavedStateHandleForEdit(),
+                taskRepository,
+                taskCategoryRepository,
+                clock,
+                createLocale(),
+            )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -1868,16 +1862,23 @@ class TaskFormViewModelTest {
             val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
             val task = genTask()
             val parentTask = genTask(id = 2L)
+            val clock = createClock()
             val db = FakeDatabase().apply {
                 insertTask(task)
                 insertTask(parentTask)
                 insertChain(parentId = parentTask.id, childId = task.id)
             }
-            val taskRepository = spyk(FakeTaskRepository(db))
+            val taskRepository = spyk(FakeTaskRepository(db, clock))
             every { taskRepository.getCount() } returns flow { throw RuntimeException("Test") }
 
             val taskCategoryRepository = FakeTaskCategoryRepository(db)
-            val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
+            val viewModel = TaskFormViewModel(
+                createSavedStateHandleForEdit(),
+                taskRepository,
+                taskCategoryRepository,
+                clock,
+                createLocale(),
+            )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -1921,18 +1922,25 @@ class TaskFormViewModelTest {
             val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
             val task = genTask()
             val parentTask = genTask(id = 2L)
+            val clock = createClock()
             val db = FakeDatabase().apply {
                 insertTask(task)
                 insertTask(parentTask)
                 insertChain(parentId = parentTask.id, childId = task.id)
             }
-            val taskRepository = spyk(FakeTaskRepository(db))
+            val taskRepository = spyk(FakeTaskRepository(db, clock))
             every { taskRepository.getParent(any()) } returns flow {
                 throw RuntimeException("Test")
             }
 
             val taskCategoryRepository = FakeTaskCategoryRepository(db)
-            val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
+            val viewModel = TaskFormViewModel(
+                createSavedStateHandleForEdit(),
+                taskRepository,
+                taskCategoryRepository,
+                clock,
+                createLocale(),
+            )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -1976,17 +1984,24 @@ class TaskFormViewModelTest {
             val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
             val task = genTask()
             val category = TaskCategory(id = 1L, name = loremFaker.lorem.words())
+            val clock = createClock()
             val db = FakeDatabase().apply {
                 insertTask(task)
                 insertTaskCategory(category, setOf(task.id))
             }
-            val taskRepository = FakeTaskRepository(db)
+            val taskRepository = FakeTaskRepository(db, clock)
             val taskCategoryRepository = spyk(FakeTaskCategoryRepository(db))
             every { taskCategoryRepository.hasCategoriesStream } returns flow {
                 throw RuntimeException("Test")
             }
 
-            val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
+            val viewModel = TaskFormViewModel(
+                createSavedStateHandleForEdit(),
+                taskRepository,
+                taskCategoryRepository,
+                clock,
+                createLocale(),
+            )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -2028,17 +2043,24 @@ class TaskFormViewModelTest {
             val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
             val task = genTask()
             val category = TaskCategory(id = 1L, name = loremFaker.lorem.words())
+            val clock = createClock()
             val db = FakeDatabase().apply {
                 insertTask(task)
                 insertTaskCategory(category, setOf(task.id))
             }
-            val taskRepository = FakeTaskRepository(db)
+            val taskRepository = FakeTaskRepository(db, clock)
             val taskCategoryRepository = spyk(FakeTaskCategoryRepository(db))
             every { taskCategoryRepository.getByTaskId(any()) } returns flow {
                 throw RuntimeException("Test")
             }
 
-            val viewModel = createTaskFormViewModelForEdit(taskRepository, taskCategoryRepository)
+            val viewModel = TaskFormViewModel(
+                createSavedStateHandleForEdit(),
+                taskRepository,
+                taskCategoryRepository,
+                clock,
+                createLocale(),
+            )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -2074,36 +2096,60 @@ class TaskFormViewModelTest {
             )
         }
 
-    private fun createClock() =
-        Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
-
     private fun genTask(id: Long = 1L) = Task(
         id = id,
         createdAt = faker.random.randomPastDate().toInstant(),
         name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
     )
 
-    private fun createSavedStateHandleForEdit() = SavedStateHandle(mapOf(NavArguments.ID_KEY to 1L))
+    private fun createSavedStateHandleForNew(): SavedStateHandle {
+        mockkStatic("androidx.navigation.SavedStateHandleKt")
+        val savedStateHandle = mockk<SavedStateHandle>()
+        every {
+            savedStateHandle.toRoute<TaskFormRoute.Main>()
+        } returns TaskFormRoute.Main.new(name = null)
+        return savedStateHandle
+    }
+
+    private fun createSavedStateHandleForEdit(): SavedStateHandle {
+        mockkStatic("androidx.navigation.SavedStateHandleKt")
+        val savedStateHandle = mockk<SavedStateHandle>()
+        every {
+            savedStateHandle.toRoute<TaskFormRoute.Main>()
+        } returns TaskFormRoute.Main.edit(id = 1L)
+        return savedStateHandle
+    }
+
+    private fun createClock() =
+        Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
+
+    private fun createLocale(): Locale = Locale.US
 
     private fun createTaskFormViewModelForNew(
-        taskRepository: TaskRepository,
-        taskCategoryRepository: TaskCategoryRepository,
-    ) = TaskFormViewModel(
-        SavedStateHandle(),
-        taskRepository,
-        taskCategoryRepository,
-        createClock(),
-        Locale.US,
-    )
+        initDatabase: (FakeDatabase) -> Unit = {}
+    ): TaskFormViewModel {
+        val clock = createClock()
+        val db = FakeDatabase().also(initDatabase)
+        return TaskFormViewModel(
+            createSavedStateHandleForNew(),
+            FakeTaskRepository(db, clock),
+            FakeTaskCategoryRepository(db),
+            clock,
+            createLocale(),
+        )
+    }
 
     private fun createTaskFormViewModelForEdit(
-        taskRepository: TaskRepository,
-        taskCategoryRepository: TaskCategoryRepository,
-    ) = TaskFormViewModel(
-        createSavedStateHandleForEdit(),
-        taskRepository,
-        taskCategoryRepository,
-        createClock(),
-        Locale.US,
-    )
+        initDatabase: (FakeDatabase) -> Unit
+    ): TaskFormViewModel {
+        val clock = createClock()
+        val db = FakeDatabase().also(initDatabase)
+        return TaskFormViewModel(
+            createSavedStateHandleForEdit(),
+            FakeTaskRepository(db, clock),
+            FakeTaskCategoryRepository(db),
+            clock,
+            createLocale(),
+        )
+    }
 }
