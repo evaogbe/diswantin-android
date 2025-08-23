@@ -1,6 +1,7 @@
 package io.github.evaogbe.diswantin.task.ui
 
 import androidx.lifecycle.SavedStateHandle
+import androidx.navigation.toRoute
 import androidx.paging.testing.asSnapshot
 import assertk.assertThat
 import assertk.assertions.isEmpty
@@ -10,18 +11,17 @@ import assertk.assertions.prop
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskCategory
-import io.github.evaogbe.diswantin.task.data.TaskCategoryRepository
-import io.github.evaogbe.diswantin.task.data.TaskRepository
 import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTaskCategoryRepository
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.MainDispatcherRule
-import io.github.evaogbe.diswantin.ui.navigation.NavArguments
 import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
 import io.mockk.coEvery
 import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkStatic
 import io.mockk.spyk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collect
@@ -48,13 +48,10 @@ class TaskCategoryDetailViewModelTest {
     fun `uiState fetches task category by id`() = runTest(mainDispatcherRule.testDispatcher) {
         val category = genTaskCategory()
         val tasks = genTasks()
-        val db = FakeDatabase().apply {
-            tasks.forEach(::insertTask)
-            insertTaskCategory(taskCategory = category, taskIds = tasks.map { it.id }.toSet())
+        val viewModel = createTaskCategoryDetailViewModel { db ->
+            tasks.forEach(db::insertTask)
+            db.insertTaskCategory(taskCategory = category, taskIds = tasks.map { it.id }.toSet())
         }
-        val taskRepository = FakeTaskRepository(db)
-        val taskCategoryRepository = FakeTaskCategoryRepository(db)
-        val viewModel = createTaskCategoryDetailViewModel(taskCategoryRepository, taskRepository)
 
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect()
@@ -77,11 +74,7 @@ class TaskCategoryDetailViewModelTest {
     @Test
     fun `uiState emits failure when task category not found`() =
         runTest(mainDispatcherRule.testDispatcher) {
-            val db = FakeDatabase()
-            val taskRepository = FakeTaskRepository(db)
-            val taskCategoryRepository = FakeTaskCategoryRepository(db)
-            val viewModel =
-                createTaskCategoryDetailViewModel(taskCategoryRepository, taskRepository)
+            val viewModel = createTaskCategoryDetailViewModel {}
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -102,18 +95,23 @@ class TaskCategoryDetailViewModelTest {
             val exception = RuntimeException("Test")
             val category = genTaskCategory()
             val tasks = genTasks()
+            val clock = createClock()
             val db = FakeDatabase().apply {
                 tasks.forEach(::insertTask)
                 insertTaskCategory(taskCategory = category, taskIds = tasks.map { it.id }.toSet())
             }
-            val taskRepository = FakeTaskRepository(db)
+            val taskRepository = FakeTaskRepository(db, clock)
             val taskCategoryRepository = spyk(FakeTaskCategoryRepository(db))
             every { taskCategoryRepository.getById(any()) } returns flow {
                 throw exception
             }
 
-            val viewModel =
-                createTaskCategoryDetailViewModel(taskCategoryRepository, taskRepository)
+            val viewModel = TaskCategoryDetailViewModel(
+                createSavedStateHandle(),
+                taskCategoryRepository,
+                taskRepository,
+                clock,
+            )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -132,13 +130,19 @@ class TaskCategoryDetailViewModelTest {
     fun `deleteCategory sets uiState to deleted`() = runTest(mainDispatcherRule.testDispatcher) {
         val category = genTaskCategory()
         val tasks = genTasks()
+        val clock = createClock()
         val db = FakeDatabase().apply {
             tasks.forEach(::insertTask)
             insertTaskCategory(taskCategory = category, taskIds = tasks.map { it.id }.toSet())
         }
-        val taskRepository = FakeTaskRepository(db)
+        val taskRepository = FakeTaskRepository(db, clock)
         val taskCategoryRepository = FakeTaskCategoryRepository(db)
-        val viewModel = createTaskCategoryDetailViewModel(taskCategoryRepository, taskRepository)
+        val viewModel = TaskCategoryDetailViewModel(
+            createSavedStateHandle(),
+            taskCategoryRepository,
+            taskRepository,
+            clock,
+        )
 
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect()
@@ -169,16 +173,21 @@ class TaskCategoryDetailViewModelTest {
         runTest(mainDispatcherRule.testDispatcher) {
             val category = genTaskCategory()
             val tasks = genTasks()
+            val clock = createClock()
             val db = FakeDatabase().apply {
                 tasks.forEach(::insertTask)
                 insertTaskCategory(taskCategory = category, taskIds = tasks.map { it.id }.toSet())
             }
-            val taskRepository = FakeTaskRepository(db)
+            val taskRepository = FakeTaskRepository(db, clock)
             val taskCategoryRepository = spyk(FakeTaskCategoryRepository(db))
             coEvery { taskCategoryRepository.delete(any()) } throws RuntimeException("Test")
 
-            val viewModel =
-                createTaskCategoryDetailViewModel(taskCategoryRepository, taskRepository)
+            val viewModel = TaskCategoryDetailViewModel(
+                createSavedStateHandle(),
+                taskCategoryRepository,
+                taskRepository,
+                clock,
+            )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -229,13 +238,27 @@ class TaskCategoryDetailViewModelTest {
         )
     }.take(faker.random.nextInt(bound = 5)).toList()
 
+    private fun createSavedStateHandle(): SavedStateHandle {
+        mockkStatic("androidx.navigation.SavedStateHandleKt")
+        val savedStateHandle = mockk<SavedStateHandle>()
+        every {
+            savedStateHandle.toRoute<TaskCategoryDetailRoute>()
+        } returns TaskCategoryDetailRoute(id = 1L)
+        return savedStateHandle
+    }
+
+    private fun createClock() = Clock.systemDefaultZone()
+
     private fun createTaskCategoryDetailViewModel(
-        taskCategoryRepository: TaskCategoryRepository,
-        taskRepository: TaskRepository,
-    ) = TaskCategoryDetailViewModel(
-        SavedStateHandle(mapOf(NavArguments.ID_KEY to 1L)),
-        taskCategoryRepository,
-        taskRepository,
-        Clock.systemDefaultZone(),
-    )
+        initDatabase: (FakeDatabase) -> Unit,
+    ): TaskCategoryDetailViewModel {
+        val clock = createClock()
+        val db = FakeDatabase().also(initDatabase)
+        return TaskCategoryDetailViewModel(
+            createSavedStateHandle(),
+            FakeTaskCategoryRepository(db),
+            FakeTaskRepository(db, clock),
+            clock,
+        )
+    }
 }

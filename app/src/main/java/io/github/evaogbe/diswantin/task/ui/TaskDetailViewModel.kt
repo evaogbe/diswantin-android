@@ -3,6 +3,7 @@ package io.github.evaogbe.diswantin.task.ui
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.toRoute
 import androidx.paging.cachedIn
 import androidx.paging.map
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -11,7 +12,6 @@ import io.github.evaogbe.diswantin.data.Result
 import io.github.evaogbe.diswantin.task.data.TaskDetail
 import io.github.evaogbe.diswantin.task.data.TaskRecurrence
 import io.github.evaogbe.diswantin.task.data.TaskRepository
-import io.github.evaogbe.diswantin.ui.navigation.NavArguments
 import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,7 +36,7 @@ class TaskDetailViewModel @Inject constructor(
     clock: Clock,
     locale: Locale,
 ) : ViewModel() {
-    private val taskId: Long = checkNotNull(savedStateHandle[NavArguments.ID_KEY])
+    private val taskId = savedStateHandle.toRoute<TaskDetailRoute>().id
 
     private val initialized = MutableStateFlow(false)
 

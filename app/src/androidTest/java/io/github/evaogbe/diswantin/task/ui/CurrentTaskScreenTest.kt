@@ -39,13 +39,10 @@ class CurrentTaskScreenTest {
 
     @Test
     fun displaysCurrentTaskName_withCurrentTask() {
-        val clock = createClock()
         val task = genTasks(1).single()
-        val db = FakeDatabase().apply {
-            insertTask(task)
+        val viewModel = createCurrentTaskViewModel { db ->
+            db.insertTask(task)
         }
-        val taskRepository = FakeTaskRepository(db, clock)
-        val viewModel = CurrentTaskViewModel(taskRepository, clock)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -67,10 +64,7 @@ class CurrentTaskScreenTest {
 
     @Test
     fun displaysEmptyMessage_withoutCurrentTask() {
-        val clock = createClock()
-        val db = FakeDatabase()
-        val taskRepository = FakeTaskRepository(db, clock)
-        val viewModel = CurrentTaskViewModel(taskRepository, clock)
+        val viewModel = createCurrentTaskViewModel {}
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -93,8 +87,8 @@ class CurrentTaskScreenTest {
 
     @Test
     fun displayErrorMessage_withFailureUi() {
-        val clock = createClock()
         val task = genTasks(1).single()
+        val clock = createClock()
         val db = FakeDatabase().apply {
             insertTask(task)
         }
@@ -127,10 +121,7 @@ class CurrentTaskScreenTest {
     @Test
     fun callsOnAddTask_whenClickAddTask() {
         var onAddTaskCalled = false
-        val clock = createClock()
-        val db = FakeDatabase()
-        val taskRepository = FakeTaskRepository(db, clock)
-        val viewModel = CurrentTaskViewModel(taskRepository, clock)
+        val viewModel = createCurrentTaskViewModel {}
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -239,14 +230,11 @@ class CurrentTaskScreenTest {
 
     @Test
     fun displaysNextTaskName_whenClickMarkDone() {
-        val clock = createClock()
         val (task1, task2) = genTasks(2)
-        val db = FakeDatabase().apply {
-            insertTask(task1)
-            insertTask(task2)
+        val viewModel = createCurrentTaskViewModel { db ->
+            db.insertTask(task1)
+            db.insertTask(task2)
         }
-        val taskRepository = FakeTaskRepository(db, clock)
-        val viewModel = CurrentTaskViewModel(taskRepository, clock)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -323,4 +311,13 @@ class CurrentTaskScreenTest {
 
     private fun createClock() =
         Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
+
+    private fun createCurrentTaskViewModel(
+        initDatabase: (FakeDatabase) -> Unit
+    ): CurrentTaskViewModel {
+        val clock = createClock()
+        val db = FakeDatabase().also(initDatabase)
+        val taskRepository = FakeTaskRepository(db, clock)
+        return CurrentTaskViewModel(taskRepository, clock)
+    }
 }

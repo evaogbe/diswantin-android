@@ -15,7 +15,6 @@ import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.stringResource
 import io.github.evaogbe.diswantin.ui.components.PendingLayoutTestTag
-import io.github.evaogbe.diswantin.ui.navigation.NavArguments
 import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.serpro69.kfaker.Faker
@@ -115,18 +114,10 @@ class TaskDetailScreenTest {
     @Test
     fun togglesTaskDone() {
         var topBarState: TaskDetailTopBarState? = null
-        val clock = createClock()
         val task = genTask()
-        val db = FakeDatabase().apply {
-            insertTask(task)
+        val viewModel = createTaskDetailViewModel { db ->
+            db.insertTask(task)
         }
-        val taskRepository = FakeTaskRepository(db, clock)
-        val viewModel = TaskDetailViewModel(
-            createSavedStateHandle(),
-            taskRepository,
-            clock,
-            Locale.US,
-        )
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -242,18 +233,10 @@ class TaskDetailScreenTest {
     @Test
     fun popsBackStack_whenTaskDeleted() {
         var onPopBackStackCalled = false
-        val clock = createClock()
         val task = genTask()
-        val db = FakeDatabase().apply {
-            insertTask(task)
+        val viewModel = createTaskDetailViewModel { db ->
+            db.insertTask(task)
         }
-        val taskRepository = FakeTaskRepository(db, clock)
-        val viewModel = TaskDetailViewModel(
-            createSavedStateHandle(),
-            taskRepository,
-            clock,
-            Locale.US,
-        )
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -322,8 +305,21 @@ class TaskDetailScreenTest {
         name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
     )
 
-    private fun createSavedStateHandle() = SavedStateHandle(mapOf(NavArguments.ID_KEY to 1L))
+    private fun createSavedStateHandle() = SavedStateHandle(mapOf("id" to 1L))
 
     private fun createClock() =
         Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
+
+    private fun createLocale() = Locale.US
+
+    private fun createTaskDetailViewModel(initDatabase: (FakeDatabase) -> Unit): TaskDetailViewModel {
+        val clock = createClock()
+        val db = FakeDatabase().also(initDatabase)
+        return TaskDetailViewModel(
+            createSavedStateHandle(),
+            FakeTaskRepository(db, clock),
+            clock,
+            createLocale(),
+        )
+    }
 }
