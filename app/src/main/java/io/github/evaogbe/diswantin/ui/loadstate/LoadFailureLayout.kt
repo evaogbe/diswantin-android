@@ -1,4 +1,4 @@
-package io.github.evaogbe.diswantin.ui.components
+package io.github.evaogbe.diswantin.ui.loadstate
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -24,6 +24,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import io.github.evaogbe.diswantin.R
+import io.github.evaogbe.diswantin.ui.button.OutlinedButtonWithIcon
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.evaogbe.diswantin.ui.theme.IconSizeLg
 import io.github.evaogbe.diswantin.ui.theme.ScreenLg
@@ -67,7 +68,7 @@ fun LoadFailureLayout(
                     colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = colorScheme.error,
                     ),
-                    border = ButtonDefaults.outlinedButtonBorder.copy(
+                    border = ButtonDefaults.outlinedButtonBorder().copy(
                         brush = SolidColor(colorScheme.error),
                     ),
                 )

@@ -1,4 +1,4 @@
-package io.github.evaogbe.diswantin.ui.components
+package io.github.evaogbe.diswantin.ui.dialog
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column

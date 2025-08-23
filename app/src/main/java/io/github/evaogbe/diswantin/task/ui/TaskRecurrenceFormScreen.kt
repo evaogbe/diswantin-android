@@ -59,8 +59,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.RecurrenceType
-import io.github.evaogbe.diswantin.ui.components.DiswantinDatePickerDialog
-import io.github.evaogbe.diswantin.ui.components.EditFieldButton
+import io.github.evaogbe.diswantin.ui.dialog.DiswantinDatePickerDialog
+import io.github.evaogbe.diswantin.ui.form.EditFieldButton
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.evaogbe.diswantin.ui.theme.ScreenLg
 import io.github.evaogbe.diswantin.ui.theme.SpaceMd

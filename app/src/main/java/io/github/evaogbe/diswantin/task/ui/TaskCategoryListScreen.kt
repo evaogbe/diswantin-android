@@ -42,10 +42,10 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.TaskCategory
-import io.github.evaogbe.diswantin.ui.components.ButtonWithIcon
-import io.github.evaogbe.diswantin.ui.components.LoadFailureLayout
-import io.github.evaogbe.diswantin.ui.components.PendingLayout
-import io.github.evaogbe.diswantin.ui.components.pagedListFooter
+import io.github.evaogbe.diswantin.ui.button.ButtonWithIcon
+import io.github.evaogbe.diswantin.ui.loadstate.LoadFailureLayout
+import io.github.evaogbe.diswantin.ui.loadstate.PendingLayout
+import io.github.evaogbe.diswantin.ui.loadstate.pagedListFooter
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.evaogbe.diswantin.ui.theme.IconSizeLg
 import io.github.evaogbe.diswantin.ui.theme.ScreenLg
