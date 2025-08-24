@@ -12,6 +12,7 @@ import assertk.assertions.isTrue
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.testing.FakeDatabase
+import io.github.evaogbe.diswantin.testing.FakeTagRepository
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.stringResource
 import io.github.evaogbe.diswantin.ui.loadstate.PendingLayoutTestTag
@@ -52,8 +53,14 @@ class TaskDetailScreenTest {
             insertTask(task)
         }
         val taskRepository = FakeTaskRepository(db, clock)
-        val viewModel =
-            TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock, Locale.US)
+        val tagRepository = FakeTagRepository(db)
+        val viewModel = TaskDetailViewModel(
+            createSavedStateHandle(),
+            taskRepository,
+            tagRepository,
+            clock,
+            Locale.US,
+        )
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -64,7 +71,7 @@ class TaskDetailScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     onNavigateToTask = {},
-                    onNavigateToCategory = {},
+                    onNavigateToTag = {},
                     taskDetailViewModel = viewModel,
                 )
             }
@@ -85,9 +92,11 @@ class TaskDetailScreenTest {
             throw RuntimeException("Test")
         }
 
+        val tagRepository = FakeTagRepository(db)
         val viewModel = TaskDetailViewModel(
             createSavedStateHandle(),
             taskRepository,
+            tagRepository,
             clock,
             Locale.US,
         )
@@ -101,7 +110,7 @@ class TaskDetailScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     onNavigateToTask = {},
-                    onNavigateToCategory = {},
+                    onNavigateToTag = {},
                     taskDetailViewModel = viewModel,
                 )
             }
@@ -128,7 +137,7 @@ class TaskDetailScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     onNavigateToTask = {},
-                    onNavigateToCategory = {},
+                    onNavigateToTag = {},
                     taskDetailViewModel = viewModel,
                 )
             }
@@ -160,9 +169,11 @@ class TaskDetailScreenTest {
         val taskRepository = spyk(FakeTaskRepository(db, clock))
         coEvery { taskRepository.markDone(any()) } throws RuntimeException("Test")
 
+        val tagRepository = FakeTagRepository(db)
         val viewModel = TaskDetailViewModel(
             createSavedStateHandle(),
             taskRepository,
+            tagRepository,
             clock,
             Locale.US,
         )
@@ -176,7 +187,7 @@ class TaskDetailScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = { userMessage = it },
                     onNavigateToTask = {},
-                    onNavigateToCategory = {},
+                    onNavigateToTag = {},
                     taskDetailViewModel = viewModel,
                 )
             }
@@ -200,9 +211,11 @@ class TaskDetailScreenTest {
         val taskRepository = spyk(FakeTaskRepository(db, clock))
         coEvery { taskRepository.unmarkDone(any()) } throws RuntimeException("Test")
 
+        val tagRepository = FakeTagRepository(db)
         val viewModel = TaskDetailViewModel(
             createSavedStateHandle(),
             taskRepository,
+            tagRepository,
             clock,
             Locale.US,
         )
@@ -217,7 +230,7 @@ class TaskDetailScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = { userMessage = it },
                     onNavigateToTask = {},
-                    onNavigateToCategory = {},
+                    onNavigateToTag = {},
                     taskDetailViewModel = viewModel,
                 )
             }
@@ -247,7 +260,7 @@ class TaskDetailScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     onNavigateToTask = {},
-                    onNavigateToCategory = {},
+                    onNavigateToTag = {},
                     taskDetailViewModel = viewModel,
                 )
             }
@@ -270,9 +283,11 @@ class TaskDetailScreenTest {
         val taskRepository = spyk(FakeTaskRepository(db, clock))
         coEvery { taskRepository.delete(any()) } throws RuntimeException("Test")
 
+        val tagRepository = FakeTagRepository(db)
         val viewModel = TaskDetailViewModel(
             createSavedStateHandle(),
             taskRepository,
+            tagRepository,
             clock,
             Locale.US,
         )
@@ -286,7 +301,7 @@ class TaskDetailScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = { userMessage = it },
                     onNavigateToTask = {},
-                    onNavigateToCategory = {},
+                    onNavigateToTag = {},
                     taskDetailViewModel = viewModel,
                 )
             }
@@ -318,6 +333,7 @@ class TaskDetailScreenTest {
         return TaskDetailViewModel(
             createSavedStateHandle(),
             FakeTaskRepository(db, clock),
+            FakeTagRepository(db),
             clock,
             createLocale(),
         )

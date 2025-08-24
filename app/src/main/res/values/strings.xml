@@ -8,7 +8,7 @@
     <string name="add_start_after_date_button">Add start after date</string>
     <string name="add_start_after_time_button">Add start after time</string>
     <string name="add_task_button">Add to-do</string>
-    <string name="add_task_category_button">Add category</string>
+    <string name="add_tag_button">Add tag</string>
     <string name="advice_title">Advice</string>
     <string name="app_name">Diswantin</string>
     <string name="back_button">Back</string>
@@ -37,7 +37,7 @@
     <string name="done_button">Done</string>
     <string name="done_chip_label_unselected">Marked done</string>
     <string name="done_chip_label_selected">Done: %1$s-%2$s</string>
-    <string name="form_type_button_category">Category</string>
+    <string name="form_type_button_tag">Tag</string>
     <string name="form_type_button_task">Task</string>
     <string name="mark_done_button">Mark done</string>
     <string name="more_actions_button">More actions</string>
@@ -110,6 +110,7 @@
         <item quantity="other">Every %1$d years</item>
     </plurals>
     <string name="refresh_button">Refresh</string>
+    <string name="remove_button">Remove</string>
     <string name="retry_button">Retry</string>
     <string name="save_button">Save</string>
     <string name="scheduled_at_label">Scheduled at</string>
@@ -117,7 +118,7 @@
     <string name="scheduled_chip_label">Scheduled: %1$s-%2$s</string>
     <string name="scheduled_time_label">Scheduled time</string>
     <string name="search_tasks_button">Search to-dos</string>
-    <string name="search_task_category_options_error">Something went wrong loading categories</string>
+    <string name="search_tag_options_error">Something went wrong loading tags</string>
     <string name="search_task_options_error">Something went wrong loading to-dos</string>
     <string name="skip_button">Skip</string>
     <string name="skip_sheet_confirm_button">Other</string>
@@ -158,26 +159,27 @@
     <string name="suggestion_item_sleep"><![CDATA[Sleepy? Take a <b>nap</b>]]></string>
     <string name="suggestion_item_snack"><![CDATA[Hungry? Grab a <b>snack</b>]]></string>
     <string name="suggestion_item_stop"><![CDATA[<b>STOP</b>. Take a deep breath. Observe your distress level, body sensations, thoughts, and feelings. Proceed honoring your emotions and thoughts]]></string>
-    <string name="task_category_detail_delete_error">Something went wrong deleting the category</string>
-    <string name="task_category_detail_fetch_error">Something went wrong loading the category</string>
-    <string name="task_category_detail_fetch_tasks_error">Something went wrong loading the to-dos</string>
-    <string name="task_category_form_fetch_error">Something went wrong loading the category</string>
-    <string name="task_category_form_fetch_tasks_error">Something went wrong loading the to-dos</string>
-    <string name="task_category_form_save_error_edit">Something went wrong editing the category</string>
-    <string name="task_category_form_save_error_new">Something went wrong adding the category</string>
-    <string name="task_category_form_title_edit">Edit Category</string>
-    <string name="task_category_form_title_new">New Category</string>
-    <string name="task_category_label">Category</string>
-    <string name="task_category_list_empty">No categories added</string>
-    <string name="task_category_list_fetch_error">Something went wrong loading the categories</string>
-    <string name="task_category_list_title">Categories</string>
+    <string name="tag_detail_delete_error">Something went wrong deleting the tag</string>
+    <string name="tag_detail_fetch_error">Something went wrong loading the tag</string>
+    <string name="tag_detail_fetch_tasks_error">Something went wrong loading the to-dos</string>
+    <string name="tag_form_fetch_error">Something went wrong loading the tag</string>
+    <string name="tag_form_fetch_tasks_error">Something went wrong loading the to-dos</string>
+    <string name="tag_form_save_error_edit">Something went wrong editing the tag</string>
+    <string name="tag_form_save_error_new">Something went wrong adding the tag</string>
+    <string name="tag_form_title_edit">Edit Tag</string>
+    <string name="tag_form_title_new">New Tag</string>
+    <string name="tag_name_label">Tag name</string>
+    <string name="tags_label">Tags</string>
+    <string name="tag_list_empty">No tags added</string>
+    <string name="tag_list_fetch_error">Something went wrong loading the tags</string>
+    <string name="tag_list_title">Tags</string>
     <string name="task_detail_delete_error">Something went wrong deleting the to-do</string>
     <string name="task_detail_fetch_children_error">Something went wrong loading the next to-dos</string>
     <string name="task_detail_fetch_error">Something went wrong loading the to-do</string>
     <string name="task_detail_mark_done_error">Something went wrong marking the to-do as done</string>
     <string name="task_detail_unmark_done_error">Something went wrong unmarking the to-do as done</string>
     <string name="task_name_done">%1$s, done</string>
-    <string name="task_form_fetch_category_error">Something went wrong loading category info</string>
+    <string name="task_form_fetch_tags_error">Something went wrong loading the tags</string>
     <string name="task_form_fetch_error">Something went wrong loading the to-do</string>
     <string name="task_form_fetch_parent_task_error">Something went wrong loading to-do info</string>
     <string name="task_form_save_error_edit">Something went wrong editing the to-do</string>
@@ -195,5 +197,4 @@
     <string name="time_picker_switch_to_input_mode">Switch to text input mode</string>
     <string name="unmark_done_button">Unmark done</string>
     <string name="view_task_button">View to-do</string>
-    <string name="view_task_category_button">View category</string>
 </resources>

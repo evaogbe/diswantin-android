@@ -158,7 +158,7 @@ private fun AutocompleteFieldPreview() {
                 query = TextFieldValue("Br"),
                 onQueryChange = {},
                 focusRequester = focusRequester,
-                label = { Text("Task before") },
+                label = { Text(text = "Task before") },
                 onSearch = {},
                 options = persistentListOf("Brush teeth", "Brush hair", "Eat breakfast"),
                 formatOption = { it },

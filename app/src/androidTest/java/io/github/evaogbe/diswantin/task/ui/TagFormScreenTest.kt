@@ -11,16 +11,18 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeLeft
 import androidx.lifecycle.SavedStateHandle
 import assertk.assertThat
 import assertk.assertions.isTrue
 import io.github.evaogbe.diswantin.R
+import io.github.evaogbe.diswantin.task.data.Tag
+import io.github.evaogbe.diswantin.task.data.TagRepository
 import io.github.evaogbe.diswantin.task.data.Task
-import io.github.evaogbe.diswantin.task.data.TaskCategory
-import io.github.evaogbe.diswantin.task.data.TaskCategoryRepository
 import io.github.evaogbe.diswantin.task.data.TaskRepository
 import io.github.evaogbe.diswantin.testing.FakeDatabase
-import io.github.evaogbe.diswantin.testing.FakeTaskCategoryRepository
+import io.github.evaogbe.diswantin.testing.FakeTagRepository
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.stringResource
 import io.github.evaogbe.diswantin.ui.loadstate.PendingLayoutTestTag
@@ -36,7 +38,7 @@ import org.junit.Rule
 import org.junit.Test
 
 @OptIn(ExperimentalTestApi::class)
-class TaskCategoryFormScreenTest {
+class TagFormScreenTest {
     @get:Rule
     val composeTestRule = createComposeRule()
 
@@ -53,13 +55,13 @@ class TaskCategoryFormScreenTest {
                 name = "${loremFaker.verbs.unique.base()} ${loremFaker.lorem.words()}",
             )
         }
-        val viewModel = createTaskCategoryFormViewModelForNew { db ->
+        val viewModel = createTagFormViewModelForNew { db ->
             tasks.forEach(db::insertTask)
         }
 
         composeTestRule.setContent {
             DiswantinTheme {
-                TaskCategoryFormScreen(
+                TagFormScreen(
                     onPopBackStack = {},
                     setTopBarState = {},
                     topBarAction = null,
@@ -67,7 +69,7 @@ class TaskCategoryFormScreenTest {
                     setUserMessage = {},
                     initialName = "",
                     onSelectTaskType = {},
-                    taskCategoryFormViewModel = viewModel,
+                    tagFormViewModel = viewModel,
                 )
             }
         }
@@ -75,20 +77,20 @@ class TaskCategoryFormScreenTest {
         composeTestRule.onNodeWithText(
             stringResource(R.string.task_name_label),
             useUnmergedTree = true,
-        ).onParent().performTextInput(tasks[0].name.dropLast(1))
+        ).onParent().performTextInput(tasks[0].name.substring(0, 1))
 
         composeTestRule.waitForIdle()
         composeTestRule.waitUntilExactlyOneExists(hasText(tasks[0].name))
         composeTestRule.onNodeWithText(tasks[0].name).performClick()
 
         tasks.drop(1).forEach { task ->
-            composeTestRule.onNodeWithTag(TaskCategoryFormLayoutTestTag)
+            composeTestRule.onNodeWithTag(TagFormLayoutTestTag)
                 .performScrollToNode(hasText(stringResource(R.string.add_task_button)))
             composeTestRule.onNodeWithText(stringResource(R.string.add_task_button)).performClick()
             composeTestRule.onNodeWithText(
                 stringResource(R.string.task_name_label),
                 useUnmergedTree = true,
-            ).onParent().performTextInput(task.name.dropLast(1))
+            ).onParent().performTextInput(task.name.substring(0, 1))
 
             composeTestRule.waitForIdle()
             composeTestRule.waitUntilExactlyOneExists(hasText(task.name))
@@ -101,23 +103,31 @@ class TaskCategoryFormScreenTest {
             stringResource(R.string.task_name_label),
             useUnmergedTree = true,
         ).assertDoesNotExist()
+
+        composeTestRule.onNodeWithTag(TagFormLayoutTestTag)
+            .performScrollToNode(hasText(tasks[0].name))
+        composeTestRule.onNodeWithText(tasks[0].name).performTouchInput { swipeLeft() }
+
+        composeTestRule.onNodeWithTag(TagFormLayoutTestTag)
+            .performScrollToNode(hasText(stringResource(R.string.add_task_button)))
+        composeTestRule.onNodeWithText(stringResource(R.string.add_task_button))
+            .assertIsDisplayed()
     }
 
     @Test
     fun displaysErrorMessage_withFailureUi() {
         val db = FakeDatabase()
         val taskRepository = FakeTaskRepository(db)
-        val taskCategoryRepository = spyk(FakeTaskCategoryRepository(db))
-        every { taskCategoryRepository.getById(any()) } returns flow {
+        val tagRepository = spyk(FakeTagRepository(db))
+        every { tagRepository.getById(any()) } returns flow {
             throw RuntimeException("Test")
         }
 
-        val viewModel =
-            createTaskCategoryFormViewModelForEdit(taskCategoryRepository, taskRepository)
+        val viewModel = createTagFormViewModelForEdit(tagRepository, taskRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
-                TaskCategoryFormScreen(
+                TagFormScreen(
                     onPopBackStack = {},
                     setTopBarState = {},
                     topBarAction = null,
@@ -125,12 +135,12 @@ class TaskCategoryFormScreenTest {
                     setUserMessage = {},
                     initialName = "",
                     onSelectTaskType = {},
-                    taskCategoryFormViewModel = viewModel,
+                    tagFormViewModel = viewModel,
                 )
             }
         }
 
-        composeTestRule.onNodeWithText(stringResource(R.string.task_category_form_fetch_error))
+        composeTestRule.onNodeWithText(stringResource(R.string.tag_form_fetch_error))
             .assertIsDisplayed()
     }
 
@@ -144,13 +154,13 @@ class TaskCategoryFormScreenTest {
                 name = "$query ${loremFaker.lorem.unique.words()}",
             )
         }
-        val viewModel = createTaskCategoryFormViewModelForNew { db ->
+        val viewModel = createTagFormViewModelForNew { db ->
             tasks.forEach(db::insertTask)
         }
 
         composeTestRule.setContent {
             DiswantinTheme {
-                TaskCategoryFormScreen(
+                TagFormScreen(
                     onPopBackStack = {},
                     setTopBarState = {},
                     topBarAction = null,
@@ -158,7 +168,7 @@ class TaskCategoryFormScreenTest {
                     setUserMessage = {},
                     initialName = "",
                     onSelectTaskType = {},
-                    taskCategoryFormViewModel = viewModel,
+                    tagFormViewModel = viewModel,
                 )
             }
         }
@@ -179,15 +189,16 @@ class TaskCategoryFormScreenTest {
         val query = loremFaker.verbs.base()
         val db = FakeDatabase()
         val taskRepository = spyk(FakeTaskRepository(db))
-        every { taskRepository.search(any()) } returns flow { throw RuntimeException("Test") }
+        every { taskRepository.searchTaggedTasks(any(), any(), any()) } returns flow {
+            throw RuntimeException("Test")
+        }
 
-        val taskCategoryRepository = FakeTaskCategoryRepository(db)
-        val viewModel =
-            createTaskCategoryFormViewModelForNew(taskCategoryRepository, taskRepository)
+        val tagRepository = FakeTagRepository(db)
+        val viewModel = createTagFormViewModelForNew(tagRepository, taskRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
-                TaskCategoryFormScreen(
+                TagFormScreen(
                     onPopBackStack = {},
                     setTopBarState = {},
                     topBarAction = null,
@@ -195,7 +206,7 @@ class TaskCategoryFormScreenTest {
                     setUserMessage = { userMessage = it },
                     initialName = "",
                     onSelectTaskType = {},
-                    taskCategoryFormViewModel = viewModel,
+                    tagFormViewModel = viewModel,
                 )
             }
         }
@@ -210,7 +221,7 @@ class TaskCategoryFormScreenTest {
     }
 
     @Test
-    fun popsBackStack_whenCategoryCreated() {
+    fun popsBackStack_whenTagCreated() {
         var onPopBackStackCalled = false
         val name = loremFaker.lorem.words()
         val tasks = List(3) {
@@ -220,13 +231,13 @@ class TaskCategoryFormScreenTest {
                 name = "${loremFaker.verbs.unique.base()} ${loremFaker.lorem.words()}"
             )
         }
-        val viewModel = createTaskCategoryFormViewModelForNew { db ->
+        val viewModel = createTagFormViewModelForNew { db ->
             tasks.forEach(db::insertTask)
         }
 
         composeTestRule.setContent {
             DiswantinTheme {
-                TaskCategoryFormScreen(
+                TagFormScreen(
                     onPopBackStack = { onPopBackStackCalled = true },
                     setTopBarState = {},
                     topBarAction = null,
@@ -234,7 +245,7 @@ class TaskCategoryFormScreenTest {
                     setUserMessage = {},
                     initialName = "",
                     onSelectTaskType = {},
-                    taskCategoryFormViewModel = viewModel,
+                    tagFormViewModel = viewModel,
                 )
             }
         }
@@ -253,7 +264,7 @@ class TaskCategoryFormScreenTest {
             composeTestRule.onNodeWithText(stringResource(R.string.add_task_button)).performClick()
         }
 
-        viewModel.saveCategory()
+        viewModel.saveTag()
 
         composeTestRule.onNodeWithTag(PendingLayoutTestTag).assertIsDisplayed()
         assertThat(onPopBackStackCalled).isTrue()
@@ -265,15 +276,15 @@ class TaskCategoryFormScreenTest {
         val name = loremFaker.lorem.words()
         val db = FakeDatabase()
         val taskRepository = FakeTaskRepository(db)
-        val taskCategoryRepository = spyk(FakeTaskCategoryRepository(db))
-        coEvery { taskCategoryRepository.create(any()) } throws RuntimeException("Test")
+        val tagRepository = spyk(FakeTagRepository(db))
+        coEvery { tagRepository.create(any()) } throws RuntimeException("Test")
 
         val viewModel =
-            createTaskCategoryFormViewModelForNew(taskCategoryRepository, taskRepository)
+            createTagFormViewModelForNew(tagRepository, taskRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
-                TaskCategoryFormScreen(
+                TagFormScreen(
                     onPopBackStack = {},
                     setTopBarState = {},
                     topBarAction = null,
@@ -281,33 +292,33 @@ class TaskCategoryFormScreenTest {
                     setUserMessage = { userMessage = it },
                     initialName = "",
                     onSelectTaskType = {},
-                    taskCategoryFormViewModel = viewModel,
+                    tagFormViewModel = viewModel,
                 )
             }
         }
 
         composeTestRule.onNodeWithText(stringResource(R.string.name_label), useUnmergedTree = true)
             .onParent().performTextInput(name)
-        viewModel.saveCategory()
+        viewModel.saveTag()
 
         composeTestRule.waitForIdle()
         composeTestRule.waitUntil {
-            userMessage == UserMessage.String(R.string.task_category_form_save_error_new)
+            userMessage == UserMessage.String(R.string.tag_form_save_error_new)
         }
     }
 
     @Test
-    fun popsBackStack_whenCategoryUpdated() {
+    fun popsBackStack_whenTagUpdated() {
         var onPopBackStackCalled = false
         val name = loremFaker.lorem.words()
-        val category = genTaskCategory()
-        val viewModel = createTaskCategoryFormViewModelForEdit { db ->
-            db.insertTaskCategory(category, emptySet())
+        val tag = genTag()
+        val viewModel = createTagFormViewModelForEdit { db ->
+            db.insertTag(tag)
         }
 
         composeTestRule.setContent {
             DiswantinTheme {
-                TaskCategoryFormScreen(
+                TagFormScreen(
                     onPopBackStack = { onPopBackStackCalled = true },
                     setTopBarState = {},
                     topBarAction = null,
@@ -315,14 +326,14 @@ class TaskCategoryFormScreenTest {
                     setUserMessage = {},
                     initialName = "",
                     onSelectTaskType = {},
-                    taskCategoryFormViewModel = viewModel,
+                    tagFormViewModel = viewModel,
                 )
             }
         }
 
         composeTestRule.onNodeWithText(stringResource(R.string.name_label), useUnmergedTree = true)
             .onParent().performTextReplacement(name)
-        viewModel.saveCategory()
+        viewModel.saveTag()
 
         composeTestRule.onNodeWithTag(PendingLayoutTestTag).assertIsDisplayed()
         assertThat(onPopBackStackCalled).isTrue()
@@ -332,20 +343,20 @@ class TaskCategoryFormScreenTest {
     fun displaysErrorMessage_withSaveErrorForEdit() {
         var userMessage: UserMessage? = null
         val name = loremFaker.lorem.words()
-        val category = genTaskCategory()
+        val tag = genTag()
         val db = FakeDatabase().apply {
-            insertTaskCategory(category, emptySet())
+            insertTag(tag)
         }
         val taskRepository = FakeTaskRepository(db)
-        val taskCategoryRepository = spyk(FakeTaskCategoryRepository(db))
-        coEvery { taskCategoryRepository.update(any()) } throws RuntimeException("Test")
+        val tagRepository = spyk(FakeTagRepository(db))
+        coEvery { tagRepository.update(any()) } throws RuntimeException("Test")
 
         val viewModel =
-            createTaskCategoryFormViewModelForEdit(taskCategoryRepository, taskRepository)
+            createTagFormViewModelForEdit(tagRepository, taskRepository)
 
         composeTestRule.setContent {
             DiswantinTheme {
-                TaskCategoryFormScreen(
+                TagFormScreen(
                     onPopBackStack = {},
                     setTopBarState = {},
                     topBarAction = null,
@@ -353,59 +364,59 @@ class TaskCategoryFormScreenTest {
                     setUserMessage = { userMessage = it },
                     initialName = "",
                     onSelectTaskType = {},
-                    taskCategoryFormViewModel = viewModel,
+                    tagFormViewModel = viewModel,
                 )
             }
         }
 
         composeTestRule.onNodeWithText(stringResource(R.string.name_label), useUnmergedTree = true)
             .onParent().performTextReplacement(name)
-        viewModel.saveCategory()
+        viewModel.saveTag()
 
         composeTestRule.waitUntil {
-            userMessage == UserMessage.String(R.string.task_category_form_save_error_edit)
+            userMessage == UserMessage.String(R.string.tag_form_save_error_edit)
         }
     }
 
-    private fun genTaskCategory() = TaskCategory(id = 1L, name = loremFaker.lorem.words())
+    private fun genTag() = Tag(id = 1L, name = loremFaker.lorem.words())
 
     private fun createSavedStateHandleForEdit() = SavedStateHandle(mapOf("id" to 1L))
 
-    private fun createTaskCategoryFormViewModelForNew(
+    private fun createTagFormViewModelForNew(
         initDatabase: (FakeDatabase) -> Unit = {},
-    ): TaskCategoryFormViewModel {
+    ): TagFormViewModel {
         val db = FakeDatabase().also(initDatabase)
-        return createTaskCategoryFormViewModelForNew(
-            FakeTaskCategoryRepository(db),
+        return createTagFormViewModelForNew(
+            FakeTagRepository(db),
             FakeTaskRepository(db),
         )
     }
 
-    private fun createTaskCategoryFormViewModelForNew(
-        taskCategoryRepository: TaskCategoryRepository,
+    private fun createTagFormViewModelForNew(
+        tagRepository: TagRepository,
         taskRepository: TaskRepository,
-    ) = TaskCategoryFormViewModel(
+    ) = TagFormViewModel(
         SavedStateHandle(),
-        taskCategoryRepository,
+        tagRepository,
         taskRepository,
     )
 
-    private fun createTaskCategoryFormViewModelForEdit(
+    private fun createTagFormViewModelForEdit(
         initDatabase: (FakeDatabase) -> Unit
-    ): TaskCategoryFormViewModel {
+    ): TagFormViewModel {
         val db = FakeDatabase().also(initDatabase)
-        return createTaskCategoryFormViewModelForEdit(
-            FakeTaskCategoryRepository(db),
+        return createTagFormViewModelForEdit(
+            FakeTagRepository(db),
             FakeTaskRepository(db),
         )
     }
 
-    private fun createTaskCategoryFormViewModelForEdit(
-        taskCategoryRepository: TaskCategoryRepository,
+    private fun createTagFormViewModelForEdit(
+        tagRepository: TagRepository,
         taskRepository: TaskRepository,
-    ) = TaskCategoryFormViewModel(
+    ) = TagFormViewModel(
         createSavedStateHandleForEdit(),
-        taskCategoryRepository,
+        tagRepository,
         taskRepository,
     )
 }

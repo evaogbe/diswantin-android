@@ -9,13 +9,15 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isEqualToIgnoringGivenProperties
 import assertk.assertions.isFalse
 import assertk.assertions.isTrue
+import assertk.assertions.prop
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.RecurrenceType
+import io.github.evaogbe.diswantin.task.data.Tag
 import io.github.evaogbe.diswantin.task.data.Task
-import io.github.evaogbe.diswantin.task.data.TaskCategory
 import io.github.evaogbe.diswantin.task.data.TaskRecurrence
+import io.github.evaogbe.diswantin.task.data.TaskTag
 import io.github.evaogbe.diswantin.testing.FakeDatabase
-import io.github.evaogbe.diswantin.testing.FakeTaskCategoryRepository
+import io.github.evaogbe.diswantin.testing.FakeTagRepository
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.MainDispatcherRule
 import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
@@ -29,7 +31,6 @@ import io.mockk.spyk
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toImmutableList
-import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
@@ -76,9 +77,9 @@ class TaskFormViewModelTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                showCategoryField = false,
-                category = null,
-                categoryOptions = persistentListOf(),
+                tagFieldState = TagFieldState.Hidden,
+                tags = persistentListOf(),
+                tagOptions = persistentListOf(),
                 showParentTaskField = false,
                 parentTask = null,
                 parentTaskOptions = persistentListOf(),
@@ -98,7 +99,7 @@ class TaskFormViewModelTest {
             startAfterTime = LocalTime.parse("17:00"),
         )
         val parentTask = genTask(id = 2L)
-        val category = TaskCategory(id = 1L, name = loremFaker.lorem.words())
+        val tag = Tag(id = 1L, name = loremFaker.lorem.words())
         val clock = createClock()
         val locale = createLocale()
         val db = FakeDatabase().apply {
@@ -113,14 +114,14 @@ class TaskFormViewModelTest {
                 )
             )
             insertChain(parentTask.id, task.id)
-            insertTaskCategory(category, setOf(task.id))
+            insertTag(tag, setOf(task.id))
         }
         val taskRepository = FakeTaskRepository(db, clock)
-        val taskCategoryRepository = FakeTaskCategoryRepository(db)
+        val tagRepository = FakeTagRepository(db)
         val viewModel = TaskFormViewModel(
             createSavedStateHandleForEdit(),
             taskRepository,
-            taskCategoryRepository,
+            tagRepository,
             clock,
             locale,
         )
@@ -147,9 +148,9 @@ class TaskFormViewModelTest {
                 startAfterTime = LocalTime.parse("17:00"),
                 scheduledDate = null,
                 scheduledTime = null,
-                showCategoryField = true,
-                category = category,
-                categoryOptions = persistentListOf(),
+                tagFieldState = TagFieldState.Closed,
+                tags = persistentListOf(tag),
+                tagOptions = persistentListOf(),
                 showParentTaskField = true,
                 parentTask = parentTask,
                 parentTaskOptions = persistentListOf(),
@@ -169,13 +170,13 @@ class TaskFormViewModelTest {
                 insertTask(task)
             }
             val taskRepository = spyk(FakeTaskRepository(db, clock))
-            val taskCategoryRepository = FakeTaskCategoryRepository(db)
+            val tagRepository = FakeTagRepository(db)
             every { taskRepository.getById(any()) } returns flow { throw exception }
 
             val viewModel = TaskFormViewModel(
                 createSavedStateHandleForEdit(),
                 taskRepository,
-                taskCategoryRepository,
+                tagRepository,
                 clock,
                 createLocale(),
             )
@@ -202,11 +203,11 @@ class TaskFormViewModelTest {
                 throw exception
             }
 
-            val taskCategoryRepository = FakeTaskCategoryRepository(db)
+            val tagRepository = FakeTagRepository(db)
             val viewModel = TaskFormViewModel(
                 createSavedStateHandleForEdit(),
                 taskRepository,
-                taskCategoryRepository,
+                tagRepository,
                 clock,
                 createLocale(),
             )
@@ -242,9 +243,9 @@ class TaskFormViewModelTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    showCategoryField = false,
-                    category = null,
-                    categoryOptions = persistentListOf(),
+                    tagFieldState = TagFieldState.Hidden,
+                    tags = persistentListOf(),
+                    tagOptions = persistentListOf(),
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
@@ -277,9 +278,9 @@ class TaskFormViewModelTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    showCategoryField = false,
-                    category = null,
-                    categoryOptions = persistentListOf(),
+                    tagFieldState = TagFieldState.Hidden,
+                    tags = persistentListOf(),
+                    tagOptions = persistentListOf(),
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
@@ -312,9 +313,9 @@ class TaskFormViewModelTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    showCategoryField = false,
-                    category = null,
-                    categoryOptions = persistentListOf(),
+                    tagFieldState = TagFieldState.Hidden,
+                    tags = persistentListOf(),
+                    tagOptions = persistentListOf(),
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
@@ -347,9 +348,9 @@ class TaskFormViewModelTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    showCategoryField = false,
-                    category = null,
-                    categoryOptions = persistentListOf(),
+                    tagFieldState = TagFieldState.Hidden,
+                    tags = persistentListOf(),
+                    tagOptions = persistentListOf(),
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
@@ -382,9 +383,9 @@ class TaskFormViewModelTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    showCategoryField = false,
-                    category = null,
-                    categoryOptions = persistentListOf(),
+                    tagFieldState = TagFieldState.Hidden,
+                    tags = persistentListOf(),
+                    tagOptions = persistentListOf(),
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
@@ -417,9 +418,9 @@ class TaskFormViewModelTest {
                     startAfterTime = startAfterTime,
                     scheduledDate = null,
                     scheduledTime = null,
-                    showCategoryField = false,
-                    category = null,
-                    categoryOptions = persistentListOf(),
+                    tagFieldState = TagFieldState.Hidden,
+                    tags = persistentListOf(),
+                    tagOptions = persistentListOf(),
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
@@ -452,9 +453,9 @@ class TaskFormViewModelTest {
                     startAfterTime = null,
                     scheduledDate = scheduledDate,
                     scheduledTime = null,
-                    showCategoryField = false,
-                    category = null,
-                    categoryOptions = persistentListOf(),
+                    tagFieldState = TagFieldState.Hidden,
+                    tags = persistentListOf(),
+                    tagOptions = persistentListOf(),
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
@@ -488,9 +489,9 @@ class TaskFormViewModelTest {
                     startAfterTime = null,
                     scheduledDate = scheduledAt.toLocalDate(),
                     scheduledTime = scheduledAt.toLocalTime(),
-                    showCategoryField = false,
-                    category = null,
-                    categoryOptions = persistentListOf(),
+                    tagFieldState = TagFieldState.Hidden,
+                    tags = persistentListOf(),
+                    tagOptions = persistentListOf(),
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
@@ -501,18 +502,18 @@ class TaskFormViewModelTest {
         }
 
     @Test
-    fun `uiState emits changed when new form and category changed`() =
+    fun `uiState emits changed when new form and tag changed`() =
         runTest(mainDispatcherRule.testDispatcher) {
-            val category = TaskCategory(id = 1L, name = loremFaker.lorem.words())
+            val tag = Tag(id = 1L, name = loremFaker.lorem.words())
             val viewModel = createTaskFormViewModelForNew { db ->
-                db.insertTaskCategory(category, emptySet())
+                db.insertTag(tag)
             }
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
             }
 
-            viewModel.updateCategory(category)
+            viewModel.addTag(tag)
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
@@ -525,9 +526,9 @@ class TaskFormViewModelTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    showCategoryField = true,
-                    category = category,
-                    categoryOptions = persistentListOf(),
+                    tagFieldState = TagFieldState.Closed,
+                    tags = persistentListOf(tag),
+                    tagOptions = persistentListOf(),
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
@@ -551,11 +552,11 @@ class TaskFormViewModelTest {
             )
             val db = FakeDatabase()
             val taskRepository = FakeTaskRepository(db, clock)
-            val taskCategoryRepository = FakeTaskCategoryRepository(db)
+            val tagRepository = FakeTagRepository(db)
             val viewModel = TaskFormViewModel(
                 createSavedStateHandleForNew(),
                 taskRepository,
-                taskCategoryRepository,
+                tagRepository,
                 clock,
                 locale,
             )
@@ -577,9 +578,9 @@ class TaskFormViewModelTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    showCategoryField = false,
-                    category = null,
-                    categoryOptions = persistentListOf(),
+                    tagFieldState = TagFieldState.Hidden,
+                    tags = persistentListOf(),
+                    tagOptions = persistentListOf(),
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
@@ -614,9 +615,9 @@ class TaskFormViewModelTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    showCategoryField = false,
-                    category = null,
-                    categoryOptions = persistentListOf(),
+                    tagFieldState = TagFieldState.Hidden,
+                    tags = persistentListOf(),
+                    tagOptions = persistentListOf(),
                     showParentTaskField = true,
                     parentTask = parentTask,
                     parentTaskOptions = persistentListOf(),
@@ -651,9 +652,9 @@ class TaskFormViewModelTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    showCategoryField = false,
-                    category = null,
-                    categoryOptions = persistentListOf(),
+                    tagFieldState = TagFieldState.Hidden,
+                    tags = persistentListOf(),
+                    tagOptions = persistentListOf(),
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
@@ -689,9 +690,9 @@ class TaskFormViewModelTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    showCategoryField = false,
-                    category = null,
-                    categoryOptions = persistentListOf(),
+                    tagFieldState = TagFieldState.Hidden,
+                    tags = persistentListOf(),
+                    tagOptions = persistentListOf(),
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
@@ -727,9 +728,9 @@ class TaskFormViewModelTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    showCategoryField = false,
-                    category = null,
-                    categoryOptions = persistentListOf(),
+                    tagFieldState = TagFieldState.Hidden,
+                    tags = persistentListOf(),
+                    tagOptions = persistentListOf(),
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
@@ -765,9 +766,9 @@ class TaskFormViewModelTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    showCategoryField = false,
-                    category = null,
-                    categoryOptions = persistentListOf(),
+                    tagFieldState = TagFieldState.Hidden,
+                    tags = persistentListOf(),
+                    tagOptions = persistentListOf(),
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
@@ -803,9 +804,9 @@ class TaskFormViewModelTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    showCategoryField = false,
-                    category = null,
-                    categoryOptions = persistentListOf(),
+                    tagFieldState = TagFieldState.Hidden,
+                    tags = persistentListOf(),
+                    tagOptions = persistentListOf(),
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
@@ -841,9 +842,9 @@ class TaskFormViewModelTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    showCategoryField = false,
-                    category = null,
-                    categoryOptions = persistentListOf(),
+                    tagFieldState = TagFieldState.Hidden,
+                    tags = persistentListOf(),
+                    tagOptions = persistentListOf(),
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
@@ -879,9 +880,9 @@ class TaskFormViewModelTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    showCategoryField = false,
-                    category = null,
-                    categoryOptions = persistentListOf(),
+                    tagFieldState = TagFieldState.Hidden,
+                    tags = persistentListOf(),
+                    tagOptions = persistentListOf(),
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
@@ -920,9 +921,9 @@ class TaskFormViewModelTest {
                     startAfterTime = null,
                     scheduledDate = scheduledAt.toLocalDate(),
                     scheduledTime = null,
-                    showCategoryField = false,
-                    category = null,
-                    categoryOptions = persistentListOf(),
+                    tagFieldState = TagFieldState.Hidden,
+                    tags = persistentListOf(),
+                    tagOptions = persistentListOf(),
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
@@ -933,20 +934,20 @@ class TaskFormViewModelTest {
         }
 
     @Test
-    fun `uiState emits changed when edit form and category changed`() =
+    fun `uiState emits changed when edit form and tag changed`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val task = genTask()
-            val category = TaskCategory(id = 1L, name = loremFaker.lorem.words())
+            val tag = Tag(id = 1L, name = loremFaker.lorem.words())
             val viewModel = createTaskFormViewModelForEdit { db ->
                 db.insertTask(task)
-                db.insertTaskCategory(category, setOf(task.id))
+                db.insertTag(tag, setOf(task.id))
             }
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
             }
 
-            viewModel.updateCategory(null)
+            viewModel.removeTag(tag)
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
@@ -959,9 +960,9 @@ class TaskFormViewModelTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    showCategoryField = true,
-                    category = null,
-                    categoryOptions = persistentListOf(),
+                    tagFieldState = TagFieldState.Closed,
+                    tags = persistentListOf(),
+                    tagOptions = persistentListOf(),
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
@@ -1004,9 +1005,9 @@ class TaskFormViewModelTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    showCategoryField = false,
-                    category = null,
-                    categoryOptions = persistentListOf(),
+                    tagFieldState = TagFieldState.Hidden,
+                    tags = persistentListOf(),
+                    tagOptions = persistentListOf(),
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
@@ -1044,9 +1045,9 @@ class TaskFormViewModelTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    showCategoryField = false,
-                    category = null,
-                    categoryOptions = persistentListOf(),
+                    tagFieldState = TagFieldState.Hidden,
+                    tags = persistentListOf(),
+                    tagOptions = persistentListOf(),
                     showParentTaskField = true,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
@@ -1078,9 +1079,9 @@ class TaskFormViewModelTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    showCategoryField = false,
-                    category = null,
-                    categoryOptions = persistentListOf(),
+                    tagFieldState = TagFieldState.Hidden,
+                    tags = persistentListOf(),
+                    tagOptions = persistentListOf(),
                     showParentTaskField = true,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
@@ -1116,9 +1117,9 @@ class TaskFormViewModelTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    showCategoryField = false,
-                    category = null,
-                    categoryOptions = persistentListOf(),
+                    tagFieldState = TagFieldState.Hidden,
+                    tags = persistentListOf(),
+                    tagOptions = persistentListOf(),
                     showParentTaskField = true,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
@@ -1138,11 +1139,11 @@ class TaskFormViewModelTest {
             val taskRepository = spyk(FakeTaskRepository(db, clock))
             every { taskRepository.getCount() } returns flow { throw RuntimeException("Test") }
 
-            val taskCategoryRepository = FakeTaskCategoryRepository(db)
+            val tagRepository = FakeTagRepository(db)
             val viewModel = TaskFormViewModel(
                 createSavedStateHandleForNew(),
                 taskRepository,
-                taskCategoryRepository,
+                tagRepository,
                 clock,
                 createLocale(),
             )
@@ -1162,9 +1163,9 @@ class TaskFormViewModelTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    showCategoryField = false,
-                    category = null,
-                    categoryOptions = persistentListOf(),
+                    tagFieldState = TagFieldState.Hidden,
+                    tags = persistentListOf(),
+                    tagOptions = persistentListOf(),
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
@@ -1187,11 +1188,11 @@ class TaskFormViewModelTest {
                 throw RuntimeException("Test")
             }
 
-            val taskCategoryRepository = FakeTaskCategoryRepository(db)
+            val tagRepository = FakeTagRepository(db)
             val viewModel = TaskFormViewModel(
                 createSavedStateHandleForEdit(),
                 taskRepository,
-                taskCategoryRepository,
+                tagRepository,
                 clock,
                 createLocale(),
             )
@@ -1211,9 +1212,9 @@ class TaskFormViewModelTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    showCategoryField = false,
-                    category = null,
-                    categoryOptions = persistentListOf(),
+                    tagFieldState = TagFieldState.Hidden,
+                    tags = persistentListOf(),
+                    tagOptions = persistentListOf(),
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
@@ -1224,42 +1225,41 @@ class TaskFormViewModelTest {
         }
 
     @Test
-    fun `uiState shows category field when has categories`() =
-        runTest(mainDispatcherRule.testDispatcher) {
-            val category = TaskCategory(name = loremFaker.lorem.words())
-            val viewModel = createTaskFormViewModelForNew { db ->
-                db.insertTaskCategory(category, emptySet())
-            }
-
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-                viewModel.uiState.collect()
-            }
-
-            assertThat(viewModel.uiState.value).isEqualTo(
-                TaskFormUiState.Success(
-                    name = "",
-                    note = "",
-                    recurrence = null,
-                    deadlineDate = null,
-                    deadlineTime = null,
-                    startAfterDate = null,
-                    startAfterTime = null,
-                    scheduledDate = null,
-                    scheduledTime = null,
-                    showCategoryField = true,
-                    category = null,
-                    categoryOptions = persistentListOf(),
-                    showParentTaskField = false,
-                    parentTask = null,
-                    parentTaskOptions = persistentListOf(),
-                    changed = false,
-                    userMessage = null,
-                )
-            )
+    fun `uiState shows tag field when has tags`() = runTest(mainDispatcherRule.testDispatcher) {
+        val tag = Tag(name = loremFaker.lorem.words())
+        val viewModel = createTaskFormViewModelForNew { db ->
+            db.insertTag(tag)
         }
 
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiState.collect()
+        }
+
+        assertThat(viewModel.uiState.value).isEqualTo(
+            TaskFormUiState.Success(
+                name = "",
+                note = "",
+                recurrence = null,
+                deadlineDate = null,
+                deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
+                scheduledDate = null,
+                scheduledTime = null,
+                tagFieldState = TagFieldState.Closed,
+                tags = persistentListOf(),
+                tagOptions = persistentListOf(),
+                showParentTaskField = false,
+                parentTask = null,
+                parentTaskOptions = persistentListOf(),
+                changed = false,
+                userMessage = null,
+            )
+        )
+    }
+
     @Test
-    fun `uiState hides category field when does not have categories`() =
+    fun `uiState hides tag field when does not have tags`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val viewModel = createTaskFormViewModelForNew()
 
@@ -1278,9 +1278,9 @@ class TaskFormViewModelTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    showCategoryField = false,
-                    category = null,
-                    categoryOptions = persistentListOf(),
+                    tagFieldState = TagFieldState.Hidden,
+                    tags = persistentListOf(),
+                    tagOptions = persistentListOf(),
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
@@ -1291,23 +1291,23 @@ class TaskFormViewModelTest {
         }
 
     @Test
-    fun `uiState hides category field when query has categories fails`() =
+    fun `uiState hides tag field when query has tags fails`() =
         runTest(mainDispatcherRule.testDispatcher) {
-            val category = TaskCategory(name = loremFaker.lorem.words())
+            val tag = Tag(name = loremFaker.lorem.words())
             val clock = createClock()
             val db = FakeDatabase().apply {
-                insertTaskCategory(category, emptySet())
+                insertTag(tag)
             }
             val taskRepository = FakeTaskRepository(db, clock)
-            val taskCategoryRepository = spyk(FakeTaskCategoryRepository(db))
-            every { taskCategoryRepository.hasCategoriesStream } returns flow {
+            val tagRepository = spyk(FakeTagRepository(db))
+            every { tagRepository.hasTagsStream } returns flow {
                 throw RuntimeException("Test")
             }
 
             val viewModel = TaskFormViewModel(
                 createSavedStateHandleForNew(),
                 taskRepository,
-                taskCategoryRepository,
+                tagRepository,
                 clock,
                 createLocale(),
             )
@@ -1327,38 +1327,38 @@ class TaskFormViewModelTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    showCategoryField = false,
-                    category = null,
-                    categoryOptions = persistentListOf(),
+                    tagFieldState = TagFieldState.Hidden,
+                    tags = persistentListOf(),
+                    tagOptions = persistentListOf(),
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
                     changed = false,
-                    userMessage = UserMessage.String(R.string.task_form_fetch_category_error),
+                    userMessage = UserMessage.String(R.string.task_form_fetch_tags_error),
                 )
             )
         }
 
     @Test
-    fun `uiState hides category field when fetch existing category fails`() =
+    fun `uiState hides tag field when fetch existing tags fails`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val task = genTask()
-            val category = TaskCategory(name = loremFaker.lorem.words())
+            val tag = Tag(name = loremFaker.lorem.words())
             val clock = createClock()
             val db = FakeDatabase().apply {
                 insertTask(task)
-                insertTaskCategory(category, setOf(task.id))
+                insertTag(tag, setOf(task.id))
             }
             val taskRepository = FakeTaskRepository(db, clock)
-            val taskCategoryRepository = spyk(FakeTaskCategoryRepository(db))
-            every { taskCategoryRepository.getByTaskId(any()) } returns flow {
+            val tagRepository = spyk(FakeTagRepository(db))
+            every { tagRepository.getTagsByTaskId(any()) } returns flow {
                 throw RuntimeException("Test")
             }
 
             val viewModel = TaskFormViewModel(
                 createSavedStateHandleForEdit(),
                 taskRepository,
-                taskCategoryRepository,
+                tagRepository,
                 clock,
                 createLocale(),
             )
@@ -1378,14 +1378,14 @@ class TaskFormViewModelTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    showCategoryField = false,
-                    category = null,
-                    categoryOptions = persistentListOf(),
+                    tagFieldState = TagFieldState.Hidden,
+                    tags = persistentListOf(),
+                    tagOptions = persistentListOf(),
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
                     changed = false,
-                    userMessage = UserMessage.String(R.string.task_form_fetch_category_error),
+                    userMessage = UserMessage.String(R.string.task_form_fetch_tags_error),
                 )
             )
         }
@@ -1394,14 +1394,14 @@ class TaskFormViewModelTest {
     fun `searchParentTasks fetches parentTaskOptions`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val query = loremFaker.verbs.base()
-            val tasks = List(faker.random.nextInt(min = 1, max = 5)) {
+            val tasks = List(faker.random.nextInt(min = 2, max = 5)) {
                 Task(
                     id = it + 1L,
                     createdAt = faker.random.randomPastDate().toInstant(),
                     name = "$query ${loremFaker.lorem.words()}",
                 )
             }
-            val viewModel = createTaskFormViewModelForNew { db ->
+            val viewModel = createTaskFormViewModelForEdit { db ->
                 tasks.forEach(db::insertTask)
             }
 
@@ -1413,7 +1413,7 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    name = "",
+                    name = tasks.first().name,
                     note = "",
                     recurrence = null,
                     deadlineDate = null,
@@ -1422,12 +1422,12 @@ class TaskFormViewModelTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    showCategoryField = false,
-                    category = null,
-                    categoryOptions = persistentListOf(),
+                    tagFieldState = TagFieldState.Hidden,
+                    tags = persistentListOf(),
+                    tagOptions = persistentListOf(),
                     showParentTaskField = true,
                     parentTask = null,
-                    parentTaskOptions = tasks.toPersistentList(),
+                    parentTaskOptions = tasks.drop(1).toImmutableList(),
                     changed = false,
                     userMessage = null,
                 )
@@ -1443,13 +1443,15 @@ class TaskFormViewModelTest {
                 insertTask(genTask())
             }
             val taskRepository = spyk(FakeTaskRepository(db, clock))
-            every { taskRepository.search(any()) } returns flow { throw RuntimeException("Test") }
+            every {
+                taskRepository.search(any(), any())
+            } returns flow { throw RuntimeException("Test") }
 
-            val taskCategoryRepository = FakeTaskCategoryRepository(db)
+            val tagRepository = FakeTagRepository(db)
             val viewModel = TaskFormViewModel(
                 createSavedStateHandleForNew(),
                 taskRepository,
-                taskCategoryRepository,
+                tagRepository,
                 clock,
                 createLocale(),
             )
@@ -1471,9 +1473,9 @@ class TaskFormViewModelTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    showCategoryField = false,
-                    category = null,
-                    categoryOptions = persistentListOf(),
+                    tagFieldState = TagFieldState.Hidden,
+                    tags = persistentListOf(),
+                    tagOptions = persistentListOf(),
                     showParentTaskField = true,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
@@ -1484,20 +1486,20 @@ class TaskFormViewModelTest {
         }
 
     @Test
-    fun `searchCategories fetches categoryOptions`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `searchTags fetches tagOptions`() = runTest(mainDispatcherRule.testDispatcher) {
         val query = loremFaker.verbs.base()
-        val categories = List(faker.random.nextInt(min = 1, max = 5)) {
-            TaskCategory(id = it + 1L, name = faker.string.regexify("""$query \w+"""))
+        val tags = List(faker.random.nextInt(min = 2, max = 5)) {
+            Tag(id = it + 1L, name = faker.string.unique.regexify("""$query \w+"""))
         }
         val viewModel = createTaskFormViewModelForNew { db ->
-            categories.forEach { db.insertTaskCategory(it, emptySet()) }
+            tags.forEach { db.insertTag(it) }
         }
 
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect()
         }
 
-        viewModel.searchCategories(query)
+        viewModel.searchTags(query)
 
         assertThat(viewModel.uiState.value).isEqualTo(
             TaskFormUiState.Success(
@@ -1510,9 +1512,9 @@ class TaskFormViewModelTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                showCategoryField = true,
-                category = null,
-                categoryOptions = categories.toImmutableList(),
+                tagFieldState = TagFieldState.Closed,
+                tags = persistentListOf(),
+                tagOptions = tags.toImmutableList(),
                 showParentTaskField = false,
                 parentTask = null,
                 parentTaskOptions = persistentListOf(),
@@ -1520,27 +1522,52 @@ class TaskFormViewModelTest {
                 userMessage = null,
             )
         )
+
+        viewModel.addTag(tags.first())
+        viewModel.searchTags(query)
+
+        assertThat(viewModel.uiState.value).isEqualTo(
+            TaskFormUiState.Success(
+                name = "",
+                note = "",
+                recurrence = null,
+                deadlineDate = null,
+                deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
+                scheduledDate = null,
+                scheduledTime = null,
+                tagFieldState = TagFieldState.Closed,
+                tags = persistentListOf(tags.first()),
+                tagOptions = tags.drop(1).toImmutableList(),
+                showParentTaskField = false,
+                parentTask = null,
+                parentTaskOptions = persistentListOf(),
+                changed = true,
+                userMessage = null,
+            )
+        )
     }
 
     @Test
-    fun `searchCategories shows error message when repository throws`() =
+    fun `searchTags shows error message when repository throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val query = loremFaker.verbs.base()
-            val category = TaskCategory(name = faker.string.regexify("""$query \w+"""))
+            val tag = Tag(name = faker.string.regexify("""$query \w+"""))
             val clock = createClock()
             val db = FakeDatabase().apply {
-                insertTaskCategory(category, emptySet())
+                insertTag(tag)
             }
             val taskRepository = FakeTaskRepository(db, clock)
-            val taskCategoryRepository = spyk(FakeTaskCategoryRepository(db))
-            every { taskCategoryRepository.search(any()) } returns flow {
+            val tagRepository = spyk(FakeTagRepository(db))
+            every { tagRepository.search(any(), any()) } returns flow {
                 throw RuntimeException("Test")
             }
 
             val viewModel = TaskFormViewModel(
                 createSavedStateHandleForNew(),
                 taskRepository,
-                taskCategoryRepository,
+                tagRepository,
                 clock,
                 createLocale(),
             )
@@ -1549,7 +1576,7 @@ class TaskFormViewModelTest {
                 viewModel.uiState.collect()
             }
 
-            viewModel.searchCategories(query)
+            viewModel.searchTags(query)
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
@@ -1562,14 +1589,14 @@ class TaskFormViewModelTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    showCategoryField = true,
-                    category = null,
-                    categoryOptions = persistentListOf(),
+                    tagFieldState = TagFieldState.Closed,
+                    tags = persistentListOf(),
+                    tagOptions = persistentListOf(),
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
                     changed = false,
-                    userMessage = UserMessage.String(R.string.search_task_category_options_error),
+                    userMessage = UserMessage.String(R.string.search_tag_options_error),
                 )
             )
         }
@@ -1582,11 +1609,11 @@ class TaskFormViewModelTest {
         val locale = createLocale()
         val db = FakeDatabase()
         val taskRepository = FakeTaskRepository(db, clock)
-        val taskCategoryRepository = FakeTaskCategoryRepository(db)
+        val tagRepository = FakeTagRepository(db)
         val viewModel = TaskFormViewModel(
             createSavedStateHandleForNew(),
             taskRepository,
-            taskCategoryRepository,
+            tagRepository,
             clock,
             locale,
         )
@@ -1606,9 +1633,9 @@ class TaskFormViewModelTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                showCategoryField = false,
-                category = null,
-                categoryOptions = persistentListOf(),
+                tagFieldState = TagFieldState.Hidden,
+                tags = persistentListOf(),
+                tagOptions = persistentListOf(),
                 showParentTaskField = false,
                 parentTask = null,
                 parentTaskOptions = persistentListOf(),
@@ -1664,11 +1691,11 @@ class TaskFormViewModelTest {
             val taskRepository = spyk(FakeTaskRepository(db, clock))
             coEvery { taskRepository.create(any()) } throws RuntimeException("Test")
 
-            val taskCategoryRepository = FakeTaskCategoryRepository(db)
+            val tagRepository = FakeTagRepository(db)
             val viewModel = TaskFormViewModel(
                 createSavedStateHandleForNew(),
                 taskRepository,
-                taskCategoryRepository,
+                tagRepository,
                 clock,
                 createLocale(),
             )
@@ -1691,9 +1718,9 @@ class TaskFormViewModelTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    showCategoryField = false,
-                    category = null,
-                    categoryOptions = persistentListOf(),
+                    tagFieldState = TagFieldState.Hidden,
+                    tags = persistentListOf(),
+                    tagOptions = persistentListOf(),
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
@@ -1714,17 +1741,17 @@ class TaskFormViewModelTest {
             startAfterDate = LocalDate.parse("2024-08-22"),
             startAfterTime = LocalTime.parse("21:00"),
         )
-        val category = TaskCategory(id = 1L, name = loremFaker.lorem.words())
+        val tag = Tag(id = 1L, name = loremFaker.lorem.words())
         val db = FakeDatabase().apply {
             insertTask(task)
-            insertTaskCategory(category, emptySet())
+            insertTag(tag)
         }
         val taskRepository = FakeTaskRepository(db, clock)
-        val taskCategoryRepository = FakeTaskCategoryRepository(db)
+        val tagRepository = FakeTagRepository(db)
         val viewModel = TaskFormViewModel(
             createSavedStateHandleForEdit(),
             taskRepository,
-            taskCategoryRepository,
+            tagRepository,
             clock,
             locale,
         )
@@ -1744,9 +1771,9 @@ class TaskFormViewModelTest {
                 startAfterTime = LocalTime.parse("21:00"),
                 scheduledDate = null,
                 scheduledTime = null,
-                showCategoryField = true,
-                category = null,
-                categoryOptions = persistentListOf(),
+                tagFieldState = TagFieldState.Closed,
+                tags = persistentListOf(),
+                tagOptions = persistentListOf(),
                 showParentTaskField = false,
                 parentTask = null,
                 parentTaskOptions = persistentListOf(),
@@ -1771,7 +1798,7 @@ class TaskFormViewModelTest {
                 locale = locale,
             ),
         )
-        viewModel.updateCategory(category)
+        viewModel.addTag(tag)
         viewModel.saveTask()
 
         assertThat(viewModel.uiState.value).isEqualTo(TaskFormUiState.Saved)
@@ -1784,9 +1811,9 @@ class TaskFormViewModelTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = LocalTime.parse("17:00"),
-                categoryId = category.id,
             )
         )
+        assertThat(tagRepository.getTagsByTaskId(task.id).first()).containsExactly(tag)
         assertThat(
             taskRepository.getTaskRecurrencesByTaskId(task.id).first()
                 .map { it.copy(id = 0) }).containsExactly(
@@ -1817,11 +1844,11 @@ class TaskFormViewModelTest {
             val taskRepository = spyk(FakeTaskRepository(db, clock))
             coEvery { taskRepository.update(any()) } throws RuntimeException("Test")
 
-            val taskCategoryRepository = FakeTaskCategoryRepository(db)
+            val tagRepository = FakeTagRepository(db)
             val viewModel = TaskFormViewModel(
                 createSavedStateHandleForEdit(),
                 taskRepository,
-                taskCategoryRepository,
+                tagRepository,
                 clock,
                 createLocale(),
             )
@@ -1844,9 +1871,9 @@ class TaskFormViewModelTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    showCategoryField = false,
-                    category = null,
-                    categoryOptions = persistentListOf(),
+                    tagFieldState = TagFieldState.Hidden,
+                    tags = persistentListOf(),
+                    tagOptions = persistentListOf(),
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
@@ -1871,11 +1898,11 @@ class TaskFormViewModelTest {
             val taskRepository = spyk(FakeTaskRepository(db, clock))
             every { taskRepository.getCount() } returns flow { throw RuntimeException("Test") }
 
-            val taskCategoryRepository = FakeTaskCategoryRepository(db)
+            val tagRepository = FakeTagRepository(db)
             val viewModel = TaskFormViewModel(
                 createSavedStateHandleForEdit(),
                 taskRepository,
-                taskCategoryRepository,
+                tagRepository,
                 clock,
                 createLocale(),
             )
@@ -1895,9 +1922,9 @@ class TaskFormViewModelTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    showCategoryField = false,
-                    category = null,
-                    categoryOptions = persistentListOf(),
+                    tagFieldState = TagFieldState.Hidden,
+                    tags = persistentListOf(),
+                    tagOptions = persistentListOf(),
                     showParentTaskField = false,
                     parentTask = parentTask,
                     parentTaskOptions = persistentListOf(),
@@ -1933,11 +1960,11 @@ class TaskFormViewModelTest {
                 throw RuntimeException("Test")
             }
 
-            val taskCategoryRepository = FakeTaskCategoryRepository(db)
+            val tagRepository = FakeTagRepository(db)
             val viewModel = TaskFormViewModel(
                 createSavedStateHandleForEdit(),
                 taskRepository,
-                taskCategoryRepository,
+                tagRepository,
                 clock,
                 createLocale(),
             )
@@ -1957,9 +1984,9 @@ class TaskFormViewModelTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    showCategoryField = false,
-                    category = null,
-                    categoryOptions = persistentListOf(),
+                    tagFieldState = TagFieldState.Hidden,
+                    tags = persistentListOf(),
+                    tagOptions = persistentListOf(),
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
@@ -1979,26 +2006,26 @@ class TaskFormViewModelTest {
         }
 
     @Test
-    fun `saveTask maintains category when query has category fails`() =
+    fun `saveTask maintains tag when query has tag fails`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
             val task = genTask()
-            val category = TaskCategory(id = 1L, name = loremFaker.lorem.words())
+            val tag = Tag(id = 1L, name = loremFaker.lorem.words())
             val clock = createClock()
             val db = FakeDatabase().apply {
                 insertTask(task)
-                insertTaskCategory(category, setOf(task.id))
+                insertTag(tag, setOf(task.id))
             }
             val taskRepository = FakeTaskRepository(db, clock)
-            val taskCategoryRepository = spyk(FakeTaskCategoryRepository(db))
-            every { taskCategoryRepository.hasCategoriesStream } returns flow {
+            val tagRepository = spyk(FakeTagRepository(db))
+            every { tagRepository.hasTagsStream } returns flow {
                 throw RuntimeException("Test")
             }
 
             val viewModel = TaskFormViewModel(
                 createSavedStateHandleForEdit(),
                 taskRepository,
-                taskCategoryRepository,
+                tagRepository,
                 clock,
                 createLocale(),
             )
@@ -2018,14 +2045,14 @@ class TaskFormViewModelTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    showCategoryField = false,
-                    category = category,
-                    categoryOptions = persistentListOf(),
+                    tagFieldState = TagFieldState.Hidden,
+                    tags = persistentListOf(tag),
+                    tagOptions = persistentListOf(),
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
                     changed = false,
-                    userMessage = UserMessage.String(R.string.task_form_fetch_category_error),
+                    userMessage = UserMessage.String(R.string.task_form_fetch_tags_error),
                 )
             )
 
@@ -2033,31 +2060,32 @@ class TaskFormViewModelTest {
             viewModel.saveTask()
 
             assertThat(taskRepository.tasks).containsExactlyInAnyOrder(
-                task.copy(name = name, categoryId = category.id)
+                task.copy(name = name)
             )
+            assertThat(tagRepository.getTagsByTaskId(task.id).first()).containsExactly(tag)
         }
 
     @Test
-    fun `saveTask maintains category when fetch existing category fails`() =
+    fun `saveTask maintains tag when fetch existing tag fails`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
             val task = genTask()
-            val category = TaskCategory(id = 1L, name = loremFaker.lorem.words())
+            val tag = Tag(id = 1L, name = loremFaker.lorem.words())
             val clock = createClock()
             val db = FakeDatabase().apply {
                 insertTask(task)
-                insertTaskCategory(category, setOf(task.id))
+                insertTag(tag, setOf(task.id))
             }
             val taskRepository = FakeTaskRepository(db, clock)
-            val taskCategoryRepository = spyk(FakeTaskCategoryRepository(db))
-            every { taskCategoryRepository.getByTaskId(any()) } returns flow {
+            val tagRepository = spyk(FakeTagRepository(db))
+            every { tagRepository.getTagsByTaskId(any()) } returns flow {
                 throw RuntimeException("Test")
             }
 
             val viewModel = TaskFormViewModel(
                 createSavedStateHandleForEdit(),
                 taskRepository,
-                taskCategoryRepository,
+                tagRepository,
                 clock,
                 createLocale(),
             )
@@ -2077,14 +2105,14 @@ class TaskFormViewModelTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    showCategoryField = false,
-                    category = null,
-                    categoryOptions = persistentListOf(),
+                    tagFieldState = TagFieldState.Hidden,
+                    tags = persistentListOf(),
+                    tagOptions = persistentListOf(),
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
                     changed = false,
-                    userMessage = UserMessage.String(R.string.task_form_fetch_category_error),
+                    userMessage = UserMessage.String(R.string.task_form_fetch_tags_error),
                 )
             )
 
@@ -2092,8 +2120,10 @@ class TaskFormViewModelTest {
             viewModel.saveTask()
 
             assertThat(taskRepository.tasks).containsExactlyInAnyOrder(
-                task.copy(name = name, categoryId = category.id)
+                task.copy(name = name)
             )
+            assertThat(tagRepository.taskTags.single { it.taskId == task.id }).prop(TaskTag::tagId)
+                .isEqualTo(tag.id)
         }
 
     private fun genTask(id: Long = 1L) = Task(
@@ -2133,7 +2163,7 @@ class TaskFormViewModelTest {
         return TaskFormViewModel(
             createSavedStateHandleForNew(),
             FakeTaskRepository(db, clock),
-            FakeTaskCategoryRepository(db),
+            FakeTagRepository(db),
             clock,
             createLocale(),
         )
@@ -2147,7 +2177,7 @@ class TaskFormViewModelTest {
         return TaskFormViewModel(
             createSavedStateHandleForEdit(),
             FakeTaskRepository(db, clock),
-            FakeTaskCategoryRepository(db),
+            FakeTagRepository(db),
             clock,
             createLocale(),
         )

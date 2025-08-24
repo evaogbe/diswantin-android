@@ -8,10 +8,10 @@ import androidx.lifecycle.SavedStateHandle
 import assertk.assertThat
 import assertk.assertions.isTrue
 import io.github.evaogbe.diswantin.R
+import io.github.evaogbe.diswantin.task.data.Tag
 import io.github.evaogbe.diswantin.task.data.Task
-import io.github.evaogbe.diswantin.task.data.TaskCategory
 import io.github.evaogbe.diswantin.testing.FakeDatabase
-import io.github.evaogbe.diswantin.testing.FakeTaskCategoryRepository
+import io.github.evaogbe.diswantin.testing.FakeTagRepository
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.stringResource
 import io.github.evaogbe.diswantin.ui.loadstate.PendingLayoutTestTag
@@ -25,7 +25,7 @@ import org.junit.Rule
 import org.junit.Test
 import java.time.Clock
 
-class TaskCategoryDetailScreenTest {
+class TagDetailScreenTest {
     @get:Rule
     val composeTestRule = createComposeRule()
 
@@ -34,28 +34,28 @@ class TaskCategoryDetailScreenTest {
     private val faker = Faker()
 
     @Test
-    fun displaysCategoryNameWithTasks() {
-        val category = genTaskCategory()
+    fun displaysTagNameWithTasks() {
+        val tag = genTag()
         val tasks = genTasks()
-        val viewModel = createTaskCategoryDetailViewModel { db ->
+        val viewModel = createTagDetailViewModel { db ->
             tasks.forEach(db::insertTask)
-            db.insertTaskCategory(taskCategory = category, taskIds = tasks.map { it.id }.toSet())
+            db.insertTag(tag = tag, taskIds = tasks.map { it.id }.toSet())
         }
 
         composeTestRule.setContent {
             DiswantinTheme {
-                TaskCategoryDetailScreen(
+                TagDetailScreen(
                     onPopBackStack = {},
                     topBarAction = null,
                     topBarActionHandled = {},
                     setUserMessage = {},
                     onSelectTask = {},
-                    taskCategoryDetailViewModel = viewModel,
+                    tagDetailViewModel = viewModel,
                 )
             }
         }
 
-        composeTestRule.onNodeWithText(category.name).assertIsDisplayed()
+        composeTestRule.onNodeWithText(tag.name).assertIsDisplayed()
         composeTestRule.onNodeWithText(tasks[0].name).assertIsDisplayed()
         composeTestRule.onNodeWithText(tasks[1].name).assertIsDisplayed()
         composeTestRule.onNodeWithText(tasks[2].name).assertIsDisplayed()
@@ -63,110 +63,108 @@ class TaskCategoryDetailScreenTest {
 
     @Test
     fun displaysErrorMessage_withFailureUi() {
-        val viewModel = createTaskCategoryDetailViewModel {}
+        val viewModel = createTagDetailViewModel {}
 
         composeTestRule.setContent {
             DiswantinTheme {
-                TaskCategoryDetailScreen(
+                TagDetailScreen(
                     onPopBackStack = {},
                     topBarAction = null,
                     topBarActionHandled = {},
                     setUserMessage = {},
                     onSelectTask = {},
-                    taskCategoryDetailViewModel = viewModel,
+                    tagDetailViewModel = viewModel,
                 )
             }
         }
 
-        composeTestRule.onNodeWithText(stringResource(R.string.task_category_detail_fetch_error))
+        composeTestRule.onNodeWithText(stringResource(R.string.tag_detail_fetch_error))
             .assertIsDisplayed()
     }
 
     @Test
-    fun popsBackStack_whenCategoryDeleted() {
+    fun popsBackStack_whenTagDeleted() {
         var onPopBackStackCalled = false
-        val category = genTaskCategory()
+        val tag = genTag()
         val tasks = genTasks()
-        val viewModel = createTaskCategoryDetailViewModel { db ->
+        val viewModel = createTagDetailViewModel { db ->
             tasks.forEach(db::insertTask)
-            db.insertTaskCategory(taskCategory = category, taskIds = tasks.map { it.id }.toSet())
+            db.insertTag(tag = tag, taskIds = tasks.map { it.id }.toSet())
         }
 
         composeTestRule.setContent {
             DiswantinTheme {
-                TaskCategoryDetailScreen(
+                TagDetailScreen(
                     onPopBackStack = { onPopBackStackCalled = true },
                     topBarAction = null,
                     topBarActionHandled = {},
                     setUserMessage = {},
                     onSelectTask = {},
-                    taskCategoryDetailViewModel = viewModel,
+                    tagDetailViewModel = viewModel,
                 )
             }
         }
 
-        viewModel.deleteCategory()
+        viewModel.deleteTag()
 
         composeTestRule.onNodeWithTag(PendingLayoutTestTag).assertIsDisplayed()
         assertThat(onPopBackStackCalled).isTrue()
     }
 
     @Test
-    fun displaysErrorMessage_whenDeleteCategoryFails() {
+    fun displaysErrorMessage_whenDeleteTagFails() {
         var userMessage: UserMessage? = null
-        val category = genTaskCategory()
+        val tag = genTag()
         val tasks = genTasks()
         val clock = createClock()
         val db = FakeDatabase().apply {
             tasks.forEach(::insertTask)
-            insertTaskCategory(taskCategory = category, taskIds = tasks.map { it.id }.toSet())
+            insertTag(tag = tag, taskIds = tasks.map { it.id }.toSet())
         }
         val taskRepository = FakeTaskRepository(db, clock)
-        val taskCategoryRepository = spyk(FakeTaskCategoryRepository(db))
-        coEvery { taskCategoryRepository.delete(any()) } throws RuntimeException("Test")
+        val tagRepository = spyk(FakeTagRepository(db))
+        coEvery { tagRepository.delete(any()) } throws RuntimeException("Test")
 
-        val viewModel = TaskCategoryDetailViewModel(
+        val viewModel = TagDetailViewModel(
             createSavedStateHandle(),
-            taskCategoryRepository,
+            tagRepository,
             taskRepository,
             clock,
         )
 
         composeTestRule.setContent {
             DiswantinTheme {
-                TaskCategoryDetailScreen(
+                TagDetailScreen(
                     onPopBackStack = {},
                     topBarAction = null,
                     topBarActionHandled = {},
                     setUserMessage = { userMessage = it },
                     onSelectTask = {},
-                    taskCategoryDetailViewModel = viewModel,
+                    tagDetailViewModel = viewModel,
                 )
             }
         }
 
-        viewModel.deleteCategory()
+        viewModel.deleteTag()
 
         composeTestRule.waitUntil {
-            userMessage == UserMessage.String(R.string.task_category_detail_delete_error)
+            userMessage == UserMessage.String(R.string.tag_detail_delete_error)
         }
     }
 
-    private fun genTaskCategory() = TaskCategory(id = 1L, name = loremFaker.lorem.words())
+    private fun genTag() = Tag(id = 1L, name = loremFaker.lorem.words())
 
     private fun genTasks() = generateSequence(
         Task(
             id = 1L,
             createdAt = faker.random.randomPastDate().toInstant(),
             name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-            categoryId = 1L,
         )
     ) {
         Task(
             id = it.id + 1L,
             createdAt = faker.random.randomPastDate(min = it.createdAt).toInstant(),
             name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-            categoryId = 1L,
         )
     }.take(3).toList()
 
@@ -174,14 +172,12 @@ class TaskCategoryDetailScreenTest {
 
     private fun createClock() = Clock.systemDefaultZone()
 
-    private fun createTaskCategoryDetailViewModel(
-        initDatabase: (FakeDatabase) -> Unit
-    ): TaskCategoryDetailViewModel {
+    private fun createTagDetailViewModel(initDatabase: (FakeDatabase) -> Unit): TagDetailViewModel {
         val clock = createClock()
         val db = FakeDatabase().also(initDatabase)
-        return TaskCategoryDetailViewModel(
+        return TagDetailViewModel(
             createSavedStateHandle(),
-            FakeTaskCategoryRepository(db),
+            FakeTagRepository(db),
             FakeTaskRepository(db, clock),
             clock,
         )

@@ -1,11 +1,11 @@
 package io.github.evaogbe.diswantin.task.ui
 
-import io.github.evaogbe.diswantin.task.data.TaskItemData
+import io.github.evaogbe.diswantin.task.data.TaskSummary
 import java.time.Instant
 
-data class TaskItemUiState(val id: Long, val name: String, val isDone: Boolean) {
+data class TaskSummaryUiState(val id: Long, val name: String, val isDone: Boolean) {
     companion object {
-        fun fromTaskItem(task: TaskItemData, doneBefore: Instant) = TaskItemUiState(
+        fun fromTaskSummary(task: TaskSummary, doneBefore: Instant) = TaskSummaryUiState(
             id = task.id,
             name = task.name,
             isDone = isTaskDone(

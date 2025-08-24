@@ -1,27 +1,34 @@
 package io.github.evaogbe.diswantin.testing
 
+import io.github.evaogbe.diswantin.task.data.Tag
 import io.github.evaogbe.diswantin.task.data.Task
-import io.github.evaogbe.diswantin.task.data.TaskCategory
 import io.github.evaogbe.diswantin.task.data.TaskCompletion
 import io.github.evaogbe.diswantin.task.data.TaskPath
 import io.github.evaogbe.diswantin.task.data.TaskRecurrence
 import io.github.evaogbe.diswantin.task.data.TaskSkip
+import io.github.evaogbe.diswantin.task.data.TaskTag
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
 class FakeDatabase {
-    private var taskCategoryIdGen = 0L
+    private var tagIdGen = 0L
 
-    private val _taskCategoryTable = MutableStateFlow(emptyMap<Long, TaskCategory>())
+    private val _tagTable = MutableStateFlow(emptyMap<Long, Tag>())
 
-    val taskCategoryTable = _taskCategoryTable.asStateFlow()
+    val tagTable = _tagTable.asStateFlow()
 
     private var taskIdGen = 0L
 
     private val _taskTable = MutableStateFlow(emptyMap<Long, Task>())
 
     val taskTable = _taskTable.asStateFlow()
+
+    private var taskTagIdGen = 0L
+
+    private val _taskTagTable = MutableStateFlow(emptyMap<Long, TaskTag>())
+
+    val taskTagTable = _taskTagTable.asStateFlow()
 
     private var taskPathIdGen = 0L
 
@@ -47,44 +54,34 @@ class FakeDatabase {
 
     val taskSkipTable = _taskSkipTable.asStateFlow()
 
-    fun insertTaskCategory(taskCategory: TaskCategory, taskIds: Set<Long>): TaskCategory {
-        val newTaskCategory = if (taskCategory.id > 0) {
-            taskCategory
-        } else {
-            taskCategory.copy(id = ++taskCategoryIdGen)
-        }
-        _taskCategoryTable.update { it + (newTaskCategory.id to newTaskCategory) }
-        _taskTable.update { taskTable ->
-            val newTasks = taskTable.values.filter { it.id in taskIds }
-                .map { it.copy(categoryId = newTaskCategory.id) }.associateBy { it.id }
-            taskTable + newTasks
-        }
-        return newTaskCategory
+    fun insertTag(tag: Tag, taskIds: Set<Long> = emptySet()): Tag {
+        val newTag = if (tag.id > 0) tag else tag.copy(id = ++tagIdGen)
+        val newTaskTags = taskIds.map {
+            TaskTag(id = ++taskTagIdGen, taskId = it, tagId = newTag.id)
+        }.associateBy { it.id }
+        _tagTable.update { it + (newTag.id to newTag) }
+        _taskTagTable.update { it + newTaskTags }
+        return newTag
     }
 
-    fun updateTaskCategory(
-        taskCategory: TaskCategory,
-        taskIdsToInsert: List<Long>,
-        taskIdsToRemove: Set<Long>,
-    ) {
-        _taskCategoryTable.update { it + (taskCategory.id to taskCategory) }
-        _taskTable.update { taskTable ->
-            val tasksToRemove =
-                taskIdsToRemove.mapNotNull { taskTable[it]?.copy(categoryId = null) }
-                    .associateBy { it.id }
-            val tasksToInsert =
-                taskIdsToInsert.mapNotNull { taskTable[it]?.copy(categoryId = taskCategory.id) }
-                    .associateBy { it.id }
-            taskTable + tasksToRemove + tasksToInsert
+    fun updateTag(tag: Tag, taskIdsToInsert: Set<Long>, taskIdsToRemove: Set<Long>) {
+        _tagTable.update { it + (tag.id to tag) }
+        _taskTagTable.update { taskTagTable ->
+            val taskTagIdsToRemove =
+                taskTagTable.values.filter { it.tagId == tag.id && it.taskId in taskIdsToRemove }
+                    .map { it.id }
+            val taskTagsToInsert = taskIdsToInsert.map {
+                TaskTag(id = ++taskTagIdGen, taskId = it, tagId = tag.id)
+            }.associateBy { it.id }
+            taskTagTable - taskTagIdsToRemove + taskTagsToInsert
         }
     }
 
-    fun deleteTaskCategory(id: Long) {
-        _taskTable.update { taskTable ->
-            taskTable + taskTable.values.filter { it.categoryId == id }
-                .map { it.copy(categoryId = null) }.associateBy { it.id }
+    fun deleteTag(id: Long) {
+        _taskTagTable.update { taskTagTable ->
+            taskTagTable.filterValues { it.tagId != id }
         }
-        _taskCategoryTable.update { it - id }
+        _tagTable.update { it - id }
     }
 
     fun insertTask(task: Task): Task {
@@ -139,6 +136,15 @@ class FakeDatabase {
     fun insertTaskSkip(taskSkip: TaskSkip) {
         val newSkip = taskSkip.copy(id = ++taskSkipIdGen)
         _taskSkipTable.update { it + (newSkip.id to newSkip) }
+    }
+
+    fun insertTaskTag(taskTag: TaskTag) {
+        val newTaskTag = taskTag.copy(id = ++taskTagIdGen)
+        _taskTagTable.update { it + (newTaskTag.id to newTaskTag) }
+    }
+
+    fun deleteTaskTag(id: Long) {
+        _taskTagTable.update { it - id }
     }
 
     fun deleteLatestTaskCompletionByTaskId(taskId: Long) {

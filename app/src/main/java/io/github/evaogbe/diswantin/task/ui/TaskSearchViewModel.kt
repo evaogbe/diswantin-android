@@ -31,9 +31,9 @@ class TaskSearchViewModel @Inject constructor(
     @OptIn(ExperimentalCoroutinesApi::class)
     val searchResultPagingData = criteria.filterNot { it.isEmpty }.flatMapLatest { criteria ->
         val doneBefore = ZonedDateTime.now(clock).with(LocalTime.MIN).toInstant()
-        taskRepository.searchTaskItems(criteria).map { searchResults ->
+        taskRepository.searchTaskSummaries(criteria).map { searchResults ->
             searchResults.map {
-                TaskItemUiState.fromTaskItem(it, doneBefore)
+                TaskSummaryUiState.fromTaskSummary(it, doneBefore)
             }
         }
     }.cachedIn(viewModelScope)

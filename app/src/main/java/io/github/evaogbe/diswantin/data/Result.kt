@@ -27,6 +27,11 @@ sealed interface Result<out T> {
         is Failure -> Failure(exception)
     }
 
+    fun <T2, R> zipWith(other: Result<T2>, transform: (T, T2) -> R) = when (this) {
+        is Success -> other.map { transform(value, it) }
+        is Failure -> Failure(exception)
+    }
+
     data class Success<T>(val value: T) : Result<T>
 
     data class Failure(val exception: Throwable) : Result<Nothing>

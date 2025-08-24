@@ -1,8 +1,8 @@
 package io.github.evaogbe.diswantin.task.ui
 
 import android.os.Parcelable
+import io.github.evaogbe.diswantin.task.data.Tag
 import io.github.evaogbe.diswantin.task.data.Task
-import io.github.evaogbe.diswantin.task.data.TaskCategory
 import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.parcelize.Parcelize
@@ -20,6 +20,10 @@ enum class TaskFormTopBarAction {
     Save, Close
 }
 
+enum class TagFieldState {
+    Open, Closed, Hidden
+}
+
 sealed interface TaskFormUiState {
     data object Pending : TaskFormUiState
 
@@ -35,9 +39,9 @@ sealed interface TaskFormUiState {
         val startAfterTime: LocalTime?,
         val scheduledDate: LocalDate?,
         val scheduledTime: LocalTime?,
-        val showCategoryField: Boolean,
-        val category: TaskCategory?,
-        val categoryOptions: ImmutableList<TaskCategory>,
+        val tagFieldState: TagFieldState,
+        val tags: ImmutableList<Tag>,
+        val tagOptions: ImmutableList<Tag>,
         val showParentTaskField: Boolean,
         val parentTask: Task?,
         val parentTaskOptions: ImmutableList<Task>,

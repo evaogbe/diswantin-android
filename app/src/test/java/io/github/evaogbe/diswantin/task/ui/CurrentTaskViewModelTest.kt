@@ -76,10 +76,11 @@ class CurrentTaskViewModelTest {
                     startAfterTime = task1.startAfterTime,
                     scheduledDate = task1.scheduledDate,
                     scheduledTime = task1.scheduledTime,
-                    categoryId = null,
+                    tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task1,
+                    existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
                 )
             )

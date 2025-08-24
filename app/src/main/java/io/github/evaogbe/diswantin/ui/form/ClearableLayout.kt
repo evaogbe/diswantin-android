@@ -31,9 +31,9 @@ import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
 @Composable
 fun ClearableLayout(
     onClear: () -> Unit,
-    invert: Boolean,
     modifier: Modifier = Modifier,
-    canClear: Boolean = true,
+    invert: Boolean = false,
+    iconContentDescription: String = stringResource(R.string.clear_button),
     content: @Composable (RowScope.() -> Unit),
 ) {
     Row(
@@ -45,24 +45,22 @@ fun ClearableLayout(
     ) {
         content()
 
-        if (canClear) {
-            IconButton(
-                onClick = onClear,
-                colors = if (invert) {
-                    IconButtonDefaults.iconButtonColors(
-                        containerColor = colorScheme.surfaceVariant,
-                        contentColor = colorScheme.onSurfaceVariant,
-                    )
-                } else {
-                    IconButtonDefaults.iconButtonColors()
-                },
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Clear,
-                    contentDescription = stringResource(R.string.clear_button),
-                    tint = colorScheme.onSurfaceVariant,
+        IconButton(
+            onClick = onClear,
+            colors = if (invert) {
+                IconButtonDefaults.iconButtonColors(
+                    containerColor = colorScheme.surfaceVariant,
+                    contentColor = colorScheme.onSurfaceVariant,
                 )
-            }
+            } else {
+                IconButtonDefaults.iconButtonColors()
+            },
+        ) {
+            Icon(
+                imageVector = Icons.Default.Clear,
+                contentDescription = iconContentDescription,
+                tint = colorScheme.onSurfaceVariant,
+            )
         }
     }
 }
@@ -72,7 +70,7 @@ fun ClearableLayout(
 private fun ClearableLayoutPreview() {
     DiswantinTheme {
         Surface {
-            ClearableLayout(onClear = {}, invert = false) {
+            ClearableLayout(onClear = {}) {
                 Box(
                     modifier = Modifier
                         .size(width = 80.dp, height = 40.dp)

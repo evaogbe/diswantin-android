@@ -85,23 +85,27 @@ class LocalTaskRepository @Inject constructor(
 
     override fun getTaskDetailById(id: Long) = taskDao.getTaskDetailById(id).flowOn(ioDispatcher)
 
-    override fun getTasksByCategoryId(categoryId: Long) = Pager(PagingConfig(pageSize = 20)) {
-        taskDao.getTasksByCategoryId(categoryId)
-    }.flow.flowOn(ioDispatcher)
-
-    override fun getTaskItemsByCategoryId(categoryId: Long): Flow<PagingData<TaskItemData>> {
+    override fun getTaskSummariesByTagId(tagId: Long): Flow<PagingData<TaskSummary>> {
         val startOfToday = ZonedDateTime.now(clock).with(LocalTime.MIN).toInstant()
         return Pager(PagingConfig(pageSize = 20)) {
-            taskDao.getTaskItemsByCategoryId(categoryId, startOfToday)
+            taskDao.getTaskSummariesByTagId(tagId, startOfToday)
         }.flow.flowOn(ioDispatcher)
     }
 
-    override fun search(query: String) = taskDao.search(escapeSql("$query*")).flowOn(ioDispatcher)
+    override fun getTaggedTasksByTagId(tagId: Long) = Pager(PagingConfig(pageSize = 20)) {
+        taskDao.getTaggedTasksByTagId(tagId)
+    }.flow.flowOn(ioDispatcher)
 
-    override fun searchTaskItems(criteria: TaskSearchCriteria) =
+    override fun search(query: String, size: Int) =
+        taskDao.search(escapeSql("$query*"), size).flowOn(ioDispatcher)
+
+    override fun searchTaggedTasks(query: String, tagId: Long?, size: Int) =
+        taskDao.searchTaggedTasks(escapeSql("$query*"), tagId, size).flowOn(ioDispatcher)
+
+    override fun searchTaskSummaries(criteria: TaskSearchCriteria) =
         Pager(PagingConfig(pageSize = 30)) {
             if (criteria.name.isEmpty()) {
-                taskDao.filterTaskItems(
+                taskDao.filterTaskSummaries(
                     deadlineStartDate = criteria.deadlineDateRange?.first,
                     deadlineEndDate = criteria.deadlineDateRange?.second,
                     startAfterStartDate = criteria.startAfterDateRange?.first,
@@ -115,7 +119,7 @@ class LocalTaskRepository @Inject constructor(
                     recurrenceDate = criteria.recurrenceDate,
                 )
             } else {
-                taskDao.searchTaskItems(
+                taskDao.searchTaskSummaries(
                     query = escapeSql("${criteria.name}*"),
                     deadlineStartDate = criteria.deadlineDateRange?.first,
                     deadlineEndDate = criteria.deadlineDateRange?.second,

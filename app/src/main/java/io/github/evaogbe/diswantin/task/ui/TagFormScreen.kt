@@ -53,7 +53,7 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import io.github.evaogbe.diswantin.R
-import io.github.evaogbe.diswantin.task.data.Task
+import io.github.evaogbe.diswantin.task.data.TaggedTask
 import io.github.evaogbe.diswantin.ui.button.TextButtonWithIcon
 import io.github.evaogbe.diswantin.ui.dialog.DiscardConfirmationDialog
 import io.github.evaogbe.diswantin.ui.form.AutocompleteField
@@ -71,12 +71,11 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOf
-import java.time.Instant
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TaskCategoryFormTopBar(
-    uiState: TaskCategoryFormTopBarState,
+fun TagFormTopBar(
+    uiState: TagFormTopBarState,
     onClose: () -> Unit,
     onSave: () -> Unit,
     modifier: Modifier = Modifier,
@@ -85,9 +84,9 @@ fun TaskCategoryFormTopBar(
         title = {
             Text(
                 text = if (uiState.isNew) {
-                    stringResource(R.string.task_category_form_title_new)
+                    stringResource(R.string.tag_form_title_new)
                 } else {
-                    stringResource(R.string.task_category_form_title_edit)
+                    stringResource(R.string.tag_form_title_edit)
                 }
             )
         },
@@ -115,28 +114,28 @@ fun TaskCategoryFormTopBar(
 }
 
 @Composable
-fun TaskCategoryFormScreen(
+fun TagFormScreen(
     onPopBackStack: () -> Unit,
-    setTopBarState: (TaskCategoryFormTopBarState) -> Unit,
-    topBarAction: TaskCategoryFormTopBarAction?,
+    setTopBarState: (TagFormTopBarState) -> Unit,
+    topBarAction: TagFormTopBarAction?,
     topBarActionHandled: () -> Unit,
     setUserMessage: (UserMessage) -> Unit,
     initialName: String,
     onSelectTaskType: (String) -> Unit,
-    taskCategoryFormViewModel: TaskCategoryFormViewModel = hiltViewModel(),
+    tagFormViewModel: TagFormViewModel = hiltViewModel(),
 ) {
-    val uiState by taskCategoryFormViewModel.uiState.collectAsStateWithLifecycle()
-    val isNew = taskCategoryFormViewModel.isNew
+    val uiState by tagFormViewModel.uiState.collectAsStateWithLifecycle()
+    val isNew = tagFormViewModel.isNew
     var nameInput by rememberSaveable { mutableStateOf(initialName) }
     val existingTaskPagingItems =
-        taskCategoryFormViewModel.existingTaskPagingData.collectAsLazyPagingItems()
+        tagFormViewModel.existingTaskPagingData.collectAsLazyPagingItems()
     var showDialog by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(uiState, isNew, nameInput) {
         setTopBarState(
-            TaskCategoryFormTopBarState(
+            TagFormTopBarState(
                 isNew = isNew,
-                showSave = isNew || uiState is TaskCategoryFormUiState.Success,
+                showSave = isNew || uiState is TagFormUiState.Success,
                 saveEnabled = nameInput.isNotBlank(),
             )
         )
@@ -145,13 +144,13 @@ fun TaskCategoryFormScreen(
     LaunchedEffect(topBarAction) {
         when (topBarAction) {
             null -> {}
-            TaskCategoryFormTopBarAction.Save -> {
-                taskCategoryFormViewModel.saveCategory()
+            TagFormTopBarAction.Save -> {
+                tagFormViewModel.saveTag()
                 topBarActionHandled()
             }
 
-            TaskCategoryFormTopBarAction.Close -> {
-                if ((uiState as? TaskCategoryFormUiState.Success)?.changed == true) {
+            TagFormTopBarAction.Close -> {
+                if ((uiState as? TagFormUiState.Success)?.changed == true) {
                     showDialog = true
                 } else {
                     onPopBackStack()
@@ -163,18 +162,18 @@ fun TaskCategoryFormScreen(
 
     LaunchedEffect(Unit) {
         snapshotFlow { nameInput }.distinctUntilChanged().collectLatest {
-            taskCategoryFormViewModel.updateName(it)
+            tagFormViewModel.updateName(it)
         }
     }
 
     when (val state = uiState) {
-        is TaskCategoryFormUiState.Pending -> PendingLayout()
+        is TagFormUiState.Pending -> PendingLayout()
 
-        is TaskCategoryFormUiState.Failure -> {
-            LoadFailureLayout(message = stringResource(R.string.task_category_form_fetch_error))
+        is TagFormUiState.Failure -> {
+            LoadFailureLayout(message = stringResource(R.string.tag_form_fetch_error))
         }
 
-        is TaskCategoryFormUiState.Saved -> {
+        is TagFormUiState.Saved -> {
             LaunchedEffect(Unit) {
                 onPopBackStack()
             }
@@ -182,13 +181,13 @@ fun TaskCategoryFormScreen(
             PendingLayout()
         }
 
-        is TaskCategoryFormUiState.Success -> {
+        is TagFormUiState.Success -> {
             when (existingTaskPagingItems.loadState.refresh) {
                 is LoadState.Loading -> PendingLayout()
 
                 is LoadState.Error -> {
                     LoadFailureLayout(
-                        message = stringResource(R.string.task_category_form_fetch_error),
+                        message = stringResource(R.string.tag_form_fetch_error),
                     )
                 }
 
@@ -202,21 +201,21 @@ fun TaskCategoryFormScreen(
                     LaunchedEffect(state.userMessage) {
                         if (state.userMessage != null) {
                             setUserMessage(state.userMessage)
-                            taskCategoryFormViewModel.userMessageShown()
+                            tagFormViewModel.userMessageShown()
                         }
                     }
 
-                    TaskCategoryFormLayout(
-                        isNew = taskCategoryFormViewModel.isNew,
+                    TagFormLayout(
+                        isNew = tagFormViewModel.isNew,
                         uiState = state,
                         name = nameInput,
                         onNameChange = { nameInput = it },
                         existingTaskItems = existingTaskPagingItems,
                         onSelectTaskType = onSelectTaskType,
-                        onRemoveTask = taskCategoryFormViewModel::removeTask,
-                        onTaskSearch = taskCategoryFormViewModel::searchTasks,
-                        onSelectTaskOption = taskCategoryFormViewModel::addTask,
-                        startEditTask = taskCategoryFormViewModel::startEditTask,
+                        onRemoveTask = tagFormViewModel::removeTask,
+                        onTaskSearch = tagFormViewModel::searchTasks,
+                        onSelectTaskOption = tagFormViewModel::addTask,
+                        startEditTask = tagFormViewModel::startEditTask,
                     )
                 }
             }
@@ -234,19 +233,19 @@ fun TaskCategoryFormScreen(
     }
 }
 
-const val TaskCategoryFormLayoutTestTag = "TaskCategoryFormLayoutTestTag"
+const val TagFormLayoutTestTag = "TagFormLayoutTestTag"
 
 @Composable
-fun TaskCategoryFormLayout(
+fun TagFormLayout(
     isNew: Boolean,
-    uiState: TaskCategoryFormUiState.Success,
+    uiState: TagFormUiState.Success,
     name: String,
     onNameChange: (String) -> Unit,
-    existingTaskItems: LazyPagingItems<Task>,
+    existingTaskItems: LazyPagingItems<TaggedTask>,
     onSelectTaskType: (String) -> Unit,
-    onRemoveTask: (Task) -> Unit,
+    onRemoveTask: (TaggedTask) -> Unit,
     onTaskSearch: (String) -> Unit,
-    onSelectTaskOption: (Task) -> Unit,
+    onSelectTaskOption: (TaggedTask) -> Unit,
     startEditTask: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -257,7 +256,7 @@ fun TaskCategoryFormLayout(
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         LazyColumn(
             modifier = Modifier
-                .testTag(TaskCategoryFormLayoutTestTag)
+                .testTag(TagFormLayoutTestTag)
                 .widthIn(max = ScreenLg)
                 .padding(SpaceMd),
         ) {
@@ -292,21 +291,24 @@ fun TaskCategoryFormLayout(
                 Text(stringResource(R.string.tasks_label), style = typography.titleMedium)
             }
 
-            items(existingTaskItems.itemCount, key = existingTaskItems.itemKey(Task::id)) { index ->
+            items(
+                existingTaskItems.itemCount,
+                key = existingTaskItems.itemKey(TaggedTask::id)
+            ) { index ->
                 val task = existingTaskItems[index]!!
-                TaskCategoryFormTaskItem(task = task, onRemoveTask = onRemoveTask)
+                TagFormTaskItem(task = task, onRemoveTask = onRemoveTask)
                 HorizontalDivider()
             }
 
-            items(newTasks, key = Task::id) { task ->
-                TaskCategoryFormTaskItem(task = task, onRemoveTask = onRemoveTask)
+            items(newTasks, key = TaggedTask::id) { task ->
+                TagFormTaskItem(task = task, onRemoveTask = onRemoveTask)
                 HorizontalDivider()
             }
 
             pagedListFooter(
                 pagingItems = existingTaskItems,
                 errorMessage = {
-                    Text(stringResource(R.string.task_category_form_fetch_tasks_error))
+                    Text(stringResource(R.string.tag_form_fetch_tasks_error))
                 },
             )
 
@@ -320,7 +322,7 @@ fun TaskCategoryFormLayout(
                             label = { Text(stringResource(R.string.task_name_label)) },
                             onSearch = onTaskSearch,
                             options = uiState.taskOptions,
-                            formatOption = Task::name,
+                            formatOption = TaggedTask::name,
                             onSelectOption = onSelectTaskOption,
                             autoFocus = true,
                         )
@@ -338,7 +340,7 @@ fun TaskCategoryFormLayout(
 }
 
 @Composable
-private fun TaskCategoryFormTaskItem(task: Task, onRemoveTask: (Task) -> Unit) {
+private fun TagFormTaskItem(task: TaggedTask, onRemoveTask: (TaggedTask) -> Unit) {
     val dismissState = rememberSwipeToDismissBoxState(confirmValueChange = {
         if (it == SwipeToDismissBoxValue.EndToStart) {
             onRemoveTask(task)
@@ -373,14 +375,14 @@ private fun TaskCategoryFormTaskItem(task: Task, onRemoveTask: (Task) -> Unit) {
 
 @DevicePreviews
 @Composable
-private fun TaskCategoryFormScreenPreview_New() {
+private fun TagFormScreenPreview_New() {
     val name = ""
-    val existingTaskItems = flowOf(PagingData.empty<Task>()).collectAsLazyPagingItems()
+    val existingTaskItems = flowOf(PagingData.empty<TaggedTask>()).collectAsLazyPagingItems()
 
     DiswantinTheme {
         Scaffold(topBar = {
-            TaskCategoryFormTopBar(
-                uiState = TaskCategoryFormTopBarState(
+            TagFormTopBar(
+                uiState = TagFormTopBarState(
                     isNew = true,
                     showSave = true,
                     saveEnabled = false,
@@ -389,9 +391,9 @@ private fun TaskCategoryFormScreenPreview_New() {
                 onSave = {},
             )
         }) { innerPadding ->
-            TaskCategoryFormLayout(
+            TagFormLayout(
                 isNew = true,
-                uiState = TaskCategoryFormUiState.Success(
+                uiState = TagFormUiState.Success(
                     name = name,
                     newTasks = persistentListOf(),
                     isEditing = true,
@@ -415,22 +417,22 @@ private fun TaskCategoryFormScreenPreview_New() {
 
 @DevicePreviews
 @Composable
-private fun TaskCategoryFormScreenPreview_Edit() {
+private fun TagFormScreenPreview_Edit() {
     val name = "Morning routine"
     val existingTaskItems = flowOf(
         PagingData.from(
             listOf(
-                Task(id = 1L, createdAt = Instant.now(), name = "Go to work"),
-                Task(id = 2L, createdAt = Instant.now(), name = "Do laundry"),
-                Task(id = 3L, createdAt = Instant.now(), name = "Go shopping"),
+                TaggedTask(id = 1L, name = "Go to work", isTagged = true),
+                TaggedTask(id = 2L, name = "Do laundry", isTagged = true),
+                TaggedTask(id = 3L, name = "Go shopping", isTagged = true),
             )
         )
     ).collectAsLazyPagingItems()
 
     DiswantinTheme {
         Scaffold(topBar = {
-            TaskCategoryFormTopBar(
-                uiState = TaskCategoryFormTopBarState(
+            TagFormTopBar(
+                uiState = TagFormTopBarState(
                     isNew = false,
                     showSave = true,
                     saveEnabled = true,
@@ -439,26 +441,14 @@ private fun TaskCategoryFormScreenPreview_Edit() {
                 onSave = {},
             )
         }) { innerPadding ->
-            TaskCategoryFormLayout(
+            TagFormLayout(
                 isNew = false,
-                uiState = TaskCategoryFormUiState.Success(
+                uiState = TagFormUiState.Success(
                     name = name,
                     newTasks = persistentListOf(
-                        Task(
-                            id = 4L,
-                            createdAt = Instant.now(),
-                            name = "Brush teeth",
-                        ),
-                        Task(
-                            id = 5L,
-                            createdAt = Instant.now(),
-                            name = "Shower",
-                        ),
-                        Task(
-                            id = 6L,
-                            createdAt = Instant.now(),
-                            name = "Eat breakfast",
-                        ),
+                        TaggedTask(id = 4L, name = "Brush teeth", isTagged = false),
+                        TaggedTask(id = 5L, name = "Shower", isTagged = false),
+                        TaggedTask(id = 6L, name = "Eat breakfast", isTagged = false),
                     ),
                     isEditing = false,
                     taskOptions = persistentListOf(),
@@ -481,22 +471,18 @@ private fun TaskCategoryFormScreenPreview_Edit() {
 
 @DevicePreviews
 @Composable
-private fun TaskCategoryFormLayoutPreview() {
+private fun TagFormLayoutPreview() {
     val name = ""
-    val existingTaskItems = flowOf(PagingData.empty<Task>()).collectAsLazyPagingItems()
+    val existingTaskItems = flowOf(PagingData.empty<TaggedTask>()).collectAsLazyPagingItems()
 
     DiswantinTheme {
         Surface {
-            TaskCategoryFormLayout(
+            TagFormLayout(
                 isNew = true,
-                uiState = TaskCategoryFormUiState.Success(
+                uiState = TagFormUiState.Success(
                     name = name,
                     newTasks = persistentListOf(
-                        Task(
-                            id = 1L,
-                            createdAt = Instant.now(),
-                            name = "Brush teeth",
-                        )
+                        TaggedTask(id = 1L, name = "Brush teeth", isTagged = false)
                     ),
                     isEditing = true,
                     taskOptions = persistentListOf(),

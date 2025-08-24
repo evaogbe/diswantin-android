@@ -304,8 +304,6 @@ interface TaskDao {
             t.scheduled_date,
             t.scheduled_time,
             com.done_at,
-            t.category_id,
-            cat.name AS category_name,
             tp.id AS parent_id,
             tp.name AS parent_name,
             rp.task_id IS NOT NULL AS parent_recurring,
@@ -316,7 +314,6 @@ interface TaskDao {
             FROM task_completion
             GROUP BY task_id
         ) com ON com.task_id = t.id
-        LEFT JOIN task_category cat ON cat.id = t.category_id
         LEFT JOIN task_path p ON p.descendant = t.id AND p.depth = 1
         LEFT JOIN task tp ON tp.id = p.ancestor
         LEFT JOIN (SELECT DISTINCT task_id FROM task_recurrence) rp ON rp.task_id = tp.id
@@ -330,19 +327,17 @@ interface TaskDao {
     )
     fun getTaskDetailById(id: Long): Flow<TaskDetail?>
 
-    @Query("SELECT * FROM task WHERE category_id = :categoryId ORDER BY name")
-    fun getTasksByCategoryId(categoryId: Long): PagingSource<Int, Task>
-
     @Query(
         """SELECT t.id, t.name, r.task_id IS NOT NULL AS recurring, c.done_at
         FROM task t
+        JOIN task_tag tt ON tt.task_id = t.id
         LEFT JOIN (
             SELECT task_id, MAX(done_at) AS done_at
             FROM task_completion
             GROUP BY task_id
         ) c ON c.task_id = t.id
         LEFT JOIN (SELECT DISTINCT task_id FROM task_recurrence) r ON r.task_id = t.id
-        WHERE t.category_id = :categoryId
+        WHERE tt.tag_id = :tagId
         ORDER BY
             c.done_at IS NOT NULL AND (r.task_id IS NULL OR c.done_at >= :startOfToday),
             c.done_at,
@@ -360,19 +355,38 @@ interface TaskDao {
             t.created_at,
             t.id"""
     )
-    fun getTaskItemsByCategoryId(
-        categoryId: Long,
+    fun getTaskSummariesByTagId(
+        tagId: Long,
         startOfToday: Instant
-    ): PagingSource<Int, TaskItemData>
+    ): PagingSource<Int, TaskSummary>
+
+    @Query(
+        """SELECT t.id, t.name, TRUE AS is_tagged
+        FROM task t
+        JOIN task_tag tt ON tt.task_id = t.id
+        WHERE tt.tag_id = :tagId
+        ORDER BY t.name"""
+    )
+    fun getTaggedTasksByTagId(tagId: Long): PagingSource<Int, TaggedTask>
 
     @Query(
         """SELECT DISTINCT task.*
         FROM task
         JOIN task_fts tf ON tf.name = task.name
         WHERE task_fts MATCH :query
-        LIMIT 20"""
+        LIMIT :size"""
     )
-    fun search(query: String): Flow<List<Task>>
+    fun search(query: String, size: Int): Flow<List<Task>>
+
+    @Query(
+        """SELECT DISTINCT t.id, t.name, tt.task_id IS NOT NULL AS is_tagged
+        FROM task t
+        JOIN task_fts tf ON tf.name = t.name
+        LEFT JOIN (SELECT task_id FROM task_tag WHERE tag_id = :tagId) tt ON tt.task_id = t.id
+        WHERE task_fts MATCH :query
+        LIMIT :size"""
+    )
+    fun searchTaggedTasks(query: String, tagId: Long?, size: Int): Flow<List<TaggedTask>>
 
     @Transaction
     @Query(
@@ -516,7 +530,7 @@ interface TaskDao {
             t.name,
             t.id"""
     )
-    fun searchTaskItems(
+    fun searchTaskSummaries(
         query: String,
         deadlineStartDate: LocalDate?,
         deadlineEndDate: LocalDate?,
@@ -527,7 +541,7 @@ interface TaskDao {
         doneStart: Instant?,
         doneEnd: Instant?,
         recurrenceDate: LocalDate?,
-    ): PagingSource<Int, TaskItemWithRecurrences>
+    ): PagingSource<Int, TaskSummaryWithRecurrences>
 
     @Transaction
     @Query(
@@ -669,7 +683,7 @@ interface TaskDao {
             t.name,
             t.id"""
     )
-    fun filterTaskItems(
+    fun filterTaskSummaries(
         deadlineStartDate: LocalDate?,
         deadlineEndDate: LocalDate?,
         startAfterStartDate: LocalDate?,
@@ -679,7 +693,7 @@ interface TaskDao {
         doneStart: Instant?,
         doneEnd: Instant?,
         recurrenceDate: LocalDate?,
-    ): PagingSource<Int, TaskItemWithRecurrences>
+    ): PagingSource<Int, TaskSummaryWithRecurrences>
 
     @Query(
         """SELECT t.*
@@ -717,7 +731,7 @@ interface TaskDao {
             t.created_at,
             t.id"""
     )
-    fun getChildren(id: Long): PagingSource<Int, TaskItemData>
+    fun getChildren(id: Long): PagingSource<Int, TaskSummary>
 
     @Query("SELECT * FROM task_recurrence WHERE task_id = :taskId ORDER BY start LIMIT 7")
     fun getTaskRecurrencesByTaskId(taskId: Long): Flow<List<TaskRecurrence>>
@@ -739,6 +753,9 @@ interface TaskDao {
 
     @Insert
     suspend fun insertSkip(skip: TaskSkip)
+
+    @Insert
+    suspend fun insertTaskTags(taskTags: Collection<TaskTag>)
 
     @Update
     suspend fun update(task: Task)
@@ -766,6 +783,10 @@ interface TaskDao {
 
         if (form.parentTaskId != null) {
             insertChain(parentId = form.parentTaskId, childId = id)
+        }
+
+        if (form.tagIds.isNotEmpty()) {
+            insertTaskTags(form.tagIds.map { TaskTag(taskId = id, tagId = it) })
         }
 
         return id
@@ -801,6 +822,9 @@ interface TaskDao {
     )
     suspend fun deleteAncestors(id: Long)
 
+    @Query("DELETE FROM task_tag WHERE task_id == :taskId AND tag_id in (:tagIds)")
+    suspend fun removeTagsFromTask(taskId: Long, tagIds: Set<Long>)
+
     @Transaction
     suspend fun update(form: EditTaskForm) {
         update(form.updatedTask)
@@ -811,6 +835,16 @@ interface TaskDao {
 
         if (form.recurrencesToAdd.isNotEmpty()) {
             insertRecurrences(form.recurrencesToAdd)
+        }
+
+        if (form.tagIdsToRemove.isNotEmpty()) {
+            removeTagsFromTask(form.updatedTask.id, form.tagIdsToRemove)
+        }
+
+        if (form.tagIdsToAdd.isNotEmpty()) {
+            val newTaskTags =
+                form.tagIdsToAdd.map { TaskTag(taskId = form.updatedTask.id, tagId = it) }
+            insertTaskTags(newTaskTags)
         }
 
         when (form.parentUpdateType) {

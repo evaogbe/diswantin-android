@@ -87,7 +87,7 @@ class TaskSearchScreenTest {
     fun displayErrorMessage_withFailureUi() {
         val query = loremFaker.verbs.base()
         val taskRepository = spyk<FakeTaskRepository>()
-        every { taskRepository.searchTaskItems(any()) } returns flowOf(
+        every { taskRepository.searchTaskSummaries(any()) } returns flowOf(
             PagingData.from(
                 emptyList(),
                 LoadStates(

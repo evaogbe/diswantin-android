@@ -74,9 +74,9 @@ class TaskSearchViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(TaskSearchUiState(hasCriteria = true))
             assertThat(viewModel.searchResultPagingData.asSnapshot()).containsExactly(
-                TaskItemUiState(id = tasks[0].id, name = tasks[0].name, isDone = false),
-                TaskItemUiState(id = tasks[1].id, name = tasks[1].name, isDone = false),
-                TaskItemUiState(id = tasks[2].id, name = tasks[2].name, isDone = false),
+                TaskSummaryUiState(id = tasks[0].id, name = tasks[0].name, isDone = false),
+                TaskSummaryUiState(id = tasks[1].id, name = tasks[1].name, isDone = false),
+                TaskSummaryUiState(id = tasks[2].id, name = tasks[2].name, isDone = false),
             )
 
             viewModel.searchTasks(

@@ -7,28 +7,27 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 
 @Entity(
-    tableName = "task_path",
-    indices = [Index("ancestor", "descendant", unique = true)],
+    tableName = "task_tag",
+    indices = [Index("task_id", "tag_id", unique = true)],
     foreignKeys = [
         ForeignKey(
             entity = Task::class,
             parentColumns = ["id"],
-            childColumns = ["ancestor"],
+            childColumns = ["task_id"],
             onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE
+            onUpdate = ForeignKey.CASCADE,
         ),
         ForeignKey(
-            entity = Task::class,
+            entity = Tag::class,
             parentColumns = ["id"],
-            childColumns = ["descendant"],
+            childColumns = ["tag_id"],
             onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE
-        ),
-    ]
+            onUpdate = ForeignKey.CASCADE,
+        )
+    ],
 )
-data class TaskPath(
+data class TaskTag(
     @PrimaryKey(autoGenerate = true) val id: Long = 0L,
-    val ancestor: Long,
-    @ColumnInfo(index = true) val descendant: Long,
-    val depth: Int,
+    @ColumnInfo("task_id") val taskId: Long,
+    @ColumnInfo("tag_id", index = true) val tagId: Long,
 )

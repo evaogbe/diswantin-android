@@ -12,11 +12,11 @@ import androidx.paging.filter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.data.Result
-import io.github.evaogbe.diswantin.task.data.EditTaskCategoryForm
-import io.github.evaogbe.diswantin.task.data.NewTaskCategoryForm
-import io.github.evaogbe.diswantin.task.data.Task
-import io.github.evaogbe.diswantin.task.data.TaskCategory
-import io.github.evaogbe.diswantin.task.data.TaskCategoryRepository
+import io.github.evaogbe.diswantin.task.data.EditTagForm
+import io.github.evaogbe.diswantin.task.data.NewTagForm
+import io.github.evaogbe.diswantin.task.data.Tag
+import io.github.evaogbe.diswantin.task.data.TagRepository
+import io.github.evaogbe.diswantin.task.data.TaggedTask
 import io.github.evaogbe.diswantin.task.data.TaskRepository
 import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import kotlinx.collections.immutable.ImmutableList
@@ -39,22 +39,22 @@ import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
-class TaskCategoryFormViewModel @Inject constructor(
+class TagFormViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    private val taskCategoryRepository: TaskCategoryRepository,
+    private val tagRepository: TagRepository,
     taskRepository: TaskRepository
 ) : ViewModel() {
-    private val route = savedStateHandle.toRoute<TaskCategoryFormRoute>()
+    private val route = savedStateHandle.toRoute<TagFormRoute>()
 
-    private val categoryId = route.id
+    private val tagId = route.id
 
-    val isNew = categoryId == null
+    val isNew = tagId == null
 
     private val name = MutableStateFlow(route.name.orEmpty())
 
     private val removedTaskIds = MutableStateFlow(emptySet<Long>())
 
-    private val newTasks = MutableStateFlow(persistentListOf<Task>())
+    private val newTasks = MutableStateFlow(persistentListOf<TaggedTask>())
 
     private val isEditing = MutableStateFlow(true)
 
@@ -64,17 +64,23 @@ class TaskCategoryFormViewModel @Inject constructor(
 
     private val userMessage = MutableStateFlow<UserMessage?>(null)
 
-    private val existingCategoryStream = categoryId?.let { id ->
-        taskCategoryRepository.getById(id)
-            .map<TaskCategory?, Result<TaskCategory?>> { Result.Success(it) }.catch { e ->
-                Timber.e(e, "Failed to fetch task category by id: %d", id)
-                emit(Result.Failure(e))
+    private val existingTagStream = tagId?.let { id ->
+        tagRepository.getById(id).map<Tag?, Result<Tag?>> { tag ->
+            if (tag == null) {
+                Timber.e("Failed to fetch tag by id: %d", id)
+                Result.Failure(NullPointerException("Tag not found: $id"))
+            } else {
+                Result.Success(tag)
             }
+        }.catch { e ->
+            Timber.e(e, "Failed to fetch tag by id: %d", id)
+            emit(Result.Failure(e))
+        }
     } ?: flowOf(Result.Success(null))
 
-    val existingTaskPagingData = categoryId?.let { id ->
+    val existingTaskPagingData = tagId?.let { id ->
         combine(
-            taskRepository.getTasksByCategoryId(id).cachedIn(viewModelScope),
+            taskRepository.getTaggedTasksByTagId(id).cachedIn(viewModelScope),
             removedTaskIds,
         ) { all, removed ->
             all.filter { it.id !in removed }
@@ -92,7 +98,7 @@ class TaskCategoryFormViewModel @Inject constructor(
     @Suppress("UNCHECKED_CAST")
     @OptIn(ExperimentalCoroutinesApi::class)
     val uiState = combine(
-        existingCategoryStream,
+        existingTagStream,
         name,
         newTasks,
         removedTaskIds,
@@ -102,7 +108,7 @@ class TaskCategoryFormViewModel @Inject constructor(
             if (query.isBlank()) {
                 flowOf(emptyList())
             } else {
-                taskRepository.search(query.trim()).catch { e ->
+                taskRepository.searchTaggedTasks(query.trim(), tagId, size = 40).catch { e ->
                     Timber.e(e, "Failed to search for tasks by query: %s", query)
                     userMessage.value = UserMessage.String(R.string.search_task_options_error)
                 }
@@ -111,56 +117,55 @@ class TaskCategoryFormViewModel @Inject constructor(
         isSaved,
         userMessage,
     ) { args ->
-        val existingCategoryResult = args[0] as Result<TaskCategory?>
+        val existingTagResult = args[0] as Result<Tag?>
         val name = args[1] as String
-        val newTasks = args[2] as ImmutableList<Task>
+        val newTasks = args[2] as ImmutableList<TaggedTask>
         val removedTaskIds = args[3] as Set<Long>
         val isEditing = args[4] as Boolean
         val taskQuery = (args[5] as String).trim()
-        val taskSearchResults = args[6] as List<Task>
+        val taskSearchResults = args[6] as List<TaggedTask>
         val isSaved = args[7] as Boolean
         val userMessage = args[8] as UserMessage?
 
         if (isSaved) {
-            TaskCategoryFormUiState.Saved
+            TagFormUiState.Saved
         } else {
-            existingCategoryResult.fold(
-                onSuccess = { existingCategory ->
+            existingTagResult.fold(
+                onSuccess = { existingTag ->
                     val hasTaskOptions = taskQuery != taskSearchResults.singleOrNull()?.name
-                    TaskCategoryFormUiState.Success(
+                    TagFormUiState.Success(
                         name = name,
                         newTasks = newTasks,
                         isEditing = isEditing,
                         taskOptions = if (hasTaskOptions) {
-                            taskSearchResults.filter<Task> { option ->
-                                val hasCategory =
-                                    option.categoryId != null && option.id !in removedTaskIds
-                                !hasCategory && option !in newTasks
-                            }.toImmutableList<Task>()
+                            taskSearchResults.filter { option ->
+                                val hasTag = option.isTagged && option.id !in removedTaskIds
+                                !hasTag && option !in newTasks
+                            }.take(20).toImmutableList()
                         } else {
                             persistentListOf()
                         },
                         changed = listOf(
-                            name == existingCategory?.name.orEmpty(),
+                            name == existingTag?.name.orEmpty(),
                             removedTaskIds.isEmpty(),
                             newTasks.isEmpty()
                         ).contains(false),
                         userMessage = userMessage,
                     )
                 },
-                onFailure = TaskCategoryFormUiState::Failure,
+                onFailure = TagFormUiState::Failure,
             )
         }
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000L),
-        initialValue = TaskCategoryFormUiState.Pending,
+        initialValue = TagFormUiState.Pending,
     )
 
     init {
         viewModelScope.launch {
-            val existingCategory = existingCategoryStream.first().getOrNull() ?: return@launch
-            name.value = existingCategory.name
+            val existingTag = existingTagStream.first().getOrNull() ?: return@launch
+            name.value = existingTag.name
             isEditing.value = false
         }
     }
@@ -173,13 +178,13 @@ class TaskCategoryFormViewModel @Inject constructor(
         isEditing.value = true
     }
 
-    fun addTask(task: Task) {
+    fun addTask(task: TaggedTask) {
         newTasks.update { it.add(task) }
         isEditing.value = false
         taskQuery.value = ""
     }
 
-    fun removeTask(task: Task) {
+    fun removeTask(task: TaggedTask) {
         removedTaskIds.update { it + task.id }
         newTasks.update { it.remove(task) }
     }
@@ -188,46 +193,46 @@ class TaskCategoryFormViewModel @Inject constructor(
         taskQuery.value = query
     }
 
-    fun saveCategory() {
-        val state = (uiState.value as? TaskCategoryFormUiState.Success) ?: return
+    fun saveTag() {
+        val state = (uiState.value as? TagFormUiState.Success) ?: return
         if (state.name.isBlank()) return
 
-        if (categoryId == null) {
-            val form = NewTaskCategoryForm(
+        val newTaskIds = state.newTasks.take(20).map { it.id }.toSet()
+
+        if (tagId == null) {
+            val form = NewTagForm(
                 name = state.name,
-                newTasks = state.newTasks.take(20),
+                newTaskIds = newTaskIds,
             )
             viewModelScope.launch {
                 try {
-                    taskCategoryRepository.create(form)
+                    tagRepository.create(form)
                     isSaved.value = true
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
-                    Timber.e(e, "Failed to create task category with form: %s", form)
-                    userMessage.value =
-                        UserMessage.String(R.string.task_category_form_save_error_new)
+                    Timber.e(e, "Failed to create tag with form: %s", form)
+                    userMessage.value = UserMessage.String(R.string.tag_form_save_error_new)
                 }
             }
         } else {
             viewModelScope.launch {
                 try {
-                    val existingCategory = checkNotNull(existingCategoryStream.first().getOrNull())
-                    taskCategoryRepository.update(
-                        EditTaskCategoryForm(
+                    val existingTag = checkNotNull(existingTagStream.first().getOrNull())
+                    tagRepository.update(
+                        EditTagForm(
                             name = state.name,
-                            newTasks = state.newTasks.take(20),
+                            taskIdsToInsert = newTaskIds,
                             taskIdsToRemove = removedTaskIds.value,
-                            existingCategory = existingCategory,
+                            existingTag = existingTag,
                         )
                     )
                     isSaved.value = true
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
-                    Timber.e(e, "Failed to update task category with id: %s", categoryId)
-                    userMessage.value =
-                        UserMessage.String(R.string.task_category_form_save_error_edit)
+                    Timber.e(e, "Failed to update tag with id: %s", tagId)
+                    userMessage.value = UserMessage.String(R.string.tag_form_save_error_edit)
                 }
             }
         }

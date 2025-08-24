@@ -169,10 +169,10 @@ fun DiswantinTimePickerDialog(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
+                    text = stringResource(R.string.time_picker_dialog_title),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 20.dp),
-                    text = stringResource(R.string.time_picker_dialog_title),
                     style = typography.labelMedium,
                 )
 

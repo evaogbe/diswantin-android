@@ -20,15 +20,20 @@ data class EditTaskForm(
     private val startAfterTime: LocalTime?,
     private val scheduledDate: LocalDate?,
     private val scheduledTime: LocalTime?,
-    private val categoryId: Long?,
+    private val tagIds: Set<Long>,
     private val recurrences: Collection<TaskRecurrence>,
     val parentUpdateType: PathUpdateType,
     private val existingTask: Task,
+    private val existingTagIds: Set<Long>,
     private val existingRecurrences: Collection<TaskRecurrence>,
 ) {
     val recurrencesToRemove: Collection<TaskRecurrence>
 
     val recurrencesToAdd: Collection<TaskRecurrence>
+
+    val tagIdsToRemove = existingTagIds - tagIds
+
+    val tagIdsToAdd = tagIds - existingTagIds
 
     init {
         require(name.isNotBlank()) { "Name must be present" }
@@ -87,6 +92,5 @@ data class EditTaskForm(
         startAfterTime = startAfterTime,
         scheduledDate = scheduledDate,
         scheduledTime = scheduledTime,
-        categoryId = categoryId,
     )
 }

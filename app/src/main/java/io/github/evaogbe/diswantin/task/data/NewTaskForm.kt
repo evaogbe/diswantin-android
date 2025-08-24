@@ -14,7 +14,7 @@ data class NewTaskForm(
     private val startAfterTime: LocalTime?,
     private val scheduledDate: LocalDate?,
     private val scheduledTime: LocalTime?,
-    private val categoryId: Long?,
+    val tagIds: Set<Long>,
     val recurrences: Collection<TaskRecurrence>,
     val parentTaskId: Long?,
     private val clock: Clock,
@@ -73,6 +73,5 @@ data class NewTaskForm(
             startAfterTime = startAfterTime,
             scheduledDate = scheduledDate,
             scheduledTime = scheduledTime,
-            categoryId = categoryId,
         )
 }

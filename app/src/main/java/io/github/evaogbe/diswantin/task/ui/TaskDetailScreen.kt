@@ -1,6 +1,8 @@
 package io.github.evaogbe.diswantin.task.ui
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -8,6 +10,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -25,6 +29,7 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -48,6 +53,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.RecurrenceType
+import io.github.evaogbe.diswantin.task.data.Tag
 import io.github.evaogbe.diswantin.ui.loadstate.LoadFailureLayout
 import io.github.evaogbe.diswantin.ui.loadstate.PendingLayout
 import io.github.evaogbe.diswantin.ui.loadstate.pagedListFooter
@@ -57,6 +63,7 @@ import io.github.evaogbe.diswantin.ui.theme.ScreenLg
 import io.github.evaogbe.diswantin.ui.theme.SpaceMd
 import io.github.evaogbe.diswantin.ui.theme.SpaceSm
 import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.coroutines.flow.flowOf
 import java.time.LocalDate
@@ -144,7 +151,7 @@ fun TaskDetailScreen(
     topBarActionHandled: () -> Unit,
     setUserMessage: (UserMessage) -> Unit,
     onNavigateToTask: (Long) -> Unit,
-    onNavigateToCategory: (Long) -> Unit,
+    onNavigateToTag: (Long) -> Unit,
     taskDetailViewModel: TaskDetailViewModel = hiltViewModel(),
 ) {
     val childTaskPagingItems = taskDetailViewModel.childTaskPagingData.collectAsLazyPagingItems()
@@ -215,7 +222,7 @@ fun TaskDetailScreen(
                         uiState = state,
                         childTaskItems = childTaskPagingItems,
                         onNavigateToTask = onNavigateToTask,
-                        onNavigateToCategory = onNavigateToCategory,
+                        onNavigateToTag = onNavigateToTag,
                     )
                 }
             }
@@ -226,9 +233,44 @@ fun TaskDetailScreen(
 @Composable
 fun TaskDetailLayout(
     uiState: TaskDetailUiState.Success,
-    childTaskItems: LazyPagingItems<TaskItemUiState>,
+    childTaskItems: LazyPagingItems<TaskSummaryUiState>,
     onNavigateToTask: (Long) -> Unit,
-    onNavigateToCategory: (Long) -> Unit,
+    onNavigateToTag: (Long) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    TaskDetailLayout(
+        uiState = uiState,
+        childTaskItems = if (childTaskItems.itemCount > 0) {
+            {
+                items(
+                    childTaskItems.itemCount,
+                    key = childTaskItems.itemKey(TaskSummaryUiState::id),
+                ) { index ->
+                    val task = childTaskItems[index]!!
+                    TaskSummaryItem(task = task, onSelectTask = onNavigateToTask)
+                    HorizontalDivider()
+                }
+
+                pagedListFooter(
+                    pagingItems = childTaskItems,
+                    errorMessage = {
+                        Text(stringResource(R.string.task_detail_fetch_children_error))
+                    },
+                )
+            }
+        } else null,
+        onNavigateToTask = onNavigateToTask,
+        onNavigateToTag = onNavigateToTag,
+        modifier = modifier,
+    )
+}
+
+@Composable
+fun TaskDetailLayout(
+    uiState: TaskDetailUiState.Success,
+    childTaskItems: (LazyListScope.() -> Unit)?,
+    onNavigateToTask: (Long) -> Unit,
+    onNavigateToTag: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
@@ -240,7 +282,7 @@ fun TaskDetailLayout(
         ) {
             item {
                 SelectionContainer(modifier = Modifier.padding(horizontal = SpaceMd)) {
-                    TaskItemName(task = uiState.taskItem, style = typography.displaySmall)
+                    TaskSummaryName(task = uiState.summary, style = typography.displaySmall)
                 }
                 Spacer(Modifier.size(SpaceMd))
             }
@@ -309,30 +351,12 @@ fun TaskDetailLayout(
                 }
             }
 
-            if (uiState.categoryId != null && uiState.categoryName != null) {
-                item {
-                    ListItem(
-                        headlineContent = {
-                            SelectionContainer {
-                                Text(text = uiState.categoryName)
-                            }
-                        },
-                        overlineContent = { Text(stringResource(R.string.task_category_label)) },
-                        supportingContent = {
-                            TextButton(onClick = { onNavigateToCategory(uiState.categoryId) }) {
-                                Text(stringResource(R.string.view_task_category_button))
-                            }
-                        },
-                    )
-                }
-            }
-
             if (uiState.parent != null) {
                 item {
                     ListItem(
                         headlineContent = {
                             SelectionContainer {
-                                TaskItemName(task = uiState.parent)
+                                TaskSummaryName(task = uiState.parent)
                             }
                         },
                         overlineContent = { Text(stringResource(R.string.parent_task_label)) },
@@ -345,7 +369,7 @@ fun TaskDetailLayout(
                 }
             }
 
-            if (childTaskItems.itemCount > 0) {
+            childTaskItems?.let {
                 item {
                     Spacer(Modifier.size(SpaceSm))
                     Text(
@@ -356,20 +380,34 @@ fun TaskDetailLayout(
                     )
                 }
 
-                items(
-                    childTaskItems.itemCount, key = childTaskItems.itemKey(TaskItemUiState::id)
-                ) { index ->
-                    val task = childTaskItems[index]!!
-                    TaskItem(task = task, onSelectTask = onNavigateToTask)
-                    HorizontalDivider()
-                }
+                it()
 
-                pagedListFooter(
-                    pagingItems = childTaskItems,
-                    errorMessage = {
-                        Text(stringResource(R.string.task_detail_fetch_children_error))
-                    },
-                )
+                item {
+                    Spacer(Modifier.size(SpaceSm))
+                }
+            }
+
+            if (uiState.tags.isNotEmpty()) {
+                item {
+                    Spacer(Modifier.size(SpaceSm))
+                    Text(
+                        stringResource(R.string.tags_label),
+                        modifier = Modifier.padding(horizontal = SpaceMd),
+                        color = colorScheme.onSurfaceVariant,
+                        style = typography.labelSmall,
+                    )
+                    FlowRow(
+                        modifier = Modifier.padding(horizontal = SpaceMd),
+                        horizontalArrangement = Arrangement.spacedBy(SpaceSm),
+                    ) {
+                        uiState.tags.forEach { tag ->
+                            SuggestionChip(
+                                onClick = { onNavigateToTag(tag.id) },
+                                label = { Text(text = tag.name) },
+                            )
+                        }
+                    }
+                }
             }
         }
     }
@@ -378,7 +416,7 @@ fun TaskDetailLayout(
 @DevicePreviews
 @Composable
 private fun TaskDetailScreenPreview_Minimal() {
-    val childTaskItems = flowOf(PagingData.empty<TaskItemUiState>()).collectAsLazyPagingItems()
+    val childTaskItems = flowOf(PagingData.empty<TaskSummaryUiState>()).collectAsLazyPagingItems()
 
     DiswantinTheme {
         Scaffold(
@@ -403,14 +441,13 @@ private fun TaskDetailScreenPreview_Minimal() {
                     formattedScheduledAt = null,
                     recurrence = null,
                     isDone = false,
-                    categoryId = null,
-                    categoryName = null,
                     parent = null,
+                    tags = persistentListOf(),
                     userMessage = null,
                 ),
                 childTaskItems = childTaskItems,
                 onNavigateToTask = {},
-                onNavigateToCategory = {},
+                onNavigateToTag = {},
                 modifier = Modifier.padding(innerPadding),
             )
         }
@@ -420,14 +457,10 @@ private fun TaskDetailScreenPreview_Minimal() {
 @DevicePreviews
 @Composable
 private fun TaskDetailScreenPreview_Detailed() {
-    val childTaskItems = flowOf(
-        PagingData.from(
-            listOf(
-                TaskItemUiState(id = 3L, name = "Eat breakfast", isDone = false),
-                TaskItemUiState(id = 4L, name = "Go to work", isDone = true),
-            )
-        )
-    ).collectAsLazyPagingItems()
+    val childTaskItems = listOf(
+        TaskSummaryUiState(id = 3L, name = "Eat breakfast", isDone = false),
+        TaskSummaryUiState(id = 4L, name = "Go to work", isDone = true),
+    )
 
     DiswantinTheme {
         Scaffold(
@@ -452,14 +485,23 @@ private fun TaskDetailScreenPreview_Detailed() {
                     formattedScheduledAt = null,
                     recurrence = null,
                     isDone = true,
-                    categoryId = 1L,
-                    categoryName = "Morning Routine",
-                    parent = TaskItemUiState(id = 1L, name = "Brush teeth", isDone = false),
+                    parent = TaskSummaryUiState(id = 1L, name = "Brush teeth", isDone = false),
+                    tags = persistentListOf(
+                        Tag(id = 1L, name = "morning routine"),
+                        Tag(id = 2L, name = "hygiene"),
+                        Tag(id = 3L, name = "low effort"),
+                        Tag(id = 3L, name = "goal"),
+                    ),
                     userMessage = null,
                 ),
-                childTaskItems = childTaskItems,
+                childTaskItems = {
+                    items(childTaskItems, key = TaskSummaryUiState::id) { task ->
+                        TaskSummaryItem(task = task, onSelectTask = {})
+                        HorizontalDivider()
+                    }
+                },
                 onNavigateToTask = {},
-                onNavigateToCategory = {},
+                onNavigateToTag = {},
                 modifier = Modifier.padding(innerPadding),
             )
         }
@@ -469,7 +511,7 @@ private fun TaskDetailScreenPreview_Detailed() {
 @DevicePreviews
 @Composable
 private fun TaskDetailLayoutPreview() {
-    val childTaskItems = flowOf(PagingData.empty<TaskItemUiState>()).collectAsLazyPagingItems()
+    val childTaskItems = flowOf(PagingData.empty<TaskSummaryUiState>()).collectAsLazyPagingItems()
 
     DiswantinTheme {
         Surface {
@@ -489,14 +531,13 @@ private fun TaskDetailLayoutPreview() {
                         locale = Locale.getDefault(),
                     ),
                     isDone = false,
-                    categoryId = null,
-                    categoryName = null,
-                    parent = TaskItemUiState(id = 1L, name = "Brush teeth", isDone = true),
+                    parent = TaskSummaryUiState(id = 1L, name = "Brush teeth", isDone = true),
+                    tags = persistentListOf(Tag(id = 1L, name = "morning routine")),
                     userMessage = null,
                 ),
                 childTaskItems = childTaskItems,
                 onNavigateToTask = {},
-                onNavigateToCategory = {},
+                onNavigateToTag = {},
             )
         }
     }
