@@ -403,7 +403,7 @@ fun TaskDetailLayout(
                         uiState.tags.forEach { tag ->
                             SuggestionChip(
                                 onClick = { onNavigateToTag(tag.id) },
-                                label = { Text(tag.name) },
+                                label = { Text(text = tag.name) },
                             )
                         }
                     }

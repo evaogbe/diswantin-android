@@ -68,7 +68,8 @@ class FakeDatabase {
         _tagTable.update { it + (tag.id to tag) }
         _taskTagTable.update { taskTagTable ->
             val taskTagIdsToRemove =
-                taskTagTable.values.filter { it.taskId in taskIdsToRemove }.map { it.id }
+                taskTagTable.values.filter { it.tagId == tag.id && it.taskId in taskIdsToRemove }
+                    .map { it.id }
             val taskTagsToInsert = taskIdsToInsert.map {
                 TaskTag(id = ++taskTagIdGen, taskId = it, tagId = tag.id)
             }.associateBy { it.id }
