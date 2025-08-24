@@ -3,6 +3,7 @@ package io.github.evaogbe.diswantin.task.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,12 +15,15 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.InputChip
+import androidx.compose.material3.InputChipDefaults
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -43,8 +47,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.RecurrenceType
+import io.github.evaogbe.diswantin.task.data.Tag
 import io.github.evaogbe.diswantin.task.data.Task
-import io.github.evaogbe.diswantin.task.data.TaskCategory
 import io.github.evaogbe.diswantin.ui.button.TextButtonWithIcon
 import io.github.evaogbe.diswantin.ui.dialog.DiscardConfirmationDialog
 import io.github.evaogbe.diswantin.ui.dialog.DiswantinDatePickerDialog
@@ -121,7 +125,7 @@ fun TaskFormScreen(
     topBarActionHandled: () -> Unit,
     setUserMessage: (UserMessage) -> Unit,
     initialName: String,
-    onSelectCategoryType: (String) -> Unit,
+    onSelectTagType: (String) -> Unit,
     onEditRecurrence: () -> Unit,
     taskFormViewModel: TaskFormViewModel = hiltViewModel(),
 ) {
@@ -216,7 +220,7 @@ fun TaskFormScreen(
                 onNameChange = { nameInput = it },
                 note = noteInput,
                 onNoteChange = { noteInput = it },
-                onSelectCategoryType = onSelectCategoryType,
+                onSelectTagType = onSelectTagType,
                 onDeadlineDateChange = taskFormViewModel::updateDeadlineDate,
                 onDeadlineTimeChange = taskFormViewModel::updateDeadlineTime,
                 onStartAfterDateChange = taskFormViewModel::updateStartAfterDate,
@@ -225,8 +229,10 @@ fun TaskFormScreen(
                 onScheduledTimeChange = taskFormViewModel::updateScheduledTime,
                 onEditRecurrence = onEditRecurrence,
                 onClearRecurrence = { taskFormViewModel.updateRecurrence(null) },
-                onCategoryChange = taskFormViewModel::updateCategory,
-                onCategorySearch = taskFormViewModel::searchCategories,
+                onAddTag = taskFormViewModel::addTag,
+                onRemoveTag = taskFormViewModel::removeTag,
+                startEditTag = taskFormViewModel::startEditTag,
+                onTagSearch = taskFormViewModel::searchTags,
                 onParentTaskChange = taskFormViewModel::updateParentTask,
                 onTaskSearch = taskFormViewModel::searchParentTasks,
             )
@@ -256,7 +262,7 @@ fun TaskFormLayout(
     onNameChange: (String) -> Unit,
     note: String,
     onNoteChange: (String) -> Unit,
-    onSelectCategoryType: (String) -> Unit,
+    onSelectTagType: (String) -> Unit,
     onDeadlineDateChange: (LocalDate?) -> Unit,
     onDeadlineTimeChange: (LocalTime?) -> Unit,
     onStartAfterDateChange: (LocalDate?) -> Unit,
@@ -265,13 +271,16 @@ fun TaskFormLayout(
     onScheduledTimeChange: (LocalTime?) -> Unit,
     onEditRecurrence: () -> Unit,
     onClearRecurrence: () -> Unit,
-    onCategoryChange: (TaskCategory?) -> Unit,
-    onCategorySearch: (String) -> Unit,
+    onAddTag: (Tag) -> Unit,
+    onRemoveTag: (Tag) -> Unit,
+    startEditTag: () -> Unit,
+    onTagSearch: (String) -> Unit,
     onParentTaskChange: (Task?) -> Unit,
     onTaskSearch: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var dialogType by rememberSaveable { mutableStateOf<FieldDialogType?>(null) }
+    var tagQuery by rememberSaveable(uiState.tagFieldState) { mutableStateOf("") }
 
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         Column(
@@ -296,7 +305,7 @@ fun TaskFormLayout(
                     selectedIndex = 0,
                     onSelect = {
                         if (it == 1) {
-                            onSelectCategoryType(name)
+                            onSelectTagType(name)
                         }
                     },
                 )
@@ -326,7 +335,10 @@ fun TaskFormLayout(
                         style = typography.bodyLarge,
                     )
                     Spacer(Modifier.size(SpaceSm))
-                    ClearableLayout(onClear = onClearRecurrence, invert = false) {
+                    ClearableLayout(
+                        onClear = onClearRecurrence,
+                        iconContentDescription = stringResource(R.string.remove_button),
+                    ) {
                         EditFieldButton(
                             onClick = onEditRecurrence,
                             text = taskRecurrenceText(uiState.recurrence),
@@ -345,7 +357,7 @@ fun TaskFormLayout(
                         Spacer(Modifier.size(SpaceSm))
                         ClearableLayout(
                             onClear = { onDeadlineDateChange(null) },
-                            invert = false,
+                            iconContentDescription = stringResource(R.string.remove_button),
                         ) {
                             EditFieldButton(
                                 onClick = { dialogType = FieldDialogType.DeadlineDate },
@@ -372,7 +384,7 @@ fun TaskFormLayout(
                         Spacer(Modifier.size(SpaceSm))
                         ClearableLayout(
                             onClear = { onDeadlineTimeChange(null) },
-                            invert = false,
+                            iconContentDescription = stringResource(R.string.remove_button),
                         ) {
                             EditFieldButton(
                                 onClick = { dialogType = FieldDialogType.DeadlineTime },
@@ -399,7 +411,7 @@ fun TaskFormLayout(
                         Spacer(Modifier.size(SpaceSm))
                         ClearableLayout(
                             onClear = { onStartAfterDateChange(null) },
-                            invert = false,
+                            iconContentDescription = stringResource(R.string.remove_button),
                         ) {
                             EditFieldButton(
                                 onClick = { dialogType = FieldDialogType.StartAfterDate },
@@ -426,7 +438,7 @@ fun TaskFormLayout(
                         Spacer(Modifier.size(SpaceSm))
                         ClearableLayout(
                             onClear = { onStartAfterTimeChange(null) },
-                            invert = false,
+                            iconContentDescription = stringResource(R.string.remove_button),
                         ) {
                             EditFieldButton(
                                 onClick = { dialogType = FieldDialogType.StartAfterTime },
@@ -467,7 +479,7 @@ fun TaskFormLayout(
                         Spacer(Modifier.size(SpaceSm))
                         ClearableLayout(
                             onClear = { onScheduledDateChange(null) },
-                            invert = false,
+                            iconContentDescription = stringResource(R.string.remove_button),
                         ) {
                             EditFieldButton(
                                 onClick = { dialogType = FieldDialogType.ScheduledDate },
@@ -492,7 +504,10 @@ fun TaskFormLayout(
                             style = typography.bodyLarge,
                         )
                         Spacer(Modifier.size(SpaceSm))
-                        ClearableLayout(onClear = { onScheduledTimeChange(null) }, invert = false) {
+                        ClearableLayout(
+                            onClear = { onScheduledTimeChange(null) },
+                            iconContentDescription = stringResource(R.string.remove_button),
+                        ) {
                             EditFieldButton(
                                 onClick = { dialogType = FieldDialogType.ScheduledTime },
                                 text = uiState.scheduledTime.format(
@@ -515,15 +530,43 @@ fun TaskFormLayout(
                 )
             }
 
-            if (uiState.showCategoryField) {
-                SelectableAutocompleteField(
-                    selectedOption = uiState.category,
-                    label = stringResource(R.string.task_category_label),
-                    onSearch = onCategorySearch,
-                    options = uiState.categoryOptions,
-                    formatOption = TaskCategory::name,
-                    onSelectOption = onCategoryChange,
-                )
+            when (uiState.tagFieldState) {
+                TagFieldState.Open -> {
+                    Column {
+                        Text(stringResource(R.string.tags_label), style = typography.titleMedium)
+
+                        TagList(tags = uiState.tags, onRemoveTag = onRemoveTag)
+
+                        AutocompleteField(
+                            query = tagQuery,
+                            onQueryChange = { tagQuery = it },
+                            label = { Text(stringResource(R.string.tag_name_label)) },
+                            onSearch = onTagSearch,
+                            options = uiState.tagOptions,
+                            formatOption = Tag::name,
+                            onSelectOption = onAddTag,
+                            autoFocus = true,
+                        )
+                    }
+                }
+
+                TagFieldState.Closed -> {
+                    Column {
+                        Text(stringResource(R.string.tags_label), style = typography.titleMedium)
+
+                        TagList(tags = uiState.tags, onRemoveTag = onRemoveTag)
+
+                        if (uiState.tags.size < 20) {
+                            TextButtonWithIcon(
+                                onClick = startEditTag,
+                                imageVector = Icons.Default.Add,
+                                text = stringResource(R.string.add_tag_button),
+                            )
+                        }
+                    }
+                }
+
+                TagFieldState.Hidden -> {}
             }
         }
     }
@@ -628,7 +671,10 @@ fun <T : Any> SelectableAutocompleteField(
             Column {
                 Text(text = label, style = typography.bodyLarge)
                 Spacer(Modifier.size(SpaceSm))
-                ClearableLayout(onClear = { onSelectOption(null) }, invert = false) {
+                ClearableLayout(
+                    onClear = { onSelectOption(null) },
+                    iconContentDescription = stringResource(R.string.remove_button)
+                ) {
                     EditFieldButton(
                         onClick = {
                             query = formatOption(selectedOption)
@@ -639,6 +685,26 @@ fun <T : Any> SelectableAutocompleteField(
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun TagList(tags: ImmutableList<Tag>, onRemoveTag: (Tag) -> Unit) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(SpaceSm)) {
+        tags.forEach { tag ->
+            InputChip(
+                selected = false,
+                onClick = { onRemoveTag(tag) },
+                label = { Text(text = tag.name) },
+                trailingIcon = {
+                    Icon(
+                        Icons.Default.Close,
+                        contentDescription = stringResource(R.string.remove_button),
+                        modifier = Modifier.size(InputChipDefaults.AvatarSize),
+                    )
+                },
+            )
         }
     }
 }
@@ -669,9 +735,9 @@ private fun TaskFormScreenPreview_New() {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    showCategoryField = false,
-                    category = null,
-                    categoryOptions = persistentListOf(),
+                    tagFieldState = TagFieldState.Hidden,
+                    tags = persistentListOf(),
+                    tagOptions = persistentListOf(),
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
@@ -682,7 +748,7 @@ private fun TaskFormScreenPreview_New() {
                 onNameChange = {},
                 note = note,
                 onNoteChange = {},
-                onSelectCategoryType = {},
+                onSelectTagType = {},
                 onDeadlineDateChange = {},
                 onDeadlineTimeChange = {},
                 onStartAfterDateChange = {},
@@ -691,8 +757,10 @@ private fun TaskFormScreenPreview_New() {
                 onScheduledTimeChange = {},
                 onEditRecurrence = {},
                 onClearRecurrence = {},
-                onCategoryChange = {},
-                onCategorySearch = {},
+                onAddTag = {},
+                onRemoveTag = {},
+                startEditTag = {},
+                onTagSearch = {},
                 onParentTaskChange = {},
                 onTaskSearch = {},
                 modifier = Modifier.padding(innerPadding),
@@ -733,9 +801,14 @@ private fun TaskFormScreenPreview_Edit() {
                     startAfterTime = LocalTime.now(),
                     scheduledDate = null,
                     scheduledTime = null,
-                    showCategoryField = true,
-                    category = TaskCategory(id = 1L, name = "Morning routine"),
-                    categoryOptions = persistentListOf(),
+                    tagFieldState = TagFieldState.Closed,
+                    tags = persistentListOf(
+                        Tag(id = 1L, name = "morning routine"),
+                        Tag(id = 2L, name = "hygiene"),
+                        Tag(id = 3L, name = "low effort"),
+                        Tag(id = 3L, name = "goal"),
+                    ),
+                    tagOptions = persistentListOf(),
                     showParentTaskField = true,
                     parentTask = Task(id = 1L, createdAt = Instant.now(), name = "Brush teeth"),
                     parentTaskOptions = persistentListOf(),
@@ -746,7 +819,7 @@ private fun TaskFormScreenPreview_Edit() {
                 onNameChange = {},
                 note = note,
                 onNoteChange = {},
-                onSelectCategoryType = {},
+                onSelectTagType = {},
                 onDeadlineDateChange = {},
                 onDeadlineTimeChange = {},
                 onStartAfterDateChange = {},
@@ -755,8 +828,10 @@ private fun TaskFormScreenPreview_Edit() {
                 onScheduledTimeChange = {},
                 onEditRecurrence = {},
                 onClearRecurrence = {},
-                onCategoryChange = {},
-                onCategorySearch = {},
+                onAddTag = {},
+                onRemoveTag = {},
+                startEditTag = {},
+                onTagSearch = {},
                 onParentTaskChange = {},
                 onTaskSearch = {},
                 modifier = Modifier.padding(innerPadding),
@@ -785,9 +860,9 @@ private fun TaskFormLayoutPreview_ScheduledAt() {
                     startAfterTime = null,
                     scheduledDate = LocalDate.now(),
                     scheduledTime = LocalTime.now(),
-                    showCategoryField = true,
-                    category = null,
-                    categoryOptions = persistentListOf(),
+                    tagFieldState = TagFieldState.Closed,
+                    tags = persistentListOf(),
+                    tagOptions = persistentListOf(),
                     showParentTaskField = true,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
@@ -798,7 +873,7 @@ private fun TaskFormLayoutPreview_ScheduledAt() {
                 onNameChange = {},
                 note = note,
                 onNoteChange = {},
-                onSelectCategoryType = {},
+                onSelectTagType = {},
                 onDeadlineDateChange = {},
                 onDeadlineTimeChange = {},
                 onStartAfterDateChange = {},
@@ -807,8 +882,10 @@ private fun TaskFormLayoutPreview_ScheduledAt() {
                 onScheduledTimeChange = {},
                 onEditRecurrence = {},
                 onClearRecurrence = {},
-                onCategoryChange = {},
-                onCategorySearch = {},
+                onAddTag = {},
+                onRemoveTag = {},
+                startEditTag = {},
+                onTagSearch = {},
                 onParentTaskChange = {},
                 onTaskSearch = {},
             )
@@ -836,9 +913,9 @@ private fun TaskFormLayoutPreview_ScheduledDate() {
                     startAfterTime = null,
                     scheduledDate = LocalDate.now(),
                     scheduledTime = null,
-                    showCategoryField = false,
-                    category = null,
-                    categoryOptions = persistentListOf(),
+                    tagFieldState = TagFieldState.Hidden,
+                    tags = persistentListOf(),
+                    tagOptions = persistentListOf(),
                     showParentTaskField = false,
                     parentTask = null,
                     parentTaskOptions = persistentListOf(),
@@ -849,7 +926,7 @@ private fun TaskFormLayoutPreview_ScheduledDate() {
                 onNameChange = {},
                 note = note,
                 onNoteChange = {},
-                onSelectCategoryType = {},
+                onSelectTagType = {},
                 onDeadlineDateChange = {},
                 onDeadlineTimeChange = {},
                 onStartAfterDateChange = {},
@@ -858,8 +935,64 @@ private fun TaskFormLayoutPreview_ScheduledDate() {
                 onScheduledTimeChange = {},
                 onEditRecurrence = {},
                 onClearRecurrence = {},
-                onCategoryChange = {},
-                onCategorySearch = {},
+                onAddTag = {},
+                onRemoveTag = {},
+                startEditTag = {},
+                onTagSearch = {},
+                onParentTaskChange = {},
+                onTaskSearch = {},
+            )
+        }
+    }
+}
+
+
+@DevicePreviews
+@Composable
+private fun TaskFormLayoutPreview_EditingTag() {
+    val name = ""
+    val note = ""
+
+    DiswantinTheme {
+        Surface {
+            TaskFormLayout(
+                isNew = false,
+                uiState = TaskFormUiState.Success(
+                    name = name,
+                    note = note,
+                    recurrence = null,
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
+                    tagFieldState = TagFieldState.Open,
+                    tags = persistentListOf(Tag(id = 1L, name = "morning routine")),
+                    tagOptions = persistentListOf(),
+                    showParentTaskField = false,
+                    parentTask = null,
+                    parentTaskOptions = persistentListOf(),
+                    changed = false,
+                    userMessage = null,
+                ),
+                name = name,
+                onNameChange = {},
+                note = note,
+                onNoteChange = {},
+                onSelectTagType = {},
+                onDeadlineDateChange = {},
+                onDeadlineTimeChange = {},
+                onStartAfterDateChange = {},
+                onStartAfterTimeChange = {},
+                onScheduledDateChange = {},
+                onScheduledTimeChange = {},
+                onEditRecurrence = {},
+                onClearRecurrence = {},
+                onAddTag = {},
+                onRemoveTag = {},
+                startEditTag = {},
+                onTagSearch = {},
                 onParentTaskChange = {},
                 onTaskSearch = {},
             )

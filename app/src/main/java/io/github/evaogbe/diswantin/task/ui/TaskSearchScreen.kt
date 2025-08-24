@@ -331,7 +331,7 @@ fun TaskSearchScreen(
     onDoneChipClick: () -> Unit,
     recurrenceDate: LocalDate?,
     onRecurrenceChipClick: () -> Unit,
-    searchResultItems: LazyPagingItems<TaskItemUiState>,
+    searchResultItems: LazyPagingItems<TaskSummaryUiState>,
     uiState: TaskSearchUiState,
     onAddTask: (String) -> Unit,
     onSelectSearchResult: (Long) -> Unit,
@@ -448,7 +448,7 @@ fun TaskSearchScreen(
 @Composable
 fun TaskSearchLayout(
     query: String,
-    searchResultItems: LazyPagingItems<TaskItemUiState>,
+    searchResultItems: LazyPagingItems<TaskSummaryUiState>,
     onSelectSearchResult: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -456,7 +456,7 @@ fun TaskSearchLayout(
         searchResultItems = {
             items(
                 searchResultItems.itemCount,
-                key = searchResultItems.itemKey(TaskItemUiState::id),
+                key = searchResultItems.itemKey(TaskSummaryUiState::id),
             ) { index ->
                 val searchResult = searchResultItems[index]!!
                 SearchResultItem(
@@ -499,7 +499,7 @@ fun TaskSearchLayout(
 
 @Composable
 private fun SearchResultItem(
-    searchResult: TaskItemUiState, query: String, onSelectSearchResult: (Long) -> Unit
+    searchResult: TaskSummaryUiState, query: String, onSelectSearchResult: (Long) -> Unit
 ) {
     val resources = LocalResources.current
 
@@ -594,9 +594,9 @@ private fun TaskSearchScreenPreview_Present() {
     val searchResultItems = flowOf(
         PagingData.from(
             listOf(
-                TaskItemUiState(id = 1L, name = "Brush teeth", isDone = true),
-                TaskItemUiState(id = 2L, name = "Brush hair", isDone = false),
-                TaskItemUiState(id = 3L, name = "Eat brunch", isDone = false),
+                TaskSummaryUiState(id = 1L, name = "Brush teeth", isDone = true),
+                TaskSummaryUiState(id = 2L, name = "Brush hair", isDone = false),
+                TaskSummaryUiState(id = 3L, name = "Eat brunch", isDone = false),
             )
         )
     ).collectAsLazyPagingItems()
@@ -640,7 +640,7 @@ private fun TaskSearchScreenPreview_Empty() {
 @DevicePreviews
 @Composable
 private fun TaskSearchScreenPreview_Initial() {
-    val searchResultItems = emptyFlow<PagingData<TaskItemUiState>>().collectAsLazyPagingItems()
+    val searchResultItems = emptyFlow<PagingData<TaskSummaryUiState>>().collectAsLazyPagingItems()
 
     DiswantinTheme {
         Scaffold(
@@ -674,16 +674,16 @@ private fun TaskSearchScreenPreview_Initial() {
 @Composable
 private fun TaskSearchLayoutPreview() {
     val searchResults = listOf(
-        TaskItemUiState(id = 1L, name = "Brush teeth", isDone = true),
-        TaskItemUiState(id = 2L, name = "Brush hair", isDone = false),
-        TaskItemUiState(id = 3L, name = "Eat brunch", isDone = false),
+        TaskSummaryUiState(id = 1L, name = "Brush teeth", isDone = true),
+        TaskSummaryUiState(id = 2L, name = "Brush hair", isDone = false),
+        TaskSummaryUiState(id = 3L, name = "Eat brunch", isDone = false),
     )
 
     DiswantinTheme {
         Surface {
             TaskSearchLayout(
                 searchResultItems = {
-                    items(searchResults, TaskItemUiState::id) { searchResult ->
+                    items(searchResults, TaskSummaryUiState::id) { searchResult ->
                         SearchResultItem(
                             searchResult = searchResult,
                             query = "Bru",

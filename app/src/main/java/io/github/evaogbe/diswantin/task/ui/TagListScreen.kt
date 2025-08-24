@@ -41,7 +41,7 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import io.github.evaogbe.diswantin.R
-import io.github.evaogbe.diswantin.task.data.TaskCategory
+import io.github.evaogbe.diswantin.task.data.Tag
 import io.github.evaogbe.diswantin.ui.button.ButtonWithIcon
 import io.github.evaogbe.diswantin.ui.loadstate.LoadFailureLayout
 import io.github.evaogbe.diswantin.ui.loadstate.PendingLayout
@@ -56,7 +56,7 @@ import kotlinx.coroutines.flow.flowOf
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TaskCategoryListTopBar(onSearch: () -> Unit, modifier: Modifier = Modifier) {
+fun TagListTopBar(onSearch: () -> Unit, modifier: Modifier = Modifier) {
     TopAppBar(
         title = {},
         modifier = modifier,
@@ -72,57 +72,56 @@ fun TaskCategoryListTopBar(onSearch: () -> Unit, modifier: Modifier = Modifier) 
 }
 
 @Composable
-fun TaskCategoryListScreen(
-    onAddCategory: () -> Unit,
-    onSelectCategory: (Long) -> Unit,
-    taskCategoryListViewModel: TaskCategoryListViewModel = hiltViewModel(),
+fun TagListScreen(
+    onAddTag: () -> Unit,
+    onSelectTag: (Long) -> Unit,
+    tagListViewModel: TagListViewModel = hiltViewModel(),
 ) {
-    val categoryPagingItems =
-        taskCategoryListViewModel.categoryPagingData.collectAsLazyPagingItems()
+    val tagPagingItems = tagListViewModel.tagPagingData.collectAsLazyPagingItems()
 
-    when (categoryPagingItems.loadState.refresh) {
+    when (tagPagingItems.loadState.refresh) {
         is LoadState.Loading -> PendingLayout()
         is LoadState.Error -> {
             LoadFailureLayout(
-                message = stringResource(R.string.task_category_list_fetch_error),
-                onRetry = categoryPagingItems::retry,
+                message = stringResource(R.string.tag_list_fetch_error),
+                onRetry = tagPagingItems::retry,
             )
         }
 
         is LoadState.NotLoading -> {
-            if (categoryPagingItems.itemCount > 0) {
-                TaskCategoryListLayout(
-                    categoryItems = categoryPagingItems,
-                    onSelectCategory = { onSelectCategory(it.id) },
+            if (tagPagingItems.itemCount > 0) {
+                TagListLayout(
+                    tagItems = tagPagingItems,
+                    onSelectTag = { onSelectTag(it.id) },
                 )
             } else {
-                EmptyTaskCategoryListLayout(onAddCategory = onAddCategory)
+                EmptyTagListLayout(onAddTag = onAddTag)
             }
         }
     }
 }
 
 @Composable
-fun TaskCategoryListLayout(
-    categoryItems: LazyPagingItems<TaskCategory>,
-    onSelectCategory: (TaskCategory) -> Unit,
+fun TagListLayout(
+    tagItems: LazyPagingItems<Tag>,
+    onSelectTag: (Tag) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    TaskCategoryListLayout(
-        categoryItems = {
-            items(categoryItems.itemCount, key = categoryItems.itemKey(TaskCategory::id)) { index ->
-                val category = categoryItems[index]!!
+    TagListLayout(
+        tagItems = {
+            items(tagItems.itemCount, key = tagItems.itemKey(Tag::id)) { index ->
+                val tag = tagItems[index]!!
                 ListItem(
-                    headlineContent = { Text(text = category.name) },
-                    modifier = Modifier.clickable { onSelectCategory(category) },
+                    headlineContent = { Text(text = tag.name) },
+                    modifier = Modifier.clickable { onSelectTag(tag) },
                 )
                 HorizontalDivider()
             }
 
             pagedListFooter(
-                pagingItems = categoryItems,
+                pagingItems = tagItems,
                 errorMessage = {
-                    Text(stringResource(R.string.task_category_list_fetch_error))
+                    Text(stringResource(R.string.tag_list_fetch_error))
                 },
             )
         },
@@ -131,8 +130,8 @@ fun TaskCategoryListLayout(
 }
 
 @Composable
-fun TaskCategoryListLayout(
-    categoryItems: LazyListScope.() -> Unit,
+fun TagListLayout(
+    tagItems: LazyListScope.() -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
@@ -141,34 +140,34 @@ fun TaskCategoryListLayout(
                 .widthIn(max = ScreenLg)
                 .fillMaxSize(),
         ) {
-            categoryItems()
+            tagItems()
         }
     }
 }
 
 @Composable
-fun EmptyTaskCategoryListLayout(onAddCategory: () -> Unit, modifier: Modifier = Modifier) {
+fun EmptyTagListLayout(onAddTag: () -> Unit, modifier: Modifier = Modifier) {
     Surface(modifier = modifier.fillMaxSize(), color = colorScheme.surfaceVariant) {
         Column(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Icon(
-                painter = painterResource(R.drawable.list_alt_add_24px),
+                painter = painterResource(R.drawable.outline_new_label_24),
                 contentDescription = null,
                 modifier = Modifier.size(IconSizeLg),
             )
             Spacer(Modifier.size(SpaceXl))
             Text(
-                stringResource(R.string.task_category_list_empty),
+                stringResource(R.string.tag_list_empty),
                 textAlign = TextAlign.Center,
                 style = typography.headlineLarge,
             )
             Spacer(Modifier.size(SpaceLg))
             ButtonWithIcon(
-                onClick = onAddCategory,
+                onClick = onAddTag,
                 imageVector = Icons.Default.Add,
-                text = stringResource(R.string.add_task_category_button),
+                text = stringResource(R.string.add_tag_button),
             )
         }
     }
@@ -176,19 +175,19 @@ fun EmptyTaskCategoryListLayout(onAddCategory: () -> Unit, modifier: Modifier = 
 
 @DevicePreviews
 @Composable
-private fun TaskCategoryListScreenPreview_Present() {
-    val categoryItems = listOf(
-        TaskCategory(id = 1L, name = "Morning routine"),
-        TaskCategory(id = 2L, name = "Work"),
-        TaskCategory(id = 3L, name = "Bedtime routine"),
+private fun TagListScreenPreview_Present() {
+    val tagItems = listOf(
+        Tag(id = 1L, name = "Morning routine"),
+        Tag(id = 2L, name = "Work"),
+        Tag(id = 3L, name = "Bedtime routine"),
     )
 
     DiswantinTheme {
-        Scaffold(topBar = { TaskCategoryListTopBar(onSearch = {}) }) { innerPadding ->
-            TaskCategoryListLayout(
-                categoryItems = {
-                    items(categoryItems, key = TaskCategory::id) { category ->
-                        ListItem(headlineContent = { Text(text = category.name) })
+        Scaffold(topBar = { TagListTopBar(onSearch = {}) }) { innerPadding ->
+            TagListLayout(
+                tagItems = {
+                    items(tagItems, key = Tag::id) { tag ->
+                        ListItem(headlineContent = { Text(text = tag.name) })
                         HorizontalDivider()
                     }
                 },
@@ -200,11 +199,11 @@ private fun TaskCategoryListScreenPreview_Present() {
 
 @DevicePreviews
 @Composable
-private fun TaskCategoryListScreenPreview_Empty() {
+private fun TagListScreenPreview_Empty() {
     DiswantinTheme {
-        Scaffold(topBar = { TaskCategoryListTopBar(onSearch = {}) }) { innerPadding ->
-            EmptyTaskCategoryListLayout(
-                onAddCategory = {},
+        Scaffold(topBar = { TagListTopBar(onSearch = {}) }) { innerPadding ->
+            EmptyTagListLayout(
+                onAddTag = {},
                 modifier = Modifier.padding(innerPadding),
             )
         }
@@ -213,13 +212,13 @@ private fun TaskCategoryListScreenPreview_Empty() {
 
 @Preview(showBackground = true)
 @Composable
-private fun TaskCategoryListLayout_Loading() {
-    val categoryItems = flowOf(
+private fun TagListLayout_Loading() {
+    val tagItems = flowOf(
         PagingData.from(
             listOf(
-                TaskCategory(id = 1L, name = "Morning routine"),
-                TaskCategory(id = 2L, name = "Work"),
-                TaskCategory(id = 3L, name = "Bedtime routine"),
+                Tag(id = 1L, name = "Morning routine"),
+                Tag(id = 2L, name = "Work"),
+                Tag(id = 3L, name = "Bedtime routine"),
             ),
             LoadStates(
                 refresh = LoadState.NotLoading(endOfPaginationReached = false),
@@ -231,20 +230,20 @@ private fun TaskCategoryListLayout_Loading() {
 
     DiswantinTheme {
         Surface {
-            TaskCategoryListLayout(categoryItems = categoryItems, onSelectCategory = {})
+            TagListLayout(tagItems = tagItems, onSelectTag = {})
         }
     }
 }
 
 @Preview
 @Composable
-private fun TaskCategoryListLayout_Error() {
-    val categoryItems = flowOf(
+private fun TagListLayout_Error() {
+    val tagItems = flowOf(
         PagingData.from(
             listOf(
-                TaskCategory(id = 1L, name = "Morning routine"),
-                TaskCategory(id = 2L, name = "Work"),
-                TaskCategory(id = 3L, name = "Bedtime routine"),
+                Tag(id = 1L, name = "Morning routine"),
+                Tag(id = 2L, name = "Work"),
+                Tag(id = 3L, name = "Bedtime routine"),
             ),
             LoadStates(
                 refresh = LoadState.NotLoading(endOfPaginationReached = false),
@@ -256,7 +255,7 @@ private fun TaskCategoryListLayout_Error() {
 
     DiswantinTheme {
         Surface {
-            TaskCategoryListLayout(categoryItems = categoryItems, onSelectCategory = {})
+            TagListLayout(tagItems = tagItems, onSelectTag = {})
         }
     }
 }

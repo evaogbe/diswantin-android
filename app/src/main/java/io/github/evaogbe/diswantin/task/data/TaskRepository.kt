@@ -10,17 +10,19 @@ interface TaskRepository {
 
     fun getTaskDetailById(id: Long): Flow<TaskDetail?>
 
-    fun getTasksByCategoryId(categoryId: Long): Flow<PagingData<Task>>
+    fun getTaskSummariesByTagId(tagId: Long): Flow<PagingData<TaskSummary>>
 
-    fun getTaskItemsByCategoryId(categoryId: Long): Flow<PagingData<TaskItemData>>
+    fun getTaggedTasksByTagId(tagId: Long): Flow<PagingData<TaggedTask>>
 
-    fun search(query: String): Flow<List<Task>>
+    fun search(query: String, size: Int): Flow<List<Task>>
 
-    fun searchTaskItems(criteria: TaskSearchCriteria): Flow<PagingData<TaskItemData>>
+    fun searchTaggedTasks(query: String, tagId: Long?, size: Int): Flow<List<TaggedTask>>
+
+    fun searchTaskSummaries(criteria: TaskSearchCriteria): Flow<PagingData<TaskSummary>>
 
     fun getParent(id: Long): Flow<Task?>
 
-    fun getChildren(id: Long): Flow<PagingData<TaskItemData>>
+    fun getChildren(id: Long): Flow<PagingData<TaskSummary>>
 
     fun getTaskRecurrencesByTaskId(taskId: Long): Flow<List<TaskRecurrence>>
 

@@ -51,18 +51,18 @@ import io.github.evaogbe.diswantin.task.ui.CurrentTaskScreen
 import io.github.evaogbe.diswantin.task.ui.CurrentTaskTopBar
 import io.github.evaogbe.diswantin.task.ui.CurrentTaskTopBarAction
 import io.github.evaogbe.diswantin.task.ui.CurrentTaskTopBarState
-import io.github.evaogbe.diswantin.task.ui.TaskCategoryDetailRoute
-import io.github.evaogbe.diswantin.task.ui.TaskCategoryDetailScreen
-import io.github.evaogbe.diswantin.task.ui.TaskCategoryDetailTopBar
-import io.github.evaogbe.diswantin.task.ui.TaskCategoryDetailTopBarAction
-import io.github.evaogbe.diswantin.task.ui.TaskCategoryDetailTopBarState
-import io.github.evaogbe.diswantin.task.ui.TaskCategoryFormRoute
-import io.github.evaogbe.diswantin.task.ui.TaskCategoryFormScreen
-import io.github.evaogbe.diswantin.task.ui.TaskCategoryFormTopBar
-import io.github.evaogbe.diswantin.task.ui.TaskCategoryFormTopBarAction
-import io.github.evaogbe.diswantin.task.ui.TaskCategoryListRoute
-import io.github.evaogbe.diswantin.task.ui.TaskCategoryListScreen
-import io.github.evaogbe.diswantin.task.ui.TaskCategoryListTopBar
+import io.github.evaogbe.diswantin.task.ui.TagDetailScreen
+import io.github.evaogbe.diswantin.task.ui.TagDetailTopBar
+import io.github.evaogbe.diswantin.task.ui.TagDetailTopBarAction
+import io.github.evaogbe.diswantin.task.ui.TagDetailTopBarState
+import io.github.evaogbe.diswantin.task.ui.TagFormScreen
+import io.github.evaogbe.diswantin.task.ui.TagFormTopBar
+import io.github.evaogbe.diswantin.task.ui.TagFormTopBarAction
+import io.github.evaogbe.diswantin.task.ui.TagListScreen
+import io.github.evaogbe.diswantin.task.ui.TagListTopBar
+import io.github.evaogbe.diswantin.task.ui.TagDetailRoute
+import io.github.evaogbe.diswantin.task.ui.TagFormRoute
+import io.github.evaogbe.diswantin.task.ui.TagListRoute
 import io.github.evaogbe.diswantin.task.ui.TaskDetailRoute
 import io.github.evaogbe.diswantin.task.ui.TaskDetailScreen
 import io.github.evaogbe.diswantin.task.ui.TaskDetailTopBar
@@ -148,8 +148,8 @@ fun DiswantinApp() {
                     )
                 }
 
-                is TopBarState.TaskCategoryList -> {
-                    TaskCategoryListTopBar(
+                is TopBarState.TagList -> {
+                    TagListTopBar(
                         onSearch = {
                             query = ""
                             navController.navigate(route = TaskSearchRoute)
@@ -200,27 +200,27 @@ fun DiswantinApp() {
                     )
                 }
 
-                is TopBarState.TaskCategoryDetail -> {
-                    TaskCategoryDetailTopBar(
+                is TopBarState.TagDetail -> {
+                    TagDetailTopBar(
                         uiState = state.uiState,
                         onBackClick = navController::popBackStack,
-                        onEditCategory = {
-                            navController.navigate(route = TaskCategoryFormRoute.edit(id = it))
+                        onEditTag = {
+                            navController.navigate(route = TagFormRoute.edit(id = it))
                         },
-                        onDeleteCategory = {
-                            topBarState = state.copy(action = TaskCategoryDetailTopBarAction.Delete)
+                        onDeleteTag = {
+                            topBarState = state.copy(action = TagDetailTopBarAction.Delete)
                         },
                     )
                 }
 
-                is TopBarState.TaskCategoryForm -> {
-                    TaskCategoryFormTopBar(
+                is TopBarState.TagForm -> {
+                    TagFormTopBar(
                         uiState = state.uiState,
                         onClose = {
-                            topBarState = state.copy(action = TaskCategoryFormTopBarAction.Close)
+                            topBarState = state.copy(action = TagFormTopBarAction.Close)
                         },
                         onSave = {
-                            topBarState = state.copy(action = TaskCategoryFormTopBarAction.Save)
+                            topBarState = state.copy(action = TagFormTopBarAction.Save)
                         },
                     )
                 }
@@ -311,17 +311,17 @@ fun DiswantinApp() {
 
                 AdviceScreen()
             }
-            composable<TaskCategoryListRoute> {
+            composable<TagListRoute> {
                 LaunchedEffect(Unit) {
-                    topBarState = TopBarState.TaskCategoryList
+                    topBarState = TopBarState.TagList
                 }
 
-                TaskCategoryListScreen(
-                    onAddCategory = {
-                        navController.navigate(route = TaskCategoryFormRoute.new(name = null))
+                TagListScreen(
+                    onAddTag = {
+                        navController.navigate(route = TagFormRoute.new(name = null))
                     },
-                    onSelectCategory = {
-                        navController.navigate(route = TaskCategoryDetailRoute(id = it))
+                    onSelectTag = {
+                        navController.navigate(route = TagDetailRoute(id = it))
                     },
                 )
             }
@@ -341,26 +341,26 @@ fun DiswantinApp() {
                     onNavigateToTask = {
                         navController.navigate(route = TaskDetailRoute(id = it))
                     },
-                    onNavigateToCategory = {
-                        navController.navigate(route = TaskCategoryDetailRoute(id = it))
+                    onNavigateToTag = {
+                        navController.navigate(route = TagDetailRoute(id = it))
                     },
                 )
             }
-            composable<TaskCategoryDetailRoute> { backStackEntry ->
+            composable<TagDetailRoute> { backStackEntry ->
                 LaunchedEffect(backStackEntry) {
-                    topBarState = TopBarState.TaskCategoryDetail(
-                        uiState = TaskCategoryDetailTopBarState(
-                            categoryId = backStackEntry.toRoute<TaskCategoryDetailRoute>().id,
+                    topBarState = TopBarState.TagDetail(
+                        uiState = TagDetailTopBarState(
+                            tagId = backStackEntry.toRoute<TagDetailRoute>().id,
                         ),
                         action = null,
                     )
                 }
 
-                TaskCategoryDetailScreen(
+                TagDetailScreen(
                     onPopBackStack = navController::popBackStack,
-                    topBarAction = (topBarState as? TopBarState.TaskCategoryDetail)?.action,
+                    topBarAction = (topBarState as? TopBarState.TagDetail)?.action,
                     topBarActionHandled = {
-                        (topBarState as? TopBarState.TaskCategoryDetail)?.copy(action = null)?.let {
+                        (topBarState as? TopBarState.TagDetail)?.copy(action = null)?.let {
                             topBarState = it
                         }
                     },
@@ -370,20 +370,20 @@ fun DiswantinApp() {
                     },
                 )
             }
-            composable<TaskCategoryFormRoute> { backStackEntry ->
-                TaskCategoryFormScreen(
+            composable<TagFormRoute> { backStackEntry ->
+                TagFormScreen(
                     onPopBackStack = navController::popBackStack,
                     setTopBarState = {
-                        topBarState = TopBarState.TaskCategoryForm(uiState = it, action = null)
+                        topBarState = TopBarState.TagForm(uiState = it, action = null)
                     },
-                    topBarAction = (topBarState as? TopBarState.TaskCategoryForm)?.action,
+                    topBarAction = (topBarState as? TopBarState.TagForm)?.action,
                     topBarActionHandled = {
-                        (topBarState as? TopBarState.TaskCategoryForm)?.copy(action = null)?.let {
+                        (topBarState as? TopBarState.TagForm)?.copy(action = null)?.let {
                             topBarState = it
                         }
                     },
                     setUserMessage = { userMessage = it },
-                    initialName = backStackEntry.toRoute<TaskCategoryFormRoute>().name.orEmpty(),
+                    initialName = backStackEntry.toRoute<TagFormRoute>().name.orEmpty(),
                     onSelectTaskType = {
                         navController.navigate(route = TaskFormRoute.Main.new(name = it)) {
                             popUpTo(backStackEntry.destination.id) {
@@ -435,8 +435,8 @@ fun DiswantinApp() {
                         },
                         setUserMessage = { userMessage = it },
                         initialName = backStackEntry.toRoute<TaskFormRoute.Main>().name.orEmpty(),
-                        onSelectCategoryType = {
-                            navController.navigate(route = TaskCategoryFormRoute.new(name = it)) {
+                        onSelectTagType = {
+                            navController.navigate(route = TagFormRoute.new(name = it)) {
                                 popUpTo(backStackEntry.destination.id) {
                                     inclusive = true
                                 }

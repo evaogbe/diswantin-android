@@ -68,7 +68,7 @@ class LocalTaskRepositoryTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    categoryId = null,
+                    tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentTaskId = null,
                     clock = clock,
@@ -88,7 +88,7 @@ class LocalTaskRepositoryTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    categoryId = null,
+                    tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentTaskId = null,
                     clock = Clock.offset(clock, Duration.ofMillis(-1)),
@@ -106,12 +106,13 @@ class LocalTaskRepositoryTest {
                     deadlineTime = task2.deadlineTime,
                     startAfterDate = LocalDate.parse("2024-08-22"),
                     startAfterTime = task2.startAfterTime,
-                    categoryId = task2.categoryId,
                     scheduledDate = task2.scheduledDate,
                     scheduledTime = task2.scheduledTime,
+                    tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task2,
+                    existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
                 )
             )
@@ -127,12 +128,13 @@ class LocalTaskRepositoryTest {
                     deadlineTime = task1.deadlineTime,
                     startAfterDate = LocalDate.parse("2024-08-23"),
                     startAfterTime = task1.startAfterTime,
-                    categoryId = task1.categoryId,
                     scheduledDate = task1.scheduledDate,
                     scheduledTime = task1.scheduledTime,
+                    tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task1,
+                    existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
                 )
             )
@@ -148,12 +150,13 @@ class LocalTaskRepositoryTest {
                     deadlineTime = task1.deadlineTime,
                     startAfterDate = task1.startAfterDate,
                     startAfterTime = task1.startAfterTime,
-                    categoryId = task1.categoryId,
                     scheduledDate = task1.scheduledDate,
                     scheduledTime = task1.scheduledTime,
+                    tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task1,
+                    existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
                 )
             )
@@ -169,12 +172,13 @@ class LocalTaskRepositoryTest {
                     deadlineTime = task2.deadlineTime,
                     startAfterDate = task2.startAfterDate,
                     startAfterTime = task2.startAfterTime,
-                    categoryId = task2.categoryId,
                     scheduledDate = task2.scheduledDate,
                     scheduledTime = task2.scheduledTime,
+                    tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task2,
+                    existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
                 )
             )
@@ -190,12 +194,13 @@ class LocalTaskRepositoryTest {
                     deadlineTime = task1.deadlineTime,
                     startAfterDate = null,
                     startAfterTime = task1.startAfterTime,
-                    categoryId = task1.categoryId,
                     scheduledDate = LocalDate.parse("2024-08-23"),
                     scheduledTime = task1.scheduledTime,
+                    tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task1,
+                    existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
                 )
             )
@@ -211,12 +216,13 @@ class LocalTaskRepositoryTest {
                     deadlineTime = task2.deadlineTime,
                     startAfterDate = null,
                     startAfterTime = task2.startAfterTime,
-                    categoryId = task2.categoryId,
                     scheduledDate = LocalDate.parse("2024-08-22"),
                     scheduledTime = task2.scheduledTime,
+                    tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task2,
+                    existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
                 )
             )
@@ -232,9 +238,9 @@ class LocalTaskRepositoryTest {
                     deadlineTime = task2.deadlineTime,
                     startAfterDate = null,
                     startAfterTime = task2.startAfterTime,
-                    categoryId = task2.categoryId,
                     scheduledDate = null,
                     scheduledTime = task2.scheduledTime,
+                    tagIds = emptySet(),
                     recurrences = listOf(
                         TaskRecurrence(
                             taskId = task2.id,
@@ -245,6 +251,7 @@ class LocalTaskRepositoryTest {
                     ),
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task2,
+                    existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
                 )
             )
@@ -260,12 +267,13 @@ class LocalTaskRepositoryTest {
                     deadlineTime = task1.deadlineTime,
                     startAfterDate = task1.startAfterDate,
                     startAfterTime = task1.startAfterTime,
-                    categoryId = task1.categoryId,
                     scheduledDate = null,
                     scheduledTime = task1.scheduledTime,
+                    tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task1,
+                    existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
                 )
             )
@@ -282,12 +290,13 @@ class LocalTaskRepositoryTest {
                     deadlineTime = task2.deadlineTime,
                     startAfterDate = task2.startAfterDate,
                     startAfterTime = LocalTime.parse("12:59"),
-                    categoryId = task2.categoryId,
                     scheduledDate = task2.scheduledDate,
                     scheduledTime = task2.scheduledTime,
+                    tagIds = emptySet(),
                     recurrences = taskRecurrences2,
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task2,
+                    existingTagIds = emptySet(),
                     existingRecurrences = taskRecurrences2,
                 )
             )
@@ -303,12 +312,13 @@ class LocalTaskRepositoryTest {
                     deadlineTime = task1.deadlineTime,
                     startAfterDate = task1.startAfterDate,
                     startAfterTime = LocalTime.parse("13:00"),
-                    categoryId = task1.categoryId,
                     scheduledDate = null,
                     scheduledTime = task1.scheduledTime,
+                    tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task1,
+                    existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
                 )
             )
@@ -324,12 +334,13 @@ class LocalTaskRepositoryTest {
                     deadlineTime = LocalTime.parse("23:59"),
                     startAfterDate = task1.startAfterDate,
                     startAfterTime = task1.startAfterTime,
-                    categoryId = task1.categoryId,
                     scheduledDate = null,
                     scheduledTime = task1.scheduledTime,
+                    tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task1,
+                    existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
                 )
             )
@@ -345,12 +356,13 @@ class LocalTaskRepositoryTest {
                     deadlineTime = LocalTime.parse("23:58"),
                     startAfterDate = task2.startAfterDate,
                     startAfterTime = task2.startAfterTime,
-                    categoryId = task2.categoryId,
                     scheduledDate = task2.scheduledDate,
                     scheduledTime = task2.scheduledTime,
+                    tagIds = emptySet(),
                     recurrences = taskRecurrences2,
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task2,
+                    existingTagIds = emptySet(),
                     existingRecurrences = taskRecurrences2,
                 )
             )
@@ -366,12 +378,13 @@ class LocalTaskRepositoryTest {
                     deadlineTime = LocalTime.parse("23:58"),
                     startAfterDate = task1.startAfterDate,
                     startAfterTime = null,
-                    categoryId = task1.categoryId,
                     scheduledDate = task1.scheduledDate,
                     scheduledTime = task1.scheduledTime,
+                    tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task1,
+                    existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
                 )
             )
@@ -387,12 +400,13 @@ class LocalTaskRepositoryTest {
                     deadlineTime = LocalTime.parse("14:00"),
                     startAfterDate = task2.startAfterDate,
                     startAfterTime = LocalTime.parse("13:00"),
-                    categoryId = task2.categoryId,
                     scheduledDate = task2.scheduledDate,
                     scheduledTime = task2.scheduledTime,
+                    tagIds = emptySet(),
                     recurrences = taskRecurrences2,
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task2,
+                    existingTagIds = emptySet(),
                     existingRecurrences = taskRecurrences2,
                 )
             )
@@ -408,12 +422,13 @@ class LocalTaskRepositoryTest {
                     deadlineTime = null,
                     startAfterDate = task1.startAfterDate,
                     startAfterTime = task1.startAfterTime,
-                    categoryId = task1.categoryId,
                     scheduledDate = task1.scheduledDate,
                     scheduledTime = task1.scheduledTime,
+                    tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task1,
+                    existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
                 )
             )
@@ -429,12 +444,13 @@ class LocalTaskRepositoryTest {
                     deadlineTime = null,
                     startAfterDate = task2.startAfterDate,
                     startAfterTime = null,
-                    categoryId = task2.categoryId,
                     scheduledDate = task2.scheduledDate,
                     scheduledTime = LocalTime.parse("13:00"),
+                    tagIds = emptySet(),
                     recurrences = taskRecurrences2,
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task2,
+                    existingTagIds = emptySet(),
                     existingRecurrences = taskRecurrences2,
                 )
             )
@@ -450,12 +466,13 @@ class LocalTaskRepositoryTest {
                     deadlineTime = null,
                     startAfterDate = null,
                     startAfterTime = null,
-                    categoryId = task1.categoryId,
                     scheduledDate = LocalDate.parse("2024-08-23"),
                     scheduledTime = LocalTime.parse("12:59"),
+                    tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task1,
+                    existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
                 )
             )
@@ -473,7 +490,7 @@ class LocalTaskRepositoryTest {
                     startAfterTime = null,
                     scheduledDate = LocalDate.parse("2024-08-22"),
                     scheduledTime = LocalTime.parse("13:01"),
-                    categoryId = null,
+                    tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentTaskId = null,
                     clock = clock,
@@ -491,12 +508,13 @@ class LocalTaskRepositoryTest {
                     deadlineTime = task3.deadlineTime,
                     startAfterDate = task3.startAfterDate,
                     startAfterTime = task3.startAfterTime,
-                    categoryId = task3.categoryId,
                     scheduledDate = task3.scheduledDate,
                     scheduledTime = task3.scheduledTime,
+                    tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Replace(task2.id),
                     existingTask = task3,
+                    existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
                 )
             )
@@ -512,12 +530,13 @@ class LocalTaskRepositoryTest {
                     deadlineTime = null,
                     startAfterDate = task2.startAfterDate,
                     startAfterTime = null,
-                    categoryId = task2.categoryId,
                     scheduledDate = task2.scheduledDate,
                     scheduledTime = LocalTime.parse("12:58"),
+                    tagIds = emptySet(),
                     recurrences = taskRecurrences2,
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task2,
+                    existingTagIds = emptySet(),
                     existingRecurrences = taskRecurrences2,
                 )
             )
@@ -533,9 +552,9 @@ class LocalTaskRepositoryTest {
                     deadlineTime = task2.deadlineTime,
                     startAfterDate = task2.startAfterDate,
                     startAfterTime = task2.startAfterTime,
-                    categoryId = task2.categoryId,
                     scheduledDate = task2.scheduledDate,
                     scheduledTime = task2.scheduledTime,
+                    tagIds = emptySet(),
                     recurrences = listOf(
                         TaskRecurrence(
                             taskId = task2.id,
@@ -546,6 +565,7 @@ class LocalTaskRepositoryTest {
                     ),
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task2,
+                    existingTagIds = emptySet(),
                     existingRecurrences = taskRecurrences2,
                 )
             )
@@ -562,9 +582,9 @@ class LocalTaskRepositoryTest {
                     deadlineTime = task3.deadlineTime,
                     startAfterDate = null,
                     startAfterTime = task3.startAfterTime,
-                    categoryId = task3.categoryId,
                     scheduledDate = null,
                     scheduledTime = task3.scheduledTime,
+                    tagIds = emptySet(),
                     recurrences = listOf(
                         TaskRecurrence(
                             taskId = task3.id,
@@ -575,6 +595,7 @@ class LocalTaskRepositoryTest {
                     ),
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task3,
+                    existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
                 )
             )
@@ -589,9 +610,9 @@ class LocalTaskRepositoryTest {
                     deadlineTime = null,
                     startAfterDate = task2.startAfterDate,
                     startAfterTime = null,
-                    categoryId = task2.categoryId,
                     scheduledDate = task2.scheduledDate,
                     scheduledTime = LocalTime.parse("12:59"),
+                    tagIds = emptySet(),
                     recurrences = listOf(
                         TaskRecurrence(
                             taskId = task2.id,
@@ -602,6 +623,7 @@ class LocalTaskRepositoryTest {
                     ),
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task2,
+                    existingTagIds = emptySet(),
                     existingRecurrences = taskRecurrences2,
                 )
             )
@@ -629,7 +651,7 @@ class LocalTaskRepositoryTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    categoryId = null,
+                    tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentTaskId = null,
                     clock = clock,
@@ -646,12 +668,13 @@ class LocalTaskRepositoryTest {
                     deadlineTime = task.deadlineTime,
                     startAfterDate = task.startAfterDate,
                     startAfterTime = task.startAfterTime,
-                    categoryId = task.categoryId,
                     scheduledDate = LocalDate.parse("2024-08-24"),
                     scheduledTime = task.scheduledTime,
+                    tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task,
+                    existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
                 )
             )
@@ -666,12 +689,13 @@ class LocalTaskRepositoryTest {
                     deadlineTime = task.deadlineTime,
                     startAfterDate = task.startAfterDate,
                     startAfterTime = task.startAfterTime,
-                    categoryId = task.categoryId,
                     scheduledDate = LocalDate.parse("2024-08-23"),
                     scheduledTime = task.scheduledTime,
+                    tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task,
+                    existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
                 )
             )
@@ -686,12 +710,13 @@ class LocalTaskRepositoryTest {
                     deadlineTime = task.deadlineTime,
                     startAfterDate = task.startAfterDate,
                     startAfterTime = task.startAfterTime,
-                    categoryId = task.categoryId,
                     scheduledDate = task.scheduledDate,
                     scheduledTime = LocalTime.parse("13:01"),
+                    tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task,
+                    existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
                 )
             )
@@ -706,12 +731,13 @@ class LocalTaskRepositoryTest {
                     deadlineTime = task.deadlineTime,
                     startAfterDate = task.startAfterDate,
                     startAfterTime = task.startAfterTime,
-                    categoryId = task.categoryId,
                     scheduledDate = task.scheduledDate,
                     scheduledTime = LocalTime.parse("13:00"),
+                    tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task,
+                    existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
                 )
             )
@@ -726,12 +752,13 @@ class LocalTaskRepositoryTest {
                     deadlineTime = task.deadlineTime,
                     startAfterDate = task.startAfterDate,
                     startAfterTime = task.startAfterTime,
-                    categoryId = task.categoryId,
                     scheduledDate = LocalDate.parse("2024-08-22"),
                     scheduledTime = LocalTime.parse("13:01"),
+                    tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task,
+                    existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
                 )
             )
@@ -746,9 +773,9 @@ class LocalTaskRepositoryTest {
                     deadlineTime = task.deadlineTime,
                     startAfterDate = null,
                     startAfterTime = task.startAfterTime,
-                    categoryId = task.categoryId,
                     scheduledDate = null,
                     scheduledTime = LocalTime.parse("13:01"),
+                    tagIds = emptySet(),
                     recurrences = listOf(
                         TaskRecurrence(
                             taskId = task.id,
@@ -759,6 +786,7 @@ class LocalTaskRepositoryTest {
                     ),
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task,
+                    existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
                 )
             )
@@ -774,12 +802,13 @@ class LocalTaskRepositoryTest {
                     deadlineTime = task.deadlineTime,
                     startAfterDate = task.startAfterDate,
                     startAfterTime = task.startAfterTime,
-                    categoryId = task.categoryId,
                     scheduledDate = task.scheduledDate,
                     scheduledTime = LocalTime.parse("13:00"),
+                    tagIds = emptySet(),
                     recurrences = taskRecurrences,
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task,
+                    existingTagIds = emptySet(),
                     existingRecurrences = taskRecurrences,
                 )
             )
@@ -807,7 +836,7 @@ class LocalTaskRepositoryTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    categoryId = null,
+                    tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentTaskId = null,
                     clock = clock,
@@ -824,12 +853,13 @@ class LocalTaskRepositoryTest {
                     deadlineTime = task.deadlineTime,
                     startAfterDate = LocalDate.parse("2024-08-24"),
                     startAfterTime = task.startAfterTime,
-                    categoryId = task.categoryId,
                     scheduledDate = task.scheduledDate,
                     scheduledTime = task.scheduledTime,
+                    tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task,
+                    existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
                 )
             )
@@ -844,12 +874,13 @@ class LocalTaskRepositoryTest {
                     deadlineTime = task.deadlineTime,
                     startAfterDate = LocalDate.parse("2024-08-23"),
                     startAfterTime = null,
-                    categoryId = task.categoryId,
                     scheduledDate = null,
                     scheduledTime = null,
+                    tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task,
+                    existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
                 )
             )
@@ -864,12 +895,13 @@ class LocalTaskRepositoryTest {
                     deadlineTime = task.deadlineTime,
                     startAfterDate = LocalDate.parse("2024-08-23"),
                     startAfterTime = LocalTime.parse("13:01"),
-                    categoryId = task.categoryId,
                     scheduledDate = null,
                     scheduledTime = null,
+                    tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task,
+                    existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
                 )
             )
@@ -884,12 +916,13 @@ class LocalTaskRepositoryTest {
                     deadlineTime = task.deadlineTime,
                     startAfterDate = LocalDate.parse("2024-08-23"),
                     startAfterTime = LocalTime.parse("13:00"),
-                    categoryId = task.categoryId,
                     scheduledDate = task.scheduledDate,
                     scheduledTime = task.scheduledTime,
+                    tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task,
+                    existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
                 )
             )
@@ -904,9 +937,9 @@ class LocalTaskRepositoryTest {
                     deadlineTime = task.deadlineTime,
                     startAfterDate = null,
                     startAfterTime = null,
-                    categoryId = task.categoryId,
                     scheduledDate = null,
                     scheduledTime = task.scheduledTime,
+                    tagIds = emptySet(),
                     recurrences = listOf(
                         TaskRecurrence(
                             taskId = task.id,
@@ -917,6 +950,7 @@ class LocalTaskRepositoryTest {
                     ),
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task,
+                    existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
                 )
             )
@@ -932,9 +966,9 @@ class LocalTaskRepositoryTest {
                     deadlineTime = task.deadlineTime,
                     startAfterDate = task.startAfterDate,
                     startAfterTime = task.startAfterTime,
-                    categoryId = task.categoryId,
                     scheduledDate = task.scheduledDate,
                     scheduledTime = task.scheduledTime,
+                    tagIds = emptySet(),
                     recurrences = listOf(
                         TaskRecurrence(
                             taskId = task.id,
@@ -945,6 +979,7 @@ class LocalTaskRepositoryTest {
                     ),
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task,
+                    existingTagIds = emptySet(),
                     existingRecurrences = taskRecurrences,
                 )
             )
@@ -972,7 +1007,7 @@ class LocalTaskRepositoryTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    categoryId = null,
+                    tagIds = emptySet(),
                     recurrences = listOf(
                         TaskRecurrence(
                             taskId = 0L,
@@ -1002,7 +1037,7 @@ class LocalTaskRepositoryTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    categoryId = null,
+                    tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentTaskId = task1.id,
                     clock = clock,
@@ -1041,7 +1076,7 @@ class LocalTaskRepositoryTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    categoryId = null,
+                    tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentTaskId = null,
                     clock = clock,
@@ -1060,7 +1095,7 @@ class LocalTaskRepositoryTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    categoryId = null,
+                    tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentTaskId = null,
                     clock = clock,
@@ -1083,7 +1118,7 @@ class LocalTaskRepositoryTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    categoryId = null,
+                    tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentTaskId = null,
                     clock = clock,
@@ -1102,10 +1137,11 @@ class LocalTaskRepositoryTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    categoryId = task1.categoryId,
+                    tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Replace(task3.id),
                     existingTask = task1,
+                    existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
                 )
             )
@@ -1122,7 +1158,7 @@ class LocalTaskRepositoryTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    categoryId = task1.categoryId,
+                    tagIds = emptySet(),
                     recurrences = listOf(
                         TaskRecurrence(
                             taskId = task1.id,
@@ -1133,6 +1169,7 @@ class LocalTaskRepositoryTest {
                     ),
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task1,
+                    existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
                 )
             )
@@ -1149,10 +1186,11 @@ class LocalTaskRepositoryTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    categoryId = task1.categoryId,
+                    tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Remove,
                     existingTask = task1,
+                    existingTagIds = emptySet(),
                     existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task1.id)
                         .first(),
                 )
@@ -1170,10 +1208,11 @@ class LocalTaskRepositoryTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    categoryId = task3.categoryId,
+                    tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Replace(task1.id),
                     existingTask = task3,
+                    existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
                 )
             )
@@ -1205,7 +1244,7 @@ class LocalTaskRepositoryTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    categoryId = null,
+                    tagIds = emptySet(),
                     recurrences = listOf(
                         TaskRecurrence(
                             taskId = 0L,
@@ -1229,9 +1268,9 @@ class LocalTaskRepositoryTest {
                     deadlineTime = task.deadlineTime,
                     startAfterDate = task.startAfterDate,
                     startAfterTime = task.startAfterTime,
-                    categoryId = task.categoryId,
                     scheduledDate = task.scheduledDate,
                     scheduledTime = task.scheduledTime,
+                    tagIds = emptySet(),
                     recurrences = listOf(
                         TaskRecurrence(
                             taskId = task.id,
@@ -1242,6 +1281,7 @@ class LocalTaskRepositoryTest {
                     ),
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task,
+                    existingTagIds = emptySet(),
                     existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
                         .first(),
                 )
@@ -1257,9 +1297,9 @@ class LocalTaskRepositoryTest {
                     deadlineTime = task.deadlineTime,
                     startAfterDate = task.startAfterDate,
                     startAfterTime = task.startAfterTime,
-                    categoryId = task.categoryId,
                     scheduledDate = task.scheduledDate,
                     scheduledTime = task.scheduledTime,
+                    tagIds = emptySet(),
                     recurrences = listOf(
                         TaskRecurrence(
                             taskId = task.id,
@@ -1270,6 +1310,7 @@ class LocalTaskRepositoryTest {
                     ),
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task,
+                    existingTagIds = emptySet(),
                     existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
                         .first(),
                 )
@@ -1298,7 +1339,7 @@ class LocalTaskRepositoryTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    categoryId = null,
+                    tagIds = emptySet(),
                     recurrences = listOf(
                         TaskRecurrence(
                             taskId = 0L,
@@ -1328,9 +1369,9 @@ class LocalTaskRepositoryTest {
                     deadlineTime = task.deadlineTime,
                     startAfterDate = task.startAfterDate,
                     startAfterTime = task.startAfterTime,
-                    categoryId = task.categoryId,
                     scheduledDate = task.scheduledDate,
                     scheduledTime = task.scheduledTime,
+                    tagIds = emptySet(),
                     recurrences = listOf(
                         TaskRecurrence(
                             taskId = task.id,
@@ -1341,6 +1382,7 @@ class LocalTaskRepositoryTest {
                     ),
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task,
+                    existingTagIds = emptySet(),
                     existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
                         .first(),
                 )
@@ -1356,9 +1398,9 @@ class LocalTaskRepositoryTest {
                     deadlineTime = task.deadlineTime,
                     startAfterDate = task.startAfterDate,
                     startAfterTime = task.startAfterTime,
-                    categoryId = task.categoryId,
                     scheduledDate = task.scheduledDate,
                     scheduledTime = task.scheduledTime,
+                    tagIds = emptySet(),
                     recurrences = listOf(
                         TaskRecurrence(
                             taskId = task.id,
@@ -1369,6 +1411,7 @@ class LocalTaskRepositoryTest {
                     ),
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task,
+                    existingTagIds = emptySet(),
                     existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
                         .first(),
                 )
@@ -1384,9 +1427,9 @@ class LocalTaskRepositoryTest {
                     deadlineTime = task.deadlineTime,
                     startAfterDate = task.startAfterDate,
                     startAfterTime = task.startAfterTime,
-                    categoryId = task.categoryId,
                     scheduledDate = task.scheduledDate,
                     scheduledTime = task.scheduledTime,
+                    tagIds = emptySet(),
                     recurrences = listOf(
                         TaskRecurrence(
                             taskId = task.id,
@@ -1397,6 +1440,7 @@ class LocalTaskRepositoryTest {
                     ),
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task,
+                    existingTagIds = emptySet(),
                     existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
                         .first(),
                 )
@@ -1412,9 +1456,9 @@ class LocalTaskRepositoryTest {
                     deadlineTime = task.deadlineTime,
                     startAfterDate = task.startAfterDate,
                     startAfterTime = task.startAfterTime,
-                    categoryId = task.categoryId,
                     scheduledDate = task.scheduledDate,
                     scheduledTime = task.scheduledTime,
+                    tagIds = emptySet(),
                     recurrences = listOf(
                         TaskRecurrence(
                             taskId = task.id,
@@ -1425,6 +1469,7 @@ class LocalTaskRepositoryTest {
                     ),
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task,
+                    existingTagIds = emptySet(),
                     existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
                         .first(),
                 )
@@ -1454,7 +1499,7 @@ class LocalTaskRepositoryTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    categoryId = null,
+                    tagIds = emptySet(),
                     recurrences = listOf(
                         TaskRecurrence(
                             taskId = 0L,
@@ -1478,9 +1523,9 @@ class LocalTaskRepositoryTest {
                     deadlineTime = task.deadlineTime,
                     startAfterDate = task.startAfterDate,
                     startAfterTime = task.startAfterTime,
-                    categoryId = task.categoryId,
                     scheduledDate = task.scheduledDate,
                     scheduledTime = task.scheduledTime,
+                    tagIds = emptySet(),
                     recurrences = listOf(
                         TaskRecurrence(
                             taskId = task.id,
@@ -1491,6 +1536,7 @@ class LocalTaskRepositoryTest {
                     ),
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task,
+                    existingTagIds = emptySet(),
                     existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
                         .first(),
                 )
@@ -1506,9 +1552,9 @@ class LocalTaskRepositoryTest {
                     deadlineTime = task.deadlineTime,
                     startAfterDate = task.startAfterDate,
                     startAfterTime = task.startAfterTime,
-                    categoryId = task.categoryId,
                     scheduledDate = task.scheduledDate,
                     scheduledTime = task.scheduledTime,
+                    tagIds = emptySet(),
                     recurrences = listOf(
                         TaskRecurrence(
                             taskId = task.id,
@@ -1519,6 +1565,7 @@ class LocalTaskRepositoryTest {
                     ),
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task,
+                    existingTagIds = emptySet(),
                     existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
                         .first(),
                 )
@@ -1547,7 +1594,7 @@ class LocalTaskRepositoryTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    categoryId = null,
+                    tagIds = emptySet(),
                     recurrences = listOf(
                         TaskRecurrence(
                             taskId = 0L,
@@ -1587,7 +1634,7 @@ class LocalTaskRepositoryTest {
                         startAfterTime = task.startAfterTime,
                         scheduledDate = task.scheduledDate,
                         scheduledTime = task.scheduledTime,
-                        categoryId = task.categoryId,
+                        tagIds = emptySet(),
                         recurrences = listOf(
                             TaskRecurrence(
                                 taskId = task.id,
@@ -1598,6 +1645,7 @@ class LocalTaskRepositoryTest {
                         ),
                         parentUpdateType = PathUpdateType.Keep,
                         existingTask = task,
+                        existingTagIds = emptySet(),
                         existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
                             .first(),
                     )
@@ -1628,7 +1676,7 @@ class LocalTaskRepositoryTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    categoryId = null,
+                    tagIds = emptySet(),
                     recurrences = listOf(
                         TaskRecurrence(
                             taskId = 0L,
@@ -1667,7 +1715,7 @@ class LocalTaskRepositoryTest {
                         startAfterTime = task.startAfterTime,
                         scheduledDate = task.scheduledDate,
                         scheduledTime = task.scheduledTime,
-                        categoryId = task.categoryId,
+                        tagIds = emptySet(),
                         recurrences = listOf(
                             TaskRecurrence(
                                 taskId = task.id,
@@ -1678,6 +1726,7 @@ class LocalTaskRepositoryTest {
                         ),
                         parentUpdateType = PathUpdateType.Keep,
                         existingTask = task,
+                        existingTagIds = emptySet(),
                         existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
                             .first(),
                     )
@@ -1708,7 +1757,7 @@ class LocalTaskRepositoryTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    categoryId = null,
+                    tagIds = emptySet(),
                     recurrences = listOf(
                         TaskRecurrence(
                             taskId = 0L,
@@ -1746,7 +1795,7 @@ class LocalTaskRepositoryTest {
                         startAfterTime = task.startAfterTime,
                         scheduledDate = task.scheduledDate,
                         scheduledTime = task.scheduledTime,
-                        categoryId = task.categoryId,
+                        tagIds = emptySet(),
                         recurrences = listOf(
                             TaskRecurrence(
                                 taskId = task.id,
@@ -1757,6 +1806,7 @@ class LocalTaskRepositoryTest {
                         ),
                         parentUpdateType = PathUpdateType.Keep,
                         existingTask = task,
+                        existingTagIds = emptySet(),
                         existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
                             .first(),
                     )
@@ -1787,7 +1837,7 @@ class LocalTaskRepositoryTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    categoryId = null,
+                    tagIds = emptySet(),
                     recurrences = listOf(
                         TaskRecurrence(
                             taskId = 0L,
@@ -1825,7 +1875,7 @@ class LocalTaskRepositoryTest {
                         startAfterTime = task.startAfterTime,
                         scheduledDate = task.scheduledDate,
                         scheduledTime = task.scheduledTime,
-                        categoryId = task.categoryId,
+                        tagIds = emptySet(),
                         recurrences = listOf(
                             TaskRecurrence(
                                 taskId = task.id,
@@ -1836,6 +1886,7 @@ class LocalTaskRepositoryTest {
                         ),
                         parentUpdateType = PathUpdateType.Keep,
                         existingTask = task,
+                        existingTagIds = emptySet(),
                         existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
                             .first(),
                     )
@@ -1866,7 +1917,7 @@ class LocalTaskRepositoryTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    categoryId = null,
+                    tagIds = emptySet(),
                     recurrences = listOf(
                         TaskRecurrence(
                             taskId = 0L,
@@ -1904,7 +1955,7 @@ class LocalTaskRepositoryTest {
                         startAfterTime = task.startAfterTime,
                         scheduledDate = task.scheduledDate,
                         scheduledTime = task.scheduledTime,
-                        categoryId = task.categoryId,
+                        tagIds = emptySet(),
                         recurrences = listOf(
                             TaskRecurrence(
                                 taskId = task.id,
@@ -1915,6 +1966,7 @@ class LocalTaskRepositoryTest {
                         ),
                         parentUpdateType = PathUpdateType.Keep,
                         existingTask = task,
+                        existingTagIds = emptySet(),
                         existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
                             .first(),
                     )
@@ -1945,7 +1997,7 @@ class LocalTaskRepositoryTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    categoryId = null,
+                    tagIds = emptySet(),
                     recurrences = listOf(
                         TaskRecurrence(
                             taskId = 0L,
@@ -1983,7 +2035,7 @@ class LocalTaskRepositoryTest {
                         startAfterTime = task.startAfterTime,
                         scheduledDate = task.scheduledDate,
                         scheduledTime = task.scheduledTime,
-                        categoryId = task.categoryId,
+                        tagIds = emptySet(),
                         recurrences = listOf(
                             TaskRecurrence(
                                 taskId = task.id,
@@ -1994,6 +2046,7 @@ class LocalTaskRepositoryTest {
                         ),
                         parentUpdateType = PathUpdateType.Keep,
                         existingTask = task,
+                        existingTagIds = emptySet(),
                         existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
                             .first(),
                     )
@@ -2024,7 +2077,7 @@ class LocalTaskRepositoryTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    categoryId = null,
+                    tagIds = emptySet(),
                     recurrences = listOf(
                         TaskRecurrence(
                             taskId = 0L,
@@ -2048,9 +2101,9 @@ class LocalTaskRepositoryTest {
                     deadlineTime = task.deadlineTime,
                     startAfterDate = task.startAfterDate,
                     startAfterTime = task.startAfterTime,
-                    categoryId = task.categoryId,
                     scheduledDate = task.scheduledDate,
                     scheduledTime = task.scheduledTime,
+                    tagIds = emptySet(),
                     recurrences = listOf(
                         TaskRecurrence(
                             taskId = task.id,
@@ -2061,6 +2114,7 @@ class LocalTaskRepositoryTest {
                     ),
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task,
+                    existingTagIds = emptySet(),
                     existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
                         .first(),
                 )
@@ -2076,9 +2130,9 @@ class LocalTaskRepositoryTest {
                     deadlineTime = task.deadlineTime,
                     startAfterDate = task.startAfterDate,
                     startAfterTime = task.startAfterTime,
-                    categoryId = task.categoryId,
                     scheduledDate = task.scheduledDate,
                     scheduledTime = task.scheduledTime,
+                    tagIds = emptySet(),
                     recurrences = listOf(
                         TaskRecurrence(
                             taskId = task.id,
@@ -2089,6 +2143,7 @@ class LocalTaskRepositoryTest {
                     ),
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task,
+                    existingTagIds = emptySet(),
                     existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
                         .first(),
                 )
@@ -2104,9 +2159,9 @@ class LocalTaskRepositoryTest {
                     deadlineTime = task.deadlineTime,
                     startAfterDate = task.startAfterDate,
                     startAfterTime = task.startAfterTime,
-                    categoryId = task.categoryId,
                     scheduledDate = task.scheduledDate,
                     scheduledTime = task.scheduledTime,
+                    tagIds = emptySet(),
                     recurrences = listOf(
                         TaskRecurrence(
                             taskId = task.id,
@@ -2117,6 +2172,7 @@ class LocalTaskRepositoryTest {
                     ),
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task,
+                    existingTagIds = emptySet(),
                     existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
                         .first(),
                 )
@@ -2145,7 +2201,7 @@ class LocalTaskRepositoryTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    categoryId = null,
+                    tagIds = emptySet(),
                     recurrences = listOf(
                         TaskRecurrence(
                             taskId = 0L,
@@ -2169,9 +2225,9 @@ class LocalTaskRepositoryTest {
                     deadlineTime = task.deadlineTime,
                     startAfterDate = task.startAfterDate,
                     startAfterTime = task.startAfterTime,
-                    categoryId = task.categoryId,
                     scheduledDate = task.scheduledDate,
                     scheduledTime = task.scheduledTime,
+                    tagIds = emptySet(),
                     recurrences = listOf(
                         TaskRecurrence(
                             taskId = task.id,
@@ -2182,6 +2238,7 @@ class LocalTaskRepositoryTest {
                     ),
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task,
+                    existingTagIds = emptySet(),
                     existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
                         .first(),
                 )
@@ -2197,9 +2254,9 @@ class LocalTaskRepositoryTest {
                     deadlineTime = task.deadlineTime,
                     startAfterDate = task.startAfterDate,
                     startAfterTime = task.startAfterTime,
-                    categoryId = task.categoryId,
                     scheduledDate = task.scheduledDate,
                     scheduledTime = task.scheduledTime,
+                    tagIds = emptySet(),
                     recurrences = listOf(
                         TaskRecurrence(
                             taskId = task.id,
@@ -2210,6 +2267,7 @@ class LocalTaskRepositoryTest {
                     ),
                     parentUpdateType = PathUpdateType.Keep,
                     existingTask = task,
+                    existingTagIds = emptySet(),
                     existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
                         .first(),
                 )
@@ -2238,7 +2296,7 @@ class LocalTaskRepositoryTest {
                     startAfterTime = null,
                     scheduledDate = null,
                     scheduledTime = null,
-                    categoryId = null,
+                    tagIds = emptySet(),
                     recurrences = listOf(
                         TaskRecurrence(
                             taskId = 0L,
@@ -2257,15 +2315,13 @@ class LocalTaskRepositoryTest {
     }
 
     @Test
-    fun getTaskItemsByCategoryId_emitsTaskItemsMatchingCategory() = runTest {
+    fun getTaskSummariesByTagId_emitsTaskSummariesMatchingTag() = runTest {
         val clock =
             Clock.fixed(Instant.parse("2024-08-23T17:00:00Z"), ZoneId.of("America/New_York"))
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
 
-        val categoryId1 =
-            db.taskCategoryDao().insert(TaskCategory(name = loremFaker.lorem.unique.words()))
-        val categoryId2 =
-            db.taskCategoryDao().insert(TaskCategory(name = loremFaker.lorem.unique.words()))
+        val tagId1 = db.tagDao().insert(Tag(name = loremFaker.lorem.unique.words()))
+        val tagId2 = db.tagDao().insert(Tag(name = loremFaker.lorem.unique.words()))
         val task1 = taskRepository.create(
             NewTaskForm(
                 name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
@@ -2276,7 +2332,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = LocalDate.parse("2024-08-24"),
                 scheduledTime = LocalTime.parse("12:00"),
-                categoryId = categoryId1,
+                tagIds = setOf(tagId1),
                 recurrences = emptyList(),
                 parentTaskId = null,
                 clock = clock,
@@ -2292,7 +2348,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = LocalDate.parse("2024-08-24"),
                 scheduledTime = null,
-                categoryId = categoryId1,
+                tagIds = setOf(tagId1),
                 recurrences = emptyList(),
                 parentTaskId = null,
                 clock = clock,
@@ -2308,7 +2364,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = categoryId1,
+                tagIds = setOf(tagId1),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -2331,7 +2387,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = categoryId1,
+                tagIds = setOf(tagId1),
                 recurrences = emptyList(),
                 parentTaskId = null,
                 clock = clock,
@@ -2347,7 +2403,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = categoryId1,
+                tagIds = setOf(tagId1),
                 recurrences = emptyList(),
                 parentTaskId = null,
                 clock = clock,
@@ -2363,7 +2419,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = categoryId1,
+                tagIds = setOf(tagId1),
                 recurrences = emptyList(),
                 parentTaskId = null,
                 clock = clock,
@@ -2379,7 +2435,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = LocalTime.parse("12:59"),
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = categoryId1,
+                tagIds = setOf(tagId1),
                 recurrences = emptyList(),
                 parentTaskId = null,
                 clock = clock,
@@ -2395,7 +2451,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = categoryId1,
+                tagIds = setOf(tagId1),
                 recurrences = emptyList(),
                 parentTaskId = null,
                 clock = clock,
@@ -2411,7 +2467,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = categoryId1,
+                tagIds = setOf(tagId1),
                 recurrences = emptyList(),
                 parentTaskId = null,
                 clock = Clock.offset(clock, Duration.ofMillis(1)),
@@ -2428,7 +2484,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = categoryId1,
+                tagIds = setOf(tagId1),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -2458,7 +2514,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = categoryId1,
+                tagIds = setOf(tagId1),
                 recurrences = emptyList(),
                 parentTaskId = null,
                 clock = clock,
@@ -2481,7 +2537,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = categoryId1,
+                tagIds = setOf(tagId1),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -2511,7 +2567,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = categoryId2,
+                tagIds = setOf(tagId2),
                 recurrences = emptyList(),
                 parentTaskId = null,
                 clock = clock,
@@ -2527,7 +2583,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
                 clock = clock,
@@ -2535,30 +2591,30 @@ class LocalTaskRepositoryTest {
         )
 
         assertThat(
-            taskRepository.getTaskItemsByCategoryId(categoryId1).asSnapshot()
+            taskRepository.getTaskSummariesByTagId(tagId1).asSnapshot()
         ).containsExactly(
-            TaskItemData(id = task1.id, name = task1.name, recurring = false, doneAt = null),
-            TaskItemData(id = task2.id, name = task2.name, recurring = false, doneAt = null),
-            TaskItemData(id = task3.id, name = task3.name, recurring = true, doneAt = null),
-            TaskItemData(id = task4.id, name = task4.name, recurring = false, doneAt = null),
-            TaskItemData(id = task5.id, name = task5.name, recurring = false, doneAt = null),
-            TaskItemData(id = task6.id, name = task6.name, recurring = false, doneAt = null),
-            TaskItemData(id = task7.id, name = task7.name, recurring = false, doneAt = null),
-            TaskItemData(id = task8.id, name = task8.name, recurring = false, doneAt = null),
-            TaskItemData(id = task9.id, name = task9.name, recurring = false, doneAt = null),
-            TaskItemData(
+            TaskSummary(id = task1.id, name = task1.name, recurring = false, doneAt = null),
+            TaskSummary(id = task2.id, name = task2.name, recurring = false, doneAt = null),
+            TaskSummary(id = task3.id, name = task3.name, recurring = true, doneAt = null),
+            TaskSummary(id = task4.id, name = task4.name, recurring = false, doneAt = null),
+            TaskSummary(id = task5.id, name = task5.name, recurring = false, doneAt = null),
+            TaskSummary(id = task6.id, name = task6.name, recurring = false, doneAt = null),
+            TaskSummary(id = task7.id, name = task7.name, recurring = false, doneAt = null),
+            TaskSummary(id = task8.id, name = task8.name, recurring = false, doneAt = null),
+            TaskSummary(id = task9.id, name = task9.name, recurring = false, doneAt = null),
+            TaskSummary(
                 id = task10.id,
                 name = task10.name,
                 recurring = true,
                 doneAt = Instant.parse("2024-08-23T03:59:59.999Z")
             ),
-            TaskItemData(
+            TaskSummary(
                 id = task11.id,
                 name = task11.name,
                 recurring = false,
                 doneAt = Instant.parse("2024-08-22T00:00:00Z")
             ),
-            TaskItemData(
+            TaskSummary(
                 id = task12.id,
                 name = task12.name,
                 recurring = true,
@@ -2568,7 +2624,7 @@ class LocalTaskRepositoryTest {
     }
 
     @Test
-    fun searchTaskItems_emitsTasksMatchingDeadlineDateRange() = runTest {
+    fun searchTaskSummaries_emitsTasksMatchingDeadlineDateRange() = runTest {
         val clock =
             Clock.fixed(Instant.parse("2024-08-23T17:00:00Z"), ZoneId.of("America/New_York"))
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
@@ -2583,7 +2639,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
                 clock = clock,
@@ -2599,7 +2655,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -2628,7 +2684,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
                 clock = clock,
@@ -2644,7 +2700,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
                 clock = clock,
@@ -2660,7 +2716,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -2683,7 +2739,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -2706,7 +2762,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -2721,7 +2777,7 @@ class LocalTaskRepositoryTest {
         )
 
         assertThat(
-            taskRepository.searchTaskItems(
+            taskRepository.searchTaskSummaries(
                 TaskSearchCriteria(
                     deadlineDateRange = Pair(
                         LocalDate.parse("2024-08-21"),
@@ -2730,13 +2786,13 @@ class LocalTaskRepositoryTest {
                 ),
             ).asSnapshot()
         ).containsExactly(
-            TaskItemData(id = task1.id, name = task1.name, recurring = false, doneAt = null),
-            TaskItemData(id = task2.id, name = task2.name, recurring = true, doneAt = null),
+            TaskSummary(id = task1.id, name = task1.name, recurring = false, doneAt = null),
+            TaskSummary(id = task2.id, name = task2.name, recurring = true, doneAt = null),
         )
     }
 
     @Test
-    fun searchTaskItems_emitsTasksMatchingStartAfterDateRange() = runTest {
+    fun searchTaskSummaries_emitsTasksMatchingStartAfterDateRange() = runTest {
         val clock =
             Clock.fixed(Instant.parse("2024-08-23T17:00:00Z"), ZoneId.of("America/New_York"))
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
@@ -2751,7 +2807,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
                 clock = clock,
@@ -2767,7 +2823,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = LocalTime.parse("12:00"),
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -2796,7 +2852,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
                 clock = clock,
@@ -2812,7 +2868,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
                 clock = clock,
@@ -2828,7 +2884,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = LocalTime.parse("12:00"),
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -2851,7 +2907,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -2874,7 +2930,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = LocalTime.parse("12:00"),
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -2889,7 +2945,7 @@ class LocalTaskRepositoryTest {
         )
 
         assertThat(
-            taskRepository.searchTaskItems(
+            taskRepository.searchTaskSummaries(
                 TaskSearchCriteria(
                     startAfterDateRange = Pair(
                         LocalDate.parse("2024-08-21"),
@@ -2898,13 +2954,13 @@ class LocalTaskRepositoryTest {
                 ),
             ).asSnapshot()
         ).containsExactly(
-            TaskItemData(id = task1.id, name = task1.name, recurring = false, doneAt = null),
-            TaskItemData(id = task2.id, name = task2.name, recurring = true, doneAt = null),
+            TaskSummary(id = task1.id, name = task1.name, recurring = false, doneAt = null),
+            TaskSummary(id = task2.id, name = task2.name, recurring = true, doneAt = null),
         )
     }
 
     @Test
-    fun searchTaskItems_emitsTasksMatchingScheduledDateRange() = runTest {
+    fun searchTaskSummaries_emitsTasksMatchingScheduledDateRange() = runTest {
         val clock =
             Clock.fixed(Instant.parse("2024-08-23T17:00:00Z"), ZoneId.of("America/New_York"))
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
@@ -2919,7 +2975,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = LocalDate.parse("2024-08-22"),
                 scheduledTime = LocalTime.MIN,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
                 clock = clock,
@@ -2935,7 +2991,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = LocalTime.parse("12:00"),
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -2964,7 +3020,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = LocalDate.parse("2024-08-20"),
                 scheduledTime = LocalTime.MIN,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
                 clock = clock,
@@ -2980,7 +3036,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
                 clock = clock,
@@ -2996,7 +3052,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = LocalTime.parse("12:00"),
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -3019,7 +3075,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -3042,7 +3098,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledTime = LocalTime.parse("12:00"),
                 scheduledDate = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -3057,7 +3113,7 @@ class LocalTaskRepositoryTest {
         )
 
         assertThat(
-            taskRepository.searchTaskItems(
+            taskRepository.searchTaskSummaries(
                 TaskSearchCriteria(
                     scheduledDateRange = Pair(
                         LocalDate.parse("2024-08-21"),
@@ -3066,13 +3122,13 @@ class LocalTaskRepositoryTest {
                 ),
             ).asSnapshot()
         ).containsExactly(
-            TaskItemData(id = task1.id, name = task1.name, recurring = false, doneAt = null),
-            TaskItemData(id = task2.id, name = task2.name, recurring = true, doneAt = null),
+            TaskSummary(id = task1.id, name = task1.name, recurring = false, doneAt = null),
+            TaskSummary(id = task2.id, name = task2.name, recurring = true, doneAt = null),
         )
     }
 
     @Test
-    fun searchTaskItems_emitsTasksMatchingDoneDateRange() = runTest {
+    fun searchTaskSummaries_emitsTasksMatchingDoneDateRange() = runTest {
         val clock =
             Clock.fixed(Instant.parse("2024-08-23T17:00:00Z"), ZoneId.of("America/New_York"))
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
@@ -3087,7 +3143,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
                 clock = clock,
@@ -3110,7 +3166,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -3146,7 +3202,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
                 clock = clock,
@@ -3169,7 +3225,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -3199,7 +3255,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
                 clock = clock,
@@ -3215,7 +3271,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -3230,7 +3286,7 @@ class LocalTaskRepositoryTest {
         )
 
         assertThat(
-            taskRepository.searchTaskItems(
+            taskRepository.searchTaskSummaries(
                 TaskSearchCriteria(
                     doneDateRange = Pair(
                         LocalDate.parse("2024-08-21"),
@@ -3239,13 +3295,13 @@ class LocalTaskRepositoryTest {
                 ),
             ).asSnapshot()
         ).containsExactly(
-            TaskItemData(
+            TaskSummary(
                 id = task1.id,
                 name = task1.name,
                 recurring = false,
                 doneAt = Instant.parse("2024-08-21T17:00:00Z"),
             ),
-            TaskItemData(
+            TaskSummary(
                 id = task2.id,
                 name = task2.name,
                 recurring = true,
@@ -3255,7 +3311,7 @@ class LocalTaskRepositoryTest {
     }
 
     @Test
-    fun searchTaskItems_emitsTasksMatchingRecurringDate() = runTest {
+    fun searchTaskSummaries_emitsTasksMatchingRecurringDate() = runTest {
         val clock =
             Clock.fixed(Instant.parse("2024-08-23T17:00:00Z"), ZoneId.of("America/New_York"))
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
@@ -3270,7 +3326,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -3293,7 +3349,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -3322,7 +3378,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -3345,7 +3401,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -3368,7 +3424,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -3392,7 +3448,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
                 clock = clock,
@@ -3408,7 +3464,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -3431,7 +3487,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -3454,7 +3510,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -3483,7 +3539,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -3506,7 +3562,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -3529,7 +3585,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -3544,7 +3600,7 @@ class LocalTaskRepositoryTest {
         )
 
         assertThat(
-            taskRepository.searchTaskItems(
+            taskRepository.searchTaskSummaries(
                 TaskSearchCriteria(
                     recurrenceDate = LocalDate.parse(
                         "2024-08-23"
@@ -3552,16 +3608,16 @@ class LocalTaskRepositoryTest {
                 )
             ).asSnapshot()
         ).containsExactly(
-            TaskItemData(id = task1.id, name = task1.name, recurring = true, doneAt = null),
-            TaskItemData(id = task2.id, name = task2.name, recurring = true, doneAt = null),
-            TaskItemData(id = task3.id, name = task3.name, recurring = true, doneAt = null),
-            TaskItemData(id = task4.id, name = task4.name, recurring = true, doneAt = null),
-            TaskItemData(id = task5.id, name = task5.name, recurring = true, doneAt = null),
+            TaskSummary(id = task1.id, name = task1.name, recurring = true, doneAt = null),
+            TaskSummary(id = task2.id, name = task2.name, recurring = true, doneAt = null),
+            TaskSummary(id = task3.id, name = task3.name, recurring = true, doneAt = null),
+            TaskSummary(id = task4.id, name = task4.name, recurring = true, doneAt = null),
+            TaskSummary(id = task5.id, name = task5.name, recurring = true, doneAt = null),
         )
     }
 
     @Test
-    fun searchTaskItems_emitsTasksMatchingNameAndDeadlineDateRange() = runTest {
+    fun searchTaskSummaries_emitsTasksMatchingNameAndDeadlineDateRange() = runTest {
         val query = loremFaker.verbs.base()
         val clock =
             Clock.fixed(Instant.parse("2024-08-23T17:00:00Z"), ZoneId.of("America/New_York"))
@@ -3577,7 +3633,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
                 clock = clock,
@@ -3593,7 +3649,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -3622,7 +3678,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
                 clock = clock,
@@ -3638,7 +3694,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
                 clock = clock,
@@ -3654,7 +3710,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
                 clock = clock,
@@ -3670,7 +3726,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -3693,7 +3749,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -3716,7 +3772,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -3731,7 +3787,7 @@ class LocalTaskRepositoryTest {
         )
 
         assertThat(
-            taskRepository.searchTaskItems(
+            taskRepository.searchTaskSummaries(
                 TaskSearchCriteria(
                     name = query,
                     deadlineDateRange = Pair(
@@ -3741,13 +3797,13 @@ class LocalTaskRepositoryTest {
                 ),
             ).asSnapshot()
         ).containsExactly(
-            TaskItemData(id = task1.id, name = task1.name, recurring = false, doneAt = null),
-            TaskItemData(id = task2.id, name = task2.name, recurring = true, doneAt = null),
+            TaskSummary(id = task1.id, name = task1.name, recurring = false, doneAt = null),
+            TaskSummary(id = task2.id, name = task2.name, recurring = true, doneAt = null),
         )
     }
 
     @Test
-    fun searchTaskItems_emitsTasksMatchingNameAndStartAfterDateRange() = runTest {
+    fun searchTaskSummaries_emitsTasksMatchingNameAndStartAfterDateRange() = runTest {
         val query = loremFaker.verbs.base()
         val clock =
             Clock.fixed(Instant.parse("2024-08-23T17:00:00Z"), ZoneId.of("America/New_York"))
@@ -3763,7 +3819,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
                 clock = clock,
@@ -3779,7 +3835,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = LocalTime.parse("12:00"),
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -3808,7 +3864,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
                 clock = clock,
@@ -3824,7 +3880,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
                 clock = clock,
@@ -3840,7 +3896,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
                 clock = clock,
@@ -3856,7 +3912,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = LocalTime.parse("12:00"),
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -3879,7 +3935,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -3902,7 +3958,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = LocalTime.parse("12:00"),
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -3917,7 +3973,7 @@ class LocalTaskRepositoryTest {
         )
 
         assertThat(
-            taskRepository.searchTaskItems(
+            taskRepository.searchTaskSummaries(
                 TaskSearchCriteria(
                     name = query,
                     startAfterDateRange = Pair(
@@ -3927,13 +3983,13 @@ class LocalTaskRepositoryTest {
                 ),
             ).asSnapshot()
         ).containsExactly(
-            TaskItemData(id = task1.id, name = task1.name, recurring = false, doneAt = null),
-            TaskItemData(id = task2.id, name = task2.name, recurring = true, doneAt = null),
+            TaskSummary(id = task1.id, name = task1.name, recurring = false, doneAt = null),
+            TaskSummary(id = task2.id, name = task2.name, recurring = true, doneAt = null),
         )
     }
 
     @Test
-    fun searchTaskItems_emitsTasksMatchingNameAndScheduledDateRange() = runTest {
+    fun searchTaskSummaries_emitsTasksMatchingNameAndScheduledDateRange() = runTest {
         val query = loremFaker.verbs.base()
         val clock =
             Clock.fixed(Instant.parse("2024-08-23T17:00:00Z"), ZoneId.of("America/New_York"))
@@ -3949,7 +4005,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = LocalDate.parse("2024-08-22"),
                 scheduledTime = LocalTime.MIN,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
                 clock = clock,
@@ -3965,7 +4021,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = LocalTime.parse("12:00"),
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -3994,7 +4050,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = LocalDate.parse("2024-08-22"),
                 scheduledTime = LocalTime.MIN,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
                 clock = clock,
@@ -4010,7 +4066,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = LocalDate.parse("2024-08-20"),
                 scheduledTime = LocalTime.MIN,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
                 clock = clock,
@@ -4026,7 +4082,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
                 clock = clock,
@@ -4042,7 +4098,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = LocalTime.parse("12:00"),
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -4065,7 +4121,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -4088,7 +4144,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = LocalTime.parse("12:00"),
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -4103,7 +4159,7 @@ class LocalTaskRepositoryTest {
         )
 
         assertThat(
-            taskRepository.searchTaskItems(
+            taskRepository.searchTaskSummaries(
                 TaskSearchCriteria(
                     name = query,
                     scheduledDateRange = Pair(
@@ -4113,13 +4169,13 @@ class LocalTaskRepositoryTest {
                 ),
             ).asSnapshot()
         ).containsExactly(
-            TaskItemData(id = task1.id, name = task1.name, recurring = false, doneAt = null),
-            TaskItemData(id = task2.id, name = task2.name, recurring = true, doneAt = null),
+            TaskSummary(id = task1.id, name = task1.name, recurring = false, doneAt = null),
+            TaskSummary(id = task2.id, name = task2.name, recurring = true, doneAt = null),
         )
     }
 
     @Test
-    fun searchTaskItems_emitsTasksMatchingNameAndDoneDateRange() = runTest {
+    fun searchTaskSummaries_emitsTasksMatchingNameAndDoneDateRange() = runTest {
         val query = loremFaker.verbs.base()
         val clock =
             Clock.fixed(Instant.parse("2024-08-23T17:00:00Z"), ZoneId.of("America/New_York"))
@@ -4135,7 +4191,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
                 clock = clock,
@@ -4158,7 +4214,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -4194,7 +4250,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
                 clock = clock,
@@ -4217,7 +4273,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -4247,7 +4303,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
                 clock = clock,
@@ -4270,7 +4326,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
                 clock = clock,
@@ -4286,7 +4342,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -4301,7 +4357,7 @@ class LocalTaskRepositoryTest {
         )
 
         assertThat(
-            taskRepository.searchTaskItems(
+            taskRepository.searchTaskSummaries(
                 TaskSearchCriteria(
                     name = query,
                     doneDateRange = Pair(
@@ -4311,13 +4367,13 @@ class LocalTaskRepositoryTest {
                 ),
             ).asSnapshot()
         ).containsExactly(
-            TaskItemData(
+            TaskSummary(
                 id = task1.id,
                 name = task1.name,
                 recurring = false,
                 doneAt = Instant.parse("2024-08-21T17:00:00Z"),
             ),
-            TaskItemData(
+            TaskSummary(
                 id = task2.id,
                 name = task2.name,
                 recurring = true,
@@ -4327,7 +4383,7 @@ class LocalTaskRepositoryTest {
     }
 
     @Test
-    fun searchTaskItems_emitsTasksNameAndMatchingRecurringDate() = runTest {
+    fun searchTaskSummaries_emitsTasksNameAndMatchingRecurringDate() = runTest {
         val query = loremFaker.verbs.base()
         val clock =
             Clock.fixed(Instant.parse("2024-08-23T17:00:00Z"), ZoneId.of("America/New_York"))
@@ -4343,7 +4399,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -4366,7 +4422,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -4395,7 +4451,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -4418,7 +4474,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -4441,7 +4497,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -4465,7 +4521,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
                 clock = clock,
@@ -4481,7 +4537,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -4504,7 +4560,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -4527,7 +4583,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -4556,7 +4612,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -4579,7 +4635,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -4602,7 +4658,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -4625,7 +4681,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = listOf(
                     TaskRecurrence(
                         taskId = 0L,
@@ -4640,7 +4696,7 @@ class LocalTaskRepositoryTest {
         )
 
         assertThat(
-            taskRepository.searchTaskItems(
+            taskRepository.searchTaskSummaries(
                 TaskSearchCriteria(
                     name = query, recurrenceDate = LocalDate.parse(
                         "2024-08-23"
@@ -4648,11 +4704,11 @@ class LocalTaskRepositoryTest {
                 )
             ).asSnapshot()
         ).containsExactly(
-            TaskItemData(id = task1.id, name = task1.name, recurring = true, doneAt = null),
-            TaskItemData(id = task2.id, name = task2.name, recurring = true, doneAt = null),
-            TaskItemData(id = task3.id, name = task3.name, recurring = true, doneAt = null),
-            TaskItemData(id = task4.id, name = task4.name, recurring = true, doneAt = null),
-            TaskItemData(id = task5.id, name = task5.name, recurring = true, doneAt = null),
+            TaskSummary(id = task1.id, name = task1.name, recurring = true, doneAt = null),
+            TaskSummary(id = task2.id, name = task2.name, recurring = true, doneAt = null),
+            TaskSummary(id = task3.id, name = task3.name, recurring = true, doneAt = null),
+            TaskSummary(id = task4.id, name = task4.name, recurring = true, doneAt = null),
+            TaskSummary(id = task5.id, name = task5.name, recurring = true, doneAt = null),
         )
     }
 
@@ -4673,7 +4729,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
                 clock = clock,
@@ -4689,7 +4745,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = task1.id,
                 clock = clock,
@@ -4705,7 +4761,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
                 clock = clock,
@@ -4722,10 +4778,11 @@ class LocalTaskRepositoryTest {
                 startAfterTime = task2.startAfterTime,
                 scheduledDate = task2.scheduledDate,
                 scheduledTime = task2.scheduledTime,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentUpdateType = PathUpdateType.Keep,
                 existingTask = task2,
+                existingTagIds = emptySet(),
                 existingRecurrences = emptyList(),
             )
         )
@@ -4742,8 +4799,6 @@ class LocalTaskRepositoryTest {
                 scheduledDate = updatedTask2.scheduledDate,
                 scheduledTime = updatedTask2.scheduledTime,
                 doneAt = null,
-                categoryId = null,
-                categoryName = null,
                 parentId = task1.id,
                 parentName = task1.name,
                 parentRecurring = false,
@@ -4761,10 +4816,11 @@ class LocalTaskRepositoryTest {
                 startAfterTime = task3.startAfterTime,
                 scheduledDate = task3.scheduledDate,
                 scheduledTime = task3.scheduledTime,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentUpdateType = PathUpdateType.Replace(updatedTask2.id),
                 existingTask = task3,
+                existingTagIds = emptySet(),
                 existingRecurrences = emptyList(),
             )
         )
@@ -4781,8 +4837,6 @@ class LocalTaskRepositoryTest {
                 scheduledDate = task3.scheduledDate,
                 scheduledTime = task3.scheduledTime,
                 doneAt = null,
-                categoryId = null,
-                categoryName = null,
                 parentId = updatedTask2.id,
                 parentName = updatedTask2.name,
                 parentRecurring = false,
@@ -4800,10 +4854,11 @@ class LocalTaskRepositoryTest {
                 startAfterTime = updatedTask2.startAfterTime,
                 scheduledDate = updatedTask2.scheduledDate,
                 scheduledTime = updatedTask2.scheduledTime,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentUpdateType = PathUpdateType.Remove,
                 existingTask = updatedTask2,
+                existingTagIds = emptySet(),
                 existingRecurrences = emptyList(),
             )
         )
@@ -4820,8 +4875,6 @@ class LocalTaskRepositoryTest {
                 scheduledDate = updatedTask2.scheduledDate,
                 scheduledTime = updatedTask2.scheduledTime,
                 doneAt = null,
-                categoryId = null,
-                categoryName = null,
                 parentId = null,
                 parentName = null,
                 parentRecurring = false,
@@ -4839,10 +4892,11 @@ class LocalTaskRepositoryTest {
                 startAfterTime = task3.startAfterTime,
                 scheduledDate = task3.scheduledDate,
                 scheduledTime = task3.scheduledTime,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentUpdateType = PathUpdateType.Replace(task1.id),
                 existingTask = task3,
+                existingTagIds = emptySet(),
                 existingRecurrences = emptyList(),
             )
         )
@@ -4859,8 +4913,6 @@ class LocalTaskRepositoryTest {
                 scheduledDate = task3.scheduledDate,
                 scheduledTime = task3.scheduledTime,
                 doneAt = null,
-                categoryId = null,
-                categoryName = null,
                 parentId = task1.id,
                 parentName = task1.name,
                 parentRecurring = false,
@@ -4878,10 +4930,11 @@ class LocalTaskRepositoryTest {
                 startAfterTime = task1.startAfterTime,
                 scheduledDate = task1.scheduledDate,
                 scheduledTime = task1.scheduledTime,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentUpdateType = PathUpdateType.Replace(task3.id),
                 existingTask = task1,
+                existingTagIds = emptySet(),
                 existingRecurrences = emptyList(),
             )
         )
@@ -4898,8 +4951,6 @@ class LocalTaskRepositoryTest {
                 scheduledDate = task1.scheduledDate,
                 scheduledTime = task1.scheduledTime,
                 doneAt = null,
-                categoryId = null,
-                categoryName = null,
                 parentId = task3.id,
                 parentName = task3.name,
                 parentRecurring = false,
@@ -4918,8 +4969,6 @@ class LocalTaskRepositoryTest {
                 scheduledDate = task3.scheduledDate,
                 scheduledTime = task3.scheduledTime,
                 doneAt = null,
-                categoryId = null,
-                categoryName = null,
                 parentId = null,
                 parentName = null,
                 parentRecurring = false,
@@ -4937,10 +4986,11 @@ class LocalTaskRepositoryTest {
                 startAfterTime = task3.startAfterTime,
                 scheduledDate = task3.scheduledDate,
                 scheduledTime = task3.scheduledTime,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentUpdateType = PathUpdateType.Replace(updatedTask2.id),
                 existingTask = task3,
+                existingTagIds = emptySet(),
                 existingRecurrences = emptyList(),
             )
         )
@@ -4957,8 +5007,6 @@ class LocalTaskRepositoryTest {
                 scheduledDate = task3.scheduledDate,
                 scheduledTime = task3.scheduledTime,
                 doneAt = null,
-                categoryId = null,
-                categoryName = null,
                 parentId = updatedTask2.id,
                 parentName = updatedTask2.name,
                 parentRecurring = false,
@@ -4976,10 +5024,11 @@ class LocalTaskRepositoryTest {
                 startAfterTime = task1.startAfterTime,
                 scheduledDate = task1.scheduledDate,
                 scheduledTime = task1.scheduledTime,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentUpdateType = PathUpdateType.Replace(updatedTask2.id),
                 existingTask = task1,
+                existingTagIds = emptySet(),
                 existingRecurrences = emptyList(),
             )
         )
@@ -4996,8 +5045,6 @@ class LocalTaskRepositoryTest {
                 scheduledDate = task1.scheduledDate,
                 scheduledTime = task1.scheduledTime,
                 doneAt = null,
-                categoryId = null,
-                categoryName = null,
                 parentId = updatedTask2.id,
                 parentName = updatedTask2.name,
                 parentRecurring = false,
@@ -5016,8 +5063,6 @@ class LocalTaskRepositoryTest {
                 scheduledDate = task3.scheduledDate,
                 scheduledTime = task3.scheduledTime,
                 doneAt = null,
-                categoryId = null,
-                categoryName = null,
                 parentId = updatedTask2.id,
                 parentName = updatedTask2.name,
                 parentRecurring = false,
@@ -5042,7 +5087,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
                 clock = clock,
@@ -5059,7 +5104,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = task1.id,
                 clock = clock,
@@ -5076,7 +5121,7 @@ class LocalTaskRepositoryTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = null,
-                categoryId = null,
+                tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = task2.id,
                 clock = clock,
@@ -5095,8 +5140,6 @@ class LocalTaskRepositoryTest {
                 scheduledDate = task1.scheduledDate,
                 scheduledTime = task1.scheduledTime,
                 doneAt = null,
-                categoryId = null,
-                categoryName = null,
                 parentId = null,
                 parentName = null,
                 parentRecurring = false,
@@ -5115,8 +5158,6 @@ class LocalTaskRepositoryTest {
                 scheduledDate = task2.scheduledDate,
                 scheduledTime = task2.scheduledTime,
                 doneAt = null,
-                categoryId = null,
-                categoryName = null,
                 parentId = task1.id,
                 parentName = task1.name,
                 parentRecurring = false,
@@ -5135,8 +5176,6 @@ class LocalTaskRepositoryTest {
                 scheduledDate = task3.scheduledDate,
                 scheduledTime = task3.scheduledTime,
                 doneAt = null,
-                categoryId = null,
-                categoryName = null,
                 parentId = task2.id,
                 parentName = task2.name,
                 parentRecurring = false,
@@ -5159,8 +5198,6 @@ class LocalTaskRepositoryTest {
                 scheduledDate = task1.scheduledDate,
                 scheduledTime = task1.scheduledTime,
                 doneAt = null,
-                categoryId = null,
-                categoryName = null,
                 parentId = null,
                 parentName = null,
                 parentRecurring = false,
@@ -5179,8 +5216,6 @@ class LocalTaskRepositoryTest {
                 scheduledDate = task3.scheduledDate,
                 scheduledTime = task3.scheduledTime,
                 doneAt = null,
-                categoryId = null,
-                categoryName = null,
                 parentId = task1.id,
                 parentName = task1.name,
                 parentRecurring = false,

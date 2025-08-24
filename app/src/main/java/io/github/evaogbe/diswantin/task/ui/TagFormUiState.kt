@@ -1,35 +1,35 @@
 package io.github.evaogbe.diswantin.task.ui
 
 import android.os.Parcelable
-import io.github.evaogbe.diswantin.task.data.Task
+import io.github.evaogbe.diswantin.task.data.TaggedTask
 import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.parcelize.Parcelize
 
 @Parcelize
-data class TaskCategoryFormTopBarState(
+data class TagFormTopBarState(
     val isNew: Boolean,
     val showSave: Boolean,
     val saveEnabled: Boolean,
 ) : Parcelable
 
-enum class TaskCategoryFormTopBarAction {
+enum class TagFormTopBarAction {
     Save, Close
 }
 
-sealed interface TaskCategoryFormUiState {
-    data object Pending : TaskCategoryFormUiState
+sealed interface TagFormUiState {
+    data object Pending : TagFormUiState
 
-    data class Failure(val exception: Throwable) : TaskCategoryFormUiState
+    data class Failure(val exception: Throwable) : TagFormUiState
 
     data class Success(
         val name: String,
-        val newTasks: ImmutableList<Task>,
+        val newTasks: ImmutableList<TaggedTask>,
         val isEditing: Boolean,
-        val taskOptions: ImmutableList<Task>,
+        val taskOptions: ImmutableList<TaggedTask>,
         val changed: Boolean,
         val userMessage: UserMessage?,
-    ) : TaskCategoryFormUiState
+    ) : TagFormUiState
 
-    data object Saved : TaskCategoryFormUiState
+    data object Saved : TagFormUiState
 }

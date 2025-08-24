@@ -1,8 +1,11 @@
 package io.github.evaogbe.diswantin.task.ui
 
 import android.os.Parcelable
+import io.github.evaogbe.diswantin.task.data.Tag
 import io.github.evaogbe.diswantin.task.data.TaskDetail
 import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.parcelize.Parcelize
 import java.time.Instant
 import java.time.LocalDate
@@ -31,12 +34,11 @@ sealed interface TaskDetailUiState {
         val formattedScheduledAt: String?,
         val recurrence: TaskRecurrenceUiState?,
         val isDone: Boolean,
-        val parent: TaskItemUiState?,
-        val categoryId: Long?,
-        val categoryName: String?,
+        val parent: TaskSummaryUiState?,
+        val tags: ImmutableList<Tag>,
         val userMessage: UserMessage?,
     ) : TaskDetailUiState {
-        val taskItem = TaskItemUiState(id = id, name = name, isDone = isDone)
+        val summary = TaskSummaryUiState(id = id, name = name, isDone = isDone)
     }
 
     data object Deleted : TaskDetailUiState
@@ -44,6 +46,7 @@ sealed interface TaskDetailUiState {
     companion object {
         fun success(
             task: TaskDetail,
+            tags: List<Tag>,
             recurrence: TaskRecurrenceUiState?,
             userMessage: UserMessage?,
             doneBefore: Instant,
@@ -61,7 +64,7 @@ sealed interface TaskDetailUiState {
                 recurring = recurrence != null,
             ),
             parent = if (task.parentId != null && task.parentName != null) {
-                TaskItemUiState(
+                TaskSummaryUiState(
                     id = task.parentId,
                     name = task.parentName,
                     isDone = isTaskDone(
@@ -73,8 +76,7 @@ sealed interface TaskDetailUiState {
             } else {
                 null
             },
-            categoryId = task.categoryId,
-            categoryName = task.categoryName,
+            tags = tags.toImmutableList(),
             userMessage = userMessage,
         )
     }

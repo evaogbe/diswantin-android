@@ -25,7 +25,7 @@ import io.github.evaogbe.diswantin.ui.theme.SpaceMd
 import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
 
 @Composable
-fun TaskItemName(task: TaskItemUiState, style: TextStyle = LocalTextStyle.current) {
+fun TaskSummaryName(task: TaskSummaryUiState, style: TextStyle = LocalTextStyle.current) {
     val resources = LocalResources.current
 
     if (task.isDone) {
@@ -43,20 +43,20 @@ fun TaskItemName(task: TaskItemUiState, style: TextStyle = LocalTextStyle.curren
 }
 
 @Composable
-fun TaskItem(task: TaskItemUiState, onSelectTask: (Long) -> Unit) {
+fun TaskSummaryItem(task: TaskSummaryUiState, onSelectTask: (Long) -> Unit) {
     ListItem(
-        headlineContent = { TaskItemName(task = task) },
+        headlineContent = { TaskSummaryName(task = task) },
         modifier = Modifier.clickable { onSelectTask(task.id) },
     )
 }
 
 @DevicePreviews
 @Composable
-private fun TaskItemPreview_Undone() {
+private fun TaskSummaryItemPreview_Undone() {
     DiswantinTheme {
         Surface {
-            TaskItem(
-                task = TaskItemUiState(id = 1L, name = "Brush teeth", isDone = false),
+            TaskSummaryItem(
+                task = TaskSummaryUiState(id = 1L, name = "Brush teeth", isDone = false),
                 onSelectTask = {},
             )
         }
@@ -65,11 +65,11 @@ private fun TaskItemPreview_Undone() {
 
 @DevicePreviews
 @Composable
-private fun TaskItemPreview_Done() {
+private fun TaskSummaryItemPreview_Done() {
     DiswantinTheme {
         Surface {
-            TaskItem(
-                task = TaskItemUiState(id = 1L, name = "Brush teeth", isDone = true),
+            TaskSummaryItem(
+                task = TaskSummaryUiState(id = 1L, name = "Brush teeth", isDone = true),
                 onSelectTask = {},
             )
         }
@@ -78,11 +78,11 @@ private fun TaskItemPreview_Done() {
 
 @DevicePreviews
 @Composable
-private fun TaskListPreview() {
+private fun TaskSummaryListPreview() {
     val taskItems = listOf(
-        TaskItemUiState(id = 1L, name = "Brush teeth", isDone = true),
-        TaskItemUiState(id = 2L, name = "Shower", isDone = false),
-        TaskItemUiState(id = 3L, name = "Eat breakfast", isDone = false),
+        TaskSummaryUiState(id = 1L, name = "Brush teeth", isDone = true),
+        TaskSummaryUiState(id = 2L, name = "Shower", isDone = false),
+        TaskSummaryUiState(id = 3L, name = "Eat breakfast", isDone = false),
     )
 
     DiswantinTheme {
@@ -93,8 +93,8 @@ private fun TaskListPreview() {
                     .fillMaxWidth()
                     .padding(vertical = SpaceMd),
             ) {
-                items(taskItems, key = TaskItemUiState::id) { task ->
-                    TaskItem(task = task, onSelectTask = {})
+                items(taskItems, key = TaskSummaryUiState::id) { task ->
+                    TaskSummaryItem(task = task, onSelectTask = {})
                     HorizontalDivider()
                 }
             }

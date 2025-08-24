@@ -6,14 +6,16 @@ import androidx.paging.testing.asSnapshot
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
+import assertk.assertions.isInstanceOf
 import assertk.assertions.isTrue
 import io.github.evaogbe.diswantin.R
+import io.github.evaogbe.diswantin.task.data.Tag
+import io.github.evaogbe.diswantin.task.data.TagRepository
+import io.github.evaogbe.diswantin.task.data.TaggedTask
 import io.github.evaogbe.diswantin.task.data.Task
-import io.github.evaogbe.diswantin.task.data.TaskCategory
-import io.github.evaogbe.diswantin.task.data.TaskCategoryRepository
 import io.github.evaogbe.diswantin.task.data.TaskRepository
 import io.github.evaogbe.diswantin.testing.FakeDatabase
-import io.github.evaogbe.diswantin.testing.FakeTaskCategoryRepository
+import io.github.evaogbe.diswantin.testing.FakeTagRepository
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.MainDispatcherRule
 import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
@@ -39,7 +41,7 @@ import org.junit.Rule
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class TaskCategoryFormViewModelTest {
+class TagFormViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule(StandardTestDispatcher())
 
@@ -48,20 +50,20 @@ class TaskCategoryFormViewModelTest {
     private val faker = Faker()
 
     @Test
-    fun `initializes for new without categoryId`() = runTest(mainDispatcherRule.testDispatcher) {
-        val viewModel = createTaskCategoryFormViewModelFormNew()
+    fun `initializes for new without tagId`() = runTest(mainDispatcherRule.testDispatcher) {
+        val viewModel = createTagFormViewModelForNew()
 
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect()
         }
 
-        assertThat(viewModel.uiState.value).isEqualTo(TaskCategoryFormUiState.Pending)
+        assertThat(viewModel.uiState.value).isEqualTo(TagFormUiState.Pending)
 
         advanceUntilIdle()
 
         assertThat(viewModel.isNew).isTrue()
         assertThat(viewModel.uiState.value).isEqualTo(
-            TaskCategoryFormUiState.Success(
+            TagFormUiState.Success(
                 name = "",
                 newTasks = persistentListOf(),
                 isEditing = true,
@@ -73,12 +75,12 @@ class TaskCategoryFormViewModelTest {
     }
 
     @Test
-    fun `initializes for edit with categoryId`() = runTest(mainDispatcherRule.testDispatcher) {
-        val category = genTaskCategory()
-        val tasks = genTasks(categoryId = category.id)
-        val viewModel = createTaskCategoryFormViewModelForEdit { db ->
+    fun `initializes for edit with tagId`() = runTest(mainDispatcherRule.testDispatcher) {
+        val tag = genTag()
+        val tasks = genTasks()
+        val viewModel = createTagFormViewModelForEdit { db ->
             tasks.forEach(db::insertTask)
-            db.insertTaskCategory(category, tasks.map(Task::id).toSet())
+            db.insertTag(tag, tasks.map(Task::id).toSet())
         }
 
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
@@ -86,10 +88,12 @@ class TaskCategoryFormViewModelTest {
         }
 
         assertThat(viewModel.isNew).isFalse()
-        assertThat(viewModel.existingTaskPagingData.asSnapshot()).isEqualTo(tasks)
+        assertThat(viewModel.existingTaskPagingData.asSnapshot()).isEqualTo(
+            tasks.map { it.toTaggedTask(isTagged = true) },
+        )
         assertThat(viewModel.uiState.value).isEqualTo(
-            TaskCategoryFormUiState.Success(
-                name = category.name,
+            TagFormUiState.Success(
+                name = tag.name,
                 newTasks = persistentListOf(),
                 isEditing = false,
                 taskOptions = persistentListOf(),
@@ -105,42 +109,58 @@ class TaskCategoryFormViewModelTest {
             val exception = RuntimeException("Test")
             val db = FakeDatabase()
             val taskRepository = FakeTaskRepository(db)
-            val taskCategoryRepository = spyk(FakeTaskCategoryRepository(db))
-            every { taskCategoryRepository.getById(any()) } returns flow {
+            val tagRepository = spyk(FakeTagRepository(db))
+            every { tagRepository.getById(any()) } returns flow {
                 throw exception
             }
 
-            val viewModel =
-                createTaskCategoryFormViewModelForEdit(taskCategoryRepository, taskRepository)
+            val viewModel = createTagFormViewModelForEdit(tagRepository, taskRepository)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
             }
 
-            assertThat(viewModel.uiState.value).isEqualTo(TaskCategoryFormUiState.Pending)
+            assertThat(viewModel.uiState.value).isEqualTo(TagFormUiState.Pending)
 
             advanceUntilIdle()
 
             assertThat(viewModel.isNew).isFalse()
-            assertThat(viewModel.uiState.value).isEqualTo(TaskCategoryFormUiState.Failure(exception))
+            assertThat(viewModel.uiState.value).isEqualTo(TagFormUiState.Failure(exception))
+        }
+
+    @Test
+    fun `uiState emits failure when tag for tag id not found`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val viewModel = createTagFormViewModelForEdit {}
+
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect()
+            }
+
+            assertThat(viewModel.uiState.value).isEqualTo(TagFormUiState.Pending)
+
+            advanceUntilIdle()
+
+            assertThat(viewModel.isNew).isFalse()
+            assertThat(viewModel.uiState.value).isInstanceOf<TagFormUiState.Failure>()
         }
 
     @Test
     fun `uiState emits changed when new form and name changed`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val name = loremFaker.lorem.words()
-            val viewModel = createTaskCategoryFormViewModelFormNew()
+            val viewModel = createTagFormViewModelForNew()
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
             }
 
-            assertThat(viewModel.uiState.value).isEqualTo(TaskCategoryFormUiState.Pending)
+            assertThat(viewModel.uiState.value).isEqualTo(TagFormUiState.Pending)
 
             advanceUntilIdle()
 
             assertThat(viewModel.uiState.value).isEqualTo(
-                TaskCategoryFormUiState.Success(
+                TagFormUiState.Success(
                     name = "",
                     newTasks = persistentListOf(),
                     isEditing = true,
@@ -154,7 +174,7 @@ class TaskCategoryFormViewModelTest {
             advanceUntilIdle()
 
             assertThat(viewModel.uiState.value).isEqualTo(
-                TaskCategoryFormUiState.Success(
+                TagFormUiState.Success(
                     name = name,
                     newTasks = persistentListOf(),
                     isEditing = true,
@@ -169,7 +189,7 @@ class TaskCategoryFormViewModelTest {
     fun `uiState emits changed when new form and tasks added`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val tasks = genTasks()
-            val viewModel = createTaskCategoryFormViewModelFormNew { db ->
+            val viewModel = createTagFormViewModelForNew { db ->
                 tasks.forEach(db::insertTask)
             }
 
@@ -177,12 +197,12 @@ class TaskCategoryFormViewModelTest {
                 viewModel.uiState.collect()
             }
 
-            assertThat(viewModel.uiState.value).isEqualTo(TaskCategoryFormUiState.Pending)
+            assertThat(viewModel.uiState.value).isEqualTo(TagFormUiState.Pending)
 
             advanceUntilIdle()
 
             assertThat(viewModel.uiState.value).isEqualTo(
-                TaskCategoryFormUiState.Success(
+                TagFormUiState.Success(
                     name = "",
                     newTasks = persistentListOf(),
                     isEditing = true,
@@ -192,13 +212,15 @@ class TaskCategoryFormViewModelTest {
                 )
             )
 
-            tasks.forEach(viewModel::addTask)
+            tasks.forEach {
+                viewModel.addTask(it.toTaggedTask(isTagged = false))
+            }
             advanceUntilIdle()
 
             assertThat(viewModel.uiState.value).isEqualTo(
-                TaskCategoryFormUiState.Success(
+                TagFormUiState.Success(
                     name = "",
-                    newTasks = tasks.toImmutableList(),
+                    newTasks = tasks.map { it.toTaggedTask(isTagged = false) }.toImmutableList(),
                     isEditing = false,
                     taskOptions = persistentListOf(),
                     changed = true,
@@ -210,24 +232,24 @@ class TaskCategoryFormViewModelTest {
     @Test
     fun `uiState emits changed when edit form and name changed`() =
         runTest(mainDispatcherRule.testDispatcher) {
-            val category = genTaskCategory()
-            val tasks = genTasks(categoryId = category.id)
-            val viewModel = createTaskCategoryFormViewModelForEdit { db ->
+            val tag = genTag()
+            val tasks = genTasks()
+            val viewModel = createTagFormViewModelForEdit { db ->
                 tasks.forEach(db::insertTask)
-                db.insertTaskCategory(category, tasks.map(Task::id).toSet())
+                db.insertTag(tag, tasks.map(Task::id).toSet())
             }
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
             }
 
-            assertThat(viewModel.uiState.value).isEqualTo(TaskCategoryFormUiState.Pending)
+            assertThat(viewModel.uiState.value).isEqualTo(TagFormUiState.Pending)
 
             advanceUntilIdle()
 
             assertThat(viewModel.uiState.value).isEqualTo(
-                TaskCategoryFormUiState.Success(
-                    name = category.name,
+                TagFormUiState.Success(
+                    name = tag.name,
                     newTasks = persistentListOf(),
                     isEditing = false,
                     taskOptions = persistentListOf(),
@@ -240,7 +262,7 @@ class TaskCategoryFormViewModelTest {
             advanceUntilIdle()
 
             assertThat(viewModel.uiState.value).isEqualTo(
-                TaskCategoryFormUiState.Success(
+                TagFormUiState.Success(
                     name = "",
                     newTasks = persistentListOf(),
                     isEditing = false,
@@ -254,25 +276,25 @@ class TaskCategoryFormViewModelTest {
     @Test
     fun `uiState emits changed when edit form and task added`() =
         runTest(mainDispatcherRule.testDispatcher) {
-            val category = genTaskCategory()
+            val tag = genTag()
             val tasks = genTasks()
-            val newTask = tasks.last()
-            val viewModel = createTaskCategoryFormViewModelForEdit { db ->
+            val newTask = tasks.last().toTaggedTask(isTagged = false)
+            val viewModel = createTagFormViewModelForEdit { db ->
                 tasks.forEach(db::insertTask)
-                db.insertTaskCategory(category, tasks.dropLast(1).map(Task::id).toSet())
+                db.insertTag(tag, tasks.dropLast(1).map(Task::id).toSet())
             }
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
             }
 
-            assertThat(viewModel.uiState.value).isEqualTo(TaskCategoryFormUiState.Pending)
+            assertThat(viewModel.uiState.value).isEqualTo(TagFormUiState.Pending)
 
             advanceUntilIdle()
 
             assertThat(viewModel.uiState.value).isEqualTo(
-                TaskCategoryFormUiState.Success(
-                    name = category.name,
+                TagFormUiState.Success(
+                    name = tag.name,
                     newTasks = persistentListOf(),
                     isEditing = false,
                     taskOptions = persistentListOf(),
@@ -285,8 +307,8 @@ class TaskCategoryFormViewModelTest {
             advanceUntilIdle()
 
             assertThat(viewModel.uiState.value).isEqualTo(
-                TaskCategoryFormUiState.Success(
-                    name = category.name,
+                TagFormUiState.Success(
+                    name = tag.name,
                     newTasks = persistentListOf(newTask),
                     isEditing = false,
                     taskOptions = persistentListOf(),
@@ -299,24 +321,25 @@ class TaskCategoryFormViewModelTest {
     @Test
     fun `uiState emits changed when edit form and task removed`() =
         runTest(mainDispatcherRule.testDispatcher) {
-            val category = genTaskCategory()
-            val tasks = genTasks(categoryId = category.id)
-            val viewModel = createTaskCategoryFormViewModelForEdit { db ->
+            val tag = genTag()
+            val tasks = genTasks()
+            val removedTask = tasks.last().toTaggedTask(isTagged = true)
+            val viewModel = createTagFormViewModelForEdit { db ->
                 tasks.forEach(db::insertTask)
-                db.insertTaskCategory(category, tasks.map(Task::id).toSet())
+                db.insertTag(tag, tasks.map(Task::id).toSet())
             }
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
             }
 
-            assertThat(viewModel.uiState.value).isEqualTo(TaskCategoryFormUiState.Pending)
+            assertThat(viewModel.uiState.value).isEqualTo(TagFormUiState.Pending)
 
             advanceUntilIdle()
 
             assertThat(viewModel.uiState.value).isEqualTo(
-                TaskCategoryFormUiState.Success(
-                    name = category.name,
+                TagFormUiState.Success(
+                    name = tag.name,
                     newTasks = persistentListOf(),
                     isEditing = false,
                     taskOptions = persistentListOf(),
@@ -324,14 +347,16 @@ class TaskCategoryFormViewModelTest {
                     userMessage = null,
                 )
             )
-            assertThat(viewModel.existingTaskPagingData.asSnapshot()).isEqualTo(tasks)
+            assertThat(viewModel.existingTaskPagingData.asSnapshot()).isEqualTo(
+                tasks.map { it.toTaggedTask(isTagged = true) },
+            )
 
-            viewModel.removeTask(tasks.last())
+            viewModel.removeTask(removedTask)
             advanceUntilIdle()
 
             assertThat(viewModel.uiState.value).isEqualTo(
-                TaskCategoryFormUiState.Success(
-                    name = category.name,
+                TagFormUiState.Success(
+                    name = tag.name,
                     newTasks = persistentListOf(),
                     isEditing = false,
                     taskOptions = persistentListOf(),
@@ -339,41 +364,105 @@ class TaskCategoryFormViewModelTest {
                     userMessage = null,
                 )
             )
-            assertThat(viewModel.existingTaskPagingData.asSnapshot()).isEqualTo(tasks.dropLast(1))
+            assertThat(viewModel.existingTaskPagingData.asSnapshot()).isEqualTo(
+                tasks.dropLast(1).map { it.toTaggedTask(isTagged = true) },
+            )
         }
 
     @Test
     fun `searchTasks sets task options`() = runTest(mainDispatcherRule.testDispatcher) {
         val query = loremFaker.verbs.base()
-        val tasks = List(faker.random.nextInt(bound = 5)) {
+        val tasks = List(3) {
             Task(
                 id = it + 1L,
                 createdAt = faker.random.randomPastDate().toInstant(),
                 name = "$query ${loremFaker.lorem.words()}",
             )
         }
-        val viewModel = createTaskCategoryFormViewModelFormNew { db ->
+        val tag = genTag()
+        val viewModel = createTagFormViewModelForEdit { db ->
             tasks.forEach(db::insertTask)
+            db.insertTag(tag, setOf(tasks[0].id))
         }
 
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect()
         }
 
-        assertThat(viewModel.uiState.value).isEqualTo(TaskCategoryFormUiState.Pending)
+        assertThat(viewModel.uiState.value).isEqualTo(TagFormUiState.Pending)
 
         advanceUntilIdle()
-
         viewModel.searchTasks(query)
         advanceUntilIdle()
 
         assertThat(viewModel.uiState.value).isEqualTo(
-            TaskCategoryFormUiState.Success(
-                name = "",
+            TagFormUiState.Success(
+                name = tag.name,
                 newTasks = persistentListOf(),
-                isEditing = true,
-                taskOptions = tasks.toImmutableList(),
+                isEditing = false,
+                taskOptions = persistentListOf(
+                    tasks[1].toTaggedTask(isTagged = false),
+                    tasks[2].toTaggedTask(isTagged = false),
+                ),
                 changed = false,
+                userMessage = null,
+            )
+        )
+
+        viewModel.removeTask(tasks[0].toTaggedTask(isTagged = true))
+        advanceUntilIdle()
+        viewModel.searchTasks(query)
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value).isEqualTo(
+            TagFormUiState.Success(
+                name = tag.name,
+                newTasks = persistentListOf(),
+                isEditing = false,
+                taskOptions = persistentListOf(
+                    tasks[0].toTaggedTask(isTagged = true),
+                    tasks[1].toTaggedTask(isTagged = false),
+                    tasks[2].toTaggedTask(isTagged = false),
+                ),
+                changed = true,
+                userMessage = null,
+            )
+        )
+
+        viewModel.addTask(tasks[1].toTaggedTask(isTagged = false))
+        advanceUntilIdle()
+        viewModel.searchTasks(query)
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value).isEqualTo(
+            TagFormUiState.Success(
+                name = tag.name,
+                newTasks = persistentListOf(tasks[1].toTaggedTask(isTagged = false)),
+                isEditing = false,
+                taskOptions = persistentListOf(
+                    tasks[0].toTaggedTask(isTagged = true),
+                    tasks[2].toTaggedTask(isTagged = false),
+                ),
+                changed = true,
+                userMessage = null,
+            )
+        )
+
+        viewModel.addTask(tasks[0].toTaggedTask(isTagged = true))
+        advanceUntilIdle()
+        viewModel.searchTasks(query)
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value).isEqualTo(
+            TagFormUiState.Success(
+                name = tag.name,
+                newTasks = persistentListOf(
+                    tasks[1].toTaggedTask(isTagged = false),
+                    tasks[0].toTaggedTask(isTagged = true),
+                ),
+                isEditing = false,
+                taskOptions = persistentListOf(tasks[2].toTaggedTask(isTagged = false)),
+                changed = true,
                 userMessage = null,
             )
         )
@@ -385,25 +474,25 @@ class TaskCategoryFormViewModelTest {
             val query = loremFaker.verbs.base()
             val db = FakeDatabase()
             val taskRepository = spyk(FakeTaskRepository(db))
-            every { taskRepository.search(any()) } returns flow { throw RuntimeException("Test") }
+            every { taskRepository.searchTaggedTasks(any(), any(), any()) } returns flow {
+                throw RuntimeException("Test")
+            }
 
-            val taskCategoryRepository = FakeTaskCategoryRepository(db)
-            val viewModel =
-                createTaskCategoryFormViewModelForNew(taskCategoryRepository, taskRepository)
+            val tagRepository = FakeTagRepository(db)
+            val viewModel = createTagFormViewModelForNew(tagRepository, taskRepository)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
             }
 
-            assertThat(viewModel.uiState.value).isEqualTo(TaskCategoryFormUiState.Pending)
+            assertThat(viewModel.uiState.value).isEqualTo(TagFormUiState.Pending)
 
             advanceUntilIdle()
-
             viewModel.searchTasks(query)
             advanceUntilIdle()
 
             assertThat(viewModel.uiState.value).isEqualTo(
-                TaskCategoryFormUiState.Success(
+                TagFormUiState.Success(
                     name = "",
                     newTasks = persistentListOf(),
                     isEditing = true,
@@ -415,189 +504,201 @@ class TaskCategoryFormViewModelTest {
         }
 
     @Test
-    fun `saveCategory creates task category without categoryId`() =
-        runTest(mainDispatcherRule.testDispatcher) {
-            val name = loremFaker.lorem.words()
-            val tasks = genTasks()
-            val db = FakeDatabase().apply {
-                tasks.forEach(::insertTask)
-            }
-            val taskRepository = FakeTaskRepository(db)
-            val taskCategoryRepository = FakeTaskCategoryRepository(db)
-            val viewModel =
-                createTaskCategoryFormViewModelForNew(taskCategoryRepository, taskRepository)
+    fun `saveTag creates tag without tagId`() = runTest(mainDispatcherRule.testDispatcher) {
+        val name = loremFaker.lorem.words()
+        val tasks = genTasks()
+        val db = FakeDatabase().apply {
+            tasks.forEach(::insertTask)
+        }
+        val taskRepository = FakeTaskRepository(db)
+        val tagRepository = FakeTagRepository(db)
+        val viewModel = createTagFormViewModelForNew(tagRepository, taskRepository)
 
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-                viewModel.uiState.collect()
-            }
-
-            assertThat(viewModel.uiState.value).isEqualTo(TaskCategoryFormUiState.Pending)
-
-            advanceUntilIdle()
-
-            assertThat(viewModel.uiState.value).isEqualTo(
-                TaskCategoryFormUiState.Success(
-                    name = "",
-                    newTasks = persistentListOf(),
-                    isEditing = true,
-                    taskOptions = persistentListOf(),
-                    changed = false,
-                    userMessage = null,
-                )
-            )
-
-            viewModel.updateName(name)
-            tasks.forEach(viewModel::addTask)
-            advanceUntilIdle()
-            viewModel.saveCategory()
-            advanceUntilIdle()
-
-            assertThat(viewModel.uiState.value).isEqualTo(TaskCategoryFormUiState.Saved)
-
-            val category = taskCategoryRepository.taskCategories.single()
-            assertThat(category.name).isEqualTo(name)
-            assertThat(taskRepository.getTasksByCategoryId(category.id).asSnapshot()).isEqualTo(
-                tasks.map { it.copy(categoryId = category.id) })
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiState.collect()
         }
 
+        assertThat(viewModel.uiState.value).isEqualTo(TagFormUiState.Pending)
+
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value).isEqualTo(
+            TagFormUiState.Success(
+                name = "",
+                newTasks = persistentListOf(),
+                isEditing = true,
+                taskOptions = persistentListOf(),
+                changed = false,
+                userMessage = null,
+            )
+        )
+
+        viewModel.updateName(name)
+        tasks.forEach {
+            viewModel.addTask(it.toTaggedTask(isTagged = false))
+        }
+        advanceUntilIdle()
+        viewModel.saveTag()
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value).isEqualTo(TagFormUiState.Saved)
+
+        val tag = tagRepository.tags.single()
+        assertThat(tag.name).isEqualTo(name)
+        assertThat(
+            taskRepository.getTaggedTasksByTagId(tag.id).asSnapshot()
+        ).isEqualTo(tasks.map { it.toTaggedTask(isTagged = true) })
+    }
+
     @Test
-    fun `saveCategory shows error message when create throws`() =
+    fun `saveTag shows error message when create throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val name = loremFaker.lorem.words()
             val db = FakeDatabase()
             val taskRepository = FakeTaskRepository(db)
-            val taskCategoryRepository = spyk(FakeTaskCategoryRepository(db))
-            coEvery { taskCategoryRepository.create(any()) } throws RuntimeException("Test")
+            val tagRepository = spyk(FakeTagRepository(db))
+            coEvery { tagRepository.create(any()) } throws RuntimeException("Test")
 
-            val viewModel =
-                createTaskCategoryFormViewModelForNew(taskCategoryRepository, taskRepository)
+            val viewModel = createTagFormViewModelForNew(tagRepository, taskRepository)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
             }
 
-            assertThat(viewModel.uiState.value).isEqualTo(TaskCategoryFormUiState.Pending)
+            assertThat(viewModel.uiState.value).isEqualTo(TagFormUiState.Pending)
 
             advanceUntilIdle()
-
             viewModel.updateName(name)
             advanceUntilIdle()
-            viewModel.saveCategory()
+            viewModel.saveTag()
             advanceUntilIdle()
 
             assertThat(viewModel.uiState.value).isEqualTo(
-                TaskCategoryFormUiState.Success(
+                TagFormUiState.Success(
                     name = name,
                     newTasks = persistentListOf(),
                     isEditing = true,
                     taskOptions = persistentListOf(),
                     changed = true,
-                    userMessage = UserMessage.String(R.string.task_category_form_save_error_new),
+                    userMessage = UserMessage.String(R.string.tag_form_save_error_new),
                 )
             )
         }
 
     @Test
-    fun `saveCategory updates task category with categoryId`() =
-        runTest(mainDispatcherRule.testDispatcher) {
-            val name = loremFaker.lorem.words()
-            val category = genTaskCategory()
-            val tasks = genTasks(categoryId = category.id)
-            val db = FakeDatabase().apply {
-                tasks.forEach(::insertTask)
-                insertTaskCategory(category, tasks.map(Task::id).toSet())
-            }
-            val taskRepository = FakeTaskRepository(db)
-            val taskCategoryRepository = FakeTaskCategoryRepository(db)
-            val viewModel =
-                createTaskCategoryFormViewModelForEdit(taskCategoryRepository, taskRepository)
+    fun `saveTag updates tag with tagId`() = runTest(mainDispatcherRule.testDispatcher) {
+        val name = loremFaker.lorem.words()
+        val tag = genTag()
+        val tasks = genTasks()
+        val db = FakeDatabase().apply {
+            tasks.forEach(::insertTask)
+            insertTag(tag, tasks.map(Task::id).toSet())
+        }
+        val taskRepository = FakeTaskRepository(db)
+        val tagRepository = FakeTagRepository(db)
+        val viewModel = createTagFormViewModelForEdit(tagRepository, taskRepository)
 
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-                viewModel.uiState.collect()
-            }
-
-            assertThat(viewModel.existingTaskPagingData.asSnapshot()).isEqualTo(tasks)
-            assertThat(viewModel.uiState.value).isEqualTo(
-                TaskCategoryFormUiState.Success(
-                    name = category.name,
-                    newTasks = persistentListOf(),
-                    isEditing = false,
-                    taskOptions = persistentListOf(),
-                    changed = false,
-                    userMessage = null,
-                )
-            )
-
-            viewModel.updateName(name)
-            advanceUntilIdle()
-            viewModel.saveCategory()
-            advanceUntilIdle()
-
-            val updatedCategory = taskCategoryRepository.getById(category.id).first()
-            val updatedTasks = taskRepository.getTasksByCategoryId(category.id).asSnapshot()
-            assertThat(viewModel.uiState.value).isEqualTo(TaskCategoryFormUiState.Saved)
-            assertThat(updatedCategory).isEqualTo(category.copy(name = name))
-            assertThat(updatedTasks).isEqualTo(tasks)
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiState.collect()
         }
 
+        assertThat(viewModel.existingTaskPagingData.asSnapshot()).isEqualTo(
+            tasks.map { it.toTaggedTask(isTagged = true) },
+        )
+        assertThat(viewModel.uiState.value).isEqualTo(
+            TagFormUiState.Success(
+                name = tag.name,
+                newTasks = persistentListOf(),
+                isEditing = false,
+                taskOptions = persistentListOf(),
+                changed = false,
+                userMessage = null,
+            )
+        )
+
+        viewModel.updateName(name)
+        advanceUntilIdle()
+        viewModel.saveTag()
+        advanceUntilIdle()
+
+        val updatedTag = tagRepository.getById(tag.id).first()
+        val updatedTasks = taskRepository.getTaggedTasksByTagId(tag.id).asSnapshot()
+        assertThat(viewModel.uiState.value).isEqualTo(TagFormUiState.Saved)
+        assertThat(updatedTag).isEqualTo(tag.copy(name = name))
+        assertThat(updatedTasks).isEqualTo(tasks.map { it.toTaggedTask(isTagged = true) })
+    }
+
     @Test
-    fun `saveCategory shows error message with update throws`() =
+    fun `saveTag shows error message with update throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val name = loremFaker.lorem.words()
-            val category = genTaskCategory()
-            val tasks = genTasks(categoryId = category.id)
+            val tag = genTag()
+            val tasks = genTasks()
             val db = FakeDatabase().apply {
                 tasks.forEach(::insertTask)
-                insertTaskCategory(category, tasks.map(Task::id).toSet())
+                insertTag(tag, tasks.map(Task::id).toSet())
             }
             val taskRepository = FakeTaskRepository(db)
-            val taskCategoryRepository = spyk(FakeTaskCategoryRepository(db))
-            coEvery { taskCategoryRepository.update(any()) } throws RuntimeException("Test")
+            val tagRepository = spyk(FakeTagRepository(db))
+            coEvery { tagRepository.update(any()) } throws RuntimeException("Test")
 
-            val viewModel =
-                createTaskCategoryFormViewModelForEdit(taskCategoryRepository, taskRepository)
+            val viewModel = createTagFormViewModelForEdit(tagRepository, taskRepository)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
             }
 
-            assertThat(viewModel.uiState.value).isEqualTo(TaskCategoryFormUiState.Pending)
+            assertThat(viewModel.uiState.value).isEqualTo(TagFormUiState.Pending)
 
             advanceUntilIdle()
-
             viewModel.updateName(name)
-            viewModel.saveCategory()
             advanceUntilIdle()
 
             assertThat(viewModel.uiState.value).isEqualTo(
-                TaskCategoryFormUiState.Success(
+                TagFormUiState.Success(
                     name = name,
                     newTasks = persistentListOf(),
                     isEditing = false,
                     taskOptions = persistentListOf(),
                     changed = true,
-                    userMessage = UserMessage.String(R.string.task_category_form_save_error_edit),
+                    userMessage = null,
+                )
+            )
+
+            viewModel.saveTag()
+            advanceUntilIdle()
+
+            assertThat(viewModel.uiState.value).isEqualTo(
+                TagFormUiState.Success(
+                    name = name,
+                    newTasks = persistentListOf(),
+                    isEditing = false,
+                    taskOptions = persistentListOf(),
+                    changed = true,
+                    userMessage = UserMessage.String(R.string.tag_form_save_error_edit),
                 )
             )
         }
 
-    private fun genTaskCategory() = TaskCategory(id = 1L, name = loremFaker.lorem.words())
+    private fun genTag() = Tag(id = 1L, name = loremFaker.lorem.words())
 
-    private fun genTasks(categoryId: Long? = null) = List(3) {
+    private fun genTasks() = List(3) {
         Task(
             id = it + 1L,
             createdAt = faker.random.randomPastDate().toInstant(),
             name = "${it + 1}. ${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-            categoryId = categoryId,
         )
     }
+
+    private fun Task.toTaggedTask(isTagged: Boolean) =
+        TaggedTask(id = id, name = name, isTagged = isTagged)
 
     private fun createSavedStateHandleForNew(): SavedStateHandle {
         mockkStatic("androidx.navigation.SavedStateHandleKt")
         val savedStateHandle = mockk<SavedStateHandle>()
         every {
-            savedStateHandle.toRoute<TaskCategoryFormRoute>()
-        } returns TaskCategoryFormRoute.new(name = null)
+            savedStateHandle.toRoute<TagFormRoute>()
+        } returns TagFormRoute.new(name = null)
         return savedStateHandle
     }
 
@@ -605,46 +706,46 @@ class TaskCategoryFormViewModelTest {
         mockkStatic("androidx.navigation.SavedStateHandleKt")
         val savedStateHandle = mockk<SavedStateHandle>()
         every {
-            savedStateHandle.toRoute<TaskCategoryFormRoute>()
-        } returns TaskCategoryFormRoute.edit(id = 1L)
+            savedStateHandle.toRoute<TagFormRoute>()
+        } returns TagFormRoute.edit(id = 1L)
         return savedStateHandle
     }
 
-    private fun createTaskCategoryFormViewModelFormNew(
+    private fun createTagFormViewModelForNew(
         initDatabase: (FakeDatabase) -> Unit = {}
-    ): TaskCategoryFormViewModel {
+    ): TagFormViewModel {
         val db = FakeDatabase().also(initDatabase)
-        return createTaskCategoryFormViewModelForNew(
-            FakeTaskCategoryRepository(db),
+        return createTagFormViewModelForNew(
+            FakeTagRepository(db),
             FakeTaskRepository(db),
         )
     }
 
-    private fun createTaskCategoryFormViewModelForNew(
-        taskCategoryRepository: TaskCategoryRepository,
+    private fun createTagFormViewModelForNew(
+        tagRepository: TagRepository,
         taskRepository: TaskRepository,
-    ) = TaskCategoryFormViewModel(
+    ) = TagFormViewModel(
         createSavedStateHandleForNew(),
-        taskCategoryRepository,
+        tagRepository,
         taskRepository,
     )
 
-    private fun createTaskCategoryFormViewModelForEdit(
+    private fun createTagFormViewModelForEdit(
         initDatabase: (FakeDatabase) -> Unit
-    ): TaskCategoryFormViewModel {
+    ): TagFormViewModel {
         val db = FakeDatabase().also(initDatabase)
-        return createTaskCategoryFormViewModelForEdit(
-            FakeTaskCategoryRepository(db),
+        return createTagFormViewModelForEdit(
+            FakeTagRepository(db),
             FakeTaskRepository(db),
         )
     }
 
-    private fun createTaskCategoryFormViewModelForEdit(
-        taskCategoryRepository: TaskCategoryRepository,
+    private fun createTagFormViewModelForEdit(
+        tagRepository: TagRepository,
         taskRepository: TaskRepository,
-    ) = TaskCategoryFormViewModel(
+    ) = TagFormViewModel(
         createSavedStateHandleForEdit(),
-        taskCategoryRepository,
+        tagRepository,
         taskRepository,
     )
 }

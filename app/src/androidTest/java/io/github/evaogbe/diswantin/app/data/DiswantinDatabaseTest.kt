@@ -41,17 +41,16 @@ class DiswantinDatabaseTest {
         val initialDb = migrationTestHelper.createDatabase(DiswantinDatabase.DB_NAME, 1)
         initialDb.execSQL(
             "INSERT INTO Activity (id, created_at, name) VALUES (?, ?, ?)",
-            arrayOf(initialId, initialCreatedAt, initialName)
+            arrayOf<Any?>(initialId, initialCreatedAt, initialName)
         )
         initialDb.close()
 
-        val migratedDb =
-            migrationTestHelper.runMigrationsAndValidate(
-                DiswantinDatabase.DB_NAME,
-                2,
-                true,
-                DiswantinDatabase.MIGRATION_1_2
-            )
+        val migratedDb = migrationTestHelper.runMigrationsAndValidate(
+            DiswantinDatabase.DB_NAME,
+            2,
+            true,
+            DiswantinDatabase.MIGRATION_1_2,
+        )
         migratedDb.query("SELECT * FROM activity").use { stmt ->
             assertThat(stmt.moveToFirst()).isTrue()
             assertThat(stmt.getLong(0)).isPositive()
@@ -75,17 +74,16 @@ class DiswantinDatabaseTest {
         val initialDb = migrationTestHelper.createDatabase(DiswantinDatabase.DB_NAME, 5)
         initialDb.execSQL(
             "INSERT INTO activity (id, created_at, name, due_at) VALUES (?, ?, ?, ?)",
-            arrayOf(initialId, initialCreatedAt, initialName, initialDueAt)
+            arrayOf<Any?>(initialId, initialCreatedAt, initialName, initialDueAt)
         )
         initialDb.close()
 
-        val migratedDb =
-            migrationTestHelper.runMigrationsAndValidate(
-                DiswantinDatabase.DB_NAME,
-                6,
-                true,
-                DiswantinDatabase.MIGRATION_5_6
-            )
+        val migratedDb = migrationTestHelper.runMigrationsAndValidate(
+            DiswantinDatabase.DB_NAME,
+            6,
+            true,
+            DiswantinDatabase.MIGRATION_5_6,
+        )
         migratedDb.query("SELECT * FROM activity").use { stmt ->
             assertThat(stmt.moveToFirst()).isTrue()
             assertThat(stmt.getLong(0)).isEqualTo(initialId)
@@ -106,17 +104,16 @@ class DiswantinDatabaseTest {
         val initialDb = migrationTestHelper.createDatabase(DiswantinDatabase.DB_NAME, 6)
         initialDb.execSQL(
             "INSERT INTO activity (id, created_at, name) VALUES (?, ?, ?)",
-            arrayOf(activityId, activityCreatedAt, activityName)
+            arrayOf<Any?>(activityId, activityCreatedAt, activityName)
         )
         initialDb.close()
 
-        val migratedDb =
-            migrationTestHelper.runMigrationsAndValidate(
-                DiswantinDatabase.DB_NAME,
-                7,
-                true,
-                DiswantinDatabase.MIGRATION_6_7
-            )
+        val migratedDb = migrationTestHelper.runMigrationsAndValidate(
+            DiswantinDatabase.DB_NAME,
+            7,
+            true,
+            DiswantinDatabase.MIGRATION_6_7,
+        )
         migratedDb.query("SELECT * FROM activity_path").use { stmt ->
             assertThat(stmt.moveToFirst()).isTrue()
             assertThat(stmt.getLong(0)).isPositive()
@@ -130,19 +127,18 @@ class DiswantinDatabaseTest {
     @Test
     fun testMigration_11_12() {
         val taskValues = List(6) {
-            arrayOf(
+            arrayOf<Any?>(
                 it + 1L,
                 faker.random.randomPastDate().toInstant().toEpochMilli(),
                 "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
             )
         }
-        val taskPathValues = taskValues.map { arrayOf(it[0], it[0], 0) } +
-                listOf(
-                    arrayOf(taskValues[0][0], taskValues[1][0], 1),
-                    arrayOf(taskValues[0][0], taskValues[2][0], 2),
-                    arrayOf(taskValues[1][0], taskValues[2][0], 1),
-                    arrayOf(taskValues[3][0], taskValues[4][0], 1),
-                )
+        val taskPathValues = taskValues.map { arrayOf(it[0], it[0], 0) } + listOf(
+            arrayOf(taskValues[0][0], taskValues[1][0], 1),
+            arrayOf(taskValues[0][0], taskValues[2][0], 2),
+            arrayOf(taskValues[1][0], taskValues[2][0], 1),
+            arrayOf(taskValues[3][0], taskValues[4][0], 1),
+        )
 
         val initialDb = migrationTestHelper.createDatabase(DiswantinDatabase.DB_NAME, 11)
         taskValues.forEach {
@@ -156,13 +152,12 @@ class DiswantinDatabaseTest {
         }
         initialDb.close()
 
-        val migratedDb =
-            migrationTestHelper.runMigrationsAndValidate(
-                DiswantinDatabase.DB_NAME,
-                12,
-                true,
-                DiswantinDatabase.MIGRATION_11_12,
-            )
+        val migratedDb = migrationTestHelper.runMigrationsAndValidate(
+            DiswantinDatabase.DB_NAME,
+            12,
+            true,
+            DiswantinDatabase.MIGRATION_11_12,
+        )
         migratedDb.query("SELECT COUNT(*) FROM `task_list`").use { stmt ->
             assertThat(stmt.moveToFirst()).isTrue()
             assertThat(stmt.getLong(0)).isEqualTo(2)
@@ -206,13 +201,13 @@ class DiswantinDatabaseTest {
 
     @Test
     fun testMigration_14_15() {
-        val taskValues1 = arrayOf(
+        val taskValues1 = arrayOf<Any?>(
             1L,
             faker.random.randomPastDate().toInstant().toEpochMilli(),
             "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
             faker.random.randomPastDate().toInstant().toEpochMilli()
         )
-        val taskValues2 = arrayOf(
+        val taskValues2 = arrayOf<Any?>(
             2L,
             faker.random.randomPastDate().toInstant().toEpochMilli(),
             "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
@@ -226,13 +221,12 @@ class DiswantinDatabaseTest {
         initialDb.execSQL("INSERT INTO `task` (id, created_at, name) VALUES (?, ?, ?)", taskValues2)
         initialDb.close()
 
-        val migratedDb =
-            migrationTestHelper.runMigrationsAndValidate(
-                DiswantinDatabase.DB_NAME,
-                15,
-                true,
-                DiswantinDatabase.MIGRATION_14_15,
-            )
+        val migratedDb = migrationTestHelper.runMigrationsAndValidate(
+            DiswantinDatabase.DB_NAME,
+            15,
+            true,
+            DiswantinDatabase.MIGRATION_14_15,
+        )
         migratedDb.query("SELECT * FROM task_completion").use { stmt ->
             assertThat(stmt.moveToFirst()).isTrue()
             assertThat(stmt.getLong(0)).isPositive()
@@ -245,13 +239,13 @@ class DiswantinDatabaseTest {
 
     @Test
     fun testMigration17to18() {
-        val taskValues1 = arrayOf(
+        val taskValues1 = arrayOf<Any?>(
             1L,
             faker.random.randomPastDate().toInstant().toEpochMilli(),
             "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
             Instant.parse("2024-08-23T17:00:00Z").toEpochMilli(),
         )
-        val taskValues2 = arrayOf(
+        val taskValues2 = arrayOf<Any?>(
             2L,
             faker.random.randomPastDate().toInstant().toEpochMilli(),
             "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
@@ -269,13 +263,12 @@ class DiswantinDatabaseTest {
         )
         initialDb.close()
 
-        val migratedDb =
-            migrationTestHelper.runMigrationsAndValidate(
-                DiswantinDatabase.DB_NAME,
-                18,
-                true,
-                DiswantinDatabase.getMigration17to18(ZoneId.of("America/New_York")),
-            )
+        val migratedDb = migrationTestHelper.runMigrationsAndValidate(
+            DiswantinDatabase.DB_NAME,
+            18,
+            true,
+            DiswantinDatabase.getMigration17to18(ZoneId.of("America/New_York")),
+        )
         migratedDb.query(
             "SELECT `id`, `created_at`, `name`, `deadline_date`, `deadline_time` FROM `task`",
         ).use { stmt ->
@@ -298,13 +291,13 @@ class DiswantinDatabaseTest {
 
     @Test
     fun testMigration20to21() {
-        val taskValues1 = arrayOf(
+        val taskValues1 = arrayOf<Any?>(
             1L,
             faker.random.randomPastDate().toInstant().toEpochMilli(),
             "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
             Instant.parse("2024-08-23T17:00:00Z").toEpochMilli(),
         )
-        val taskValues2 = arrayOf(
+        val taskValues2 = arrayOf<Any?>(
             2L,
             faker.random.randomPastDate().toInstant().toEpochMilli(),
             "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
@@ -322,13 +315,12 @@ class DiswantinDatabaseTest {
         )
         initialDb.close()
 
-        val migratedDb =
-            migrationTestHelper.runMigrationsAndValidate(
-                DiswantinDatabase.DB_NAME,
-                21,
-                true,
-                DiswantinDatabase.getMigration20to21(ZoneId.of("America/New_York")),
-            )
+        val migratedDb = migrationTestHelper.runMigrationsAndValidate(
+            DiswantinDatabase.DB_NAME,
+            21,
+            true,
+            DiswantinDatabase.getMigration20to21(ZoneId.of("America/New_York")),
+        )
         migratedDb.query(
             "SELECT `id`, `created_at`, `name`, `scheduled_date`, `scheduled_time` FROM `task`",
         ).use { stmt ->
@@ -358,17 +350,16 @@ class DiswantinDatabaseTest {
         val initialDb = migrationTestHelper.createDatabase(DiswantinDatabase.DB_NAME, 22)
         initialDb.execSQL(
             "INSERT INTO `task` (`id`, `created_at`, `name`, `recurring`) VALUES (?, ?, ?, ?)",
-            arrayOf(taskId, taskCreatedAt, taskName, true)
+            arrayOf<Any?>(taskId, taskCreatedAt, taskName, true)
         )
         initialDb.close()
 
-        val migratedDb =
-            migrationTestHelper.runMigrationsAndValidate(
-                DiswantinDatabase.DB_NAME,
-                23,
-                true,
-                DiswantinDatabase.getMigration22To23(LocalDate.parse("2024-09-13"), Locale.US),
-            )
+        val migratedDb = migrationTestHelper.runMigrationsAndValidate(
+            DiswantinDatabase.DB_NAME,
+            23,
+            true,
+            DiswantinDatabase.getMigration22To23(LocalDate.parse("2024-09-13"), Locale.US),
+        )
         migratedDb.query("SELECT * FROM `task_recurrence`").use { stmt ->
             assertThat(stmt.moveToFirst()).isTrue()
             assertThat(stmt.getLong(0)).isPositive()
@@ -389,13 +380,12 @@ class DiswantinDatabaseTest {
         initialDb.execSQL("INSERT INTO `task_category` (`name`) VALUES (?)", arrayOf(categoryName))
         initialDb.close()
 
-        val migratedDb =
-            migrationTestHelper.runMigrationsAndValidate(
-                DiswantinDatabase.DB_NAME,
-                27,
-                true,
-                DiswantinDatabase.MIGRATION_26_27,
-            )
+        val migratedDb = migrationTestHelper.runMigrationsAndValidate(
+            DiswantinDatabase.DB_NAME,
+            27,
+            true,
+            DiswantinDatabase.MIGRATION_26_27,
+        )
         migratedDb.query("SELECT * FROM `task_category_fts`").use { stmt ->
             assertThat(stmt.moveToFirst()).isTrue()
             assertThat(stmt.getString(0)).isEqualTo(categoryName)
@@ -411,18 +401,64 @@ class DiswantinDatabaseTest {
         initialDb.execSQL("INSERT INTO `task_category` (`name`) VALUES (?)", arrayOf(categoryName))
         initialDb.close()
 
-        val migratedDb =
-            migrationTestHelper.runMigrationsAndValidate(
-                DiswantinDatabase.DB_NAME,
-                28,
-                true,
-                DiswantinDatabase.MIGRATION_26_27,
-                DiswantinDatabase.MIGRATION_27_28,
-            )
+        val migratedDb = migrationTestHelper.runMigrationsAndValidate(
+            DiswantinDatabase.DB_NAME,
+            28,
+            true,
+            DiswantinDatabase.MIGRATION_26_27,
+            DiswantinDatabase.MIGRATION_27_28,
+        )
         migratedDb.query("SELECT * FROM `task_category_fts`").use { stmt ->
             assertThat(stmt.moveToFirst()).isTrue()
             assertThat(stmt.getString(0)).isEqualTo(categoryName)
         }
         migratedDb.close()
+    }
+
+    @Test
+    fun testMigration_32_33() {
+        val tagId = faker.random.nextLong(min = 1, max = Long.MAX_VALUE)
+        val tagName = loremFaker.lorem.words()
+
+        val taskWithTagValues = arrayOf<Any?>(
+            faker.random.nextLong(min = 1, max = Long.MAX_VALUE),
+            faker.random.randomPastDate().toInstant().toEpochMilli(),
+            "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+            tagId,
+        )
+        val taskWithoutTagValues = arrayOf<Any?>(
+            faker.random.nextLong(min = 1, max = Long.MAX_VALUE),
+            faker.random.randomPastDate().toInstant().toEpochMilli(),
+            "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+        )
+
+        migrationTestHelper.createDatabase(DiswantinDatabase.DB_NAME, 32).use { db ->
+            db.execSQL(
+                "INSERT INTO `tag` (`id`, `name`) VALUES (?, ?)", arrayOf<Any?>(tagId, tagName)
+            )
+            db.execSQL(
+                "INSERT INTO `task` (`id`, `created_at`, `name`) VALUES (?, ?, ?)",
+                taskWithoutTagValues
+            )
+            db.execSQL(
+                "INSERT INTO `task` (`id`, `created_at`, `name`, `category_id`) VALUES (?, ?, ?, ?)",
+                taskWithTagValues
+            )
+        }
+
+        migrationTestHelper.runMigrationsAndValidate(
+            DiswantinDatabase.DB_NAME,
+            33,
+            true,
+            DiswantinDatabase.MIGRATION_32_33,
+        ).use { db ->
+            db.query("SELECT * FROM `task_tag`").use { stmt ->
+                assertThat(stmt.moveToFirst()).isTrue()
+                assertThat(stmt.getLong(0)).isPositive()
+                assertThat(stmt.getLong(1)).isEqualTo(taskWithTagValues[0])
+                assertThat(stmt.getLong(2)).isEqualTo(tagId)
+                assertThat(stmt.moveToNext()).isFalse()
+            }
+        }
     }
 }

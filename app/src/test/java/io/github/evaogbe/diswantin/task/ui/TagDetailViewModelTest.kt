@@ -9,10 +9,10 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isInstanceOf
 import assertk.assertions.prop
 import io.github.evaogbe.diswantin.R
+import io.github.evaogbe.diswantin.task.data.Tag
 import io.github.evaogbe.diswantin.task.data.Task
-import io.github.evaogbe.diswantin.task.data.TaskCategory
 import io.github.evaogbe.diswantin.testing.FakeDatabase
-import io.github.evaogbe.diswantin.testing.FakeTaskCategoryRepository
+import io.github.evaogbe.diswantin.testing.FakeTagRepository
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.MainDispatcherRule
 import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
@@ -36,7 +36,7 @@ import org.junit.Test
 import java.time.Clock
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class TaskCategoryDetailViewModelTest {
+class TagDetailViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule(StandardTestDispatcher())
 
@@ -45,47 +45,47 @@ class TaskCategoryDetailViewModelTest {
     private val faker = Faker()
 
     @Test
-    fun `uiState fetches task category by id`() = runTest(mainDispatcherRule.testDispatcher) {
-        val category = genTaskCategory()
+    fun `uiState fetches tag by id`() = runTest(mainDispatcherRule.testDispatcher) {
+        val tag = genTag()
         val tasks = genTasks()
-        val viewModel = createTaskCategoryDetailViewModel { db ->
+        val viewModel = createTagDetailViewModel { db ->
             tasks.forEach(db::insertTask)
-            db.insertTaskCategory(taskCategory = category, taskIds = tasks.map { it.id }.toSet())
+            db.insertTag(tag = tag, taskIds = tasks.map { it.id }.toSet())
         }
 
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect()
         }
 
-        assertThat(viewModel.uiState.value).isEqualTo(TaskCategoryDetailUiState.Pending)
+        assertThat(viewModel.uiState.value).isEqualTo(TagDetailUiState.Pending)
 
         advanceUntilIdle()
 
-        val taskItems = tasks.map { it.toTaskItemUiState() }
+        val taskSummaries = tasks.map { it.toTaskSummaryUiState() }
         assertThat(viewModel.uiState.value).isEqualTo(
-            TaskCategoryDetailUiState.Success(
-                category = category,
+            TagDetailUiState.Success(
+                tag = tag,
                 userMessage = null,
             )
         )
-        assertThat(viewModel.taskItemPagingData.asSnapshot()).isEqualTo(taskItems)
+        assertThat(viewModel.taskSummaryPagingData.asSnapshot()).isEqualTo(taskSummaries)
     }
 
     @Test
-    fun `uiState emits failure when task category not found`() =
+    fun `uiState emits failure when tag not found`() =
         runTest(mainDispatcherRule.testDispatcher) {
-            val viewModel = createTaskCategoryDetailViewModel {}
+            val viewModel = createTagDetailViewModel {}
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
             }
 
-            assertThat(viewModel.uiState.value).isEqualTo(TaskCategoryDetailUiState.Pending)
+            assertThat(viewModel.uiState.value).isEqualTo(TagDetailUiState.Pending)
 
             advanceUntilIdle()
 
-            assertThat(viewModel.uiState.value).isInstanceOf<TaskCategoryDetailUiState.Failure>()
-                .prop(TaskCategoryDetailUiState.Failure::exception)
+            assertThat(viewModel.uiState.value).isInstanceOf<TagDetailUiState.Failure>()
+                .prop(TagDetailUiState.Failure::exception)
                 .isInstanceOf<NullPointerException>()
         }
 
@@ -93,22 +93,22 @@ class TaskCategoryDetailViewModelTest {
     fun `uiState emits failure when repository throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val exception = RuntimeException("Test")
-            val category = genTaskCategory()
+            val tag = genTag()
             val tasks = genTasks()
             val clock = createClock()
             val db = FakeDatabase().apply {
                 tasks.forEach(::insertTask)
-                insertTaskCategory(taskCategory = category, taskIds = tasks.map { it.id }.toSet())
+                insertTag(tag = tag, taskIds = tasks.map { it.id }.toSet())
             }
             val taskRepository = FakeTaskRepository(db, clock)
-            val taskCategoryRepository = spyk(FakeTaskCategoryRepository(db))
-            every { taskCategoryRepository.getById(any()) } returns flow {
+            val tagRepository = spyk(FakeTagRepository(db))
+            every { tagRepository.getById(any()) } returns flow {
                 throw exception
             }
 
-            val viewModel = TaskCategoryDetailViewModel(
+            val viewModel = TagDetailViewModel(
                 createSavedStateHandle(),
-                taskCategoryRepository,
+                tagRepository,
                 taskRepository,
                 clock,
             )
@@ -117,29 +117,29 @@ class TaskCategoryDetailViewModelTest {
                 viewModel.uiState.collect()
             }
 
-            assertThat(viewModel.uiState.value).isEqualTo(TaskCategoryDetailUiState.Pending)
+            assertThat(viewModel.uiState.value).isEqualTo(TagDetailUiState.Pending)
 
             advanceUntilIdle()
 
             assertThat(viewModel.uiState.value).isEqualTo(
-                TaskCategoryDetailUiState.Failure(exception)
+                TagDetailUiState.Failure(exception)
             )
         }
 
     @Test
-    fun `deleteCategory sets uiState to deleted`() = runTest(mainDispatcherRule.testDispatcher) {
-        val category = genTaskCategory()
+    fun `deleteTag sets uiState to deleted`() = runTest(mainDispatcherRule.testDispatcher) {
+        val tag = genTag()
         val tasks = genTasks()
         val clock = createClock()
         val db = FakeDatabase().apply {
             tasks.forEach(::insertTask)
-            insertTaskCategory(taskCategory = category, taskIds = tasks.map { it.id }.toSet())
+            insertTag(tag = tag, taskIds = tasks.map { it.id }.toSet())
         }
         val taskRepository = FakeTaskRepository(db, clock)
-        val taskCategoryRepository = FakeTaskCategoryRepository(db)
-        val viewModel = TaskCategoryDetailViewModel(
+        val tagRepository = FakeTagRepository(db)
+        val viewModel = TagDetailViewModel(
             createSavedStateHandle(),
-            taskCategoryRepository,
+            tagRepository,
             taskRepository,
             clock,
         )
@@ -148,43 +148,43 @@ class TaskCategoryDetailViewModelTest {
             viewModel.uiState.collect()
         }
 
-        assertThat(viewModel.uiState.value).isEqualTo(TaskCategoryDetailUiState.Pending)
+        assertThat(viewModel.uiState.value).isEqualTo(TagDetailUiState.Pending)
 
         advanceUntilIdle()
 
-        val taskItems = tasks.map { it.toTaskItemUiState() }
+        val taskSummaries = tasks.map { it.toTaskSummaryUiState() }
         assertThat(viewModel.uiState.value).isEqualTo(
-            TaskCategoryDetailUiState.Success(
-                category = category,
+            TagDetailUiState.Success(
+                tag = tag,
                 userMessage = null,
             )
         )
-        assertThat(viewModel.taskItemPagingData.asSnapshot()).isEqualTo(taskItems)
+        assertThat(viewModel.taskSummaryPagingData.asSnapshot()).isEqualTo(taskSummaries)
 
-        viewModel.deleteCategory()
+        viewModel.deleteTag()
         advanceUntilIdle()
 
-        assertThat(taskCategoryRepository.taskCategories).isEmpty()
-        assertThat(viewModel.uiState.value).isEqualTo(TaskCategoryDetailUiState.Deleted)
+        assertThat(tagRepository.tags).isEmpty()
+        assertThat(viewModel.uiState.value).isEqualTo(TagDetailUiState.Deleted)
     }
 
     @Test
-    fun `deleteCategory shows error message when repository throws`() =
+    fun `deleteTag shows error message when repository throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
-            val category = genTaskCategory()
+            val tag = genTag()
             val tasks = genTasks()
             val clock = createClock()
             val db = FakeDatabase().apply {
                 tasks.forEach(::insertTask)
-                insertTaskCategory(taskCategory = category, taskIds = tasks.map { it.id }.toSet())
+                insertTag(tag = tag, taskIds = tasks.map { it.id }.toSet())
             }
             val taskRepository = FakeTaskRepository(db, clock)
-            val taskCategoryRepository = spyk(FakeTaskCategoryRepository(db))
-            coEvery { taskCategoryRepository.delete(any()) } throws RuntimeException("Test")
+            val tagRepository = spyk(FakeTagRepository(db))
+            coEvery { tagRepository.delete(any()) } throws RuntimeException("Test")
 
-            val viewModel = TaskCategoryDetailViewModel(
+            val viewModel = TagDetailViewModel(
                 createSavedStateHandle(),
-                taskCategoryRepository,
+                tagRepository,
                 taskRepository,
                 clock,
             )
@@ -193,48 +193,47 @@ class TaskCategoryDetailViewModelTest {
                 viewModel.uiState.collect()
             }
 
-            assertThat(viewModel.uiState.value).isEqualTo(TaskCategoryDetailUiState.Pending)
+            assertThat(viewModel.uiState.value).isEqualTo(TagDetailUiState.Pending)
 
             advanceUntilIdle()
 
-            val taskItems = tasks.map { it.toTaskItemUiState() }
+            val taskSummaries = tasks.map { it.toTaskSummaryUiState() }
             assertThat(viewModel.uiState.value).isEqualTo(
-                TaskCategoryDetailUiState.Success(
-                    category = category,
+                TagDetailUiState.Success(
+                    tag = tag,
                     userMessage = null,
                 )
             )
-            assertThat(viewModel.taskItemPagingData.asSnapshot()).isEqualTo(taskItems)
+            assertThat(viewModel.taskSummaryPagingData.asSnapshot()).isEqualTo(taskSummaries)
 
-            viewModel.deleteCategory()
+            viewModel.deleteTag()
             advanceUntilIdle()
 
             assertThat(viewModel.uiState.value).isEqualTo(
-                TaskCategoryDetailUiState.Success(
-                    category = category,
-                    userMessage = UserMessage.String(R.string.task_category_detail_delete_error),
+                TagDetailUiState.Success(
+                    tag = tag,
+                    userMessage = UserMessage.String(R.string.tag_detail_delete_error),
                 )
             )
-            assertThat(viewModel.taskItemPagingData.asSnapshot()).isEqualTo(taskItems)
+            assertThat(viewModel.taskSummaryPagingData.asSnapshot()).isEqualTo(taskSummaries)
         }
 
-    private fun Task.toTaskItemUiState() = TaskItemUiState(id = id, name = name, isDone = false)
+    private fun Task.toTaskSummaryUiState() =
+        TaskSummaryUiState(id = id, name = name, isDone = false)
 
-    private fun genTaskCategory() = TaskCategory(id = 1L, name = loremFaker.lorem.words())
+    private fun genTag() = Tag(id = 1L, name = loremFaker.lorem.words())
 
     private fun genTasks() = generateSequence(
         Task(
             id = 1L,
             createdAt = faker.random.randomPastDate().toInstant(),
             name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-            categoryId = 1L,
         )
     ) {
         Task(
             id = it.id + 1L,
             createdAt = faker.random.randomPastDate(min = it.createdAt).toInstant(),
             name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-            categoryId = 1L,
         )
     }.take(faker.random.nextInt(bound = 5)).toList()
 
@@ -242,21 +241,21 @@ class TaskCategoryDetailViewModelTest {
         mockkStatic("androidx.navigation.SavedStateHandleKt")
         val savedStateHandle = mockk<SavedStateHandle>()
         every {
-            savedStateHandle.toRoute<TaskCategoryDetailRoute>()
-        } returns TaskCategoryDetailRoute(id = 1L)
+            savedStateHandle.toRoute<TagDetailRoute>()
+        } returns TagDetailRoute(id = 1L)
         return savedStateHandle
     }
 
     private fun createClock() = Clock.systemDefaultZone()
 
-    private fun createTaskCategoryDetailViewModel(
+    private fun createTagDetailViewModel(
         initDatabase: (FakeDatabase) -> Unit,
-    ): TaskCategoryDetailViewModel {
+    ): TagDetailViewModel {
         val clock = createClock()
         val db = FakeDatabase().also(initDatabase)
-        return TaskCategoryDetailViewModel(
+        return TagDetailViewModel(
             createSavedStateHandle(),
-            FakeTaskCategoryRepository(db),
+            FakeTagRepository(db),
             FakeTaskRepository(db, clock),
             clock,
         )

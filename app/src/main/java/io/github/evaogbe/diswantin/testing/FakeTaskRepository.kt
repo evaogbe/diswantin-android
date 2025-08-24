@@ -7,13 +7,15 @@ import io.github.evaogbe.diswantin.task.data.CurrentTaskParams
 import io.github.evaogbe.diswantin.task.data.EditTaskForm
 import io.github.evaogbe.diswantin.task.data.NewTaskForm
 import io.github.evaogbe.diswantin.task.data.PathUpdateType
+import io.github.evaogbe.diswantin.task.data.TaggedTask
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskCompletion
 import io.github.evaogbe.diswantin.task.data.TaskDetail
-import io.github.evaogbe.diswantin.task.data.TaskItemData
 import io.github.evaogbe.diswantin.task.data.TaskRepository
 import io.github.evaogbe.diswantin.task.data.TaskSearchCriteria
 import io.github.evaogbe.diswantin.task.data.TaskSkip
+import io.github.evaogbe.diswantin.task.data.TaskSummary
+import io.github.evaogbe.diswantin.task.data.TaskTag
 import io.github.evaogbe.diswantin.task.data.doesRecurOnDate
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -142,12 +144,11 @@ class FakeTaskRepository(
     override fun getById(id: Long) = db.taskTable.map { checkNotNull(it[id]) }
 
     override fun getTaskDetailById(id: Long): Flow<TaskDetail?> = combine(
-        db.taskCategoryTable,
         db.taskTable,
         db.taskCompletionTable,
         db.taskPathTable,
         db.taskRecurrenceTable,
-    ) { taskCategories, tasks, taskCompletions, taskPaths, taskRecurrences ->
+    ) { tasks, taskCompletions, taskPaths, taskRecurrences ->
         val parentId =
             taskPaths.values.firstOrNull { it.descendant == id && it.depth == 1 }?.ancestor
         tasks[id]?.let { task ->
@@ -163,8 +164,6 @@ class FakeTaskRepository(
                 scheduledTime = task.scheduledTime,
                 doneAt = taskCompletions.values.filter { it.taskId == task.id }
                     .maxOfOrNull { it.doneAt },
-                categoryId = task.categoryId,
-                categoryName = task.categoryId?.let { taskCategories[it] }?.name,
                 parentId = parentId,
                 parentName = parentId?.let { tasks[it] }?.name,
                 parentRecurring = taskRecurrences.values.any { it.taskId == parentId },
@@ -174,43 +173,34 @@ class FakeTaskRepository(
         }
     }
 
-    override fun getTasksByCategoryId(categoryId: Long) = db.taskTable.map { tasks ->
-        PagingData.from(
-            tasks.values.filter { it.categoryId == categoryId }.sortedBy(Task::name),
-            LoadStates(
-                refresh = LoadState.NotLoading(endOfPaginationReached = true),
-                prepend = LoadState.NotLoading(endOfPaginationReached = true),
-                append = LoadState.NotLoading(endOfPaginationReached = true),
-            ),
-        )
-    }
-
-    override fun getTaskItemsByCategoryId(categoryId: Long) = combine(
+    override fun getTaskSummariesByTagId(tagId: Long) = combine(
         db.taskTable,
         db.taskCompletionTable,
         db.taskRecurrenceTable,
-    ) { tasks, taskCompletions, taskRecurrences ->
+        db.taskTagTable,
+    ) { tasks, taskCompletions, taskRecurrences, taskTags ->
         PagingData.from(
-            tasks.values.asSequence().filter { it.categoryId == categoryId }.sortedWith(
-                compareBy<Task> { task ->
-                    taskCompletions.values.any { it.taskId == task.id }
-                }.thenComparing(Task::scheduledDate, nullsLast())
-                    .thenComparing(Task::scheduledTime, nullsLast()).thenComparing { task ->
-                        !taskRecurrences.values.any { it.taskId == task.id }
-                    }.thenComparing(Task::deadlineDate, nullsLast())
-                    .thenComparing(Task::deadlineTime, nullsLast())
-                    .thenComparing(Task::startAfterDate, nullsFirst())
-                    .thenComparing(Task::startAfterTime, nullsFirst())
-                    .thenComparing(Task::createdAt).thenComparing(Task::id),
-            ).map { task ->
-                TaskItemData(
-                    id = task.id,
-                    name = task.name,
-                    recurring = taskRecurrences.values.any { it.taskId == task.id },
-                    doneAt = taskCompletions.values.filter { it.taskId == task.id }
-                        .maxOfOrNull { it.doneAt },
-                )
-            }.toList(),
+            taskTags.values.asSequence().filter { it.tagId == tagId }
+                .mapNotNull { tasks[it.taskId] }.sortedWith(
+                    compareBy<Task> { task ->
+                        taskCompletions.values.any { it.taskId == task.id }
+                    }.thenComparing(Task::scheduledDate, nullsLast())
+                        .thenComparing(Task::scheduledTime, nullsLast()).thenComparing { task ->
+                            !taskRecurrences.values.any { it.taskId == task.id }
+                        }.thenComparing(Task::deadlineDate, nullsLast())
+                        .thenComparing(Task::deadlineTime, nullsLast())
+                        .thenComparing(Task::startAfterDate, nullsFirst())
+                        .thenComparing(Task::startAfterTime, nullsFirst())
+                        .thenComparing(Task::createdAt).thenComparing(Task::id),
+                ).map { task ->
+                    TaskSummary(
+                        id = task.id,
+                        name = task.name,
+                        recurring = taskRecurrences.values.any { it.taskId == task.id },
+                        doneAt = taskCompletions.values.filter { it.taskId == task.id }
+                            .maxOfOrNull { it.doneAt },
+                    )
+                }.toList(),
             LoadStates(
                 refresh = LoadState.NotLoading(endOfPaginationReached = true),
                 prepend = LoadState.NotLoading(endOfPaginationReached = true),
@@ -219,11 +209,40 @@ class FakeTaskRepository(
         )
     }
 
-    override fun search(query: String) = db.taskTable.map { tasks ->
-        tasks.values.filter { it.name.contains(query, ignoreCase = true) }
+    override fun getTaggedTasksByTagId(tagId: Long) =
+        combine(db.taskTable, db.taskTagTable) { tasks, taskTags ->
+            PagingData.from(
+                taskTags.values.filter { it.tagId == tagId }.mapNotNull { taskTag ->
+                    tasks[taskTag.taskId]?.let {
+                        TaggedTask(id = it.id, name = it.name, isTagged = true)
+                    }
+                }.sortedBy(TaggedTask::name),
+                LoadStates(
+                    refresh = LoadState.NotLoading(endOfPaginationReached = true),
+                    prepend = LoadState.NotLoading(endOfPaginationReached = true),
+                    append = LoadState.NotLoading(endOfPaginationReached = true),
+                ),
+            )
+        }
+
+    override fun search(query: String, size: Int) = db.taskTable.map { tasks ->
+        tasks.values.filter { it.name.contains(query, ignoreCase = true) }.take(size)
     }
 
-    override fun searchTaskItems(criteria: TaskSearchCriteria) = combine(
+    override fun searchTaggedTasks(query: String, tagId: Long?, size: Int) =
+        combine(db.taskTable, db.taskTagTable) { tasks, taskTags ->
+            tasks.values.filter { it.name.contains(query, ignoreCase = true) }.map { task ->
+                TaggedTask(
+                    id = task.id,
+                    name = task.name,
+                    isTagged = tagId != null && taskTags.values.any {
+                        it.taskId == task.id && it.tagId == tagId
+                    },
+                )
+            }.take(size)
+        }
+
+    override fun searchTaskSummaries(criteria: TaskSearchCriteria) = combine(
         db.taskTable,
         db.taskCompletionTable,
         db.taskRecurrenceTable,
@@ -262,7 +281,7 @@ class FakeTaskRepository(
                     doesRecurOnDate(recurrences, it)
                 } != false
             }.map { (task, recurrences) ->
-                TaskItemData(
+                TaskSummary(
                     id = task.id,
                     name = task.name,
                     recurring = recurrences.isNotEmpty(),
@@ -303,7 +322,7 @@ class FakeTaskRepository(
                         .thenComparing(Task::startAfterTime, nullsFirst())
                         .thenComparing(Task::createdAt).thenComparing(Task::id)
                 ).map { task ->
-                    TaskItemData(
+                    TaskSummary(
                         id = task.id,
                         name = task.name,
                         recurring = taskRecurrences.values.any { it.taskId == task.id },
@@ -328,6 +347,7 @@ class FakeTaskRepository(
 
     override suspend fun create(form: NewTaskForm): Task {
         val task = db.insertTask(form.newTask)
+        form.tagIds.forEach { db.insertTaskTag(TaskTag(taskId = task.id, tagId = it)) }
         form.recurrences.forEach { db.insertTaskRecurrence(it.copy(taskId = task.id)) }
 
         if (form.parentTaskId != null) {
@@ -339,6 +359,10 @@ class FakeTaskRepository(
 
     override suspend fun update(form: EditTaskForm): Task {
         db.updateTask(form.updatedTask)
+        form.tagIdsToRemove.forEach { db.deleteTaskTag(it) }
+        form.tagIdsToAdd.forEach {
+            db.insertTaskTag(TaskTag(taskId = form.updatedTask.id, tagId = it))
+        }
         form.recurrencesToRemove.forEach { db.deleteTaskRecurrence(it.id) }
         form.recurrencesToAdd.forEach(db::insertTaskRecurrence)
 

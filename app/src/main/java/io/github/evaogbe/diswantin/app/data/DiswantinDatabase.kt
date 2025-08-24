@@ -14,16 +14,17 @@ import androidx.room.TypeConverters
 import androidx.room.migration.AutoMigrationSpec
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import io.github.evaogbe.diswantin.task.data.Tag
+import io.github.evaogbe.diswantin.task.data.TagDao
+import io.github.evaogbe.diswantin.task.data.TagFts
 import io.github.evaogbe.diswantin.task.data.Task
-import io.github.evaogbe.diswantin.task.data.TaskCategory
-import io.github.evaogbe.diswantin.task.data.TaskCategoryDao
-import io.github.evaogbe.diswantin.task.data.TaskCategoryFts
 import io.github.evaogbe.diswantin.task.data.TaskCompletion
 import io.github.evaogbe.diswantin.task.data.TaskDao
 import io.github.evaogbe.diswantin.task.data.TaskFts
 import io.github.evaogbe.diswantin.task.data.TaskPath
 import io.github.evaogbe.diswantin.task.data.TaskRecurrence
 import io.github.evaogbe.diswantin.task.data.TaskSkip
+import io.github.evaogbe.diswantin.task.data.TaskTag
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -33,13 +34,14 @@ import java.time.temporal.WeekFields
 import java.util.Locale
 
 @Database(
-    version = 31,
+    version = 34,
     entities = [
         Task::class,
         TaskFts::class,
         TaskPath::class,
-        TaskCategory::class,
-        TaskCategoryFts::class,
+        Tag::class,
+        TagFts::class,
+        TaskTag::class,
         TaskCompletion::class,
         TaskRecurrence::class,
         TaskSkip::class,
@@ -65,13 +67,15 @@ import java.util.Locale
         AutoMigration(from = 28, to = 29),
         AutoMigration(from = 29, to = 30),
         AutoMigration(from = 30, to = 31, spec = DiswantinDatabase.Migration30to31::class),
+        AutoMigration(from = 31, to = 32, spec = DiswantinDatabase.Migration31to32::class),
+        AutoMigration(from = 33, to = 34, spec = DiswantinDatabase.Migration33to34::class),
     ]
 )
 @TypeConverters(Converters::class)
 abstract class DiswantinDatabase : RoomDatabase() {
     abstract fun taskDao(): TaskDao
 
-    abstract fun taskCategoryDao(): TaskCategoryDao
+    abstract fun tagDao(): TagDao
 
     @DeleteColumn(tableName = "activity", columnName = "skipped_at")
     class Migration4To5 : AutoMigrationSpec
@@ -102,6 +106,13 @@ abstract class DiswantinDatabase : RoomDatabase() {
 
     @DeleteColumn(tableName = "task_recurrence", columnName = "week")
     class Migration30to31 : AutoMigrationSpec
+
+    @RenameTable(fromTableName = "task_category", toTableName = "tag")
+    @RenameTable(fromTableName = "task_category_fts", toTableName = "tag_fts")
+    class Migration31to32 : AutoMigrationSpec
+
+    @DeleteColumn(tableName = "task", columnName = "category_id")
+    class Migration33to34 : AutoMigrationSpec
 
     companion object {
         const val DB_NAME = "diswantin"
@@ -184,16 +195,15 @@ abstract class DiswantinDatabase : RoomDatabase() {
                     ) `tail` ON `tail`.`descendant` = `p`.`descendant`
                         AND `tail`.`depth` = `p`.`depth`
                     WHERE `p`.`depth` > 0"""
-                )
-                    .use { stmt ->
-                        while (stmt.moveToNext()) {
-                            val ancestor = stmt.getLong(0)
-                            val descendant = stmt.getLong(1)
-                            chainsByHead.compute(ancestor) { _, v ->
-                                v.orEmpty() + setOf(ancestor, descendant)
-                            }
+                ).use { stmt ->
+                    while (stmt.moveToNext()) {
+                        val ancestor = stmt.getLong(0)
+                        val descendant = stmt.getLong(1)
+                        chainsByHead.compute(ancestor) { _, v ->
+                            v.orEmpty() + setOf(ancestor, descendant)
                         }
                     }
+                }
                 chainsByHead.entries.forEachIndexed { i, (_, taskIds) ->
                     val listId = db.insert(
                         "task_list",
@@ -239,8 +249,7 @@ abstract class DiswantinDatabase : RoomDatabase() {
                     db.query("SELECT `id`, `created_at`, `name`, `deadline` FROM `task` WHERE `deadline` IS NOT NULL")
                         .use { stmt ->
                             while (stmt.moveToNext()) {
-                                val deadline =
-                                    Instant.ofEpochMilli(stmt.getLong(3)).atZone(zoneId)
+                                val deadline = Instant.ofEpochMilli(stmt.getLong(3)).atZone(zoneId)
                                 taskValues += "(%d, %d, \"%s\", \"%s\", \"%s\")".format(
                                     stmt.getLong(0),
                                     stmt.getLong(1),
@@ -270,21 +279,20 @@ abstract class DiswantinDatabase : RoomDatabase() {
                         """SELECT `id`, `created_at`, `name`, `scheduled_at`
                         FROM `task`
                         WHERE `scheduled_at` IS NOT NULL"""
-                    )
-                        .use { stmt ->
-                            while (stmt.moveToNext()) {
-                                val scheduledAt =
-                                    Instant.ofEpochMilli(stmt.getLong(3)).atZone(zoneId)
-                                taskValues += "(%d, %d, \"%s\", \"%s\", \"%s\")".format(
-                                    stmt.getLong(0),
-                                    stmt.getLong(1),
-                                    stmt.getString(2),
-                                    scheduledAt.toLocalDate(),
-                                    scheduledAt.toLocalTime()
-                                        .format(DateTimeFormatter.ofPattern("HH:mm")),
-                                )
-                            }
+                    ).use { stmt ->
+                        while (stmt.moveToNext()) {
+                            val scheduledAt =
+                                Instant.ofEpochMilli(stmt.getLong(3)).atZone(zoneId)
+                            taskValues += "(%d, %d, \"%s\", \"%s\", \"%s\")".format(
+                                stmt.getLong(0),
+                                stmt.getLong(1),
+                                stmt.getString(2),
+                                scheduledAt.toLocalDate(),
+                                scheduledAt.toLocalTime()
+                                    .format(DateTimeFormatter.ofPattern("HH:mm")),
+                            )
                         }
+                    }
                     db.execSQL("ALTER TABLE `task` ADD COLUMN `scheduled_date` TEXT")
                     db.execSQL("ALTER TABLE `task` ADD COLUMN `scheduled_time` TEXT")
                     db.execSQL(
@@ -349,22 +357,33 @@ abstract class DiswantinDatabase : RoomDatabase() {
             }
         }
 
-        fun createDatabase(context: Context) =
-            Room.databaseBuilder(
-                context.applicationContext,
-                DiswantinDatabase::class.java,
-                DB_NAME,
-            ).addMigrations(
-                MIGRATION_1_2,
-                MIGRATION_5_6,
-                MIGRATION_6_7,
-                MIGRATION_11_12,
-                MIGRATION_14_15,
-                getMigration17to18(),
-                getMigration20to21(),
-                getMigration22To23(),
-                MIGRATION_26_27,
-                MIGRATION_27_28,
-            ).build()
+        val MIGRATION_32_33 = object : Migration(32, 33) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """INSERT INTO `task_tag` (`task_id`, `tag_id`)
+                        SELECT task.id, task.category_id
+                        FROM task
+                        WHERE task.category_id IS NOT NULL"""
+                )
+            }
+        }
+
+        fun createDatabase(context: Context) = Room.databaseBuilder(
+            context.applicationContext,
+            DiswantinDatabase::class.java,
+            DB_NAME,
+        ).addMigrations(
+            MIGRATION_1_2,
+            MIGRATION_5_6,
+            MIGRATION_6_7,
+            MIGRATION_11_12,
+            MIGRATION_14_15,
+            getMigration17to18(),
+            getMigration20to21(),
+            getMigration22To23(),
+            MIGRATION_26_27,
+            MIGRATION_27_28,
+            MIGRATION_32_33,
+        ).build()
     }
 }

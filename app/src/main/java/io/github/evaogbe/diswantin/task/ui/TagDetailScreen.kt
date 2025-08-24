@@ -43,7 +43,7 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import io.github.evaogbe.diswantin.R
-import io.github.evaogbe.diswantin.task.data.TaskCategory
+import io.github.evaogbe.diswantin.task.data.Tag
 import io.github.evaogbe.diswantin.ui.loadstate.LoadFailureLayout
 import io.github.evaogbe.diswantin.ui.loadstate.PendingLayout
 import io.github.evaogbe.diswantin.ui.loadstate.pagedListFooter
@@ -55,11 +55,11 @@ import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TaskCategoryDetailTopBar(
-    uiState: TaskCategoryDetailTopBarState,
+fun TagDetailTopBar(
+    uiState: TagDetailTopBarState,
     onBackClick: () -> Unit,
-    onEditCategory: (Long) -> Unit,
-    onDeleteCategory: () -> Unit,
+    onEditTag: (Long) -> Unit,
+    onDeleteTag: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
@@ -76,8 +76,8 @@ fun TaskCategoryDetailTopBar(
             }
         },
         actions = {
-            if (uiState.categoryId != null) {
-                IconButton(onClick = { onEditCategory(uiState.categoryId) }) {
+            if (uiState.tagId != null) {
+                IconButton(onClick = { onEditTag(uiState.tagId) }) {
                     Icon(
                         imageVector = Icons.Default.Edit,
                         contentDescription = stringResource(R.string.edit_button),
@@ -95,7 +95,7 @@ fun TaskCategoryDetailTopBar(
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.delete_button)) },
                         onClick = {
-                            onDeleteCategory()
+                            onDeleteTag()
                             menuExpanded = false
                         },
                         leadingIcon = {
@@ -109,37 +109,37 @@ fun TaskCategoryDetailTopBar(
 }
 
 @Composable
-fun TaskCategoryDetailScreen(
+fun TagDetailScreen(
     onPopBackStack: () -> Unit,
-    topBarAction: TaskCategoryDetailTopBarAction?,
+    topBarAction: TagDetailTopBarAction?,
     topBarActionHandled: () -> Unit,
     setUserMessage: (UserMessage) -> Unit,
     onSelectTask: (Long) -> Unit,
-    taskCategoryDetailViewModel: TaskCategoryDetailViewModel = hiltViewModel(),
+    tagDetailViewModel: TagDetailViewModel = hiltViewModel(),
 ) {
-    val taskPagingItems = taskCategoryDetailViewModel.taskItemPagingData.collectAsLazyPagingItems()
-    val uiState by taskCategoryDetailViewModel.uiState.collectAsStateWithLifecycle()
+    val taskPagingItems = tagDetailViewModel.taskSummaryPagingData.collectAsLazyPagingItems()
+    val uiState by tagDetailViewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(topBarAction) {
         when (topBarAction) {
             null -> {}
-            TaskCategoryDetailTopBarAction.Delete -> {
-                taskCategoryDetailViewModel.deleteCategory()
+            TagDetailTopBarAction.Delete -> {
+                tagDetailViewModel.deleteTag()
                 topBarActionHandled()
             }
         }
     }
 
     when (val state = uiState) {
-        is TaskCategoryDetailUiState.Pending -> {
+        is TagDetailUiState.Pending -> {
             PendingLayout()
         }
 
-        is TaskCategoryDetailUiState.Failure -> {
-            LoadFailureLayout(message = stringResource(R.string.task_category_detail_fetch_error))
+        is TagDetailUiState.Failure -> {
+            LoadFailureLayout(message = stringResource(R.string.tag_detail_fetch_error))
         }
 
-        is TaskCategoryDetailUiState.Deleted -> {
+        is TagDetailUiState.Deleted -> {
             LaunchedEffect(Unit) {
                 onPopBackStack()
             }
@@ -147,12 +147,12 @@ fun TaskCategoryDetailScreen(
             PendingLayout()
         }
 
-        is TaskCategoryDetailUiState.Success -> {
+        is TagDetailUiState.Success -> {
             when (taskPagingItems.loadState.refresh) {
                 is LoadState.Loading -> PendingLayout()
                 is LoadState.Error -> {
                     LoadFailureLayout(
-                        message = stringResource(R.string.task_category_detail_fetch_error),
+                        message = stringResource(R.string.tag_detail_fetch_error),
                     )
                 }
 
@@ -160,11 +160,11 @@ fun TaskCategoryDetailScreen(
                     LaunchedEffect(state.userMessage) {
                         if (state.userMessage != null) {
                             setUserMessage(state.userMessage)
-                            taskCategoryDetailViewModel.userMessageShown()
+                            tagDetailViewModel.userMessageShown()
                         }
                     }
 
-                    TaskCategoryDetailLayout(
+                    TagDetailLayout(
                         uiState = state,
                         taskItems = taskPagingItems,
                         onSelectTask = onSelectTask,
@@ -176,26 +176,29 @@ fun TaskCategoryDetailScreen(
 }
 
 @Composable
-fun TaskCategoryDetailLayout(
-    uiState: TaskCategoryDetailUiState.Success,
-    taskItems: LazyPagingItems<TaskItemUiState>,
+fun TagDetailLayout(
+    uiState: TagDetailUiState.Success,
+    taskItems: LazyPagingItems<TaskSummaryUiState>,
     onSelectTask: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    TaskCategoryDetailLayout(
+    TagDetailLayout(
         uiState = uiState,
         taskItems = if (taskItems.itemCount > 0) {
             {
-                items(taskItems.itemCount, key = taskItems.itemKey(TaskItemUiState::id)) { index ->
+                items(
+                    taskItems.itemCount,
+                    key = taskItems.itemKey(TaskSummaryUiState::id)
+                ) { index ->
                     val task = taskItems[index]!!
-                    TaskItem(task = task, onSelectTask = onSelectTask)
+                    TaskSummaryItem(task = task, onSelectTask = onSelectTask)
                     HorizontalDivider()
                 }
 
                 pagedListFooter(
                     pagingItems = taskItems,
                     errorMessage = {
-                        Text(stringResource(R.string.task_category_detail_fetch_tasks_error))
+                        Text(stringResource(R.string.tag_detail_fetch_tasks_error))
                     },
                 )
             }
@@ -205,8 +208,8 @@ fun TaskCategoryDetailLayout(
 }
 
 @Composable
-private fun TaskCategoryDetailLayout(
-    uiState: TaskCategoryDetailUiState.Success,
+private fun TagDetailLayout(
+    uiState: TagDetailUiState.Success,
     taskItems: (LazyListScope.() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
@@ -219,7 +222,7 @@ private fun TaskCategoryDetailLayout(
         ) {
             item {
                 SelectionContainer(modifier = Modifier.padding(horizontal = SpaceMd)) {
-                    Text(text = uiState.category.name, style = typography.displaySmall)
+                    Text(text = uiState.tag.name, style = typography.displaySmall)
                 }
             }
 
@@ -242,30 +245,30 @@ private fun TaskCategoryDetailLayout(
 
 @DevicePreviews
 @Composable
-private fun TaskCategoryDetailScreenPreview() {
-    val taskItems = listOf(
-        TaskItemUiState(id = 1L, name = "Brush teeth", isDone = true),
-        TaskItemUiState(id = 2L, name = "Shower", isDone = false),
-        TaskItemUiState(id = 3L, name = "Eat breakfast", isDone = false),
+private fun TagDetailScreenPreview() {
+    val taskSummaries = listOf(
+        TaskSummaryUiState(id = 1L, name = "Brush teeth", isDone = true),
+        TaskSummaryUiState(id = 2L, name = "Shower", isDone = false),
+        TaskSummaryUiState(id = 3L, name = "Eat breakfast", isDone = false),
     )
 
     DiswantinTheme {
         Scaffold(topBar = {
-            TaskCategoryDetailTopBar(
-                uiState = TaskCategoryDetailTopBarState(categoryId = 1L),
+            TagDetailTopBar(
+                uiState = TagDetailTopBarState(tagId = 1L),
                 onBackClick = {},
-                onEditCategory = {},
-                onDeleteCategory = {},
+                onEditTag = {},
+                onDeleteTag = {},
             )
         }) { innerPadding ->
-            TaskCategoryDetailLayout(
-                uiState = TaskCategoryDetailUiState.Success(
-                    category = TaskCategory(name = "Morning Routine"),
+            TagDetailLayout(
+                uiState = TagDetailUiState.Success(
+                    tag = Tag(name = "Morning Routine"),
                     userMessage = null,
                 ),
                 taskItems = {
-                    items(taskItems, key = TaskItemUiState::id) { task ->
-                        TaskItem(task = task, onSelectTask = {})
+                    items(taskSummaries, key = TaskSummaryUiState::id) { task ->
+                        TaskSummaryItem(task = task, onSelectTask = {})
                         HorizontalDivider()
                     }
                 },

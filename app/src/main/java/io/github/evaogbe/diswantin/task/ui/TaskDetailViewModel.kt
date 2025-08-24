@@ -9,6 +9,8 @@ import androidx.paging.map
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.data.Result
+import io.github.evaogbe.diswantin.task.data.Tag
+import io.github.evaogbe.diswantin.task.data.TagRepository
 import io.github.evaogbe.diswantin.task.data.TaskDetail
 import io.github.evaogbe.diswantin.task.data.TaskRecurrence
 import io.github.evaogbe.diswantin.task.data.TaskRepository
@@ -33,6 +35,7 @@ import javax.inject.Inject
 class TaskDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val taskRepository: TaskRepository,
+    tagRepository: TagRepository,
     clock: Clock,
     locale: Locale,
 ) : ViewModel() {
@@ -44,7 +47,7 @@ class TaskDetailViewModel @Inject constructor(
 
     val childTaskPagingData = taskRepository.getChildren(taskId).map { pagingData ->
         val doneBefore = ZonedDateTime.now(clock).with(LocalTime.MIN).toInstant()
-        pagingData.map { TaskItemUiState.fromTaskItem(it, doneBefore) }
+        pagingData.map { TaskSummaryUiState.fromTaskSummary(it, doneBefore) }
     }.cachedIn(viewModelScope)
 
     val uiState = combine(
@@ -57,6 +60,11 @@ class TaskDetailViewModel @Inject constructor(
             Timber.e(e, "Failed to fetch task by id: %d", taskId)
             emit(Result.Failure(e))
         },
+        tagRepository.getTagsByTaskId(taskId)
+            .map<List<Tag>, Result<List<Tag>>> { Result.Success(it) }.catch { e ->
+            Timber.e(e, "Failed to fetch tags by task id: %d", taskId)
+            emit(Result.Failure(e))
+        },
         taskRepository.getTaskRecurrencesByTaskId(taskId)
             .map<List<TaskRecurrence>, Result<TaskRecurrenceUiState?>> {
                 Result.Success(TaskRecurrenceUiState.tryFromEntities(it, locale))
@@ -65,14 +73,15 @@ class TaskDetailViewModel @Inject constructor(
                 emit(Result.Failure(e))
             },
         userMessage,
-    ) { initialized, taskResult, recurrenceResult, userMessage ->
+    ) { initialized, taskResult, tagsResult, recurrenceResult, userMessage ->
         taskResult.andThen { task ->
             when {
                 task != null -> {
-                    recurrenceResult.map { recurrence ->
+                    tagsResult.zipWith(recurrenceResult) { tags, recurrence ->
                         val doneBefore = ZonedDateTime.now(clock).with(LocalTime.MIN).toInstant()
                         TaskDetailUiState.success(
                             task = task,
+                            tags = tags,
                             recurrence = recurrence,
                             userMessage = userMessage,
                             doneBefore = doneBefore,
@@ -91,8 +100,6 @@ class TaskDetailViewModel @Inject constructor(
     )
 
     fun markTaskDone() {
-        val taskId = (uiState.value as? TaskDetailUiState.Success)?.id ?: return
-
         viewModelScope.launch {
             try {
                 taskRepository.markDone(taskId)
@@ -106,8 +113,6 @@ class TaskDetailViewModel @Inject constructor(
     }
 
     fun unmarkTaskDone() {
-        val taskId = (uiState.value as? TaskDetailUiState.Success)?.id ?: return
-
         viewModelScope.launch {
             try {
                 taskRepository.unmarkDone(taskId)
@@ -121,8 +126,6 @@ class TaskDetailViewModel @Inject constructor(
     }
 
     fun deleteTask() {
-        val taskId = (uiState.value as? TaskDetailUiState.Success)?.id ?: return
-
         viewModelScope.launch {
             try {
                 taskRepository.delete(taskId)

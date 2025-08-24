@@ -41,13 +41,13 @@ fun FormTypeButtonGroup(
             shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
             icon = {
                 Icon(
-                    painter = painterResource(R.drawable.baseline_list_alt_24),
+                    painter = painterResource(R.drawable.baseline_label_24),
                     contentDescription = null,
                     modifier = Modifier.size(SegmentedButtonDefaults.IconSize),
                 )
             },
         ) {
-            Text(stringResource(R.string.form_type_button_category))
+            Text(stringResource(R.string.form_type_button_tag))
         }
     }
 }

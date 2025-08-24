@@ -20,5 +20,5 @@ object DatabaseModule {
     fun provideTaskDao(db: DiswantinDatabase) = db.taskDao()
 
     @Provides
-    fun provideTaskCategoryDao(db: DiswantinDatabase) = db.taskCategoryDao()
+    fun provideTagDao(db: DiswantinDatabase) = db.tagDao()
 }

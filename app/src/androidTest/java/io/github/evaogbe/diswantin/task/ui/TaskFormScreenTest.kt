@@ -9,6 +9,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onParent
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.lifecycle.SavedStateHandle
@@ -17,11 +18,11 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isTrue
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.RecurrenceType
+import io.github.evaogbe.diswantin.task.data.Tag
 import io.github.evaogbe.diswantin.task.data.Task
-import io.github.evaogbe.diswantin.task.data.TaskCategory
 import io.github.evaogbe.diswantin.task.data.TaskRecurrence
 import io.github.evaogbe.diswantin.testing.FakeDatabase
-import io.github.evaogbe.diswantin.testing.FakeTaskCategoryRepository
+import io.github.evaogbe.diswantin.testing.FakeTagRepository
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.stringResource
 import io.github.evaogbe.diswantin.ui.loadstate.PendingLayoutTestTag
@@ -88,14 +89,14 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     initialName = "",
-                    onSelectCategoryType = {},
+                    onSelectTagType = {},
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
             }
         }
 
-        composeTestRule.onNodeWithText(stringResource(R.string.form_type_button_category))
+        composeTestRule.onNodeWithText(stringResource(R.string.form_type_button_tag))
             .assertIsDisplayed()
     }
 
@@ -115,14 +116,14 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     initialName = "",
-                    onSelectCategoryType = {},
+                    onSelectTagType = {},
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
             }
         }
 
-        composeTestRule.onNodeWithText(stringResource(R.string.form_type_button_category))
+        composeTestRule.onNodeWithText(stringResource(R.string.form_type_button_tag))
             .assertDoesNotExist()
     }
 
@@ -139,7 +140,7 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     initialName = "",
-                    onSelectCategoryType = {},
+                    onSelectTagType = {},
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -163,7 +164,7 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     initialName = "",
-                    onSelectCategoryType = {},
+                    onSelectTagType = {},
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -203,7 +204,7 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     initialName = "",
-                    onSelectCategoryType = {},
+                    onSelectTagType = {},
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -246,7 +247,7 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     initialName = "",
-                    onSelectCategoryType = {},
+                    onSelectTagType = {},
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -293,7 +294,7 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     initialName = "",
-                    onSelectCategoryType = {},
+                    onSelectTagType = {},
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -340,7 +341,7 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     initialName = "",
-                    onSelectCategoryType = {},
+                    onSelectTagType = {},
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -382,7 +383,7 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     initialName = "",
-                    onSelectCategoryType = {},
+                    onSelectTagType = {},
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -426,7 +427,7 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     initialName = "",
-                    onSelectCategoryType = {},
+                    onSelectTagType = {},
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -475,7 +476,7 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     initialName = "",
-                    onSelectCategoryType = {},
+                    onSelectTagType = {},
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -516,7 +517,7 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     initialName = "",
-                    onSelectCategoryType = {},
+                    onSelectTagType = {},
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -539,11 +540,11 @@ class TaskFormScreenTest {
         val taskRepository = spyk(FakeTaskRepository(db, clock))
         every { taskRepository.getParent(any()) } returns flow { throw RuntimeException("Test") }
 
-        val taskCategoryRepository = FakeTaskCategoryRepository(db)
+        val tagRepository = FakeTagRepository(db)
         val viewModel = TaskFormViewModel(
             createSavedStateHandleForEdit(),
             taskRepository,
-            taskCategoryRepository,
+            tagRepository,
             clock,
             createLocale(),
         )
@@ -557,7 +558,7 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = { userMessage = it },
                     initialName = "",
-                    onSelectCategoryType = {},
+                    onSelectTagType = {},
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -571,10 +572,10 @@ class TaskFormScreenTest {
     }
 
     @Test
-    fun displaysCategoryField_whenHasCategories() {
+    fun displaysTagField_whenHasTags() {
         val viewModel = createTaskFormViewModelForEdit { db ->
             db.insertTask(genTask())
-            db.insertTaskCategory(TaskCategory(name = loremFaker.lorem.words()), emptySet())
+            db.insertTag(Tag(name = loremFaker.lorem.words()))
         }
 
         composeTestRule.setContent {
@@ -586,7 +587,7 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     initialName = "",
-                    onSelectCategoryType = {},
+                    onSelectTagType = {},
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -594,28 +595,28 @@ class TaskFormScreenTest {
         }
 
         composeTestRule.onNodeWithText(
-            stringResource(R.string.task_category_label), useUnmergedTree = true
+            stringResource(R.string.add_tag_button), useUnmergedTree = true
         ).assertIsDisplayed()
     }
 
     @Test
-    fun displaysErrorMessage_whenFetchExistingCategoryFails() {
+    fun displaysErrorMessage_whenFetchExistingTagFails() {
         var userMessage: UserMessage? = null
         val clock = createClock()
         val db = FakeDatabase().apply {
             insertTask(genTask())
-            insertTaskCategory(TaskCategory(name = loremFaker.lorem.words()), emptySet())
+            insertTag(Tag(name = loremFaker.lorem.words()))
         }
         val taskRepository = FakeTaskRepository(db, clock)
-        val taskCategoryRepository = spyk(FakeTaskCategoryRepository(db))
-        every { taskCategoryRepository.getByTaskId(any()) } returns flow {
+        val tagRepository = spyk(FakeTagRepository(db))
+        every { tagRepository.getTagsByTaskId(any()) } returns flow {
             throw RuntimeException("Test")
         }
 
         val viewModel = TaskFormViewModel(
             createSavedStateHandleForEdit(),
             taskRepository,
-            taskCategoryRepository,
+            tagRepository,
             clock,
             createLocale(),
         )
@@ -629,7 +630,7 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = { userMessage = it },
                     initialName = "",
-                    onSelectCategoryType = {},
+                    onSelectTagType = {},
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -637,9 +638,58 @@ class TaskFormScreenTest {
         }
 
         composeTestRule.onNodeWithText(
-            stringResource(R.string.task_category_label), useUnmergedTree = true
+            stringResource(R.string.tag_name_label), useUnmergedTree = true
         ).assertDoesNotExist()
-        assertThat(userMessage).isEqualTo(UserMessage.String(R.string.task_form_fetch_category_error))
+        assertThat(userMessage).isEqualTo(UserMessage.String(R.string.task_form_fetch_tags_error))
+    }
+
+    @Test
+    fun hidesAddTagButton_when20TagsAdded() {
+        val tags = List(20) {
+            Tag(id = it + 1L, name = loremFaker.lorem.unique.words())
+        }
+        val viewModel = createTaskFormViewModelForNew { db ->
+            tags.forEach(db::insertTag)
+        }
+
+        composeTestRule.setContent {
+            DiswantinTheme {
+                TaskFormScreen(
+                    onPopBackStack = {},
+                    setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
+                    setUserMessage = {},
+                    initialName = "",
+                    onSelectTagType = {},
+                    onEditRecurrence = {},
+                    taskFormViewModel = viewModel,
+                )
+            }
+        }
+
+        tags.forEach { tag ->
+            composeTestRule.onNodeWithText(stringResource(R.string.add_tag_button))
+                .performScrollTo().performClick()
+            composeTestRule.onNodeWithText(
+                stringResource(R.string.tag_name_label), useUnmergedTree = true
+            ).onParent().performTextInput(tag.name.substring(0, 1))
+
+            composeTestRule.waitForIdle()
+            composeTestRule.waitUntilExactlyOneExists(hasText(tag.name))
+            composeTestRule.onNodeWithText(tag.name).performClick()
+        }
+
+        composeTestRule.waitUntilDoesNotExist(hasText(stringResource(R.string.tag_name_label)))
+        composeTestRule.onNodeWithText(
+            stringResource(R.string.tag_name_label), useUnmergedTree = true
+        ).assertDoesNotExist()
+        composeTestRule.onNodeWithText(stringResource(R.string.add_tag_button)).assertDoesNotExist()
+
+        composeTestRule.onNodeWithText(tags.first().name).performScrollTo().performClick()
+
+        composeTestRule.onNodeWithText(stringResource(R.string.add_tag_button)).performScrollTo()
+            .assertIsDisplayed()
     }
 
     @Test
@@ -665,7 +715,7 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     initialName = "",
-                    onSelectCategoryType = {},
+                    onSelectTagType = {},
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -691,13 +741,15 @@ class TaskFormScreenTest {
             insertTask(genTask())
         }
         val taskRepository = spyk(FakeTaskRepository(db, clock))
-        every { taskRepository.search(any()) } returns flow { throw RuntimeException("Test") }
+        every { taskRepository.search(any(), any()) } returns flow {
+            throw RuntimeException("Test")
+        }
 
-        val taskCategoryRepository = FakeTaskCategoryRepository(db)
+        val tagRepository = FakeTagRepository(db)
         val viewModel = TaskFormViewModel(
             SavedStateHandle(),
             taskRepository,
-            taskCategoryRepository,
+            tagRepository,
             clock,
             createLocale(),
         )
@@ -711,7 +763,7 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = { userMessage = it },
                     initialName = "",
-                    onSelectCategoryType = {},
+                    onSelectTagType = {},
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -728,14 +780,14 @@ class TaskFormScreenTest {
     }
 
     @Test
-    fun displaysMatchingCategoryOptions_whenCategorySearchedFor() {
+    fun displaysMatchingTagOptions_whenTagSearchedFor() {
         val query = loremFaker.verbs.base()
-        val categories = List(3) {
-            TaskCategory(id = it + 1L, name = "$query ${loremFaker.lorem.unique.words()}")
+        val tags = List(3) {
+            Tag(id = it + 1L, name = "$query ${loremFaker.lorem.unique.words()}")
         }
         val viewModel = createTaskFormViewModelForEdit { db ->
             db.insertTask(genTask())
-            categories.forEach { db.insertTaskCategory(it, emptySet()) }
+            tags.forEach { db.insertTag(it) }
         }
 
         composeTestRule.setContent {
@@ -747,44 +799,45 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     initialName = "",
-                    onSelectCategoryType = {},
+                    onSelectTagType = {},
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
             }
         }
 
+        composeTestRule.onNodeWithText(stringResource(R.string.add_tag_button)).performClick()
         composeTestRule.onNodeWithText(
-            stringResource(R.string.task_category_label), useUnmergedTree = true
+            stringResource(R.string.tag_name_label), useUnmergedTree = true
         ).onParent().performTextInput(query)
 
         composeTestRule.waitForIdle()
-        composeTestRule.waitUntilExactlyOneExists(hasText(categories[0].name))
-        composeTestRule.onNodeWithText(categories[0].name).assertIsDisplayed()
-        composeTestRule.onNodeWithText(categories[1].name).assertIsDisplayed()
-        composeTestRule.onNodeWithText(categories[2].name).assertIsDisplayed()
+        composeTestRule.waitUntilExactlyOneExists(hasText(tags[0].name))
+        composeTestRule.onNodeWithText(tags[0].name).assertIsDisplayed()
+        composeTestRule.onNodeWithText(tags[1].name).assertIsDisplayed()
+        composeTestRule.onNodeWithText(tags[2].name).assertIsDisplayed()
     }
 
     @Test
-    fun displaysErrorMessage_whenSearchCategoriesFails() {
+    fun displaysErrorMessage_whenSearchTagsFails() {
         var userMessage: UserMessage? = null
         val query = loremFaker.verbs.base()
-        val category = TaskCategory(name = faker.string.regexify("""$query \w+"""))
+        val tag = Tag(name = faker.string.regexify("""$query \w+"""))
         val clock = createClock()
         val db = FakeDatabase().apply {
             insertTask(genTask())
-            insertTaskCategory(category, emptySet())
+            insertTag(tag)
         }
         val taskRepository = FakeTaskRepository(db, clock)
-        val taskCategoryRepository = spyk(FakeTaskCategoryRepository(db))
-        every { taskCategoryRepository.search(any()) } returns flow {
+        val tagRepository = spyk(FakeTagRepository(db))
+        every { tagRepository.search(any(), any()) } returns flow {
             throw RuntimeException("Test")
         }
 
         val viewModel = TaskFormViewModel(
             createSavedStateHandleForEdit(),
             taskRepository,
-            taskCategoryRepository,
+            tagRepository,
             clock,
             createLocale(),
         )
@@ -798,19 +851,20 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = { userMessage = it },
                     initialName = "",
-                    onSelectCategoryType = {},
+                    onSelectTagType = {},
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
             }
         }
 
+        composeTestRule.onNodeWithText(stringResource(R.string.add_tag_button)).performClick()
         composeTestRule.onNodeWithText(
-            stringResource(R.string.task_category_label), useUnmergedTree = true
+            stringResource(R.string.tag_name_label), useUnmergedTree = true
         ).onParent().performTextInput(query)
 
         composeTestRule.waitUntil {
-            userMessage == UserMessage.String(R.string.search_task_category_options_error)
+            userMessage == UserMessage.String(R.string.search_tag_options_error)
         }
     }
 
@@ -829,7 +883,7 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     initialName = "",
-                    onSelectCategoryType = {},
+                    onSelectTagType = {},
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -863,11 +917,11 @@ class TaskFormScreenTest {
         val taskRepository = spyk(FakeTaskRepository(db, clock))
         coEvery { taskRepository.create(any()) } throws RuntimeException("Test")
 
-        val taskCategoryRepository = FakeTaskCategoryRepository(db)
+        val tagRepository = FakeTagRepository(db)
         val viewModel = TaskFormViewModel(
             SavedStateHandle(),
             taskRepository,
-            taskCategoryRepository,
+            tagRepository,
             clock,
             createLocale(),
         )
@@ -881,7 +935,7 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = { userMessage = it },
                     initialName = "",
-                    onSelectCategoryType = {},
+                    onSelectTagType = {},
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -918,7 +972,7 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     initialName = "",
-                    onSelectCategoryType = {},
+                    onSelectTagType = {},
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -938,7 +992,7 @@ class TaskFormScreenTest {
 
         composeTestRule.onNodeWithText(stringResource(R.string.name_label), useUnmergedTree = true)
             .onParent().performTextReplacement(name)
-        composeTestRule.onNodeWithContentDescription(stringResource(R.string.clear_button))
+        composeTestRule.onNodeWithContentDescription(stringResource(R.string.remove_button))
             .performClick()
         composeTestRule.onNodeWithText(stringResource(R.string.add_scheduled_at_button))
             .performClick()
@@ -961,11 +1015,11 @@ class TaskFormScreenTest {
         val taskRepository = spyk(FakeTaskRepository(db, clock))
         coEvery { taskRepository.update(any()) } throws RuntimeException("Test")
 
-        val taskCategoryRepository = FakeTaskCategoryRepository(db)
+        val tagRepository = FakeTagRepository(db)
         val viewModel = TaskFormViewModel(
             createSavedStateHandleForEdit(),
             taskRepository,
-            taskCategoryRepository,
+            tagRepository,
             clock,
             createLocale(),
         )
@@ -979,7 +1033,7 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = { userMessage = it },
                     initialName = "",
-                    onSelectCategoryType = {},
+                    onSelectTagType = {},
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -1018,7 +1072,7 @@ class TaskFormScreenTest {
         return TaskFormViewModel(
             SavedStateHandle(),
             FakeTaskRepository(db, clock),
-            FakeTaskCategoryRepository(db),
+            FakeTagRepository(db),
             clock,
             createLocale(),
         )
@@ -1032,7 +1086,7 @@ class TaskFormScreenTest {
         return TaskFormViewModel(
             createSavedStateHandleForEdit(),
             FakeTaskRepository(db, clock),
-            FakeTaskCategoryRepository(db),
+            FakeTagRepository(db),
             clock,
             createLocale(),
         )

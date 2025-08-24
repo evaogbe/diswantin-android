@@ -13,6 +13,7 @@ import io.github.evaogbe.diswantin.task.data.RecurrenceType
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskRecurrence
 import io.github.evaogbe.diswantin.testing.FakeDatabase
+import io.github.evaogbe.diswantin.testing.FakeTagRepository
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.MainDispatcherRule
 import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
@@ -23,6 +24,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.spyk
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collect
@@ -72,14 +74,21 @@ class TaskDetailViewModelTest {
             insertChain(parentId = task1.id, childId = task2.id)
         }
         val taskRepository = FakeTaskRepository(db, clock)
-        val viewModel = TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock, locale)
+        val tagRepository = FakeTagRepository(db)
+        val viewModel = TaskDetailViewModel(
+            createSavedStateHandle(),
+            taskRepository,
+            tagRepository,
+            clock,
+            locale,
+        )
 
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect()
         }
 
         assertThat(viewModel.childTaskPagingData.asSnapshot()).containsExactly(
-            TaskItemUiState(id = task2.id, name = task2.name, isDone = false)
+            TaskSummaryUiState(id = task2.id, name = task2.name, isDone = false)
         )
         assertThat(viewModel.uiState.value).isEqualTo(
             TaskDetailUiState.Success(
@@ -97,9 +106,8 @@ class TaskDetailViewModelTest {
                     locale = locale,
                 ),
                 isDone = false,
-                categoryId = null,
-                categoryName = null,
                 parent = null,
+                tags = persistentListOf(),
                 userMessage = null,
             )
         )
@@ -128,8 +136,14 @@ class TaskDetailViewModelTest {
             val taskRepository = spyk(FakeTaskRepository(db, clock))
             every { taskRepository.getTaskDetailById(any()) } returns flow { throw exception }
 
-            val viewModel =
-                TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock, createLocale())
+            val tagRepository = FakeTagRepository(db)
+            val viewModel = TaskDetailViewModel(
+                createSavedStateHandle(),
+                taskRepository,
+                tagRepository,
+                clock,
+                createLocale(),
+            )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -152,8 +166,42 @@ class TaskDetailViewModelTest {
                 throw exception
             }
 
-            val viewModel =
-                TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock, createLocale())
+            val tagRepository = FakeTagRepository(db)
+            val viewModel = TaskDetailViewModel(
+                createSavedStateHandle(),
+                taskRepository,
+                tagRepository,
+                clock,
+                createLocale(),
+            )
+
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect()
+            }
+
+            assertThat(viewModel.uiState.value).isEqualTo(TaskDetailUiState.Failure(exception))
+        }
+
+    @Test
+    fun `uiState emits failure when fetch tags throws`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val exception = RuntimeException("Test")
+            val task = genTask()
+            val clock = createClock()
+            val db = FakeDatabase().apply {
+                insertTask(task)
+            }
+            val taskRepository = FakeTaskRepository(db, clock)
+            val tagRepository = spyk(FakeTagRepository(db))
+            every { tagRepository.getTagsByTaskId(any()) } returns flow { throw exception }
+
+            val viewModel = TaskDetailViewModel(
+                createSavedStateHandle(),
+                taskRepository,
+                tagRepository,
+                clock,
+                createLocale(),
+            )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -171,8 +219,14 @@ class TaskDetailViewModelTest {
             insertTask(task)
         }
         val taskRepository = FakeTaskRepository(db, clock)
-        val viewModel =
-            TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock, createLocale())
+        val tagRepository = FakeTagRepository(db)
+        val viewModel = TaskDetailViewModel(
+            createSavedStateHandle(),
+            taskRepository,
+            tagRepository,
+            clock,
+            createLocale(),
+        )
 
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect()
@@ -188,9 +242,8 @@ class TaskDetailViewModelTest {
                 formattedScheduledAt = null,
                 recurrence = null,
                 isDone = false,
-                categoryId = null,
-                categoryName = null,
                 parent = null,
+                tags = persistentListOf(),
                 userMessage = null,
             )
         )
@@ -207,9 +260,8 @@ class TaskDetailViewModelTest {
                 formattedScheduledAt = null,
                 recurrence = null,
                 isDone = true,
-                categoryId = null,
-                categoryName = null,
                 parent = null,
+                tags = persistentListOf(),
                 userMessage = null,
             )
         )
@@ -226,9 +278,8 @@ class TaskDetailViewModelTest {
                 formattedScheduledAt = null,
                 recurrence = null,
                 isDone = false,
-                categoryId = null,
-                categoryName = null,
                 parent = null,
+                tags = persistentListOf(),
                 userMessage = null,
             )
         )
@@ -245,8 +296,14 @@ class TaskDetailViewModelTest {
             val taskRepository = spyk(FakeTaskRepository(db, clock))
             coEvery { taskRepository.markDone(any()) } throws RuntimeException("Test")
 
-            val viewModel =
-                TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock, createLocale())
+            val tagRepository = FakeTagRepository(db)
+            val viewModel = TaskDetailViewModel(
+                createSavedStateHandle(),
+                taskRepository,
+                tagRepository,
+                clock,
+                createLocale(),
+            )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -264,9 +321,8 @@ class TaskDetailViewModelTest {
                     formattedScheduledAt = null,
                     recurrence = null,
                     isDone = false,
-                    categoryId = null,
-                    categoryName = null,
                     parent = null,
+                    tags = persistentListOf(),
                     userMessage = UserMessage.String(R.string.task_detail_mark_done_error),
                 )
             )
@@ -285,8 +341,14 @@ class TaskDetailViewModelTest {
             taskRepository.markDone(task.id)
             coEvery { taskRepository.unmarkDone(any()) } throws RuntimeException("Test")
 
-            val viewModel =
-                TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock, createLocale())
+            val tagRepository = FakeTagRepository(db)
+            val viewModel = TaskDetailViewModel(
+                createSavedStateHandle(),
+                taskRepository,
+                tagRepository,
+                clock,
+                createLocale(),
+            )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -304,9 +366,8 @@ class TaskDetailViewModelTest {
                     formattedScheduledAt = null,
                     recurrence = null,
                     isDone = true,
-                    categoryId = null,
-                    categoryName = null,
                     parent = null,
+                    tags = persistentListOf(),
                     userMessage = UserMessage.String(R.string.task_detail_unmark_done_error),
                 )
             )
@@ -333,9 +394,8 @@ class TaskDetailViewModelTest {
                 formattedScheduledAt = null,
                 recurrence = null,
                 isDone = false,
-                categoryId = null,
-                categoryName = null,
                 parent = null,
+                tags = persistentListOf(),
                 userMessage = null,
             )
         )
@@ -356,8 +416,14 @@ class TaskDetailViewModelTest {
             val taskRepository = spyk(FakeTaskRepository(db, clock))
             coEvery { taskRepository.delete(any()) } throws RuntimeException("Test")
 
-            val viewModel =
-                TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock, createLocale())
+            val tagRepository = FakeTagRepository(db)
+            val viewModel = TaskDetailViewModel(
+                createSavedStateHandle(),
+                taskRepository,
+                tagRepository,
+                clock,
+                createLocale(),
+            )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -375,9 +441,8 @@ class TaskDetailViewModelTest {
                     formattedScheduledAt = null,
                     recurrence = null,
                     isDone = false,
-                    categoryId = null,
-                    categoryName = null,
                     parent = null,
+                    tags = persistentListOf(),
                     userMessage = UserMessage.String(R.string.task_detail_delete_error),
                 )
             )
@@ -404,7 +469,12 @@ class TaskDetailViewModelTest {
     private fun createTaskDetailViewModel(initDatabase: (FakeDatabase) -> Unit): TaskDetailViewModel {
         val clock = createClock()
         val db = FakeDatabase().also(initDatabase)
-        val taskRepository = FakeTaskRepository(db, clock)
-        return TaskDetailViewModel(createSavedStateHandle(), taskRepository, clock, createLocale())
+        return TaskDetailViewModel(
+            createSavedStateHandle(),
+            FakeTaskRepository(db, clock),
+            FakeTagRepository(db),
+            clock,
+            createLocale(),
+        )
     }
 }

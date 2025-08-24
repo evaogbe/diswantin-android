@@ -9,8 +9,8 @@ import androidx.paging.map
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.data.Result
-import io.github.evaogbe.diswantin.task.data.TaskCategory
-import io.github.evaogbe.diswantin.task.data.TaskCategoryRepository
+import io.github.evaogbe.diswantin.task.data.Tag
+import io.github.evaogbe.diswantin.task.data.TagRepository
 import io.github.evaogbe.diswantin.task.data.TaskRepository
 import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import kotlinx.coroutines.CancellationException
@@ -29,74 +29,74 @@ import java.time.ZonedDateTime
 import javax.inject.Inject
 
 @HiltViewModel
-class TaskCategoryDetailViewModel @Inject constructor(
+class TagDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    private val taskCategoryRepository: TaskCategoryRepository,
+    private val tagRepository: TagRepository,
     taskRepository: TaskRepository,
     clock: Clock,
 ) : ViewModel() {
-    private val categoryId = savedStateHandle.toRoute<TaskCategoryDetailRoute>().id
+    private val tagId = savedStateHandle.toRoute<TagDetailRoute>().id
 
     private val initialized = MutableStateFlow(false)
 
     private val userMessage = MutableStateFlow<UserMessage?>(null)
 
-    val taskItemPagingData = taskRepository.getTaskItemsByCategoryId(categoryId).map { pagingData ->
+    val taskSummaryPagingData = taskRepository.getTaskSummariesByTagId(tagId).map { pagingData ->
         val doneBefore = ZonedDateTime.now(clock).with(LocalTime.MIN).toInstant()
-        pagingData.map { TaskItemUiState.fromTaskItem(it, doneBefore) }
+        pagingData.map { TaskSummaryUiState.fromTaskSummary(it, doneBefore) }
     }.cachedIn(viewModelScope)
 
     val uiState = combine(
         initialized,
-        taskCategoryRepository.getById(categoryId).onEach {
+        tagRepository.getById(tagId).onEach {
             if (it != null) {
                 initialized.value = true
             }
-        }.map<TaskCategory?, Result<TaskCategory?>> {
+        }.map<Tag?, Result<Tag?>> {
             Result.Success(it)
         }.catch { e ->
-            Timber.e(e, "Failed to fetch task category by id: %d", categoryId)
+            Timber.e(e, "Failed to fetch tag by id: %d", tagId)
             emit(Result.Failure(e))
         },
         userMessage,
-    ) { initialized, categoryResult, userMessage ->
-        categoryResult.fold(
-            onSuccess = { category ->
+    ) { initialized, tagResult, userMessage ->
+        tagResult.fold(
+            onSuccess = { tag ->
                 when {
-                    category != null -> {
-                        TaskCategoryDetailUiState.Success(
-                            category = category,
+                    tag != null -> {
+                        TagDetailUiState.Success(
+                            tag = tag,
                             userMessage = userMessage,
                         )
                     }
 
-                    initialized -> TaskCategoryDetailUiState.Deleted
+                    initialized -> TagDetailUiState.Deleted
                     else -> {
-                        TaskCategoryDetailUiState.Failure(
-                            NullPointerException("Category with id $categoryId not found"),
+                        TagDetailUiState.Failure(
+                            NullPointerException("Tag with id $tagId not found"),
                         )
                     }
                 }
             },
-            onFailure = TaskCategoryDetailUiState::Failure,
+            onFailure = TagDetailUiState::Failure,
         )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000L),
-        initialValue = TaskCategoryDetailUiState.Pending,
+        initialValue = TagDetailUiState.Pending,
     )
 
-    fun deleteCategory() {
-        val category = (uiState.value as? TaskCategoryDetailUiState.Success)?.category ?: return
+    fun deleteTag() {
+        val tag = (uiState.value as? TagDetailUiState.Success)?.tag ?: return
 
         viewModelScope.launch {
             try {
-                taskCategoryRepository.delete(category)
+                tagRepository.delete(tag)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Timber.e(e, "Failed to delete task category: %s", category)
-                userMessage.value = UserMessage.String(R.string.task_category_detail_delete_error)
+                Timber.e(e, "Failed to delete tag: %s", tag)
+                userMessage.value = UserMessage.String(R.string.tag_detail_delete_error)
             }
         }
     }
