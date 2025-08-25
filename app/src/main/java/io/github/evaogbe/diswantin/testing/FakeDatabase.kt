@@ -64,17 +64,8 @@ class FakeDatabase {
         return newTag
     }
 
-    fun updateTag(tag: Tag, taskIdsToInsert: Set<Long>, taskIdsToRemove: Set<Long>) {
+    fun updateTag(tag: Tag) {
         _tagTable.update { it + (tag.id to tag) }
-        _taskTagTable.update { taskTagTable ->
-            val taskTagIdsToRemove =
-                taskTagTable.values.filter { it.tagId == tag.id && it.taskId in taskIdsToRemove }
-                    .map { it.id }
-            val taskTagsToInsert = taskIdsToInsert.map {
-                TaskTag(id = ++taskTagIdGen, taskId = it, tagId = tag.id)
-            }.associateBy { it.id }
-            taskTagTable - taskTagIdsToRemove + taskTagsToInsert
-        }
     }
 
     fun deleteTag(id: Long) {

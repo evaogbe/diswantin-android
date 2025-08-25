@@ -5,8 +5,6 @@ import io.github.evaogbe.diswantin.task.ui.CurrentTaskTopBarAction
 import io.github.evaogbe.diswantin.task.ui.CurrentTaskTopBarState
 import io.github.evaogbe.diswantin.task.ui.TagDetailTopBarAction
 import io.github.evaogbe.diswantin.task.ui.TagDetailTopBarState
-import io.github.evaogbe.diswantin.task.ui.TagFormTopBarAction
-import io.github.evaogbe.diswantin.task.ui.TagFormTopBarState
 import io.github.evaogbe.diswantin.task.ui.TaskDetailTopBarAction
 import io.github.evaogbe.diswantin.task.ui.TaskDetailTopBarState
 import io.github.evaogbe.diswantin.task.ui.TaskFormTopBarAction
@@ -40,12 +38,6 @@ sealed interface TopBarState : Parcelable {
     data class TagDetail(
         val uiState: TagDetailTopBarState,
         val action: TagDetailTopBarAction?,
-    ) : TopBarState
-
-    @Parcelize
-    data class TagForm(
-        val uiState: TagFormTopBarState,
-        val action: TagFormTopBarAction?,
     ) : TopBarState
 
     @Parcelize

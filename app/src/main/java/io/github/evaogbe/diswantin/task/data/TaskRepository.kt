@@ -12,11 +12,7 @@ interface TaskRepository {
 
     fun getTaskSummariesByTagId(tagId: Long): Flow<PagingData<TaskSummary>>
 
-    fun getTaggedTasksByTagId(tagId: Long): Flow<PagingData<TaggedTask>>
-
     fun search(query: String, size: Int): Flow<List<Task>>
-
-    fun searchTaggedTasks(query: String, tagId: Long?, size: Int): Flow<List<TaggedTask>>
 
     fun searchTaskSummaries(criteria: TaskSearchCriteria): Flow<PagingData<TaskSummary>>
 

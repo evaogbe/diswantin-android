@@ -92,15 +92,8 @@ class LocalTaskRepository @Inject constructor(
         }.flow.flowOn(ioDispatcher)
     }
 
-    override fun getTaggedTasksByTagId(tagId: Long) = Pager(PagingConfig(pageSize = 20)) {
-        taskDao.getTaggedTasksByTagId(tagId)
-    }.flow.flowOn(ioDispatcher)
-
     override fun search(query: String, size: Int) =
         taskDao.search(escapeSql("$query*"), size).flowOn(ioDispatcher)
-
-    override fun searchTaggedTasks(query: String, tagId: Long?, size: Int) =
-        taskDao.searchTaggedTasks(escapeSql("$query*"), tagId, size).flowOn(ioDispatcher)
 
     override fun searchTaskSummaries(criteria: TaskSearchCriteria) =
         Pager(PagingConfig(pageSize = 30)) {

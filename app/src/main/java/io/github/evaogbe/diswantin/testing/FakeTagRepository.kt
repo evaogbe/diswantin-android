@@ -43,15 +43,11 @@ class FakeTagRepository(private val db: FakeDatabase = FakeDatabase()) :
     }
 
     override suspend fun create(form: NewTagForm) {
-        db.insertTag(form.newTag, form.newTaskIds)
+        db.insertTag(form.newTag)
     }
 
     override suspend fun update(form: EditTagForm) {
-        db.updateTag(
-            tag = form.updatedTag,
-            taskIdsToInsert = form.taskIdsToInsert,
-            taskIdsToRemove = form.taskIdsToRemove,
-        )
+        db.updateTag(form.updatedTag)
     }
 
     override suspend fun delete(tag: Tag) {

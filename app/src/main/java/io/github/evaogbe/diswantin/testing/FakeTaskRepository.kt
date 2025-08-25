@@ -7,7 +7,6 @@ import io.github.evaogbe.diswantin.task.data.CurrentTaskParams
 import io.github.evaogbe.diswantin.task.data.EditTaskForm
 import io.github.evaogbe.diswantin.task.data.NewTaskForm
 import io.github.evaogbe.diswantin.task.data.PathUpdateType
-import io.github.evaogbe.diswantin.task.data.TaggedTask
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskCompletion
 import io.github.evaogbe.diswantin.task.data.TaskDetail
@@ -209,38 +208,9 @@ class FakeTaskRepository(
         )
     }
 
-    override fun getTaggedTasksByTagId(tagId: Long) =
-        combine(db.taskTable, db.taskTagTable) { tasks, taskTags ->
-            PagingData.from(
-                taskTags.values.filter { it.tagId == tagId }.mapNotNull { taskTag ->
-                    tasks[taskTag.taskId]?.let {
-                        TaggedTask(id = it.id, name = it.name, isTagged = true)
-                    }
-                }.sortedBy(TaggedTask::name),
-                LoadStates(
-                    refresh = LoadState.NotLoading(endOfPaginationReached = true),
-                    prepend = LoadState.NotLoading(endOfPaginationReached = true),
-                    append = LoadState.NotLoading(endOfPaginationReached = true),
-                ),
-            )
-        }
-
     override fun search(query: String, size: Int) = db.taskTable.map { tasks ->
         tasks.values.filter { it.name.contains(query, ignoreCase = true) }.take(size)
     }
-
-    override fun searchTaggedTasks(query: String, tagId: Long?, size: Int) =
-        combine(db.taskTable, db.taskTagTable) { tasks, taskTags ->
-            tasks.values.filter { it.name.contains(query, ignoreCase = true) }.map { task ->
-                TaggedTask(
-                    id = task.id,
-                    name = task.name,
-                    isTagged = tagId != null && taskTags.values.any {
-                        it.taskId == task.id && it.tagId == tagId
-                    },
-                )
-            }.take(size)
-        }
 
     override fun searchTaskSummaries(criteria: TaskSearchCriteria) = combine(
         db.taskTable,
