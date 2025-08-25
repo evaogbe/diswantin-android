@@ -33,12 +33,17 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TagFormSheet(initialName: String, onDismiss: () -> Unit, onSave: (String) -> Unit) {
+fun TagFormSheet(
+    initialName: String,
+    onDismiss: () -> Unit,
+    onSave: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val sheetState = rememberModalBottomSheetState()
     val coroutineScope = rememberCoroutineScope()
     var nameInput by rememberSaveable { mutableStateOf(initialName) }
 
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    ModalBottomSheet(onDismissRequest = onDismiss, modifier = modifier) {
         TagFormSheetLayout(
             isNew = initialName.isEmpty(),
             name = nameInput,
