@@ -9,7 +9,7 @@ import kotlinx.parcelize.Parcelize
 data class TagDetailTopBarState(val tagId: Long?) : Parcelable
 
 enum class TagDetailTopBarAction {
-    Delete
+    Edit, Delete
 }
 
 sealed interface TagDetailUiState {

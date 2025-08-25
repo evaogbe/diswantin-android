@@ -77,57 +77,6 @@ class TaskFormScreenTest {
     }
 
     @Test
-    fun displaysFormTypeButtonGroup_whenNew() {
-        val viewModel = createTaskFormViewModelForNew()
-
-        composeTestRule.setContent {
-            DiswantinTheme {
-                TaskFormScreen(
-                    onPopBackStack = {},
-                    setTopBarState = {},
-                    topBarAction = null,
-                    topBarActionHandled = {},
-                    setUserMessage = {},
-                    initialName = "",
-                    onSelectTagType = {},
-                    onEditRecurrence = {},
-                    taskFormViewModel = viewModel,
-                )
-            }
-        }
-
-        composeTestRule.onNodeWithText(stringResource(R.string.form_type_button_tag))
-            .assertIsDisplayed()
-    }
-
-    @Test
-    fun doesNotDisplayFormTypeButtonGroup_whenEdit() {
-        val task = genTask()
-        val viewModel = createTaskFormViewModelForEdit { db ->
-            db.insertTask(task)
-        }
-
-        composeTestRule.setContent {
-            DiswantinTheme {
-                TaskFormScreen(
-                    onPopBackStack = {},
-                    setTopBarState = {},
-                    topBarAction = null,
-                    topBarActionHandled = {},
-                    setUserMessage = {},
-                    initialName = "",
-                    onSelectTagType = {},
-                    onEditRecurrence = {},
-                    taskFormViewModel = viewModel,
-                )
-            }
-        }
-
-        composeTestRule.onNodeWithText(stringResource(R.string.form_type_button_tag))
-            .assertDoesNotExist()
-    }
-
-    @Test
     fun displaysErrorMessage_withFailureUi() {
         val viewModel = createTaskFormViewModelForEdit {}
 
@@ -140,7 +89,6 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     initialName = "",
-                    onSelectTagType = {},
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -164,7 +112,6 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     initialName = "",
-                    onSelectTagType = {},
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -204,7 +151,6 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     initialName = "",
-                    onSelectTagType = {},
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -247,7 +193,6 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     initialName = "",
-                    onSelectTagType = {},
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -294,7 +239,6 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     initialName = "",
-                    onSelectTagType = {},
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -341,7 +285,6 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     initialName = "",
-                    onSelectTagType = {},
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -383,7 +326,6 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     initialName = "",
-                    onSelectTagType = {},
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -427,7 +369,6 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     initialName = "",
-                    onSelectTagType = {},
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -476,7 +417,6 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     initialName = "",
-                    onSelectTagType = {},
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -517,7 +457,6 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     initialName = "",
-                    onSelectTagType = {},
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -558,7 +497,6 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = { userMessage = it },
                     initialName = "",
-                    onSelectTagType = {},
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -587,7 +525,6 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     initialName = "",
-                    onSelectTagType = {},
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -630,7 +567,6 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = { userMessage = it },
                     initialName = "",
-                    onSelectTagType = {},
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -661,7 +597,6 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     initialName = "",
-                    onSelectTagType = {},
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -715,7 +650,6 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     initialName = "",
-                    onSelectTagType = {},
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -763,7 +697,6 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = { userMessage = it },
                     initialName = "",
-                    onSelectTagType = {},
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -799,7 +732,6 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     initialName = "",
-                    onSelectTagType = {},
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -851,7 +783,6 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = { userMessage = it },
                     initialName = "",
-                    onSelectTagType = {},
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -883,7 +814,6 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     initialName = "",
-                    onSelectTagType = {},
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -935,7 +865,6 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = { userMessage = it },
                     initialName = "",
-                    onSelectTagType = {},
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -972,7 +901,6 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     initialName = "",
-                    onSelectTagType = {},
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -1033,7 +961,6 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = { userMessage = it },
                     initialName = "",
-                    onSelectTagType = {},
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )

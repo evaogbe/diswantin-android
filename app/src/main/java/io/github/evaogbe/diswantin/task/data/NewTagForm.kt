@@ -1,6 +1,6 @@
 package io.github.evaogbe.diswantin.task.data
 
-data class NewTagForm(private val name: String, val newTaskIds: Set<Long>) {
+data class NewTagForm(private val name: String) {
     init {
         require(name.isNotBlank()) { "Name must be present" }
     }

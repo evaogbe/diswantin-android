@@ -2,8 +2,6 @@ package io.github.evaogbe.diswantin.task.data
 
 data class EditTagForm(
     private val name: String,
-    val taskIdsToInsert: Set<Long>,
-    val taskIdsToRemove: Set<Long>,
     private val existingTag: Tag,
 ) {
     init {

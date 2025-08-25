@@ -5,7 +5,6 @@ import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
-import androidx.room.Transaction
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 
@@ -41,29 +40,9 @@ interface TagDao {
     @Insert
     suspend fun insert(tag: Tag): Long
 
-    @Insert
-    suspend fun insertTaskTags(taskTag: Collection<TaskTag>)
-
     @Update
     suspend fun update(tag: Tag)
 
     @Delete
     suspend fun delete(tag: Tag)
-
-    @Transaction
-    suspend fun insertWithTasks(tag: Tag, taskIds: Set<Long>): Long {
-        val id = insert(tag)
-        insertTaskTags(taskIds.map { TaskTag(taskId = it, tagId = id) })
-        return id
-    }
-
-    @Query("DELETE FROM task_tag WHERE tag_id == :tagId AND task_id in (:taskIds)")
-    suspend fun removeTagFromTasks(tagId: Long, taskIds: Set<Long>)
-
-    @Transaction
-    suspend fun updateWithTasks(tag: Tag, taskIdsToInsert: Set<Long>, taskIdsToRemove: Set<Long>) {
-        update(tag)
-        removeTagFromTasks(tag.id, taskIdsToRemove)
-        insertTaskTags(taskIdsToInsert.map { TaskTag(taskId = it, tagId = tag.id) })
-    }
 }

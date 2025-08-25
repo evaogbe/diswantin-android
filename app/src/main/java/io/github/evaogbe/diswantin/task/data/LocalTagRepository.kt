@@ -30,20 +30,13 @@ class LocalTagRepository @Inject constructor(
 
     override suspend fun create(form: NewTagForm) {
         withContext(ioDispatcher) {
-            tagDao.insertWithTasks(
-                tag = form.newTag,
-                taskIds = form.newTaskIds,
-            )
+            tagDao.insert(form.newTag)
         }
     }
 
     override suspend fun update(form: EditTagForm) {
         withContext(ioDispatcher) {
-            tagDao.updateWithTasks(
-                tag = form.updatedTag,
-                taskIdsToInsert = form.taskIdsToInsert,
-                taskIdsToRemove = form.taskIdsToRemove,
-            )
+            tagDao.update(form.updatedTag)
         }
     }
 

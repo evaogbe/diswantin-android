@@ -3,16 +3,24 @@ package io.github.evaogbe.diswantin.task.ui
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onParent
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import androidx.paging.LoadState
 import androidx.paging.LoadStates
 import androidx.paging.PagingData
+import assertk.assertThat
+import assertk.assertions.isFalse
+import assertk.assertions.isNotEmpty
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.Tag
 import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTagRepository
 import io.github.evaogbe.diswantin.testing.stringResource
+import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.serpro69.kfaker.lorem.LoremFaker
+import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.spyk
 import kotlinx.coroutines.flow.flowOf
@@ -39,8 +47,10 @@ class TagListScreenTest {
         composeTestRule.setContent {
             DiswantinTheme {
                 TagListScreen(
-                    onAddTag = {},
                     onSelectTag = {},
+                    setUserMessage = {},
+                    fabClicked = false,
+                    fabClickHandled = {},
                     tagListViewModel = viewModel,
                 )
             }
@@ -59,8 +69,10 @@ class TagListScreenTest {
         composeTestRule.setContent {
             DiswantinTheme {
                 TagListScreen(
-                    onAddTag = {},
                     onSelectTag = {},
+                    setUserMessage = {},
+                    fabClicked = false,
+                    fabClickHandled = {},
                     tagListViewModel = viewModel,
                 )
             }
@@ -88,8 +100,10 @@ class TagListScreenTest {
         composeTestRule.setContent {
             DiswantinTheme {
                 TagListScreen(
-                    onAddTag = {},
                     onSelectTag = {},
+                    setUserMessage = {},
+                    fabClicked = false,
+                    fabClickHandled = {},
                     tagListViewModel = viewModel,
                 )
             }
@@ -97,5 +111,63 @@ class TagListScreenTest {
 
         composeTestRule.onNodeWithText(stringResource(R.string.tag_list_fetch_error))
             .assertIsDisplayed()
+    }
+
+    @Test
+    fun handlesFab_whenTagSaved() {
+        var fabClicked = true
+        val name = loremFaker.lorem.words()
+        val tagRepository = FakeTagRepository()
+        val viewModel = TagListViewModel(tagRepository)
+
+        composeTestRule.setContent {
+            DiswantinTheme {
+                TagListScreen(
+                    onSelectTag = {},
+                    setUserMessage = {},
+                    fabClicked = fabClicked,
+                    fabClickHandled = { fabClicked = false },
+                    tagListViewModel = viewModel,
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(stringResource(R.string.name_label), useUnmergedTree = true)
+            .onParent().performTextInput(name)
+        composeTestRule.onNodeWithText(stringResource(R.string.save_button)).performClick()
+
+        assertThat(fabClicked).isFalse()
+        assertThat(tagRepository.tags).isNotEmpty()
+    }
+
+    @Test
+    fun displaysErrorMessage_withSaveError() {
+        var userMessage: UserMessage? = null
+        val name = loremFaker.lorem.words()
+        val tagRepository = spyk(FakeTagRepository())
+        coEvery { tagRepository.create(any()) } throws RuntimeException("Test")
+
+        val viewModel = TagListViewModel(tagRepository)
+
+        composeTestRule.setContent {
+            DiswantinTheme {
+                TagListScreen(
+                    onSelectTag = {},
+                    setUserMessage = { userMessage = it },
+                    fabClicked = true,
+                    fabClickHandled = {},
+                    tagListViewModel = viewModel,
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(stringResource(R.string.name_label), useUnmergedTree = true)
+            .onParent().performTextInput(name)
+        composeTestRule.onNodeWithText(stringResource(R.string.save_button)).performClick()
+
+        composeTestRule.waitForIdle()
+        composeTestRule.waitUntil {
+            userMessage == UserMessage.String(R.string.tag_form_save_error_new)
+        }
     }
 }

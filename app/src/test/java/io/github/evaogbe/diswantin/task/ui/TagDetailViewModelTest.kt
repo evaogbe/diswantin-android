@@ -6,7 +6,9 @@ import androidx.paging.testing.asSnapshot
 import assertk.assertThat
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
+import assertk.assertions.isEqualToIgnoringGivenProperties
 import assertk.assertions.isInstanceOf
+import assertk.assertions.isNotNull
 import assertk.assertions.prop
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.Tag
@@ -25,6 +27,7 @@ import io.mockk.mockkStatic
 import io.mockk.spyk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -123,6 +126,98 @@ class TagDetailViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TagDetailUiState.Failure(exception)
+            )
+        }
+
+    @Test
+    fun `saveTag updates tag`() = runTest(mainDispatcherRule.testDispatcher) {
+        val name = loremFaker.lorem.words()
+        val tag = genTag()
+        val clock = createClock()
+        val db = FakeDatabase().apply {
+            insertTag(tag = tag)
+        }
+        val taskRepository = FakeTaskRepository(db, clock)
+        val tagRepository = FakeTagRepository(db)
+        val viewModel = TagDetailViewModel(
+            createSavedStateHandle(),
+            tagRepository,
+            taskRepository,
+            clock,
+        )
+
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiState.collect()
+        }
+
+        assertThat(viewModel.uiState.value).isEqualTo(TagDetailUiState.Pending)
+
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value).isEqualTo(
+            TagDetailUiState.Success(
+                tag = tag,
+                userMessage = null,
+            )
+        )
+
+        viewModel.saveTag(name)
+        advanceUntilIdle()
+
+        val updatedTag = tagRepository.getById(tag.id).first()
+        assertThat(viewModel.uiState.value).isEqualTo(
+            TagDetailUiState.Success(
+                tag = tag.copy(name = name),
+                userMessage = null,
+            )
+        )
+        assertThat(updatedTag).isNotNull()
+            .isEqualToIgnoringGivenProperties(Tag(name = name), Tag::id)
+    }
+
+    @Test
+    fun `saveTag shows error message when repository throws`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val name = loremFaker.lorem.words()
+            val tag = genTag()
+            val clock = createClock()
+            val db = FakeDatabase().apply {
+                insertTag(tag = tag)
+            }
+            val taskRepository = FakeTaskRepository(db, clock)
+            val tagRepository = spyk(FakeTagRepository(db))
+            coEvery { tagRepository.update(any()) } throws RuntimeException("Test")
+
+            val viewModel = TagDetailViewModel(
+                createSavedStateHandle(),
+                tagRepository,
+                taskRepository,
+                clock,
+            )
+
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect()
+            }
+
+            assertThat(viewModel.uiState.value).isEqualTo(TagDetailUiState.Pending)
+
+            advanceUntilIdle()
+
+            assertThat(viewModel.uiState.value).isEqualTo(
+                TagDetailUiState.Success(
+                    tag = tag,
+                    userMessage = null,
+                )
+            )
+
+            viewModel.saveTag(name)
+            advanceUntilIdle()
+
+            assertThat(viewModel.uiState.value).isEqualTo(
+                TagDetailUiState.Success(
+                    tag = tag,
+                    userMessage = UserMessage.String(R.string.tag_form_save_error_edit),
+                )
             )
         }
 

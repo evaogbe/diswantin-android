@@ -361,15 +361,6 @@ interface TaskDao {
     ): PagingSource<Int, TaskSummary>
 
     @Query(
-        """SELECT t.id, t.name, TRUE AS is_tagged
-        FROM task t
-        JOIN task_tag tt ON tt.task_id = t.id
-        WHERE tt.tag_id = :tagId
-        ORDER BY t.name"""
-    )
-    fun getTaggedTasksByTagId(tagId: Long): PagingSource<Int, TaggedTask>
-
-    @Query(
         """SELECT DISTINCT task.*
         FROM task
         JOIN task_fts tf ON tf.name = task.name
@@ -377,16 +368,6 @@ interface TaskDao {
         LIMIT :size"""
     )
     fun search(query: String, size: Int): Flow<List<Task>>
-
-    @Query(
-        """SELECT DISTINCT t.id, t.name, tt.task_id IS NOT NULL AS is_tagged
-        FROM task t
-        JOIN task_fts tf ON tf.name = t.name
-        LEFT JOIN (SELECT task_id FROM task_tag WHERE tag_id = :tagId) tt ON tt.task_id = t.id
-        WHERE task_fts MATCH :query
-        LIMIT :size"""
-    )
-    fun searchTaggedTasks(query: String, tagId: Long?, size: Int): Flow<List<TaggedTask>>
 
     @Transaction
     @Query(

@@ -259,20 +259,18 @@ private fun SkipSheet(
         onDismissRequest = { onDismiss(DismissSkipSheetReason.ClickOutside) },
         sheetState = sheetState
     ) {
-        SkipSheetContent(
+        SkipSheetLayout(
             onDismiss = { reason ->
                 coroutineScope.launch { sheetState.hide() }.invokeOnCompletion {
                     onDismiss(reason)
                 }
-            })
+            },
+        )
     }
 }
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
-private fun SkipSheetContent(
-    onDismiss: (DismissSkipSheetReason) -> Unit
-) {
+private fun SkipSheetLayout(onDismiss: (DismissSkipSheetReason) -> Unit) {
     Column(
         modifier = Modifier.padding(SpaceMd),
     ) {
@@ -495,10 +493,10 @@ private fun CurrentTaskScreenPreview_Empty() {
 
 @DevicePreviews
 @Composable
-private fun SkipSheetContentPreview() {
+private fun SkipSheetLayoutPreview() {
     DiswantinTheme {
         Surface {
-            SkipSheetContent(onDismiss = {})
+            SkipSheetLayout(onDismiss = {})
         }
     }
 }

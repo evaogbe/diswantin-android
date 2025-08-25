@@ -32,6 +32,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -119,10 +120,16 @@ fun TagDetailScreen(
 ) {
     val taskPagingItems = tagDetailViewModel.taskSummaryPagingData.collectAsLazyPagingItems()
     val uiState by tagDetailViewModel.uiState.collectAsStateWithLifecycle()
+    var showBottomSheet by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(topBarAction) {
         when (topBarAction) {
             null -> {}
+            TagDetailTopBarAction.Edit -> {
+                showBottomSheet = true
+                topBarActionHandled()
+            }
+
             TagDetailTopBarAction.Delete -> {
                 tagDetailViewModel.deleteTag()
                 topBarActionHandled()
@@ -169,6 +176,14 @@ fun TagDetailScreen(
                         taskItems = taskPagingItems,
                         onSelectTask = onSelectTask,
                     )
+
+                    if (showBottomSheet) {
+                        TagFormSheet(
+                            initialName = state.tag.name,
+                            onDismiss = { showBottomSheet = false },
+                            onSave = tagDetailViewModel::saveTag,
+                        )
+                    }
                 }
             }
         }

@@ -34,13 +34,4 @@ data object TaskFormRoute {
 data class TagDetailRoute(val id: Long)
 
 @Serializable
-data class TagFormRoute(val id: Long? = null, val name: String? = null) {
-    companion object {
-        fun new(name: String?) = TagFormRoute(name = name)
-
-        fun edit(id: Long) = TagFormRoute(id = id)
-    }
-}
-
-@Serializable
 object TaskSearchRoute

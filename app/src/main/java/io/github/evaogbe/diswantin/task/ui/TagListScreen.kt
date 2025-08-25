@@ -27,6 +27,11 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -34,6 +39,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.LoadStates
 import androidx.paging.PagingData
@@ -46,6 +52,7 @@ import io.github.evaogbe.diswantin.ui.button.ButtonWithIcon
 import io.github.evaogbe.diswantin.ui.loadstate.LoadFailureLayout
 import io.github.evaogbe.diswantin.ui.loadstate.PendingLayout
 import io.github.evaogbe.diswantin.ui.loadstate.pagedListFooter
+import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.evaogbe.diswantin.ui.theme.IconSizeLg
 import io.github.evaogbe.diswantin.ui.theme.ScreenLg
@@ -73,11 +80,15 @@ fun TagListTopBar(onSearch: () -> Unit, modifier: Modifier = Modifier) {
 
 @Composable
 fun TagListScreen(
-    onAddTag: () -> Unit,
     onSelectTag: (Long) -> Unit,
+    setUserMessage: (UserMessage) -> Unit,
+    fabClicked: Boolean,
+    fabClickHandled: () -> Unit,
     tagListViewModel: TagListViewModel = hiltViewModel(),
 ) {
     val tagPagingItems = tagListViewModel.tagPagingData.collectAsLazyPagingItems()
+    val userMessage by tagListViewModel.userMessage.collectAsStateWithLifecycle()
+    var showBottomSheet by rememberSaveable(fabClicked) { mutableStateOf(fabClicked) }
 
     when (tagPagingItems.loadState.refresh) {
         is LoadState.Loading -> PendingLayout()
@@ -89,13 +100,31 @@ fun TagListScreen(
         }
 
         is LoadState.NotLoading -> {
+            LaunchedEffect(userMessage) {
+                userMessage?.let {
+                    setUserMessage(it)
+                    tagListViewModel.userMessageShown()
+                }
+            }
+
             if (tagPagingItems.itemCount > 0) {
                 TagListLayout(
                     tagItems = tagPagingItems,
                     onSelectTag = { onSelectTag(it.id) },
                 )
             } else {
-                EmptyTagListLayout(onAddTag = onAddTag)
+                EmptyTagListLayout(onAddTag = { showBottomSheet = true })
+            }
+
+            if (showBottomSheet) {
+                TagFormSheet(
+                    initialName = "",
+                    onDismiss = {
+                        showBottomSheet = false
+                        fabClickHandled()
+                    },
+                    onSave = tagListViewModel::saveTag,
+                )
             }
         }
     }

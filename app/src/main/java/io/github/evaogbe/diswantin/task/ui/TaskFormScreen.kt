@@ -125,7 +125,6 @@ fun TaskFormScreen(
     topBarActionHandled: () -> Unit,
     setUserMessage: (UserMessage) -> Unit,
     initialName: String,
-    onSelectTagType: (String) -> Unit,
     onEditRecurrence: () -> Unit,
     taskFormViewModel: TaskFormViewModel = hiltViewModel(),
 ) {
@@ -214,13 +213,11 @@ fun TaskFormScreen(
             }
 
             TaskFormLayout(
-                isNew = taskFormViewModel.isNew,
                 uiState = state,
                 name = nameInput,
                 onNameChange = { nameInput = it },
                 note = noteInput,
                 onNoteChange = { noteInput = it },
-                onSelectTagType = onSelectTagType,
                 onDeadlineDateChange = taskFormViewModel::updateDeadlineDate,
                 onDeadlineTimeChange = taskFormViewModel::updateDeadlineTime,
                 onStartAfterDateChange = taskFormViewModel::updateStartAfterDate,
@@ -256,13 +253,11 @@ enum class FieldDialogType {
 
 @Composable
 fun TaskFormLayout(
-    isNew: Boolean,
     uiState: TaskFormUiState.Success,
     name: String,
     onNameChange: (String) -> Unit,
     note: String,
     onNoteChange: (String) -> Unit,
-    onSelectTagType: (String) -> Unit,
     onDeadlineDateChange: (LocalDate?) -> Unit,
     onDeadlineTimeChange: (LocalTime?) -> Unit,
     onStartAfterDateChange: (LocalDate?) -> Unit,
@@ -299,17 +294,6 @@ fun TaskFormLayout(
                     capitalization = KeyboardCapitalization.Sentences,
                 ),
             )
-
-            if (isNew) {
-                FormTypeButtonGroup(
-                    selectedIndex = 0,
-                    onSelect = {
-                        if (it == 1) {
-                            onSelectTagType(name)
-                        }
-                    },
-                )
-            }
 
             OutlinedTextField(
                 value = note,
@@ -724,7 +708,6 @@ private fun TaskFormScreenPreview_New() {
             )
         }) { innerPadding ->
             TaskFormLayout(
-                isNew = true,
                 uiState = TaskFormUiState.Success(
                     name = name,
                     note = note,
@@ -748,7 +731,6 @@ private fun TaskFormScreenPreview_New() {
                 onNameChange = {},
                 note = note,
                 onNoteChange = {},
-                onSelectTagType = {},
                 onDeadlineDateChange = {},
                 onDeadlineTimeChange = {},
                 onStartAfterDateChange = {},
@@ -784,7 +766,6 @@ private fun TaskFormScreenPreview_Edit() {
             )
         }) { innerPadding ->
             TaskFormLayout(
-                isNew = false,
                 uiState = TaskFormUiState.Success(
                     name = name,
                     note = note,
@@ -819,7 +800,6 @@ private fun TaskFormScreenPreview_Edit() {
                 onNameChange = {},
                 note = note,
                 onNoteChange = {},
-                onSelectTagType = {},
                 onDeadlineDateChange = {},
                 onDeadlineTimeChange = {},
                 onStartAfterDateChange = {},
@@ -849,7 +829,6 @@ private fun TaskFormLayoutPreview_ScheduledAt() {
     DiswantinTheme {
         Surface {
             TaskFormLayout(
-                isNew = true,
                 uiState = TaskFormUiState.Success(
                     name = name,
                     note = note,
@@ -873,7 +852,6 @@ private fun TaskFormLayoutPreview_ScheduledAt() {
                 onNameChange = {},
                 note = note,
                 onNoteChange = {},
-                onSelectTagType = {},
                 onDeadlineDateChange = {},
                 onDeadlineTimeChange = {},
                 onStartAfterDateChange = {},
@@ -902,7 +880,6 @@ private fun TaskFormLayoutPreview_ScheduledDate() {
     DiswantinTheme {
         Surface {
             TaskFormLayout(
-                isNew = false,
                 uiState = TaskFormUiState.Success(
                     name = name,
                     note = note,
@@ -926,7 +903,6 @@ private fun TaskFormLayoutPreview_ScheduledDate() {
                 onNameChange = {},
                 note = note,
                 onNoteChange = {},
-                onSelectTagType = {},
                 onDeadlineDateChange = {},
                 onDeadlineTimeChange = {},
                 onStartAfterDateChange = {},
@@ -956,7 +932,6 @@ private fun TaskFormLayoutPreview_EditingTag() {
     DiswantinTheme {
         Surface {
             TaskFormLayout(
-                isNew = false,
                 uiState = TaskFormUiState.Success(
                     name = name,
                     note = note,
@@ -980,7 +955,6 @@ private fun TaskFormLayoutPreview_EditingTag() {
                 onNameChange = {},
                 note = note,
                 onNoteChange = {},
-                onSelectTagType = {},
                 onDeadlineDateChange = {},
                 onDeadlineTimeChange = {},
                 onStartAfterDateChange = {},

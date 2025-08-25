@@ -37,8 +37,6 @@
     <string name="done_button">Done</string>
     <string name="done_chip_label_unselected">Marked done</string>
     <string name="done_chip_label_selected">Done: %1$s-%2$s</string>
-    <string name="form_type_button_tag">Tag</string>
-    <string name="form_type_button_task">Task</string>
     <string name="mark_done_button">Mark done</string>
     <string name="more_actions_button">More actions</string>
     <string name="name_label">Name</string>
@@ -162,8 +160,6 @@
     <string name="tag_detail_delete_error">Something went wrong deleting the tag</string>
     <string name="tag_detail_fetch_error">Something went wrong loading the tag</string>
     <string name="tag_detail_fetch_tasks_error">Something went wrong loading the to-dos</string>
-    <string name="tag_form_fetch_error">Something went wrong loading the tag</string>
-    <string name="tag_form_fetch_tasks_error">Something went wrong loading the to-dos</string>
     <string name="tag_form_save_error_edit">Something went wrong editing the tag</string>
     <string name="tag_form_save_error_new">Something went wrong adding the tag</string>
     <string name="tag_form_title_edit">Edit Tag</string>
@@ -186,7 +182,6 @@
     <string name="task_form_save_error_new">Something went wrong adding the to-do</string>
     <string name="task_form_title_edit">Edit To-do</string>
     <string name="task_form_title_new">New To-do</string>
-    <string name="task_name_label">To-do name</string>
     <string name="task_recurrence_form_title">Repetition</string>
     <string name="task_search_empty">No matching to-dos</string>
     <string name="task_search_error">Something went wrong searching for to-dos</string>
