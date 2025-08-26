@@ -537,7 +537,7 @@ fun TaskFormLayout(
 
                         TagList(tags = uiState.tags, onRemoveTag = onRemoveTag)
 
-                        if (uiState.tags.size < 20) {
+                        if (uiState.tags.size < Task.MAX_TAGS) {
                             TextButtonWithIcon(
                                 onClick = startEditTag,
                                 painter = painterResource(R.drawable.baseline_add_24),

@@ -33,9 +33,9 @@ class FakeTagRepository(private val db: FakeDatabase = FakeDatabase()) :
 
     override fun getById(id: Long) = db.tagTable.map { it[id] }
 
-    override fun getTagsByTaskId(taskId: Long) =
+    override fun getTagsByTaskId(taskId: Long, size: Int) =
         combine(db.tagTable, db.taskTagTable) { tags, taskTags ->
-            taskTags.values.filter { it.taskId == taskId }.mapNotNull { tags[it.tagId] }
+            taskTags.values.filter { it.taskId == taskId }.mapNotNull { tags[it.tagId] }.take(size)
         }
 
     override fun search(query: String, size: Int) = db.tagTable.map { tags ->

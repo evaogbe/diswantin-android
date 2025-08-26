@@ -537,7 +537,7 @@ class TaskFormScreenTest {
         }
         val taskRepository = FakeTaskRepository(db, clock)
         val tagRepository = spyk(FakeTagRepository(db))
-        every { tagRepository.getTagsByTaskId(any()) } returns flow {
+        every { tagRepository.getTagsByTaskId(any(), any()) } returns flow {
             throw RuntimeException("Test")
         }
 
@@ -570,8 +570,8 @@ class TaskFormScreenTest {
     }
 
     @Test
-    fun hidesAddTagButton_when20TagsAdded() {
-        val tags = List(20) {
+    fun hidesAddTagButton_when10TagsAdded() {
+        val tags = List(10) {
             Tag(id = it + 1L, name = loremFaker.lorem.unique.words())
         }
         val viewModel = createTaskFormViewModelForNew { db ->

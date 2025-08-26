@@ -19,4 +19,8 @@ data class Task(
     @ColumnInfo("scheduled_date") val scheduledDate: LocalDate? = null,
     @ColumnInfo("scheduled_time") val scheduledTime: LocalTime? = null,
     @ColumnInfo(defaultValue = "") val note: String = "",
-)
+) {
+    companion object {
+        const val MAX_TAGS = 10
+    }
+}
