@@ -5,8 +5,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.ModalBottomSheet
@@ -16,11 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -41,16 +39,15 @@ fun TagFormSheet(
 ) {
     val sheetState = rememberModalBottomSheetState()
     val coroutineScope = rememberCoroutineScope()
-    var nameInput by rememberSaveable { mutableStateOf(initialName) }
+    val nameInput = rememberTextFieldState(initialText = initialName)
 
     ModalBottomSheet(onDismissRequest = onDismiss, modifier = modifier) {
         TagFormSheetLayout(
             isNew = initialName.isEmpty(),
             name = nameInput,
-            onNameChange = { nameInput = it },
             onSave = {
                 coroutineScope.launch { sheetState.hide() }.invokeOnCompletion {
-                    onSave(nameInput)
+                    onSave(nameInput.text.toString())
                     onDismiss()
                 }
             },
@@ -61,8 +58,7 @@ fun TagFormSheet(
 @Composable
 fun TagFormSheetLayout(
     isNew: Boolean,
-    name: String,
-    onNameChange: (String) -> Unit,
+    name: TextFieldState,
     onSave: () -> Unit,
 ) {
     Column(
@@ -78,19 +74,21 @@ fun TagFormSheetLayout(
         )
         Spacer(Modifier.size(SpaceMd))
         OutlinedTextField(
-            value = name,
-            onValueChange = onNameChange,
+            state = name,
             modifier = Modifier.fillMaxWidth(),
             label = { Text(stringResource(R.string.name_label)) },
             keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions(onDone = { onSave() }),
-            singleLine = true,
+            onKeyboardAction = { performDefaultAction ->
+                onSave()
+                performDefaultAction()
+            },
+            lineLimits = TextFieldLineLimits.SingleLine,
         )
         Spacer(Modifier.size(SpaceMd))
         TextButton(
             onClick = onSave,
             modifier = Modifier.align(Alignment.End),
-            enabled = name.isNotBlank(),
+            enabled = name.text.isNotBlank(),
         ) {
             Text(stringResource(R.string.save_button))
         }
@@ -104,8 +102,7 @@ private fun TagFormSheetLayoutPreview_New() {
         Surface {
             TagFormSheetLayout(
                 isNew = true,
-                name = "",
-                onNameChange = {},
+                name = TextFieldState(),
                 onSave = {},
             )
         }
@@ -119,8 +116,7 @@ private fun TagFormSheetLayoutPreview_Edit() {
         Surface {
             TagFormSheetLayout(
                 isNew = false,
-                name = "morning routine",
-                onNameChange = {},
+                name = TextFieldState(initialText = "morning routine"),
                 onSave = {},
             )
         }

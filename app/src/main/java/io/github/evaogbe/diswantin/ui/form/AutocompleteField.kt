@@ -1,16 +1,18 @@
 package io.github.evaogbe.diswantin.ui.form
 
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldLabelScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -22,9 +24,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import kotlinx.collections.immutable.ImmutableList
@@ -38,9 +38,8 @@ import kotlin.time.Duration.Companion.milliseconds
 @OptIn(FlowPreview::class)
 @Composable
 fun <T : Any> AutocompleteField(
-    query: String,
-    onQueryChange: (String) -> Unit,
-    label: @Composable () -> Unit,
+    query: TextFieldState,
+    label: @Composable TextFieldLabelScope.() -> Unit,
     onSearch: (String) -> Unit,
     options: ImmutableList<T>,
     formatOption: (T) -> String,
@@ -48,34 +47,21 @@ fun <T : Any> AutocompleteField(
     autoFocus: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    var textFieldValue by remember {
-        mutableStateOf(TextFieldValue(text = query, selection = TextRange(query.length)))
-    }
     var expanded by remember(options) { mutableStateOf(options.isNotEmpty()) }
     val focusRequester = remember { FocusRequester() }
-    val currentQuery by rememberUpdatedState(query)
-
-    LaunchedEffect(query) {
-        textFieldValue = textFieldValue.copy(text = query)
-    }
+    val currentQuery by rememberUpdatedState(query.text)
 
     LaunchedEffect(onSearch) {
-        snapshotFlow { currentQuery }
-            .debounce(150.milliseconds)
-            .distinctUntilChanged()
+        snapshotFlow { currentQuery }.debounce(150.milliseconds).distinctUntilChanged()
             .collectLatest {
-                onSearch(it)
+                onSearch(it.toString())
             }
     }
 
     AutocompleteField(
         expanded = expanded,
         onExpandedChange = { expanded = it },
-        query = textFieldValue,
-        onQueryChange = {
-            textFieldValue = it
-            onQueryChange(it.text)
-        },
+        query = query,
         focusRequester = focusRequester,
         label = label,
         onSearch = onSearch,
@@ -97,10 +83,9 @@ fun <T : Any> AutocompleteField(
 fun <T : Any> AutocompleteField(
     expanded: Boolean,
     onExpandedChange: (Boolean) -> Unit,
-    query: TextFieldValue,
-    onQueryChange: (TextFieldValue) -> Unit,
+    query: TextFieldState,
     focusRequester: FocusRequester,
-    label: @Composable () -> Unit,
+    label: @Composable TextFieldLabelScope.() -> Unit,
     onSearch: (String) -> Unit,
     options: ImmutableList<T>,
     formatOption: (T) -> String,
@@ -113,31 +98,34 @@ fun <T : Any> AutocompleteField(
         modifier = modifier,
     ) {
         OutlinedTextField(
-            value = query,
-            onValueChange = onQueryChange,
+            state = query,
             modifier = Modifier
                 .focusRequester(focusRequester)
                 .fillMaxWidth()
-                .menuAnchor(MenuAnchorType.PrimaryEditable),
+                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable),
             label = label,
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
-            keyboardActions = KeyboardActions(onSearch = { onSearch(query.text) }),
-            singleLine = true,
+            onKeyboardAction = { performDefaultAction ->
+                onSearch(query.text.toString())
+                performDefaultAction()
+            },
+            lineLimits = TextFieldLineLimits.SingleLine,
             colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
         )
 
         if (options.isNotEmpty()) {
             ExposedDropdownMenu(
                 expanded = expanded,
-                onDismissRequest = { onExpandedChange(false) }) {
+                onDismissRequest = { onExpandedChange(false) },
+            ) {
                 options.forEach { option ->
                     DropdownMenuItem(
                         text = { Text(text = formatOption(option)) },
                         onClick = {
                             onSelectOption(option)
                             onExpandedChange(false)
-                        }
+                        },
                     )
                 }
             }
@@ -155,14 +143,13 @@ private fun AutocompleteFieldPreview() {
             AutocompleteField(
                 expanded = true,
                 onExpandedChange = {},
-                query = TextFieldValue("Br"),
-                onQueryChange = {},
+                query = TextFieldState(initialText = "Br"),
                 focusRequester = focusRequester,
                 label = { Text(text = "Task before") },
                 onSearch = {},
                 options = persistentListOf("Brush teeth", "Brush hair", "Eat breakfast"),
                 formatOption = { it },
-                onSelectOption = {}
+                onSelectOption = {},
             )
         }
     }

@@ -12,9 +12,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -70,7 +67,7 @@ fun TagListTopBar(onSearch: () -> Unit, modifier: Modifier = Modifier) {
         actions = {
             IconButton(onClick = onSearch) {
                 Icon(
-                    imageVector = Icons.Default.Search,
+                    painterResource(R.drawable.outline_search_24),
                     contentDescription = stringResource(R.string.search_tasks_button),
                 )
             }
@@ -195,7 +192,7 @@ fun EmptyTagListLayout(onAddTag: () -> Unit, modifier: Modifier = Modifier) {
             Spacer(Modifier.size(SpaceLg))
             ButtonWithIcon(
                 onClick = onAddTag,
-                imageVector = Icons.Default.Add,
+                painter = painterResource(R.drawable.baseline_add_24),
                 text = stringResource(R.string.add_tag_button),
             )
         }

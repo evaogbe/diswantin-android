@@ -30,8 +30,8 @@ sealed interface TaskFormUiState {
     data class Failure(val exception: Throwable) : TaskFormUiState
 
     data class Success(
-        val name: String,
-        val note: String,
+        val initialName: String,
+        val initialNote: String,
         val recurrence: TaskRecurrenceUiState?,
         val deadlineDate: LocalDate?,
         val deadlineTime: LocalTime?,

@@ -5,9 +5,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.foundation.text.input.clearText
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -84,7 +83,7 @@ fun DiswantinApp() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
-    var query by rememberSaveable { mutableStateOf("") }
+    val query = rememberTextFieldState()
     var topBarState by rememberSaveable {
         mutableStateOf<TopBarState>(
             TopBarState.CurrentTask(
@@ -125,7 +124,7 @@ fun DiswantinApp() {
                     CurrentTaskTopBar(
                         uiState = state.uiState,
                         onSearch = {
-                            query = ""
+                            query.clearText()
                             navController.navigate(route = TaskSearchRoute)
                         },
                         onRefresh = {
@@ -140,7 +139,7 @@ fun DiswantinApp() {
                 is TopBarState.Advice -> {
                     AdviceTopBar(
                         onSearch = {
-                            query = ""
+                            query.clearText()
                             navController.navigate(route = TaskSearchRoute)
                         },
                     )
@@ -149,7 +148,7 @@ fun DiswantinApp() {
                 is TopBarState.TagList -> {
                     TagListTopBar(
                         onSearch = {
-                            query = ""
+                            query.clearText()
                             navController.navigate(route = TaskSearchRoute)
                         },
                     )
@@ -214,7 +213,6 @@ fun DiswantinApp() {
                 is TopBarState.TaskSearch -> {
                     TaskSearchTopBar(
                         query = query,
-                        onQueryChange = { query = it },
                         onBackClick = navController::popBackStack,
                         onSearch = {
                             topBarState = state.copy(action = TaskSearchTopBarAction.Search)
@@ -378,7 +376,7 @@ fun DiswantinApp() {
                 }
 
                 TaskSearchScreen(
-                    query = query,
+                    query = query.text.toString(),
                     topBarAction = (topBarState as? TopBarState.TaskSearch)?.action,
                     topBarActionHandled = {
                         (topBarState as? TopBarState.TaskSearch)?.copy(action = null)?.let {
@@ -411,7 +409,6 @@ fun DiswantinApp() {
                             }
                         },
                         setUserMessage = { userMessage = it },
-                        initialName = backStackEntry.toRoute<TaskFormRoute.Main>().name.orEmpty(),
                         onEditRecurrence = {
                             navController.navigate(route = TaskFormRoute.Recurrence)
                         },
@@ -470,7 +467,7 @@ fun DiswantinBottomBar(
 fun DiswantinFab(onClick: () -> Unit, modifier: Modifier = Modifier) {
     FloatingActionButton(onClick = onClick, modifier = modifier) {
         Icon(
-            imageVector = Icons.Default.Add,
+            painterResource(R.drawable.baseline_add_24),
             contentDescription = stringResource(R.string.add_button),
         )
     }
@@ -488,7 +485,7 @@ private fun DiswantinScaffoldPreview() {
                     actions = {
                         IconButton(onClick = {}) {
                             Icon(
-                                imageVector = Icons.Default.Search,
+                                painterResource(R.drawable.outline_search_24),
                                 contentDescription = stringResource(R.string.search_tasks_button),
                             )
                         }

@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme.colorScheme
@@ -55,7 +53,7 @@ fun LoadFailureLayout(
                 Text(
                     text = message,
                     textAlign = TextAlign.Center,
-                    style = typography.headlineLarge
+                    style = typography.headlineLarge,
                 )
             }
 
@@ -63,7 +61,7 @@ fun LoadFailureLayout(
                 Spacer(Modifier.size(SpaceLg))
                 OutlinedButtonWithIcon(
                     onClick = onRetry,
-                    imageVector = Icons.Default.Refresh,
+                    painter = painterResource(R.drawable.outline_refresh_24),
                     text = stringResource(R.string.retry_button),
                     colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = colorScheme.error,

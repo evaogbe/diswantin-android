@@ -60,7 +60,11 @@ class TaskFormViewModel @Inject constructor(
 
     val isNew = taskId == null
 
-    private val name = MutableStateFlow(route.name.orEmpty())
+    private val initialName = MutableStateFlow(route.name.orEmpty())
+
+    private val initialNote = MutableStateFlow("")
+
+    private val name = MutableStateFlow("")
 
     private val note = MutableStateFlow("")
 
@@ -136,6 +140,8 @@ class TaskFormViewModel @Inject constructor(
     @OptIn(ExperimentalCoroutinesApi::class)
     @Suppress("UNCHECKED_CAST")
     val uiState = combine(
+        initialName,
+        initialNote,
         name,
         note,
         recurrenceUiState,
@@ -178,29 +184,31 @@ class TaskFormViewModel @Inject constructor(
         existingTagsStream,
         existingParentTaskStream,
     ) { args ->
-        val name = args[0] as String
-        val note = args[1] as String
-        val recurrenceUiState = args[2] as TaskRecurrenceUiState?
-        val deadlineDate = args[3] as LocalDate?
-        val deadlineTime = args[4] as LocalTime?
-        val startAfterDate = args[5] as LocalDate?
-        val startAfterTime = args[6] as LocalTime?
-        val scheduledDate = args[7] as LocalDate?
-        val scheduledTime = args[8] as LocalTime?
-        val taskCountResult = args[9] as Result<Long>
-        val parentTask = args[10] as Task?
-        val parentTaskQuery = (args[11] as String).trim()
-        val parentTaskOptions = args[12] as List<Task>
-        val tagFieldState = args[13] as TagFieldState
-        val tags = args[14] as ImmutableList<Tag>
-        val tagQuery = (args[15] as String).trim()
-        val tagOptions = args[16] as List<Tag>
-        val isSaved = args[17] as Boolean
-        val userMessage = args[18] as UserMessage?
-        val existingTaskResult = args[19] as Result<Task?>
-        val existingRecurrencesResult = args[20] as Result<List<TaskRecurrence>>
-        val existingTagsResult = args[21] as Result<List<Tag>>
-        val existingParentTaskResult = args[22] as Result<Task?>
+        val initialName = args[0] as String
+        val initialNote = args[1] as String
+        val name = args[2] as String
+        val note = args[3] as String
+        val recurrenceUiState = args[4] as TaskRecurrenceUiState?
+        val deadlineDate = args[5] as LocalDate?
+        val deadlineTime = args[6] as LocalTime?
+        val startAfterDate = args[7] as LocalDate?
+        val startAfterTime = args[8] as LocalTime?
+        val scheduledDate = args[9] as LocalDate?
+        val scheduledTime = args[10] as LocalTime?
+        val taskCountResult = args[11] as Result<Long>
+        val parentTask = args[12] as Task?
+        val parentTaskQuery = (args[13] as String).trim()
+        val parentTaskOptions = args[14] as List<Task>
+        val tagFieldState = args[15] as TagFieldState
+        val tags = args[16] as ImmutableList<Tag>
+        val tagQuery = (args[17] as String).trim()
+        val tagOptions = args[18] as List<Tag>
+        val isSaved = args[19] as Boolean
+        val userMessage = args[20] as UserMessage?
+        val existingTaskResult = args[21] as Result<Task?>
+        val existingRecurrencesResult = args[22] as Result<List<TaskRecurrence>>
+        val existingTagsResult = args[23] as Result<List<Tag>>
+        val existingParentTaskResult = args[24] as Result<Task?>
 
         if (isSaved) {
             TaskFormUiState.Saved
@@ -222,8 +230,8 @@ class TaskFormViewModel @Inject constructor(
                     val existingRecurrenceUiState =
                         TaskRecurrenceUiState.tryFromEntities(existingRecurrences, locale)
                     TaskFormUiState.Success(
-                        name = name,
-                        note = note,
+                        initialName = initialName,
+                        initialNote = initialNote,
                         recurrence = recurrenceUiState,
                         deadlineDate = deadlineDate,
                         deadlineTime = deadlineTime,
@@ -304,6 +312,8 @@ class TaskFormViewModel @Inject constructor(
         }.launchIn(viewModelScope)
         viewModelScope.launch {
             val existingTask = existingTaskStream.first().getOrNull() ?: return@launch
+            initialName.value = existingTask.name
+            initialNote.value = existingTask.note
             name.value = existingTask.name
             note.value = existingTask.note
             deadlineDate.value = existingTask.deadlineDate
@@ -358,6 +368,9 @@ class TaskFormViewModel @Inject constructor(
 
     fun updateParentTask(value: Task?) {
         parentTask.value = value
+        if (value == null) {
+            parentTaskQuery.value = ""
+        }
     }
 
     fun startEditTag() {
@@ -401,7 +414,7 @@ class TaskFormViewModel @Inject constructor(
 
     fun saveTask() {
         val state = (uiState.value as? TaskFormUiState.Success) ?: return
-        if (state.name.isBlank()) return
+        if (name.value.isBlank()) return
         val nonRecurringHasScheduledTime =
             state.scheduledDate == null && state.scheduledTime != null && state.recurrence == null
         val scheduledDate = if (nonRecurringHasScheduledTime) {
@@ -439,8 +452,8 @@ class TaskFormViewModel @Inject constructor(
 
         if (taskId == null) {
             val form = NewTaskForm(
-                name = state.name,
-                note = state.note,
+                name = name.value,
+                note = note.value,
                 deadlineDate = state.deadlineDate,
                 deadlineTime = state.deadlineTime,
                 startAfterDate = state.startAfterDate,
@@ -485,8 +498,8 @@ class TaskFormViewModel @Inject constructor(
                     }
                     taskRepository.update(
                         EditTaskForm(
-                            name = state.name,
-                            note = state.note,
+                            name = name.value,
+                            note = note.value,
                             deadlineDate = state.deadlineDate,
                             deadlineTime = state.deadlineTime,
                             startAfterDate = state.startAfterDate,

@@ -1,58 +1,44 @@
 package io.github.evaogbe.diswantin.ui.form
 
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.foundation.text.input.KeyboardActionHandler
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldColors
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.TextFieldLabelScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.text.TextRange
-import androidx.compose.ui.text.input.TextFieldValue
 
 @Composable
 fun AutoFocusTextField(
-    value: String,
-    onValueChange: (String) -> Unit,
+    state: TextFieldState,
     modifier: Modifier = Modifier,
-    label: @Composable (() -> Unit)? = null,
+    label: @Composable (TextFieldLabelScope.() -> Unit)? = null,
     placeholder: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
-    keyboardActions: KeyboardActions = KeyboardActions.Default,
-    singleLine: Boolean = false,
-    colors: TextFieldColors = OutlinedTextFieldDefaults.colors(),
+    onKeyboardAction: KeyboardActionHandler? = null,
+    lineLimits: TextFieldLineLimits = TextFieldLineLimits.Default,
+    colors: TextFieldColors = TextFieldDefaults.colors(),
 ) {
-    var textFieldValue by remember {
-        mutableStateOf(TextFieldValue(text = value, selection = TextRange(value.length)))
-    }
     val focusRequester = remember { FocusRequester() }
 
-    LaunchedEffect(value) {
-        textFieldValue = textFieldValue.copy(text = value)
-    }
-
     TextField(
-        value = textFieldValue,
-        onValueChange = {
-            textFieldValue = it
-            onValueChange(it.text)
-        },
+        state = state,
         modifier = modifier.focusRequester(focusRequester),
         label = label,
         placeholder = placeholder,
         trailingIcon = trailingIcon,
         keyboardOptions = keyboardOptions,
-        keyboardActions = keyboardActions,
-        singleLine = singleLine,
-        colors = colors
+        onKeyboardAction = onKeyboardAction,
+        lineLimits = lineLimits,
+        colors = colors,
     )
 
     LaunchedEffect(Unit) {

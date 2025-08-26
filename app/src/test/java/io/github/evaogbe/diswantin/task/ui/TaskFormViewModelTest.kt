@@ -68,8 +68,8 @@ class TaskFormViewModelTest {
         assertThat(viewModel.isNew).isTrue()
         assertThat(viewModel.uiState.value).isEqualTo(
             TaskFormUiState.Success(
-                name = "",
-                note = "",
+                initialName = "",
+                initialNote = "",
                 recurrence = null,
                 deadlineDate = null,
                 deadlineTime = null,
@@ -133,8 +133,8 @@ class TaskFormViewModelTest {
         assertThat(viewModel.isNew).isFalse()
         assertThat(viewModel.uiState.value).isEqualTo(
             TaskFormUiState.Success(
-                name = task.name,
-                note = task.note,
+                initialName = task.name,
+                initialNote = task.note,
                 recurrence = TaskRecurrenceUiState(
                     start = LocalDate.parse("2024-08-22"),
                     type = RecurrenceType.Day,
@@ -234,8 +234,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    name = name,
-                    note = "",
+                    initialName = "",
+                    initialNote = "",
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -269,8 +269,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    name = "",
-                    note = note,
+                    initialName = "",
+                    initialNote = "",
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -304,8 +304,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    name = "",
-                    note = "",
+                    initialName = "",
+                    initialNote = "",
                     recurrence = null,
                     deadlineDate = deadlineDate,
                     deadlineTime = null,
@@ -339,8 +339,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    name = "",
-                    note = "",
+                    initialName = "",
+                    initialNote = "",
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = deadlineTime,
@@ -374,8 +374,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    name = "",
-                    note = "",
+                    initialName = "",
+                    initialNote = "",
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -409,8 +409,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    name = "",
-                    note = "",
+                    initialName = "",
+                    initialNote = "",
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -444,8 +444,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    name = "",
-                    note = "",
+                    initialName = "",
+                    initialNote = "",
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -480,8 +480,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    name = "",
-                    note = "",
+                    initialName = "",
+                    initialNote = "",
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -517,8 +517,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    name = "",
-                    note = "",
+                    initialName = "",
+                    initialNote = "",
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -569,8 +569,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    name = "",
-                    note = "",
+                    initialName = "",
+                    initialNote = "",
                     recurrence = recurrence,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -606,8 +606,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    name = "",
-                    note = "",
+                    initialName = "",
+                    initialNote = "",
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -643,8 +643,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    name = "",
-                    note = "",
+                    initialName = task.name,
+                    initialNote = task.note,
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -681,8 +681,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    name = task.name,
-                    note = "",
+                    initialName = task.name,
+                    initialNote = task.note,
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -719,8 +719,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    name = task.name,
-                    note = "",
+                    initialName = task.name,
+                    initialNote = task.note,
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -757,8 +757,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    name = task.name,
-                    note = "",
+                    initialName = task.name,
+                    initialNote = task.note,
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -795,8 +795,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    name = task.name,
-                    note = "",
+                    initialName = task.name,
+                    initialNote = task.note,
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -833,8 +833,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    name = task.name,
-                    note = "",
+                    initialName = task.name,
+                    initialNote = task.note,
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -871,8 +871,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    name = task.name,
-                    note = "",
+                    initialName = task.name,
+                    initialNote = task.note,
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -912,8 +912,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    name = task.name,
-                    note = "",
+                    initialName = task.name,
+                    initialNote = task.note,
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -951,8 +951,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    name = task.name,
-                    note = "",
+                    initialName = task.name,
+                    initialNote = task.note,
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -996,8 +996,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    name = task.name,
-                    note = "",
+                    initialName = task.name,
+                    initialNote = task.note,
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -1036,8 +1036,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    name = task.name,
-                    note = "",
+                    initialName = task.name,
+                    initialNote = task.note,
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -1070,8 +1070,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    name = "",
-                    note = "",
+                    initialName = "",
+                    initialNote = "",
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -1108,8 +1108,8 @@ class TaskFormViewModelTest {
             assertThat(viewModel.isNew).isFalse()
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    name = task.name,
-                    note = "",
+                    initialName = task.name,
+                    initialNote = task.note,
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -1154,8 +1154,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    name = "",
-                    note = "",
+                    initialName = "",
+                    initialNote = "",
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -1203,8 +1203,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    name = task.name,
-                    note = "",
+                    initialName = task.name,
+                    initialNote = task.note,
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -1237,8 +1237,8 @@ class TaskFormViewModelTest {
 
         assertThat(viewModel.uiState.value).isEqualTo(
             TaskFormUiState.Success(
-                name = "",
-                note = "",
+                initialName = "",
+                initialNote = "",
                 recurrence = null,
                 deadlineDate = null,
                 deadlineTime = null,
@@ -1269,8 +1269,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    name = "",
-                    note = "",
+                    initialName = "",
+                    initialNote = "",
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -1318,8 +1318,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    name = "",
-                    note = "",
+                    initialName = "",
+                    initialNote = "",
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -1369,8 +1369,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    name = task.name,
-                    note = "",
+                    initialName = task.name,
+                    initialNote = task.note,
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -1401,6 +1401,8 @@ class TaskFormViewModelTest {
                     name = "$query ${loremFaker.lorem.words()}",
                 )
             }
+            val currentTask = tasks.first()
+            val taskOptions = tasks.drop(1)
             val viewModel = createTaskFormViewModelForEdit { db ->
                 tasks.forEach(db::insertTask)
             }
@@ -1413,8 +1415,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    name = tasks.first().name,
-                    note = "",
+                    initialName = currentTask.name,
+                    initialNote = currentTask.note,
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -1427,7 +1429,7 @@ class TaskFormViewModelTest {
                     tagOptions = persistentListOf(),
                     showParentTaskField = true,
                     parentTask = null,
-                    parentTaskOptions = tasks.drop(1).toImmutableList(),
+                    parentTaskOptions = taskOptions.toImmutableList(),
                     changed = false,
                     userMessage = null,
                 )
@@ -1464,8 +1466,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    name = "",
-                    note = "",
+                    initialName = "",
+                    initialNote = "",
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -1503,8 +1505,8 @@ class TaskFormViewModelTest {
 
         assertThat(viewModel.uiState.value).isEqualTo(
             TaskFormUiState.Success(
-                name = "",
-                note = "",
+                initialName = "",
+                initialNote = "",
                 recurrence = null,
                 deadlineDate = null,
                 deadlineTime = null,
@@ -1528,8 +1530,8 @@ class TaskFormViewModelTest {
 
         assertThat(viewModel.uiState.value).isEqualTo(
             TaskFormUiState.Success(
-                name = "",
-                note = "",
+                initialName = "",
+                initialNote = "",
                 recurrence = null,
                 deadlineDate = null,
                 deadlineTime = null,
@@ -1580,8 +1582,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    name = "",
-                    note = "",
+                    initialName = "",
+                    initialNote = "",
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -1624,8 +1626,8 @@ class TaskFormViewModelTest {
 
         assertThat(viewModel.uiState.value).isEqualTo(
             TaskFormUiState.Success(
-                name = "",
-                note = "",
+                initialName = "",
+                initialNote = "",
                 recurrence = null,
                 deadlineDate = null,
                 deadlineTime = null,
@@ -1709,8 +1711,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    name = name,
-                    note = "",
+                    initialName = "",
+                    initialNote = "",
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -1762,8 +1764,8 @@ class TaskFormViewModelTest {
 
         assertThat(viewModel.uiState.value).isEqualTo(
             TaskFormUiState.Success(
-                name = task.name,
-                note = "",
+                initialName = task.name,
+                initialNote = task.note,
                 recurrence = null,
                 deadlineDate = LocalDate.parse("2024-08-23"),
                 deadlineTime = LocalTime.parse("22:00"),
@@ -1862,8 +1864,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    name = name,
-                    note = "",
+                    initialName = task.name,
+                    initialNote = task.note,
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -1913,8 +1915,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    name = task.name,
-                    note = "",
+                    initialName = task.name,
+                    initialNote = task.note,
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -1975,8 +1977,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    name = task.name,
-                    note = "",
+                    initialName = task.name,
+                    initialNote = task.note,
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -2036,8 +2038,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    name = task.name,
-                    note = "",
+                    initialName = task.name,
+                    initialNote = task.note,
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -2096,8 +2098,8 @@ class TaskFormViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
-                    name = task.name,
-                    note = "",
+                    initialName = task.name,
+                    initialNote = task.note,
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,

@@ -1,5 +1,6 @@
 package io.github.evaogbe.diswantin.task.ui
 
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasText
@@ -13,6 +14,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isTrue
@@ -33,6 +35,7 @@ import io.github.serpro69.kfaker.lorem.LoremFaker
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.spyk
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flow
 import org.junit.Rule
 import org.junit.Test
@@ -88,7 +91,6 @@ class TaskFormScreenTest {
                     topBarAction = null,
                     topBarActionHandled = {},
                     setUserMessage = {},
-                    initialName = "",
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -111,7 +113,6 @@ class TaskFormScreenTest {
                     topBarAction = null,
                     topBarActionHandled = {},
                     setUserMessage = {},
-                    initialName = "",
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -150,7 +151,6 @@ class TaskFormScreenTest {
                     topBarAction = null,
                     topBarActionHandled = {},
                     setUserMessage = {},
-                    initialName = "",
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -192,7 +192,6 @@ class TaskFormScreenTest {
                     topBarAction = null,
                     topBarActionHandled = {},
                     setUserMessage = {},
-                    initialName = "",
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -238,7 +237,6 @@ class TaskFormScreenTest {
                     topBarAction = null,
                     topBarActionHandled = {},
                     setUserMessage = {},
-                    initialName = "",
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -284,7 +282,6 @@ class TaskFormScreenTest {
                     topBarAction = null,
                     topBarActionHandled = {},
                     setUserMessage = {},
-                    initialName = "",
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -325,7 +322,6 @@ class TaskFormScreenTest {
                     topBarAction = null,
                     topBarActionHandled = {},
                     setUserMessage = {},
-                    initialName = "",
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -368,7 +364,6 @@ class TaskFormScreenTest {
                     topBarAction = null,
                     topBarActionHandled = {},
                     setUserMessage = {},
-                    initialName = "",
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -416,7 +411,6 @@ class TaskFormScreenTest {
                     topBarAction = null,
                     topBarActionHandled = {},
                     setUserMessage = {},
-                    initialName = "",
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -456,7 +450,6 @@ class TaskFormScreenTest {
                     topBarAction = null,
                     topBarActionHandled = {},
                     setUserMessage = {},
-                    initialName = "",
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -496,7 +489,6 @@ class TaskFormScreenTest {
                     topBarAction = null,
                     topBarActionHandled = {},
                     setUserMessage = { userMessage = it },
-                    initialName = "",
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -524,7 +516,6 @@ class TaskFormScreenTest {
                     topBarAction = null,
                     topBarActionHandled = {},
                     setUserMessage = {},
-                    initialName = "",
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -566,7 +557,6 @@ class TaskFormScreenTest {
                     topBarAction = null,
                     topBarActionHandled = {},
                     setUserMessage = { userMessage = it },
-                    initialName = "",
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -596,7 +586,6 @@ class TaskFormScreenTest {
                     topBarAction = null,
                     topBarActionHandled = {},
                     setUserMessage = {},
-                    initialName = "",
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -649,7 +638,6 @@ class TaskFormScreenTest {
                     topBarAction = null,
                     topBarActionHandled = {},
                     setUserMessage = {},
-                    initialName = "",
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -696,7 +684,6 @@ class TaskFormScreenTest {
                     topBarAction = null,
                     topBarActionHandled = {},
                     setUserMessage = { userMessage = it },
-                    initialName = "",
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -731,7 +718,6 @@ class TaskFormScreenTest {
                     topBarAction = null,
                     topBarActionHandled = {},
                     setUserMessage = {},
-                    initialName = "",
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -782,7 +768,6 @@ class TaskFormScreenTest {
                     topBarAction = null,
                     topBarActionHandled = {},
                     setUserMessage = { userMessage = it },
-                    initialName = "",
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -803,17 +788,19 @@ class TaskFormScreenTest {
     fun popsBackStack_whenTaskCreated() {
         val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
         var onPopBackStackCalled = false
+        val topBarActionState = MutableStateFlow<TaskFormTopBarAction?>(null)
         val viewModel = createTaskFormViewModelForNew()
 
         composeTestRule.setContent {
+            val topBarAction by topBarActionState.collectAsStateWithLifecycle()
+
             DiswantinTheme {
                 TaskFormScreen(
                     onPopBackStack = { onPopBackStackCalled = true },
                     setTopBarState = {},
-                    topBarAction = null,
-                    topBarActionHandled = {},
+                    topBarAction = topBarAction,
+                    topBarActionHandled = { topBarActionState.value = null },
                     setUserMessage = {},
-                    initialName = "",
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -832,7 +819,7 @@ class TaskFormScreenTest {
         composeTestRule.onNodeWithText(stringResource(R.string.add_deadline_date_button))
             .performClick()
         composeTestRule.onNodeWithText(stringResource(R.string.ok_button)).performClick()
-        viewModel.saveTask()
+        topBarActionState.value = TaskFormTopBarAction.Save
 
         composeTestRule.onNodeWithTag(PendingLayoutTestTag).assertIsDisplayed()
         assertThat(onPopBackStackCalled).isTrue()
@@ -842,6 +829,7 @@ class TaskFormScreenTest {
     fun displaysErrorMessage_withSaveErrorForNew() {
         var userMessage: UserMessage? = null
         val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
+        val topBarActionState = MutableStateFlow<TaskFormTopBarAction?>(null)
         val clock = createClock()
         val db = FakeDatabase()
         val taskRepository = spyk(FakeTaskRepository(db, clock))
@@ -857,26 +845,24 @@ class TaskFormScreenTest {
         )
 
         composeTestRule.setContent {
+            val topBarAction by topBarActionState.collectAsStateWithLifecycle()
+
             DiswantinTheme {
                 TaskFormScreen(
                     onPopBackStack = {},
                     setTopBarState = {},
-                    topBarAction = null,
-                    topBarActionHandled = {},
+                    topBarAction = topBarAction,
+                    topBarActionHandled = { topBarActionState.value = null },
                     setUserMessage = { userMessage = it },
-                    initialName = "",
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
             }
         }
 
-        composeTestRule.onNodeWithText(stringResource(R.string.task_form_save_error_new))
-            .assertDoesNotExist()
-
         composeTestRule.onNodeWithText(stringResource(R.string.name_label), useUnmergedTree = true)
             .onParent().performTextInput(name)
-        viewModel.saveTask()
+        topBarActionState.value = TaskFormTopBarAction.Save
 
         composeTestRule.waitUntil {
             userMessage == UserMessage.String(R.string.task_form_save_error_new)
@@ -887,20 +873,22 @@ class TaskFormScreenTest {
     fun popsBackStack_whenTaskUpdated() {
         val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
         var onPopBackStackCalled = false
+        val topBarActionState = MutableStateFlow<TaskFormTopBarAction?>(null)
         val task = genTask().copy(deadlineDate = faker.random.randomFutureDate().toLocalDate())
         val viewModel = createTaskFormViewModelForEdit { db ->
             db.insertTask(task)
         }
 
         composeTestRule.setContent {
+            val topBarAction by topBarActionState.collectAsStateWithLifecycle()
+
             DiswantinTheme {
                 TaskFormScreen(
                     onPopBackStack = { onPopBackStackCalled = true },
                     setTopBarState = {},
-                    topBarAction = null,
-                    topBarActionHandled = {},
+                    topBarAction = topBarAction,
+                    topBarActionHandled = { topBarActionState.value = null },
                     setUserMessage = {},
-                    initialName = "",
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
@@ -925,7 +913,7 @@ class TaskFormScreenTest {
         composeTestRule.onNodeWithText(stringResource(R.string.add_scheduled_at_button))
             .performClick()
         composeTestRule.onNodeWithText(stringResource(R.string.ok_button)).performClick()
-        viewModel.saveTask()
+        topBarActionState.value = TaskFormTopBarAction.Save
 
         composeTestRule.onNodeWithTag(PendingLayoutTestTag).assertIsDisplayed()
         assertThat(onPopBackStackCalled).isTrue()
@@ -934,6 +922,7 @@ class TaskFormScreenTest {
     @Test
     fun displaysErrorMessage_withSaveErrorForEdit() {
         var userMessage: UserMessage? = null
+        val topBarActionState = MutableStateFlow<TaskFormTopBarAction?>(null)
         val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
         val task = genTask()
         val clock = createClock()
@@ -953,26 +942,24 @@ class TaskFormScreenTest {
         )
 
         composeTestRule.setContent {
+            val topBarAction by topBarActionState.collectAsStateWithLifecycle()
+
             DiswantinTheme {
                 TaskFormScreen(
                     onPopBackStack = {},
                     setTopBarState = {},
-                    topBarAction = null,
-                    topBarActionHandled = {},
+                    topBarAction = topBarAction,
+                    topBarActionHandled = { topBarActionState.value = null },
                     setUserMessage = { userMessage = it },
-                    initialName = "",
                     onEditRecurrence = {},
                     taskFormViewModel = viewModel,
                 )
             }
         }
 
-        composeTestRule.onNodeWithText(stringResource(R.string.task_form_save_error_edit))
-            .assertDoesNotExist()
-
         composeTestRule.onNodeWithText(stringResource(R.string.name_label), useUnmergedTree = true)
             .onParent().performTextReplacement(name)
-        viewModel.saveTask()
+        topBarActionState.value = TaskFormTopBarAction.Save
 
         composeTestRule.waitUntil {
             userMessage == UserMessage.String(R.string.task_form_save_error_edit)

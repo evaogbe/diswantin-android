@@ -13,11 +13,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.input.clearText
+import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -67,8 +68,6 @@ import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.distinctUntilChanged
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
@@ -98,7 +97,7 @@ fun TaskFormTopBar(
         navigationIcon = {
             IconButton(onClick = onClose) {
                 Icon(
-                    imageVector = Icons.Default.Close,
+                    painterResource(R.drawable.baseline_close_24),
                     contentDescription = stringResource(R.string.close_button),
                 )
             }
@@ -124,22 +123,22 @@ fun TaskFormScreen(
     topBarAction: TaskFormTopBarAction?,
     topBarActionHandled: () -> Unit,
     setUserMessage: (UserMessage) -> Unit,
-    initialName: String,
     onEditRecurrence: () -> Unit,
     taskFormViewModel: TaskFormViewModel = hiltViewModel(),
 ) {
     val uiState by taskFormViewModel.uiState.collectAsStateWithLifecycle()
     val isNew = taskFormViewModel.isNew
-    var nameInput by rememberSaveable { mutableStateOf(initialName) }
-    var noteInput by rememberSaveable { mutableStateOf("") }
+    val name = rememberTextFieldState()
+    val note = rememberTextFieldState()
+    val tagQuery = rememberTextFieldState()
     var showDialog by rememberSaveable { mutableStateOf(false) }
 
-    LaunchedEffect(uiState, nameInput, isNew) {
+    LaunchedEffect(uiState, name.text, isNew) {
         setTopBarState(
             TaskFormTopBarState(
                 isNew = isNew,
                 showSave = isNew || uiState is TaskFormUiState.Success,
-                saveEnabled = nameInput.isNotBlank(),
+                saveEnabled = name.text.isNotBlank(),
             )
         )
     }
@@ -163,18 +162,6 @@ fun TaskFormScreen(
         }
     }
 
-    LaunchedEffect(Unit) {
-        snapshotFlow { nameInput }.distinctUntilChanged().collectLatest {
-            taskFormViewModel.updateName(it)
-        }
-    }
-
-    LaunchedEffect(Unit) {
-        snapshotFlow { noteInput }.distinctUntilChanged().collectLatest {
-            taskFormViewModel.updateNote(it)
-        }
-    }
-
     when (val state = uiState) {
         is TaskFormUiState.Pending -> {
             PendingLayout()
@@ -193,18 +180,6 @@ fun TaskFormScreen(
         }
 
         is TaskFormUiState.Success -> {
-            LaunchedEffect(state.name) {
-                if (state.name != nameInput) {
-                    nameInput = state.name
-                }
-            }
-
-            LaunchedEffect(state.note) {
-                if (state.note != noteInput) {
-                    noteInput = state.note
-                }
-            }
-
             LaunchedEffect(state.userMessage) {
                 if (state.userMessage != null) {
                     setUserMessage(state.userMessage)
@@ -212,12 +187,38 @@ fun TaskFormScreen(
                 }
             }
 
+            LaunchedEffect(state.initialName) {
+                if (state.initialName != name.text) {
+                    name.setTextAndPlaceCursorAtEnd(state.initialName)
+                }
+            }
+
+            LaunchedEffect(name) {
+                snapshotFlow { name.text.toString() }.collect {
+                    taskFormViewModel.updateName(it)
+                }
+            }
+
+            LaunchedEffect(state.initialNote) {
+                if (state.initialNote != note.text) {
+                    note.setTextAndPlaceCursorAtEnd(state.initialNote)
+                }
+            }
+
+            LaunchedEffect(note) {
+                snapshotFlow { note.text.toString() }.collect {
+                    taskFormViewModel.updateNote(it)
+                }
+            }
+
+            LaunchedEffect(state.tagFieldState) {
+                tagQuery.clearText()
+            }
+
             TaskFormLayout(
                 uiState = state,
-                name = nameInput,
-                onNameChange = { nameInput = it },
-                note = noteInput,
-                onNoteChange = { noteInput = it },
+                name = name,
+                note = note,
                 onDeadlineDateChange = taskFormViewModel::updateDeadlineDate,
                 onDeadlineTimeChange = taskFormViewModel::updateDeadlineTime,
                 onStartAfterDateChange = taskFormViewModel::updateStartAfterDate,
@@ -229,6 +230,7 @@ fun TaskFormScreen(
                 onAddTag = taskFormViewModel::addTag,
                 onRemoveTag = taskFormViewModel::removeTag,
                 startEditTag = taskFormViewModel::startEditTag,
+                tagQuery = tagQuery,
                 onTagSearch = taskFormViewModel::searchTags,
                 onParentTaskChange = taskFormViewModel::updateParentTask,
                 onTaskSearch = taskFormViewModel::searchParentTasks,
@@ -254,10 +256,8 @@ enum class FieldDialogType {
 @Composable
 fun TaskFormLayout(
     uiState: TaskFormUiState.Success,
-    name: String,
-    onNameChange: (String) -> Unit,
-    note: String,
-    onNoteChange: (String) -> Unit,
+    name: TextFieldState,
+    note: TextFieldState,
     onDeadlineDateChange: (LocalDate?) -> Unit,
     onDeadlineTimeChange: (LocalTime?) -> Unit,
     onStartAfterDateChange: (LocalDate?) -> Unit,
@@ -269,13 +269,13 @@ fun TaskFormLayout(
     onAddTag: (Tag) -> Unit,
     onRemoveTag: (Tag) -> Unit,
     startEditTag: () -> Unit,
+    tagQuery: TextFieldState,
     onTagSearch: (String) -> Unit,
     onParentTaskChange: (Task?) -> Unit,
     onTaskSearch: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var dialogType by rememberSaveable { mutableStateOf<FieldDialogType?>(null) }
-    var tagQuery by rememberSaveable(uiState.tagFieldState) { mutableStateOf("") }
 
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         Column(
@@ -286,8 +286,7 @@ fun TaskFormLayout(
             verticalArrangement = Arrangement.spacedBy(SpaceMd),
         ) {
             OutlinedTextField(
-                value = name,
-                onValueChange = onNameChange,
+                state = name,
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text(stringResource(R.string.name_label)) },
                 keyboardOptions = KeyboardOptions.Default.copy(
@@ -296,20 +295,19 @@ fun TaskFormLayout(
             )
 
             OutlinedTextField(
-                value = note,
-                onValueChange = onNoteChange,
+                state = note,
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text(stringResource(R.string.note_label)) },
                 keyboardOptions = KeyboardOptions.Default.copy(
                     capitalization = KeyboardCapitalization.Sentences,
                 ),
-                minLines = 2,
+                lineLimits = TextFieldLineLimits.MultiLine(2),
             )
 
             if (uiState.recurrence == null) {
                 TextButtonWithIcon(
                     onClick = onEditRecurrence,
-                    imageVector = Icons.Default.Refresh,
+                    painter = painterResource(R.drawable.outline_refresh_24),
                     text = stringResource(R.string.add_recurrence_button),
                 )
             } else {
@@ -523,7 +521,6 @@ fun TaskFormLayout(
 
                         AutocompleteField(
                             query = tagQuery,
-                            onQueryChange = { tagQuery = it },
                             label = { Text(stringResource(R.string.tag_name_label)) },
                             onSearch = onTagSearch,
                             options = uiState.tagOptions,
@@ -543,7 +540,7 @@ fun TaskFormLayout(
                         if (uiState.tags.size < 20) {
                             TextButtonWithIcon(
                                 onClick = startEditTag,
-                                imageVector = Icons.Default.Add,
+                                painter = painterResource(R.drawable.baseline_add_24),
                                 text = stringResource(R.string.add_tag_button),
                             )
                         }
@@ -616,19 +613,24 @@ fun <T : Any> SelectableAutocompleteField(
     formatOption: (T) -> String,
     onSelectOption: (T?) -> Unit,
 ) {
-    var query by rememberSaveable(selectedOption) {
-        mutableStateOf(selectedOption?.let(formatOption).orEmpty())
+    val query = rememberTextFieldState()
+    val selectAndClear = { option: T? ->
+        onSelectOption(option)
+        query.clearText()
+    }
+
+    LaunchedEffect(selectedOption) {
+        query.setTextAndPlaceCursorAtEnd(selectedOption?.let(formatOption).orEmpty())
     }
 
     if (selectedOption == null) {
         AutocompleteField(
             query = query,
-            onQueryChange = { query = it },
             label = { Text(text = label) },
             onSearch = onSearch,
             options = options,
             formatOption = formatOption,
-            onSelectOption = onSelectOption,
+            onSelectOption = selectAndClear,
             autoFocus = false,
         )
     } else {
@@ -638,13 +640,12 @@ fun <T : Any> SelectableAutocompleteField(
             ClearableLayout(onClear = { isEditing = false }, invert = true) {
                 AutocompleteField(
                     query = query,
-                    onQueryChange = { query = it },
                     label = { Text(text = label) },
                     onSearch = onSearch,
                     options = options,
                     formatOption = formatOption,
                     onSelectOption = {
-                        onSelectOption(it)
+                        selectAndClear(it)
                         isEditing = false
                     },
                     autoFocus = false,
@@ -656,12 +657,12 @@ fun <T : Any> SelectableAutocompleteField(
                 Text(text = label, style = typography.bodyLarge)
                 Spacer(Modifier.size(SpaceSm))
                 ClearableLayout(
-                    onClear = { onSelectOption(null) },
+                    onClear = { selectAndClear(null) },
                     iconContentDescription = stringResource(R.string.remove_button)
                 ) {
                     EditFieldButton(
                         onClick = {
-                            query = formatOption(selectedOption)
+                            query.setTextAndPlaceCursorAtEnd(formatOption(selectedOption))
                             isEditing = true
                         },
                         text = formatOption(selectedOption),
@@ -683,7 +684,7 @@ fun TagList(tags: ImmutableList<Tag>, onRemoveTag: (Tag) -> Unit) {
                 label = { Text(text = tag.name) },
                 trailingIcon = {
                     Icon(
-                        Icons.Default.Close,
+                        painterResource(R.drawable.baseline_close_24),
                         contentDescription = stringResource(R.string.remove_button),
                         modifier = Modifier.size(InputChipDefaults.AvatarSize),
                     )
@@ -700,17 +701,23 @@ private fun TaskFormScreenPreview_New() {
     val note = ""
 
     DiswantinTheme {
-        Scaffold(topBar = {
-            TaskFormTopBar(
-                uiState = TaskFormTopBarState(isNew = true, showSave = true, saveEnabled = false),
-                onClose = {},
-                onSave = {},
-            )
-        }) { innerPadding ->
+        Scaffold(
+            topBar = {
+                TaskFormTopBar(
+                    uiState = TaskFormTopBarState(
+                        isNew = true,
+                        showSave = true,
+                        saveEnabled = false,
+                    ),
+                    onClose = {},
+                    onSave = {},
+                )
+            },
+        ) { innerPadding ->
             TaskFormLayout(
                 uiState = TaskFormUiState.Success(
-                    name = name,
-                    note = note,
+                    initialName = name,
+                    initialNote = note,
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -727,10 +734,8 @@ private fun TaskFormScreenPreview_New() {
                     changed = false,
                     userMessage = null,
                 ),
-                name = name,
-                onNameChange = {},
-                note = note,
-                onNoteChange = {},
+                name = TextFieldState(initialText = name),
+                note = TextFieldState(initialText = note),
                 onDeadlineDateChange = {},
                 onDeadlineTimeChange = {},
                 onStartAfterDateChange = {},
@@ -742,6 +747,7 @@ private fun TaskFormScreenPreview_New() {
                 onAddTag = {},
                 onRemoveTag = {},
                 startEditTag = {},
+                tagQuery = TextFieldState(),
                 onTagSearch = {},
                 onParentTaskChange = {},
                 onTaskSearch = {},
@@ -758,17 +764,23 @@ private fun TaskFormScreenPreview_Edit() {
     val note = "Wash hair and deep condition before appointment at hair salon"
 
     DiswantinTheme {
-        Scaffold(topBar = {
-            TaskFormTopBar(
-                uiState = TaskFormTopBarState(isNew = false, showSave = true, saveEnabled = true),
-                onClose = {},
-                onSave = {},
-            )
-        }) { innerPadding ->
+        Scaffold(
+            topBar = {
+                TaskFormTopBar(
+                    uiState = TaskFormTopBarState(
+                        isNew = false,
+                        showSave = true,
+                        saveEnabled = true,
+                    ),
+                    onClose = {},
+                    onSave = {},
+                )
+            },
+        ) { innerPadding ->
             TaskFormLayout(
                 uiState = TaskFormUiState.Success(
-                    name = name,
-                    note = note,
+                    initialName = name,
+                    initialNote = note,
                     recurrence = TaskRecurrenceUiState(
                         start = LocalDate.now(),
                         type = RecurrenceType.Day,
@@ -796,10 +808,8 @@ private fun TaskFormScreenPreview_Edit() {
                     changed = false,
                     userMessage = null,
                 ),
-                name = name,
-                onNameChange = {},
-                note = note,
-                onNoteChange = {},
+                name = TextFieldState(initialText = name),
+                note = TextFieldState(initialText = note),
                 onDeadlineDateChange = {},
                 onDeadlineTimeChange = {},
                 onStartAfterDateChange = {},
@@ -811,6 +821,7 @@ private fun TaskFormScreenPreview_Edit() {
                 onAddTag = {},
                 onRemoveTag = {},
                 startEditTag = {},
+                tagQuery = TextFieldState(),
                 onTagSearch = {},
                 onParentTaskChange = {},
                 onTaskSearch = {},
@@ -830,8 +841,8 @@ private fun TaskFormLayoutPreview_ScheduledAt() {
         Surface {
             TaskFormLayout(
                 uiState = TaskFormUiState.Success(
-                    name = name,
-                    note = note,
+                    initialName = name,
+                    initialNote = note,
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -848,10 +859,8 @@ private fun TaskFormLayoutPreview_ScheduledAt() {
                     changed = true,
                     userMessage = null,
                 ),
-                name = name,
-                onNameChange = {},
-                note = note,
-                onNoteChange = {},
+                name = TextFieldState(initialText = name),
+                note = TextFieldState(initialText = note),
                 onDeadlineDateChange = {},
                 onDeadlineTimeChange = {},
                 onStartAfterDateChange = {},
@@ -863,6 +872,7 @@ private fun TaskFormLayoutPreview_ScheduledAt() {
                 onAddTag = {},
                 onRemoveTag = {},
                 startEditTag = {},
+                tagQuery = TextFieldState(),
                 onTagSearch = {},
                 onParentTaskChange = {},
                 onTaskSearch = {},
@@ -881,8 +891,8 @@ private fun TaskFormLayoutPreview_ScheduledDate() {
         Surface {
             TaskFormLayout(
                 uiState = TaskFormUiState.Success(
-                    name = name,
-                    note = note,
+                    initialName = name,
+                    initialNote = note,
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -899,10 +909,8 @@ private fun TaskFormLayoutPreview_ScheduledDate() {
                     changed = false,
                     userMessage = null,
                 ),
-                name = name,
-                onNameChange = {},
-                note = note,
-                onNoteChange = {},
+                name = TextFieldState(initialText = name),
+                note = TextFieldState(initialText = note),
                 onDeadlineDateChange = {},
                 onDeadlineTimeChange = {},
                 onStartAfterDateChange = {},
@@ -914,6 +922,7 @@ private fun TaskFormLayoutPreview_ScheduledDate() {
                 onAddTag = {},
                 onRemoveTag = {},
                 startEditTag = {},
+                tagQuery = TextFieldState(),
                 onTagSearch = {},
                 onParentTaskChange = {},
                 onTaskSearch = {},
@@ -933,8 +942,8 @@ private fun TaskFormLayoutPreview_EditingTag() {
         Surface {
             TaskFormLayout(
                 uiState = TaskFormUiState.Success(
-                    name = name,
-                    note = note,
+                    initialName = name,
+                    initialNote = note,
                     recurrence = null,
                     deadlineDate = null,
                     deadlineTime = null,
@@ -951,10 +960,8 @@ private fun TaskFormLayoutPreview_EditingTag() {
                     changed = false,
                     userMessage = null,
                 ),
-                name = name,
-                onNameChange = {},
-                note = note,
-                onNoteChange = {},
+                name = TextFieldState(initialText = name),
+                note = TextFieldState(initialText = note),
                 onDeadlineDateChange = {},
                 onDeadlineTimeChange = {},
                 onStartAfterDateChange = {},
@@ -966,6 +973,7 @@ private fun TaskFormLayoutPreview_EditingTag() {
                 onAddTag = {},
                 onRemoveTag = {},
                 startEditTag = {},
+                tagQuery = TextFieldState(),
                 onTagSearch = {},
                 onParentTaskChange = {},
                 onTaskSearch = {},
