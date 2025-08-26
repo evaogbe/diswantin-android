@@ -11,11 +11,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -36,6 +31,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -71,7 +67,7 @@ fun TagDetailTopBar(
         navigationIcon = {
             IconButton(onClick = onBackClick) {
                 Icon(
-                    imageVector = Icons.AutoMirrored.Default.ArrowBack,
+                    painterResource(R.drawable.baseline_arrow_back_24),
                     contentDescription = stringResource(R.string.back_button),
                 )
             }
@@ -80,14 +76,14 @@ fun TagDetailTopBar(
             if (uiState.tagId != null) {
                 IconButton(onClick = { onEditTag(uiState.tagId) }) {
                     Icon(
-                        imageVector = Icons.Default.Edit,
+                        painterResource(R.drawable.outline_edit_24),
                         contentDescription = stringResource(R.string.edit_button),
                     )
                 }
 
                 IconButton(onClick = { menuExpanded = !menuExpanded }) {
                     Icon(
-                        imageVector = Icons.Default.MoreVert,
+                        painterResource(R.drawable.outline_more_vert_24),
                         contentDescription = stringResource(R.string.more_actions_button),
                     )
                 }
@@ -100,7 +96,10 @@ fun TagDetailTopBar(
                             menuExpanded = false
                         },
                         leadingIcon = {
-                            Icon(imageVector = Icons.Default.Delete, contentDescription = null)
+                            Icon(
+                                painterResource(R.drawable.baseline_delete_24),
+                                contentDescription = null
+                            )
                         },
                     )
                 }
@@ -203,7 +202,7 @@ fun TagDetailLayout(
             {
                 items(
                     taskItems.itemCount,
-                    key = taskItems.itemKey(TaskSummaryUiState::id)
+                    key = taskItems.itemKey(TaskSummaryUiState::id),
                 ) { index ->
                     val task = taskItems[index]!!
                     TaskSummaryItem(task = task, onSelectTask = onSelectTask)

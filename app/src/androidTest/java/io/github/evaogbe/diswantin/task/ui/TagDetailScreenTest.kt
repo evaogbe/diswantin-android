@@ -1,10 +1,12 @@
 package io.github.evaogbe.diswantin.task.ui
 
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import assertk.assertThat
 import assertk.assertions.isTrue
 import io.github.evaogbe.diswantin.R
@@ -21,6 +23,7 @@ import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
 import io.mockk.coEvery
 import io.mockk.spyk
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Rule
 import org.junit.Test
 import java.time.Clock
@@ -85,6 +88,7 @@ class TagDetailScreenTest {
     @Test
     fun popsBackStack_whenTagDeleted() {
         var onPopBackStackCalled = false
+        val topBarActionState = MutableStateFlow<TagDetailTopBarAction?>(null)
         val tag = genTag()
         val tasks = genTasks()
         val viewModel = createTagDetailViewModel { db ->
@@ -93,11 +97,13 @@ class TagDetailScreenTest {
         }
 
         composeTestRule.setContent {
+            val topBarAction by topBarActionState.collectAsStateWithLifecycle()
+
             DiswantinTheme {
                 TagDetailScreen(
                     onPopBackStack = { onPopBackStackCalled = true },
-                    topBarAction = null,
-                    topBarActionHandled = {},
+                    topBarAction = topBarAction,
+                    topBarActionHandled = { topBarActionState.value = null },
                     setUserMessage = {},
                     onSelectTask = {},
                     tagDetailViewModel = viewModel,
@@ -105,7 +111,7 @@ class TagDetailScreenTest {
             }
         }
 
-        viewModel.deleteTag()
+        topBarActionState.value = TagDetailTopBarAction.Delete
 
         composeTestRule.onNodeWithTag(PendingLayoutTestTag).assertIsDisplayed()
         assertThat(onPopBackStackCalled).isTrue()
@@ -114,6 +120,7 @@ class TagDetailScreenTest {
     @Test
     fun displaysErrorMessage_whenDeleteTagFails() {
         var userMessage: UserMessage? = null
+        val topBarActionState = MutableStateFlow<TagDetailTopBarAction?>(null)
         val tag = genTag()
         val tasks = genTasks()
         val clock = createClock()
@@ -133,11 +140,13 @@ class TagDetailScreenTest {
         )
 
         composeTestRule.setContent {
+            val topBarAction by topBarActionState.collectAsStateWithLifecycle()
+
             DiswantinTheme {
                 TagDetailScreen(
                     onPopBackStack = {},
-                    topBarAction = null,
-                    topBarActionHandled = {},
+                    topBarAction = topBarAction,
+                    topBarActionHandled = { topBarActionState.value = null },
                     setUserMessage = { userMessage = it },
                     onSelectTask = {},
                     tagDetailViewModel = viewModel,
@@ -145,7 +154,7 @@ class TagDetailScreenTest {
             }
         }
 
-        viewModel.deleteTag()
+        topBarActionState.value = TagDetailTopBarAction.Delete
 
         composeTestRule.waitUntil {
             userMessage == UserMessage.String(R.string.tag_detail_delete_error)

@@ -14,12 +14,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Done
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -95,14 +89,14 @@ fun CurrentTaskTopBar(
         actions = {
             IconButton(onClick = onSearch) {
                 Icon(
-                    imageVector = Icons.Default.Search,
+                    painterResource(R.drawable.outline_search_24),
                     contentDescription = stringResource(R.string.search_tasks_button),
                 )
             }
 
             IconButton(onClick = { menuExpanded = !menuExpanded }) {
                 Icon(
-                    imageVector = Icons.Default.MoreVert,
+                    painterResource(R.drawable.outline_more_vert_24),
                     contentDescription = stringResource(R.string.more_actions_button),
                 )
             }
@@ -116,7 +110,7 @@ fun CurrentTaskTopBar(
                     },
                     leadingIcon = {
                         Icon(
-                            imageVector = Icons.Default.Refresh,
+                            painterResource(R.drawable.outline_refresh_24),
                             contentDescription = null,
                         )
                     },
@@ -296,7 +290,6 @@ private fun SkipSheetLayout(onDismiss: (DismissSkipSheetReason) -> Unit) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CurrentTaskLayout(
     uiState: CurrentTaskUiState.Present,
@@ -348,7 +341,7 @@ fun CurrentTaskLayout(
                     )
                     FilledTonalButtonWithIcon(
                         onClick = onMarkTaskDone,
-                        imageVector = Icons.Default.Done,
+                        painter = painterResource(R.drawable.baseline_done_24),
                         text = stringResource(R.string.current_task_mark_done_button),
                     )
                 }
@@ -357,7 +350,6 @@ fun CurrentTaskLayout(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EmptyCurrentTaskLayout(
     isRefreshing: Boolean,
@@ -392,7 +384,7 @@ fun EmptyCurrentTaskLayout(
                 Spacer(Modifier.size(SpaceLg))
                 ButtonWithIcon(
                     onClick = onAddTask,
-                    imageVector = Icons.Default.Add,
+                    painter = painterResource(R.drawable.baseline_add_24),
                     text = stringResource(R.string.add_task_button),
                 )
             }

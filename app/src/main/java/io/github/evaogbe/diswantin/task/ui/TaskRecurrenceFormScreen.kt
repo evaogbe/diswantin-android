@@ -17,19 +17,19 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme.typography
-import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -51,9 +51,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -61,6 +62,7 @@ import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.RecurrenceType
 import io.github.evaogbe.diswantin.ui.dialog.DiswantinDatePickerDialog
 import io.github.evaogbe.diswantin.ui.form.EditFieldButton
+import io.github.evaogbe.diswantin.ui.form.OutlinedIntegerField
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.evaogbe.diswantin.ui.theme.ScreenLg
 import io.github.evaogbe.diswantin.ui.theme.SpaceMd
@@ -90,7 +92,7 @@ fun TaskRecurrenceFormTopBar(
         navigationIcon = {
             IconButton(onClick = onClose) {
                 Icon(
-                    imageVector = Icons.Default.Close,
+                    painterResource(R.drawable.baseline_close_24),
                     contentDescription = stringResource(R.string.close_button),
                 )
             }
@@ -157,6 +159,13 @@ fun TaskRecurrentFormScreen(
     )
 }
 
+private val TypeOptions = listOf(
+    R.plurals.recurrence_day to RecurrenceType.Day,
+    R.plurals.recurrence_week to RecurrenceType.Week,
+    R.plurals.recurrence_month to RecurrenceType.DayOfMonth,
+    R.plurals.recurrence_year to RecurrenceType.Year,
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskRecurrenceFormScreen(
@@ -172,13 +181,24 @@ fun TaskRecurrenceFormScreen(
     modifier: Modifier = Modifier,
 ) {
     var showDialog by rememberSaveable { mutableStateOf(false) }
+    val typeInput = rememberTextFieldState()
     var typeFieldExpanded by remember { mutableStateOf(false) }
-    val typeOptions = listOf(
-        R.plurals.recurrence_day to RecurrenceType.Day,
-        R.plurals.recurrence_week to RecurrenceType.Week,
-        R.plurals.recurrence_month to RecurrenceType.DayOfMonth,
-        R.plurals.recurrence_year to RecurrenceType.Year,
-    )
+    val resources = LocalResources.current
+
+    LaunchedEffect(resources, type, step) {
+        typeInput.setTextAndPlaceCursorAtEnd(
+            resources.getQuantityString(
+                when (type) {
+                    RecurrenceType.Day -> R.plurals.recurrence_day
+                    RecurrenceType.Week -> R.plurals.recurrence_week
+                    RecurrenceType.DayOfMonth -> R.plurals.recurrence_month
+                    RecurrenceType.WeekOfMonth -> R.plurals.recurrence_month
+                    RecurrenceType.Year -> R.plurals.recurrence_year
+                },
+                step,
+            )
+        )
+    }
 
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         Column(
@@ -198,14 +218,10 @@ fun TaskRecurrenceFormScreen(
             Text(stringResource(R.string.recurrence_step_label), style = typography.bodyLarge)
             Spacer(Modifier.size(SpaceSm))
             Row {
-                OutlinedTextField(
-                    value = if (step == 0) "" else step.toString(),
-                    onValueChange = { onStepChange(it.toIntOrNull() ?: 0) },
+                OutlinedIntegerField(
+                    value = step,
+                    onValueChange = onStepChange,
                     modifier = Modifier.width(72.dp),
-                    keyboardOptions = KeyboardOptions.Default.copy(
-                        keyboardType = KeyboardType.Number,
-                    ),
-                    singleLine = true,
                 )
                 Spacer(Modifier.size(SpaceMd))
                 ExposedDropdownMenuBox(
@@ -213,31 +229,21 @@ fun TaskRecurrenceFormScreen(
                     onExpandedChange = { typeFieldExpanded = it },
                 ) {
                     OutlinedTextField(
-                        value = pluralStringResource(
-                            when (type) {
-                                RecurrenceType.Day -> R.plurals.recurrence_day
-                                RecurrenceType.Week -> R.plurals.recurrence_week
-                                RecurrenceType.DayOfMonth -> R.plurals.recurrence_month
-                                RecurrenceType.WeekOfMonth -> R.plurals.recurrence_month
-                                RecurrenceType.Year -> R.plurals.recurrence_year
-                            },
-                            step,
-                        ),
-                        onValueChange = {},
+                        state = typeInput,
                         modifier = Modifier
                             .width(200.dp)
-                            .menuAnchor(MenuAnchorType.PrimaryNotEditable),
+                            .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
                         readOnly = true,
                         trailingIcon = {
                             ExposedDropdownMenuDefaults.TrailingIcon(expanded = typeFieldExpanded)
                         },
-                        singleLine = true,
+                        lineLimits = TextFieldLineLimits.SingleLine,
                     )
                     ExposedDropdownMenu(
                         expanded = typeFieldExpanded,
                         onDismissRequest = { typeFieldExpanded = false },
                     ) {
-                        typeOptions.forEach { (resId, type) ->
+                        TypeOptions.forEach { (resId, type) ->
                             DropdownMenuItem(
                                 text = { Text(text = pluralStringResource(resId, step)) },
                                 onClick = {

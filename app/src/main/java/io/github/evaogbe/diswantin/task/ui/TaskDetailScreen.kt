@@ -13,12 +13,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Done
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -89,7 +83,7 @@ fun TaskDetailTopBar(
         navigationIcon = {
             IconButton(onClick = onBackClick) {
                 Icon(
-                    imageVector = Icons.AutoMirrored.Default.ArrowBack,
+                    painterResource(R.drawable.baseline_arrow_back_24),
                     contentDescription = stringResource(R.string.back_button)
                 )
             }
@@ -98,7 +92,7 @@ fun TaskDetailTopBar(
             if (uiState.taskId != null) {
                 IconButton(onClick = { onEditTask(uiState.taskId) }) {
                     Icon(
-                        imageVector = Icons.Default.Edit,
+                        painterResource(R.drawable.outline_edit_24),
                         contentDescription = stringResource(R.string.edit_button),
                     )
                 }
@@ -113,7 +107,7 @@ fun TaskDetailTopBar(
                 } else {
                     IconButton(onClick = onMarkTaskDone) {
                         Icon(
-                            imageVector = Icons.Default.Done,
+                            painterResource(R.drawable.baseline_done_24),
                             contentDescription = stringResource(R.string.mark_done_button),
                         )
                     }
@@ -121,7 +115,7 @@ fun TaskDetailTopBar(
 
                 IconButton(onClick = { menuExpanded = !menuExpanded }) {
                     Icon(
-                        imageVector = Icons.Default.MoreVert,
+                        painterResource(R.drawable.outline_more_vert_24),
                         contentDescription = stringResource(R.string.more_actions_button),
                     )
                 }
@@ -134,7 +128,10 @@ fun TaskDetailTopBar(
                             menuExpanded = false
                         },
                         leadingIcon = {
-                            Icon(imageVector = Icons.Default.Delete, contentDescription = null)
+                            Icon(
+                                painterResource(R.drawable.baseline_delete_24),
+                                contentDescription = null
+                            )
                         },
                     )
                 }

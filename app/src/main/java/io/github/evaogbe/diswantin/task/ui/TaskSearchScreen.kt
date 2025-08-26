@@ -18,14 +18,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.input.clearText
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
@@ -51,6 +48,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -62,6 +60,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
+import androidx.paging.LoadStates
 import androidx.paging.PagingData
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
@@ -95,8 +94,7 @@ import kotlin.time.Duration.Companion.milliseconds
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskSearchTopBar(
-    query: String,
-    onQueryChange: (String) -> Unit,
+    query: TextFieldState,
     onBackClick: () -> Unit,
     onSearch: () -> Unit,
     modifier: Modifier = Modifier,
@@ -104,15 +102,14 @@ fun TaskSearchTopBar(
     TopAppBar(
         title = {
             AutoFocusTextField(
-                value = query,
-                onValueChange = onQueryChange,
+                state = query,
                 modifier = Modifier.fillMaxWidth(),
                 placeholder = { Text(stringResource(R.string.task_search_title)) },
-                trailingIcon = if (query.isNotEmpty()) {
+                trailingIcon = if (query.text.isNotEmpty()) {
                     {
-                        IconButton(onClick = { onQueryChange("") }) {
+                        IconButton(onClick = { query.clearText() }) {
                             Icon(
-                                imageVector = Icons.Default.Clear,
+                                painterResource(R.drawable.baseline_close_24),
                                 contentDescription = stringResource(R.string.clear_button)
                             )
                         }
@@ -121,8 +118,11 @@ fun TaskSearchTopBar(
                     null
                 },
                 keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
-                keyboardActions = KeyboardActions(onSearch = { onSearch() }),
-                singleLine = true,
+                onKeyboardAction = { performDefaultAction ->
+                    onSearch()
+                    performDefaultAction()
+                },
+                lineLimits = TextFieldLineLimits.SingleLine,
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = Color.Transparent,
                     unfocusedContainerColor = Color.Transparent,
@@ -133,7 +133,7 @@ fun TaskSearchTopBar(
         navigationIcon = {
             IconButton(onClick = onBackClick) {
                 Icon(
-                    imageVector = Icons.AutoMirrored.Default.ArrowBack,
+                    painterResource(R.drawable.baseline_arrow_back_24),
                     contentDescription = stringResource(R.string.back_button),
                 )
             }
@@ -499,7 +499,9 @@ fun TaskSearchLayout(
 
 @Composable
 private fun SearchResultItem(
-    searchResult: TaskSummaryUiState, query: String, onSelectSearchResult: (Long) -> Unit
+    searchResult: TaskSummaryUiState,
+    query: String,
+    onSelectSearchResult: (Long) -> Unit,
 ) {
     val resources = LocalResources.current
 
@@ -559,7 +561,7 @@ fun EmptyTaskSearchLayout(onAddTask: () -> Unit, modifier: Modifier = Modifier) 
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Icon(
-                imageVector = Icons.Default.Search,
+                painterResource(R.drawable.outline_search_24),
                 contentDescription = null,
                 modifier = Modifier.size(IconSizeLg),
             )
@@ -572,7 +574,7 @@ fun EmptyTaskSearchLayout(onAddTask: () -> Unit, modifier: Modifier = Modifier) 
             Spacer(Modifier.size(SpaceLg))
             ButtonWithIcon(
                 onClick = onAddTask,
-                imageVector = Icons.Default.Add,
+                painter = painterResource(R.drawable.baseline_add_24),
                 text = stringResource(R.string.add_task_button),
             )
         }
@@ -597,14 +599,23 @@ private fun TaskSearchScreenPreview_Present() {
                 TaskSummaryUiState(id = 1L, name = "Brush teeth", isDone = true),
                 TaskSummaryUiState(id = 2L, name = "Brush hair", isDone = false),
                 TaskSummaryUiState(id = 3L, name = "Eat brunch", isDone = false),
-            )
+            ),
+            LoadStates(
+                refresh = LoadState.NotLoading(endOfPaginationReached = true),
+                prepend = LoadState.NotLoading(endOfPaginationReached = true),
+                append = LoadState.NotLoading(endOfPaginationReached = true),
+            ),
         )
     ).collectAsLazyPagingItems()
 
     DiswantinTheme {
         Scaffold(
             topBar = {
-                TaskSearchTopBar(query = "Bru", onQueryChange = {}, onBackClick = {}, onSearch = {})
+                TaskSearchTopBar(
+                    query = TextFieldState(initialText = "Bru"),
+                    onBackClick = {},
+                    onSearch = {},
+                )
             },
         ) { innerPadding ->
             TaskSearchScreen(
@@ -645,7 +656,11 @@ private fun TaskSearchScreenPreview_Initial() {
     DiswantinTheme {
         Scaffold(
             topBar = {
-                TaskSearchTopBar(query = "", onQueryChange = {}, onBackClick = {}, onSearch = {})
+                TaskSearchTopBar(
+                    query = TextFieldState(),
+                    onBackClick = {},
+                    onSearch = {},
+                )
             },
         ) { innerPadding ->
             TaskSearchScreen(

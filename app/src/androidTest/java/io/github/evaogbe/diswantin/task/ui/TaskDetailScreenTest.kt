@@ -1,11 +1,13 @@
 package io.github.evaogbe.diswantin.task.ui
 
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isTrue
@@ -23,6 +25,7 @@ import io.github.serpro69.kfaker.lorem.LoremFaker
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.spyk
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flow
 import org.junit.Rule
 import org.junit.Test
@@ -123,18 +126,21 @@ class TaskDetailScreenTest {
     @Test
     fun togglesTaskDone() {
         var topBarState: TaskDetailTopBarState? = null
+        val topBarActionState = MutableStateFlow<TaskDetailTopBarAction?>(null)
         val task = genTask()
         val viewModel = createTaskDetailViewModel { db ->
             db.insertTask(task)
         }
 
         composeTestRule.setContent {
+            val topBarAction by topBarActionState.collectAsStateWithLifecycle()
+
             DiswantinTheme {
                 TaskDetailScreen(
                     onPopBackStack = {},
                     setTopBarState = { topBarState = it },
-                    topBarAction = null,
-                    topBarActionHandled = {},
+                    topBarAction = topBarAction,
+                    topBarActionHandled = { topBarActionState.value = null },
                     setUserMessage = {},
                     onNavigateToTask = {},
                     onNavigateToTag = {},
@@ -145,13 +151,13 @@ class TaskDetailScreenTest {
 
         assertThat(topBarState).isEqualTo(TaskDetailTopBarState(taskId = task.id, isDone = false))
 
-        viewModel.markTaskDone()
+        topBarActionState.value = TaskDetailTopBarAction.MarkDone
 
         composeTestRule.waitUntil {
             topBarState == TaskDetailTopBarState(taskId = task.id, isDone = true)
         }
 
-        viewModel.unmarkTaskDone()
+        topBarActionState.value = TaskDetailTopBarAction.UnmarkDone
 
         composeTestRule.waitUntil {
             topBarState == TaskDetailTopBarState(taskId = task.id, isDone = false)
@@ -161,6 +167,7 @@ class TaskDetailScreenTest {
     @Test
     fun displaysErrorMessage_whenMarkTaskDoneFails() {
         var userMessage: UserMessage? = null
+        val topBarActionState = MutableStateFlow<TaskDetailTopBarAction?>(null)
         val clock = createClock()
         val task = genTask()
         val db = FakeDatabase().apply {
@@ -179,12 +186,14 @@ class TaskDetailScreenTest {
         )
 
         composeTestRule.setContent {
+            val topBarAction by topBarActionState.collectAsStateWithLifecycle()
+
             DiswantinTheme {
                 TaskDetailScreen(
                     onPopBackStack = {},
                     setTopBarState = {},
-                    topBarAction = null,
-                    topBarActionHandled = {},
+                    topBarAction = topBarAction,
+                    topBarActionHandled = { topBarActionState.value = null },
                     setUserMessage = { userMessage = it },
                     onNavigateToTask = {},
                     onNavigateToTag = {},
@@ -193,7 +202,7 @@ class TaskDetailScreenTest {
             }
         }
 
-        viewModel.markTaskDone()
+        topBarActionState.value = TaskDetailTopBarAction.MarkDone
 
         composeTestRule.waitUntil {
             userMessage == UserMessage.String(R.string.task_detail_mark_done_error)
@@ -203,6 +212,7 @@ class TaskDetailScreenTest {
     @Test
     fun displaysErrorMessage_whenUnmarkTaskDoneFails() {
         var userMessage: UserMessage? = null
+        val topBarActionState = MutableStateFlow<TaskDetailTopBarAction?>(null)
         val clock = createClock()
         val task = genTask()
         val db = FakeDatabase().apply {
@@ -222,12 +232,14 @@ class TaskDetailScreenTest {
         viewModel.markTaskDone()
 
         composeTestRule.setContent {
+            val topBarAction by topBarActionState.collectAsStateWithLifecycle()
+
             DiswantinTheme {
                 TaskDetailScreen(
                     onPopBackStack = {},
                     setTopBarState = {},
-                    topBarAction = null,
-                    topBarActionHandled = {},
+                    topBarAction = topBarAction,
+                    topBarActionHandled = { topBarActionState.value = null },
                     setUserMessage = { userMessage = it },
                     onNavigateToTask = {},
                     onNavigateToTag = {},
@@ -236,7 +248,7 @@ class TaskDetailScreenTest {
             }
         }
 
-        viewModel.unmarkTaskDone()
+        topBarActionState.value = TaskDetailTopBarAction.UnmarkDone
 
         composeTestRule.waitUntil {
             userMessage == UserMessage.String(R.string.task_detail_unmark_done_error)
@@ -246,18 +258,21 @@ class TaskDetailScreenTest {
     @Test
     fun popsBackStack_whenTaskDeleted() {
         var onPopBackStackCalled = false
+        val topBarActionState = MutableStateFlow<TaskDetailTopBarAction?>(null)
         val task = genTask()
         val viewModel = createTaskDetailViewModel { db ->
             db.insertTask(task)
         }
 
         composeTestRule.setContent {
+            val topBarAction by topBarActionState.collectAsStateWithLifecycle()
+
             DiswantinTheme {
                 TaskDetailScreen(
                     onPopBackStack = { onPopBackStackCalled = true },
                     setTopBarState = {},
-                    topBarAction = null,
-                    topBarActionHandled = {},
+                    topBarAction = topBarAction,
+                    topBarActionHandled = { topBarActionState.value = null },
                     setUserMessage = {},
                     onNavigateToTask = {},
                     onNavigateToTag = {},
@@ -266,7 +281,7 @@ class TaskDetailScreenTest {
             }
         }
 
-        viewModel.deleteTask()
+        topBarActionState.value = TaskDetailTopBarAction.Delete
 
         composeTestRule.onNodeWithTag(PendingLayoutTestTag).assertIsDisplayed()
         assertThat(onPopBackStackCalled).isTrue()
@@ -275,6 +290,7 @@ class TaskDetailScreenTest {
     @Test
     fun displaysErrorMessage_whenDeleteTaskFails() {
         var userMessage: UserMessage? = null
+        val topBarActionState = MutableStateFlow<TaskDetailTopBarAction?>(null)
         val clock = createClock()
         val task = genTask()
         val db = FakeDatabase().apply {
@@ -293,12 +309,14 @@ class TaskDetailScreenTest {
         )
 
         composeTestRule.setContent {
+            val topBarAction by topBarActionState.collectAsStateWithLifecycle()
+
             DiswantinTheme {
                 TaskDetailScreen(
                     onPopBackStack = {},
                     setTopBarState = {},
-                    topBarAction = null,
-                    topBarActionHandled = {},
+                    topBarAction = topBarAction,
+                    topBarActionHandled = { topBarActionState.value = null },
                     setUserMessage = { userMessage = it },
                     onNavigateToTask = {},
                     onNavigateToTag = {},
@@ -307,7 +325,7 @@ class TaskDetailScreenTest {
             }
         }
 
-        viewModel.deleteTask()
+        topBarActionState.value = TaskDetailTopBarAction.Delete
 
         composeTestRule.waitUntil {
             userMessage == UserMessage.String(R.string.task_detail_delete_error)
