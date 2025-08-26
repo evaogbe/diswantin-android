@@ -20,8 +20,8 @@ class LocalTagRepository @Inject constructor(
 
     override fun getById(id: Long) = tagDao.getById(id).flowOn(ioDispatcher)
 
-    override fun getTagsByTaskId(taskId: Long) =
-        tagDao.getTagsByTaskId(taskId).flowOn(ioDispatcher)
+    override fun getTagsByTaskId(taskId: Long, size: Int) =
+        tagDao.getTagsByTaskId(taskId, size).flowOn(ioDispatcher)
 
     override fun search(query: String, size: Int) =
         tagDao.search(escapeSql("$query*"), size).flowOn(ioDispatcher)

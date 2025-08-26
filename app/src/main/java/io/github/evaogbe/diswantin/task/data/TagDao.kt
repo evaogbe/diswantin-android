@@ -21,9 +21,9 @@ interface TagDao {
         FROM tag t
         JOIN task_tag tt ON tt.tag_id = t.id
         WHERE tt.task_id = :taskId
-        LIMIT 20"""
+        LIMIT :size"""
     )
-    fun getTagsByTaskId(taskId: Long): Flow<List<Tag>>
+    fun getTagsByTaskId(taskId: Long, size: Int): Flow<List<Tag>>
 
     @Query(
         """SELECT tag.*

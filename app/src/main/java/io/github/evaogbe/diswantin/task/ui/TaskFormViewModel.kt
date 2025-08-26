@@ -128,7 +128,8 @@ class TaskFormViewModel @Inject constructor(
     } ?: flowOf(Result.Success(null))
 
     private val existingTagsStream = taskId?.let { id ->
-        tagRepository.getTagsByTaskId(id).map<List<Tag>, Result<List<Tag>>> { Result.Success(it) }
+        tagRepository.getTagsByTaskId(id, size = Task.MAX_TAGS)
+            .map<List<Tag>, Result<List<Tag>>> { Result.Success(it) }
             .catch { e ->
                 Timber.e(e, "Failed to fetch tags by task id: %d", id)
                 userMessage.value = UserMessage.String(R.string.task_form_fetch_tags_error)
@@ -171,7 +172,7 @@ class TaskFormViewModel @Inject constructor(
             if (query.isBlank()) {
                 flowOf(emptyList())
             } else {
-                tagRepository.search(query.trim(), size = 40).catch { e ->
+                tagRepository.search(query.trim(), size = Task.MAX_TAGS * 2).catch { e ->
                     Timber.e(e, "Failed to search for tag by query: %s", query)
                     userMessage.value = UserMessage.String(R.string.search_tag_options_error)
                 }
@@ -242,7 +243,7 @@ class TaskFormViewModel @Inject constructor(
                         tagFieldState = tagFieldState,
                         tags = tags,
                         tagOptions = if (hasTagOptions) {
-                            tagOptions.filter { it !in tags }.take(20).toImmutableList()
+                            tagOptions.filter { it !in tags }.take(Task.MAX_TAGS).toImmutableList()
                         } else {
                             persistentListOf()
                         },

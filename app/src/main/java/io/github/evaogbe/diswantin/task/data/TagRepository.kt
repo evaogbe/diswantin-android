@@ -10,7 +10,7 @@ interface TagRepository {
 
     fun getById(id: Long): Flow<Tag?>
 
-    fun getTagsByTaskId(taskId: Long): Flow<List<Tag>>
+    fun getTagsByTaskId(taskId: Long, size: Int): Flow<List<Tag>>
 
     fun search(query: String, size: Int): Flow<List<Tag>>
 

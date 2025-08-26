@@ -11,6 +11,7 @@ import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.data.Result
 import io.github.evaogbe.diswantin.task.data.Tag
 import io.github.evaogbe.diswantin.task.data.TagRepository
+import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskDetail
 import io.github.evaogbe.diswantin.task.data.TaskRecurrence
 import io.github.evaogbe.diswantin.task.data.TaskRepository
@@ -60,11 +61,11 @@ class TaskDetailViewModel @Inject constructor(
             Timber.e(e, "Failed to fetch task by id: %d", taskId)
             emit(Result.Failure(e))
         },
-        tagRepository.getTagsByTaskId(taskId)
+        tagRepository.getTagsByTaskId(taskId, size = Task.MAX_TAGS)
             .map<List<Tag>, Result<List<Tag>>> { Result.Success(it) }.catch { e ->
-            Timber.e(e, "Failed to fetch tags by task id: %d", taskId)
-            emit(Result.Failure(e))
-        },
+                Timber.e(e, "Failed to fetch tags by task id: %d", taskId)
+                emit(Result.Failure(e))
+            },
         taskRepository.getTaskRecurrencesByTaskId(taskId)
             .map<List<TaskRecurrence>, Result<TaskRecurrenceUiState?>> {
                 Result.Success(TaskRecurrenceUiState.tryFromEntities(it, locale))

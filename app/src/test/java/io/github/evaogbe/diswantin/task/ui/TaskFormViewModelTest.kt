@@ -1351,7 +1351,7 @@ class TaskFormViewModelTest {
             }
             val taskRepository = FakeTaskRepository(db, clock)
             val tagRepository = spyk(FakeTagRepository(db))
-            every { tagRepository.getTagsByTaskId(any()) } returns flow {
+            every { tagRepository.getTagsByTaskId(any(), any()) } returns flow {
                 throw RuntimeException("Test")
             }
 
@@ -1815,7 +1815,7 @@ class TaskFormViewModelTest {
                 scheduledTime = LocalTime.parse("17:00"),
             )
         )
-        assertThat(tagRepository.getTagsByTaskId(task.id).first()).containsExactly(tag)
+        assertThat(tagRepository.getTagsByTaskId(task.id, 2).first()).containsExactly(tag)
         assertThat(
             taskRepository.getTaskRecurrencesByTaskId(task.id).first()
                 .map { it.copy(id = 0) }).containsExactly(
@@ -2064,7 +2064,7 @@ class TaskFormViewModelTest {
             assertThat(taskRepository.tasks).containsExactlyInAnyOrder(
                 task.copy(name = name)
             )
-            assertThat(tagRepository.getTagsByTaskId(task.id).first()).containsExactly(tag)
+            assertThat(tagRepository.getTagsByTaskId(task.id, 2).first()).containsExactly(tag)
         }
 
     @Test
@@ -2080,7 +2080,7 @@ class TaskFormViewModelTest {
             }
             val taskRepository = FakeTaskRepository(db, clock)
             val tagRepository = spyk(FakeTagRepository(db))
-            every { tagRepository.getTagsByTaskId(any()) } returns flow {
+            every { tagRepository.getTagsByTaskId(any(), any()) } returns flow {
                 throw RuntimeException("Test")
             }
 

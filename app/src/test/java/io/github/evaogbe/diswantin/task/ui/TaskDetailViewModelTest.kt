@@ -193,7 +193,7 @@ class TaskDetailViewModelTest {
             }
             val taskRepository = FakeTaskRepository(db, clock)
             val tagRepository = spyk(FakeTagRepository(db))
-            every { tagRepository.getTagsByTaskId(any()) } returns flow { throw exception }
+            every { tagRepository.getTagsByTaskId(any(), any()) } returns flow { throw exception }
 
             val viewModel = TaskDetailViewModel(
                 createSavedStateHandle(),
