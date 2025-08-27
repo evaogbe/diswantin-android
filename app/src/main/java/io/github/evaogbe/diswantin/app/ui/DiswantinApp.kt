@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.input.clearText
 import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -66,6 +67,7 @@ import io.github.evaogbe.diswantin.task.ui.TaskFormRoute
 import io.github.evaogbe.diswantin.task.ui.TaskFormScreen
 import io.github.evaogbe.diswantin.task.ui.TaskFormTopBar
 import io.github.evaogbe.diswantin.task.ui.TaskFormTopBarAction
+import io.github.evaogbe.diswantin.task.ui.TaskFormViewModel
 import io.github.evaogbe.diswantin.task.ui.TaskRecurrenceFormTopBar
 import io.github.evaogbe.diswantin.task.ui.TaskRecurrenceFormTopBarAction
 import io.github.evaogbe.diswantin.task.ui.TaskRecurrentFormScreen
@@ -387,7 +389,7 @@ fun DiswantinApp() {
                         navController.navigate(route = TaskFormRoute.Main.new(name = it))
                     },
                     onSelectSearchResult = {
-                        navController.navigate(route = TaskDetailRoute(id = it))
+                        navController.navigate(route = TaskDetailRoute(id = it.id))
                     },
                 )
             }
@@ -412,6 +414,10 @@ fun DiswantinApp() {
                         onEditRecurrence = {
                             navController.navigate(route = TaskFormRoute.Recurrence)
                         },
+                        onEditParent = {
+                            query.setTextAndPlaceCursorAtEnd(it)
+                            navController.navigate(route = TaskFormRoute.TaskSearch)
+                        },
                         taskFormViewModel = hiltViewModel(parentEntry),
                     )
                 }
@@ -431,6 +437,33 @@ fun DiswantinApp() {
                                 ?.let { topBarState = it }
                         },
                         taskFormViewModel = hiltViewModel(parentEntry),
+                    )
+                }
+                composable<TaskFormRoute.TaskSearch> { backStackEntry ->
+                    val parentEntry = remember(backStackEntry) {
+                        navController.getBackStackEntry(TaskFormRoute)
+                    }
+                    val taskFormViewModel = hiltViewModel<TaskFormViewModel>(parentEntry)
+
+                    LaunchedEffect(Unit) {
+                        if (topBarState !is TopBarState.TaskSearch) {
+                            topBarState = TopBarState.TaskSearch(action = null)
+                        }
+                    }
+
+                    TaskSearchScreen(
+                        query = query.text.toString(),
+                        topBarAction = (topBarState as? TopBarState.TaskSearch)?.action,
+                        topBarActionHandled = {
+                            (topBarState as? TopBarState.TaskSearch)?.copy(action = null)?.let {
+                                topBarState = it
+                            }
+                        },
+                        onAddTask = null,
+                        onSelectSearchResult = {
+                            taskFormViewModel.updateParent(it)
+                            navController.popBackStack()
+                        },
                     )
                 }
             }

@@ -1,8 +1,8 @@
 package io.github.evaogbe.diswantin.task.ui
 
 import android.os.Parcelable
+import io.github.evaogbe.diswantin.task.data.NamedEntity
 import io.github.evaogbe.diswantin.task.data.Tag
-import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.parcelize.Parcelize
@@ -42,9 +42,8 @@ sealed interface TaskFormUiState {
         val tagFieldState: TagFieldState,
         val tags: ImmutableList<Tag>,
         val tagOptions: ImmutableList<Tag>,
-        val showParentTaskField: Boolean,
-        val parentTask: Task?,
-        val parentTaskOptions: ImmutableList<Task>,
+        val showParentField: Boolean,
+        val parent: NamedEntity?,
         val changed: Boolean,
         val userMessage: UserMessage?,
     ) : TaskFormUiState {

@@ -360,15 +360,6 @@ interface TaskDao {
         startOfToday: Instant
     ): PagingSource<Int, TaskSummary>
 
-    @Query(
-        """SELECT DISTINCT task.*
-        FROM task
-        JOIN task_fts tf ON tf.name = task.name
-        WHERE task_fts MATCH :query
-        LIMIT :size"""
-    )
-    fun search(query: String, size: Int): Flow<List<Task>>
-
     @Transaction
     @Query(
         """SELECT DISTINCT t.id, t.name, r.task_id IS NOT NULL AS recurring, c.done_at

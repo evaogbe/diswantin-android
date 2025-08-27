@@ -1,9 +1,12 @@
 package io.github.evaogbe.diswantin.task.ui
 
+import io.github.evaogbe.diswantin.task.data.NamedEntity
 import io.github.evaogbe.diswantin.task.data.TaskSummary
 import java.time.Instant
 
 data class TaskSummaryUiState(val id: Long, val name: String, val isDone: Boolean) {
+    fun toNamedEntity() = NamedEntity(id = id, name = name)
+
     companion object {
         fun fromTaskSummary(task: TaskSummary, doneBefore: Instant) = TaskSummaryUiState(
             id = task.id,

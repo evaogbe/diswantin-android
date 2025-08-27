@@ -66,6 +66,7 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import io.github.evaogbe.diswantin.R
+import io.github.evaogbe.diswantin.task.data.NamedEntity
 import io.github.evaogbe.diswantin.ui.button.ButtonWithIcon
 import io.github.evaogbe.diswantin.ui.dialog.DiswantinDatePickerDialog
 import io.github.evaogbe.diswantin.ui.dialog.DiswantinDateRangePickerDialog
@@ -151,8 +152,8 @@ fun TaskSearchScreen(
     query: String,
     topBarAction: TaskSearchTopBarAction?,
     topBarActionHandled: () -> Unit,
-    onAddTask: (String) -> Unit,
-    onSelectSearchResult: (Long) -> Unit,
+    onAddTask: ((String) -> Unit)?,
+    onSelectSearchResult: (NamedEntity) -> Unit,
     taskSearchViewModel: TaskSearchViewModel = hiltViewModel(),
 ) {
     val searchResultPagingItems =
@@ -333,8 +334,8 @@ fun TaskSearchScreen(
     onRecurrenceChipClick: () -> Unit,
     searchResultItems: LazyPagingItems<TaskSummaryUiState>,
     uiState: TaskSearchUiState,
-    onAddTask: (String) -> Unit,
-    onSelectSearchResult: (Long) -> Unit,
+    onAddTask: ((String) -> Unit)?,
+    onSelectSearchResult: (NamedEntity) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val dateFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT)
@@ -435,7 +436,11 @@ fun TaskSearchScreen(
                             onSelectSearchResult = onSelectSearchResult,
                         )
                     } else {
-                        EmptyTaskSearchLayout(onAddTask = { onAddTask(query.trim()) })
+                        EmptyTaskSearchLayout(
+                            onAddTask = if (onAddTask != null) {
+                                { onAddTask(query.trim()) }
+                            } else null,
+                        )
                     }
                 }
             }
@@ -449,7 +454,7 @@ fun TaskSearchScreen(
 fun TaskSearchLayout(
     query: String,
     searchResultItems: LazyPagingItems<TaskSummaryUiState>,
-    onSelectSearchResult: (Long) -> Unit,
+    onSelectSearchResult: (NamedEntity) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     TaskSearchLayout(
@@ -501,7 +506,7 @@ fun TaskSearchLayout(
 private fun SearchResultItem(
     searchResult: TaskSummaryUiState,
     query: String,
-    onSelectSearchResult: (Long) -> Unit,
+    onSelectSearchResult: (NamedEntity) -> Unit,
 ) {
     val resources = LocalResources.current
 
@@ -540,12 +545,12 @@ private fun SearchResultItem(
                 },
             )
         },
-        modifier = Modifier.clickable { onSelectSearchResult(searchResult.id) },
+        modifier = Modifier.clickable { onSelectSearchResult(searchResult.toNamedEntity()) },
     )
 }
 
 @Composable
-fun EmptyTaskSearchLayout(onAddTask: () -> Unit, modifier: Modifier = Modifier) {
+fun EmptyTaskSearchLayout(onAddTask: (() -> Unit)?, modifier: Modifier = Modifier) {
     Surface(
         modifier = modifier
             .imePadding()
@@ -571,12 +576,14 @@ fun EmptyTaskSearchLayout(onAddTask: () -> Unit, modifier: Modifier = Modifier) 
                 textAlign = TextAlign.Center,
                 style = typography.headlineLarge,
             )
-            Spacer(Modifier.size(SpaceLg))
-            ButtonWithIcon(
-                onClick = onAddTask,
-                painter = painterResource(R.drawable.baseline_add_24),
-                text = stringResource(R.string.add_task_button),
-            )
+            if (onAddTask != null) {
+                Spacer(Modifier.size(SpaceLg))
+                ButtonWithIcon(
+                    onClick = onAddTask,
+                    painter = painterResource(R.drawable.baseline_add_24),
+                    text = stringResource(R.string.add_task_button),
+                )
+            }
         }
     }
 }
@@ -642,9 +649,17 @@ private fun TaskSearchScreenPreview_Present() {
 
 @DevicePreviews
 @Composable
-private fun TaskSearchScreenPreview_Empty() {
+private fun TaskSearchScreenPreview_EmptyWithAddTask() {
     DiswantinTheme {
         EmptyTaskSearchLayout(onAddTask = {})
+    }
+}
+
+@DevicePreviews
+@Composable
+private fun TaskSearchScreenPreview_EmptyWithoutAddTask() {
+    DiswantinTheme {
+        EmptyTaskSearchLayout(onAddTask = null)
     }
 }
 
