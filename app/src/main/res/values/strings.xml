@@ -2,6 +2,7 @@
     <string name="add_button">Add</string>
     <string name="add_deadline_date_button">Add deadline date</string>
     <string name="add_deadline_time_button">Add deadline time</string>
+    <string name="add_parent_task_button">Add previous to-do</string>
     <string name="add_recurrence_button">Does not repeat</string>
     <string name="add_scheduled_at_button">Schedule</string>
     <string name="add_scheduled_time_button">Add scheduled time</string>
@@ -117,7 +118,6 @@
     <string name="scheduled_time_label">Scheduled time</string>
     <string name="search_tasks_button">Search to-dos</string>
     <string name="search_tag_options_error">Something went wrong loading tags</string>
-    <string name="search_task_options_error">Something went wrong loading to-dos</string>
     <string name="skip_button">Skip</string>
     <string name="skip_sheet_confirm_button">Other</string>
     <string name="skip_sheet_dismiss_button">Too hard</string>

@@ -366,7 +366,7 @@ fun TaskDetailLayout(
                 }
             }
 
-            childTaskItems?.let {
+            if (childTaskItems != null) {
                 item {
                     Spacer(Modifier.size(SpaceSm))
                     Text(
@@ -377,7 +377,7 @@ fun TaskDetailLayout(
                     )
                 }
 
-                it()
+                childTaskItems()
 
                 item {
                     Spacer(Modifier.size(SpaceSm))

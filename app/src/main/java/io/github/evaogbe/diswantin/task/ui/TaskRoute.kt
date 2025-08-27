@@ -28,6 +28,9 @@ data object TaskFormRoute {
 
     @Serializable
     data object Recurrence
+
+    @Serializable
+    data object TaskSearch
 }
 
 @Serializable

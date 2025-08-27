@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.evaogbe.diswantin.R
+import io.github.evaogbe.diswantin.task.data.NamedEntity
 import io.github.evaogbe.diswantin.task.data.RecurrenceType
 import io.github.evaogbe.diswantin.task.data.Tag
 import io.github.evaogbe.diswantin.task.data.Task
@@ -68,7 +69,6 @@ import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
-import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -124,6 +124,7 @@ fun TaskFormScreen(
     topBarActionHandled: () -> Unit,
     setUserMessage: (UserMessage) -> Unit,
     onEditRecurrence: () -> Unit,
+    onEditParent: (String) -> Unit,
     taskFormViewModel: TaskFormViewModel = hiltViewModel(),
 ) {
     val uiState by taskFormViewModel.uiState.collectAsStateWithLifecycle()
@@ -232,8 +233,8 @@ fun TaskFormScreen(
                 startEditTag = taskFormViewModel::startEditTag,
                 tagQuery = tagQuery,
                 onTagSearch = taskFormViewModel::searchTags,
-                onParentTaskChange = taskFormViewModel::updateParentTask,
-                onTaskSearch = taskFormViewModel::searchParentTasks,
+                onParentTaskChange = taskFormViewModel::updateParent,
+                onEditParent = onEditParent,
             )
         }
     }
@@ -271,8 +272,8 @@ fun TaskFormLayout(
     startEditTag: () -> Unit,
     tagQuery: TextFieldState,
     onTagSearch: (String) -> Unit,
-    onParentTaskChange: (Task?) -> Unit,
-    onTaskSearch: (String) -> Unit,
+    onParentTaskChange: (NamedEntity?) -> Unit,
+    onEditParent: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var dialogType by rememberSaveable { mutableStateOf<FieldDialogType?>(null) }
@@ -501,15 +502,32 @@ fun TaskFormLayout(
                 }
             }
 
-            if (uiState.showParentTaskField) {
-                SelectableAutocompleteField(
-                    selectedOption = uiState.parentTask,
-                    label = stringResource(R.string.parent_task_label),
-                    onSearch = onTaskSearch,
-                    options = uiState.parentTaskOptions,
-                    formatOption = Task::name,
-                    onSelectOption = onParentTaskChange,
-                )
+            if (uiState.showParentField) {
+                if (uiState.parent == null) {
+                    TextButtonWithIcon(
+                        onClick = { onEditParent("") },
+                        painter = painterResource(R.drawable.baseline_add_24),
+                        text = stringResource(R.string.add_parent_task_button),
+                    )
+                } else {
+                    Column {
+                        Text(
+                            text = stringResource(R.string.parent_task_label),
+                            style = typography.bodyLarge,
+                        )
+                        Spacer(Modifier.size(SpaceSm))
+                        ClearableLayout(
+                            onClear = { onParentTaskChange(null) },
+                            iconContentDescription = stringResource(R.string.remove_button),
+                        ) {
+                            EditFieldButton(
+                                onClick = { onEditParent(uiState.parent.name) },
+                                text = uiState.parent.name,
+                                modifier = Modifier.weight(1f, fill = false),
+                            )
+                        }
+                    }
+                }
             }
 
             when (uiState.tagFieldState) {
@@ -605,76 +623,6 @@ fun TaskFormLayout(
 }
 
 @Composable
-fun <T : Any> SelectableAutocompleteField(
-    selectedOption: T?,
-    label: String,
-    onSearch: (String) -> Unit,
-    options: ImmutableList<T>,
-    formatOption: (T) -> String,
-    onSelectOption: (T?) -> Unit,
-) {
-    val query = rememberTextFieldState()
-    val selectAndClear = { option: T? ->
-        onSelectOption(option)
-        query.clearText()
-    }
-
-    LaunchedEffect(selectedOption) {
-        query.setTextAndPlaceCursorAtEnd(selectedOption?.let(formatOption).orEmpty())
-    }
-
-    if (selectedOption == null) {
-        AutocompleteField(
-            query = query,
-            label = { Text(text = label) },
-            onSearch = onSearch,
-            options = options,
-            formatOption = formatOption,
-            onSelectOption = selectAndClear,
-            autoFocus = false,
-        )
-    } else {
-        var isEditing by rememberSaveable { mutableStateOf(false) }
-
-        if (isEditing) {
-            ClearableLayout(onClear = { isEditing = false }, invert = true) {
-                AutocompleteField(
-                    query = query,
-                    label = { Text(text = label) },
-                    onSearch = onSearch,
-                    options = options,
-                    formatOption = formatOption,
-                    onSelectOption = {
-                        selectAndClear(it)
-                        isEditing = false
-                    },
-                    autoFocus = false,
-                    modifier = Modifier.weight(1f),
-                )
-            }
-        } else {
-            Column {
-                Text(text = label, style = typography.bodyLarge)
-                Spacer(Modifier.size(SpaceSm))
-                ClearableLayout(
-                    onClear = { selectAndClear(null) },
-                    iconContentDescription = stringResource(R.string.remove_button)
-                ) {
-                    EditFieldButton(
-                        onClick = {
-                            query.setTextAndPlaceCursorAtEnd(formatOption(selectedOption))
-                            isEditing = true
-                        },
-                        text = formatOption(selectedOption),
-                        modifier = Modifier.weight(1f, fill = false),
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
 fun TagList(tags: ImmutableList<Tag>, onRemoveTag: (Tag) -> Unit) {
     FlowRow(horizontalArrangement = Arrangement.spacedBy(SpaceSm)) {
         tags.forEach { tag ->
@@ -728,9 +676,8 @@ private fun TaskFormScreenPreview_New() {
                     tagFieldState = TagFieldState.Hidden,
                     tags = persistentListOf(),
                     tagOptions = persistentListOf(),
-                    showParentTaskField = false,
-                    parentTask = null,
-                    parentTaskOptions = persistentListOf(),
+                    showParentField = false,
+                    parent = null,
                     changed = false,
                     userMessage = null,
                 ),
@@ -750,7 +697,7 @@ private fun TaskFormScreenPreview_New() {
                 tagQuery = TextFieldState(),
                 onTagSearch = {},
                 onParentTaskChange = {},
-                onTaskSearch = {},
+                onEditParent = {},
                 modifier = Modifier.padding(innerPadding),
             )
         }
@@ -802,9 +749,8 @@ private fun TaskFormScreenPreview_Edit() {
                         Tag(id = 3L, name = "goal"),
                     ),
                     tagOptions = persistentListOf(),
-                    showParentTaskField = true,
-                    parentTask = Task(id = 1L, createdAt = Instant.now(), name = "Brush teeth"),
-                    parentTaskOptions = persistentListOf(),
+                    showParentField = true,
+                    parent = NamedEntity(id = 1L, name = "Brush teeth"),
                     changed = false,
                     userMessage = null,
                 ),
@@ -824,7 +770,7 @@ private fun TaskFormScreenPreview_Edit() {
                 tagQuery = TextFieldState(),
                 onTagSearch = {},
                 onParentTaskChange = {},
-                onTaskSearch = {},
+                onEditParent = {},
                 modifier = Modifier.padding(innerPadding),
             )
         }
@@ -853,9 +799,8 @@ private fun TaskFormLayoutPreview_ScheduledAt() {
                     tagFieldState = TagFieldState.Closed,
                     tags = persistentListOf(),
                     tagOptions = persistentListOf(),
-                    showParentTaskField = true,
-                    parentTask = null,
-                    parentTaskOptions = persistentListOf(),
+                    showParentField = true,
+                    parent = null,
                     changed = true,
                     userMessage = null,
                 ),
@@ -875,7 +820,7 @@ private fun TaskFormLayoutPreview_ScheduledAt() {
                 tagQuery = TextFieldState(),
                 onTagSearch = {},
                 onParentTaskChange = {},
-                onTaskSearch = {},
+                onEditParent = {},
             )
         }
     }
@@ -903,9 +848,8 @@ private fun TaskFormLayoutPreview_ScheduledDate() {
                     tagFieldState = TagFieldState.Hidden,
                     tags = persistentListOf(),
                     tagOptions = persistentListOf(),
-                    showParentTaskField = false,
-                    parentTask = null,
-                    parentTaskOptions = persistentListOf(),
+                    showParentField = false,
+                    parent = null,
                     changed = false,
                     userMessage = null,
                 ),
@@ -925,7 +869,7 @@ private fun TaskFormLayoutPreview_ScheduledDate() {
                 tagQuery = TextFieldState(),
                 onTagSearch = {},
                 onParentTaskChange = {},
-                onTaskSearch = {},
+                onEditParent = {},
             )
         }
     }
@@ -954,9 +898,8 @@ private fun TaskFormLayoutPreview_EditingTag() {
                     tagFieldState = TagFieldState.Open,
                     tags = persistentListOf(Tag(id = 1L, name = "morning routine")),
                     tagOptions = persistentListOf(),
-                    showParentTaskField = false,
-                    parentTask = null,
-                    parentTaskOptions = persistentListOf(),
+                    showParentField = false,
+                    parent = null,
                     changed = false,
                     userMessage = null,
                 ),
@@ -976,7 +919,7 @@ private fun TaskFormLayoutPreview_EditingTag() {
                 tagQuery = TextFieldState(),
                 onTagSearch = {},
                 onParentTaskChange = {},
-                onTaskSearch = {},
+                onEditParent = {},
             )
         }
     }

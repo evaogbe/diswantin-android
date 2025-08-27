@@ -208,10 +208,6 @@ class FakeTaskRepository(
         )
     }
 
-    override fun search(query: String, size: Int) = db.taskTable.map { tasks ->
-        tasks.values.filter { it.name.contains(query, ignoreCase = true) }.take(size)
-    }
-
     override fun searchTaskSummaries(criteria: TaskSearchCriteria) = combine(
         db.taskTable,
         db.taskCompletionTable,

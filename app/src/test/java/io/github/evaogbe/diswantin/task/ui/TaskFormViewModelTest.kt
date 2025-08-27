@@ -80,9 +80,8 @@ class TaskFormViewModelTest {
                 tagFieldState = TagFieldState.Hidden,
                 tags = persistentListOf(),
                 tagOptions = persistentListOf(),
-                showParentTaskField = false,
-                parentTask = null,
-                parentTaskOptions = persistentListOf(),
+                showParentField = false,
+                parent = null,
                 changed = false,
                 userMessage = null,
             )
@@ -151,9 +150,8 @@ class TaskFormViewModelTest {
                 tagFieldState = TagFieldState.Closed,
                 tags = persistentListOf(tag),
                 tagOptions = persistentListOf(),
-                showParentTaskField = true,
-                parentTask = parentTask,
-                parentTaskOptions = persistentListOf(),
+                showParentField = true,
+                parent = parentTask.toNamedEntity(),
                 changed = false,
                 userMessage = null,
             )
@@ -246,9 +244,8 @@ class TaskFormViewModelTest {
                     tagFieldState = TagFieldState.Hidden,
                     tags = persistentListOf(),
                     tagOptions = persistentListOf(),
-                    showParentTaskField = false,
-                    parentTask = null,
-                    parentTaskOptions = persistentListOf(),
+                    showParentField = false,
+                    parent = null,
                     changed = true,
                     userMessage = null,
                 )
@@ -281,9 +278,8 @@ class TaskFormViewModelTest {
                     tagFieldState = TagFieldState.Hidden,
                     tags = persistentListOf(),
                     tagOptions = persistentListOf(),
-                    showParentTaskField = false,
-                    parentTask = null,
-                    parentTaskOptions = persistentListOf(),
+                    showParentField = false,
+                    parent = null,
                     changed = true,
                     userMessage = null,
                 )
@@ -316,9 +312,8 @@ class TaskFormViewModelTest {
                     tagFieldState = TagFieldState.Hidden,
                     tags = persistentListOf(),
                     tagOptions = persistentListOf(),
-                    showParentTaskField = false,
-                    parentTask = null,
-                    parentTaskOptions = persistentListOf(),
+                    showParentField = false,
+                    parent = null,
                     changed = true,
                     userMessage = null,
                 )
@@ -351,9 +346,8 @@ class TaskFormViewModelTest {
                     tagFieldState = TagFieldState.Hidden,
                     tags = persistentListOf(),
                     tagOptions = persistentListOf(),
-                    showParentTaskField = false,
-                    parentTask = null,
-                    parentTaskOptions = persistentListOf(),
+                    showParentField = false,
+                    parent = null,
                     changed = true,
                     userMessage = null,
                 )
@@ -386,9 +380,8 @@ class TaskFormViewModelTest {
                     tagFieldState = TagFieldState.Hidden,
                     tags = persistentListOf(),
                     tagOptions = persistentListOf(),
-                    showParentTaskField = false,
-                    parentTask = null,
-                    parentTaskOptions = persistentListOf(),
+                    showParentField = false,
+                    parent = null,
                     changed = true,
                     userMessage = null,
                 )
@@ -421,9 +414,8 @@ class TaskFormViewModelTest {
                     tagFieldState = TagFieldState.Hidden,
                     tags = persistentListOf(),
                     tagOptions = persistentListOf(),
-                    showParentTaskField = false,
-                    parentTask = null,
-                    parentTaskOptions = persistentListOf(),
+                    showParentField = false,
+                    parent = null,
                     changed = true,
                     userMessage = null,
                 )
@@ -456,9 +448,8 @@ class TaskFormViewModelTest {
                     tagFieldState = TagFieldState.Hidden,
                     tags = persistentListOf(),
                     tagOptions = persistentListOf(),
-                    showParentTaskField = false,
-                    parentTask = null,
-                    parentTaskOptions = persistentListOf(),
+                    showParentField = false,
+                    parent = null,
                     changed = true,
                     userMessage = null,
                 )
@@ -492,9 +483,8 @@ class TaskFormViewModelTest {
                     tagFieldState = TagFieldState.Hidden,
                     tags = persistentListOf(),
                     tagOptions = persistentListOf(),
-                    showParentTaskField = false,
-                    parentTask = null,
-                    parentTaskOptions = persistentListOf(),
+                    showParentField = false,
+                    parent = null,
                     changed = true,
                     userMessage = null,
                 )
@@ -529,9 +519,8 @@ class TaskFormViewModelTest {
                     tagFieldState = TagFieldState.Closed,
                     tags = persistentListOf(tag),
                     tagOptions = persistentListOf(),
-                    showParentTaskField = false,
-                    parentTask = null,
-                    parentTaskOptions = persistentListOf(),
+                    showParentField = false,
+                    parent = null,
                     changed = true,
                     userMessage = null,
                 )
@@ -581,9 +570,8 @@ class TaskFormViewModelTest {
                     tagFieldState = TagFieldState.Hidden,
                     tags = persistentListOf(),
                     tagOptions = persistentListOf(),
-                    showParentTaskField = false,
-                    parentTask = null,
-                    parentTaskOptions = persistentListOf(),
+                    showParentField = false,
+                    parent = null,
                     changed = true,
                     userMessage = null,
                 )
@@ -602,7 +590,7 @@ class TaskFormViewModelTest {
                 viewModel.uiState.collect()
             }
 
-            viewModel.updateParentTask(parentTask)
+            viewModel.updateParent(parentTask.toNamedEntity())
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
@@ -618,9 +606,8 @@ class TaskFormViewModelTest {
                     tagFieldState = TagFieldState.Hidden,
                     tags = persistentListOf(),
                     tagOptions = persistentListOf(),
-                    showParentTaskField = true,
-                    parentTask = parentTask,
-                    parentTaskOptions = persistentListOf(),
+                    showParentField = true,
+                    parent = parentTask.toNamedEntity(),
                     changed = true,
                     userMessage = null,
                 )
@@ -655,9 +642,8 @@ class TaskFormViewModelTest {
                     tagFieldState = TagFieldState.Hidden,
                     tags = persistentListOf(),
                     tagOptions = persistentListOf(),
-                    showParentTaskField = false,
-                    parentTask = null,
-                    parentTaskOptions = persistentListOf(),
+                    showParentField = false,
+                    parent = null,
                     changed = true,
                     userMessage = null,
                 )
@@ -693,9 +679,8 @@ class TaskFormViewModelTest {
                     tagFieldState = TagFieldState.Hidden,
                     tags = persistentListOf(),
                     tagOptions = persistentListOf(),
-                    showParentTaskField = false,
-                    parentTask = null,
-                    parentTaskOptions = persistentListOf(),
+                    showParentField = false,
+                    parent = null,
                     changed = true,
                     userMessage = null,
                 )
@@ -731,9 +716,8 @@ class TaskFormViewModelTest {
                     tagFieldState = TagFieldState.Hidden,
                     tags = persistentListOf(),
                     tagOptions = persistentListOf(),
-                    showParentTaskField = false,
-                    parentTask = null,
-                    parentTaskOptions = persistentListOf(),
+                    showParentField = false,
+                    parent = null,
                     changed = true,
                     userMessage = null,
                 )
@@ -769,9 +753,8 @@ class TaskFormViewModelTest {
                     tagFieldState = TagFieldState.Hidden,
                     tags = persistentListOf(),
                     tagOptions = persistentListOf(),
-                    showParentTaskField = false,
-                    parentTask = null,
-                    parentTaskOptions = persistentListOf(),
+                    showParentField = false,
+                    parent = null,
                     changed = true,
                     userMessage = null,
                 )
@@ -807,9 +790,8 @@ class TaskFormViewModelTest {
                     tagFieldState = TagFieldState.Hidden,
                     tags = persistentListOf(),
                     tagOptions = persistentListOf(),
-                    showParentTaskField = false,
-                    parentTask = null,
-                    parentTaskOptions = persistentListOf(),
+                    showParentField = false,
+                    parent = null,
                     changed = true,
                     userMessage = null,
                 )
@@ -845,9 +827,8 @@ class TaskFormViewModelTest {
                     tagFieldState = TagFieldState.Hidden,
                     tags = persistentListOf(),
                     tagOptions = persistentListOf(),
-                    showParentTaskField = false,
-                    parentTask = null,
-                    parentTaskOptions = persistentListOf(),
+                    showParentField = false,
+                    parent = null,
                     changed = true,
                     userMessage = null,
                 )
@@ -883,9 +864,8 @@ class TaskFormViewModelTest {
                     tagFieldState = TagFieldState.Hidden,
                     tags = persistentListOf(),
                     tagOptions = persistentListOf(),
-                    showParentTaskField = false,
-                    parentTask = null,
-                    parentTaskOptions = persistentListOf(),
+                    showParentField = false,
+                    parent = null,
                     changed = true,
                     userMessage = null,
                 )
@@ -924,9 +904,8 @@ class TaskFormViewModelTest {
                     tagFieldState = TagFieldState.Hidden,
                     tags = persistentListOf(),
                     tagOptions = persistentListOf(),
-                    showParentTaskField = false,
-                    parentTask = null,
-                    parentTaskOptions = persistentListOf(),
+                    showParentField = false,
+                    parent = null,
                     changed = true,
                     userMessage = null,
                 )
@@ -963,9 +942,8 @@ class TaskFormViewModelTest {
                     tagFieldState = TagFieldState.Closed,
                     tags = persistentListOf(),
                     tagOptions = persistentListOf(),
-                    showParentTaskField = false,
-                    parentTask = null,
-                    parentTaskOptions = persistentListOf(),
+                    showParentField = false,
+                    parent = null,
                     changed = true,
                     userMessage = null,
                 )
@@ -1008,9 +986,8 @@ class TaskFormViewModelTest {
                     tagFieldState = TagFieldState.Hidden,
                     tags = persistentListOf(),
                     tagOptions = persistentListOf(),
-                    showParentTaskField = false,
-                    parentTask = null,
-                    parentTaskOptions = persistentListOf(),
+                    showParentField = false,
+                    parent = null,
                     changed = true,
                     userMessage = null,
                 )
@@ -1032,7 +1009,7 @@ class TaskFormViewModelTest {
                 viewModel.uiState.collect()
             }
 
-            viewModel.updateParentTask(null)
+            viewModel.updateParent(null)
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
@@ -1048,9 +1025,8 @@ class TaskFormViewModelTest {
                     tagFieldState = TagFieldState.Hidden,
                     tags = persistentListOf(),
                     tagOptions = persistentListOf(),
-                    showParentTaskField = true,
-                    parentTask = null,
-                    parentTaskOptions = persistentListOf(),
+                    showParentField = true,
+                    parent = null,
                     changed = true,
                     userMessage = null,
                 )
@@ -1082,9 +1058,8 @@ class TaskFormViewModelTest {
                     tagFieldState = TagFieldState.Hidden,
                     tags = persistentListOf(),
                     tagOptions = persistentListOf(),
-                    showParentTaskField = true,
-                    parentTask = null,
-                    parentTaskOptions = persistentListOf(),
+                    showParentField = true,
+                    parent = null,
                     changed = false,
                     userMessage = null,
                 )
@@ -1120,9 +1095,8 @@ class TaskFormViewModelTest {
                     tagFieldState = TagFieldState.Hidden,
                     tags = persistentListOf(),
                     tagOptions = persistentListOf(),
-                    showParentTaskField = true,
-                    parentTask = null,
-                    parentTaskOptions = persistentListOf(),
+                    showParentField = true,
+                    parent = null,
                     changed = false,
                     userMessage = null,
                 )
@@ -1166,9 +1140,8 @@ class TaskFormViewModelTest {
                     tagFieldState = TagFieldState.Hidden,
                     tags = persistentListOf(),
                     tagOptions = persistentListOf(),
-                    showParentTaskField = false,
-                    parentTask = null,
-                    parentTaskOptions = persistentListOf(),
+                    showParentField = false,
+                    parent = null,
                     changed = false,
                     userMessage = UserMessage.String(R.string.task_form_fetch_parent_task_error),
                 )
@@ -1215,9 +1188,8 @@ class TaskFormViewModelTest {
                     tagFieldState = TagFieldState.Hidden,
                     tags = persistentListOf(),
                     tagOptions = persistentListOf(),
-                    showParentTaskField = false,
-                    parentTask = null,
-                    parentTaskOptions = persistentListOf(),
+                    showParentField = false,
+                    parent = null,
                     changed = false,
                     userMessage = UserMessage.String(R.string.task_form_fetch_parent_task_error),
                 )
@@ -1249,9 +1221,8 @@ class TaskFormViewModelTest {
                 tagFieldState = TagFieldState.Closed,
                 tags = persistentListOf(),
                 tagOptions = persistentListOf(),
-                showParentTaskField = false,
-                parentTask = null,
-                parentTaskOptions = persistentListOf(),
+                showParentField = false,
+                parent = null,
                 changed = false,
                 userMessage = null,
             )
@@ -1281,9 +1252,8 @@ class TaskFormViewModelTest {
                     tagFieldState = TagFieldState.Hidden,
                     tags = persistentListOf(),
                     tagOptions = persistentListOf(),
-                    showParentTaskField = false,
-                    parentTask = null,
-                    parentTaskOptions = persistentListOf(),
+                    showParentField = false,
+                    parent = null,
                     changed = false,
                     userMessage = null,
                 )
@@ -1330,9 +1300,8 @@ class TaskFormViewModelTest {
                     tagFieldState = TagFieldState.Hidden,
                     tags = persistentListOf(),
                     tagOptions = persistentListOf(),
-                    showParentTaskField = false,
-                    parentTask = null,
-                    parentTaskOptions = persistentListOf(),
+                    showParentField = false,
+                    parent = null,
                     changed = false,
                     userMessage = UserMessage.String(R.string.task_form_fetch_tags_error),
                 )
@@ -1381,108 +1350,10 @@ class TaskFormViewModelTest {
                     tagFieldState = TagFieldState.Hidden,
                     tags = persistentListOf(),
                     tagOptions = persistentListOf(),
-                    showParentTaskField = false,
-                    parentTask = null,
-                    parentTaskOptions = persistentListOf(),
+                    showParentField = false,
+                    parent = null,
                     changed = false,
                     userMessage = UserMessage.String(R.string.task_form_fetch_tags_error),
-                )
-            )
-        }
-
-    @Test
-    fun `searchParentTasks fetches parentTaskOptions`() =
-        runTest(mainDispatcherRule.testDispatcher) {
-            val query = loremFaker.verbs.base()
-            val tasks = List(faker.random.nextInt(min = 2, max = 5)) {
-                Task(
-                    id = it + 1L,
-                    createdAt = faker.random.randomPastDate().toInstant(),
-                    name = "$query ${loremFaker.lorem.words()}",
-                )
-            }
-            val currentTask = tasks.first()
-            val taskOptions = tasks.drop(1)
-            val viewModel = createTaskFormViewModelForEdit { db ->
-                tasks.forEach(db::insertTask)
-            }
-
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-                viewModel.uiState.collect()
-            }
-
-            viewModel.searchParentTasks(query)
-
-            assertThat(viewModel.uiState.value).isEqualTo(
-                TaskFormUiState.Success(
-                    initialName = currentTask.name,
-                    initialNote = currentTask.note,
-                    recurrence = null,
-                    deadlineDate = null,
-                    deadlineTime = null,
-                    startAfterDate = null,
-                    startAfterTime = null,
-                    scheduledDate = null,
-                    scheduledTime = null,
-                    tagFieldState = TagFieldState.Hidden,
-                    tags = persistentListOf(),
-                    tagOptions = persistentListOf(),
-                    showParentTaskField = true,
-                    parentTask = null,
-                    parentTaskOptions = taskOptions.toImmutableList(),
-                    changed = false,
-                    userMessage = null,
-                )
-            )
-        }
-
-    @Test
-    fun `searchParentTasks shows error message when repository throws`() =
-        runTest(mainDispatcherRule.testDispatcher) {
-            val query = loremFaker.verbs.base()
-            val clock = createClock()
-            val db = FakeDatabase().apply {
-                insertTask(genTask())
-            }
-            val taskRepository = spyk(FakeTaskRepository(db, clock))
-            every {
-                taskRepository.search(any(), any())
-            } returns flow { throw RuntimeException("Test") }
-
-            val tagRepository = FakeTagRepository(db)
-            val viewModel = TaskFormViewModel(
-                createSavedStateHandleForNew(),
-                taskRepository,
-                tagRepository,
-                clock,
-                createLocale(),
-            )
-
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-                viewModel.uiState.collect()
-            }
-
-            viewModel.searchParentTasks(query)
-
-            assertThat(viewModel.uiState.value).isEqualTo(
-                TaskFormUiState.Success(
-                    initialName = "",
-                    initialNote = "",
-                    recurrence = null,
-                    deadlineDate = null,
-                    deadlineTime = null,
-                    startAfterDate = null,
-                    startAfterTime = null,
-                    scheduledDate = null,
-                    scheduledTime = null,
-                    tagFieldState = TagFieldState.Hidden,
-                    tags = persistentListOf(),
-                    tagOptions = persistentListOf(),
-                    showParentTaskField = true,
-                    parentTask = null,
-                    parentTaskOptions = persistentListOf(),
-                    changed = false,
-                    userMessage = UserMessage.String(R.string.search_task_options_error),
                 )
             )
         }
@@ -1517,9 +1388,8 @@ class TaskFormViewModelTest {
                 tagFieldState = TagFieldState.Closed,
                 tags = persistentListOf(),
                 tagOptions = tags.toImmutableList(),
-                showParentTaskField = false,
-                parentTask = null,
-                parentTaskOptions = persistentListOf(),
+                showParentField = false,
+                parent = null,
                 changed = false,
                 userMessage = null,
             )
@@ -1542,9 +1412,8 @@ class TaskFormViewModelTest {
                 tagFieldState = TagFieldState.Closed,
                 tags = persistentListOf(tags.first()),
                 tagOptions = tags.drop(1).toImmutableList(),
-                showParentTaskField = false,
-                parentTask = null,
-                parentTaskOptions = persistentListOf(),
+                showParentField = false,
+                parent = null,
                 changed = true,
                 userMessage = null,
             )
@@ -1594,9 +1463,8 @@ class TaskFormViewModelTest {
                     tagFieldState = TagFieldState.Closed,
                     tags = persistentListOf(),
                     tagOptions = persistentListOf(),
-                    showParentTaskField = false,
-                    parentTask = null,
-                    parentTaskOptions = persistentListOf(),
+                    showParentField = false,
+                    parent = null,
                     changed = false,
                     userMessage = UserMessage.String(R.string.search_tag_options_error),
                 )
@@ -1638,9 +1506,8 @@ class TaskFormViewModelTest {
                 tagFieldState = TagFieldState.Hidden,
                 tags = persistentListOf(),
                 tagOptions = persistentListOf(),
-                showParentTaskField = false,
-                parentTask = null,
-                parentTaskOptions = persistentListOf(),
+                showParentField = false,
+                parent = null,
                 changed = false,
                 userMessage = null,
             )
@@ -1723,9 +1590,8 @@ class TaskFormViewModelTest {
                     tagFieldState = TagFieldState.Hidden,
                     tags = persistentListOf(),
                     tagOptions = persistentListOf(),
-                    showParentTaskField = false,
-                    parentTask = null,
-                    parentTaskOptions = persistentListOf(),
+                    showParentField = false,
+                    parent = null,
                     changed = true,
                     userMessage = UserMessage.String(R.string.task_form_save_error_new),
                 )
@@ -1776,9 +1642,8 @@ class TaskFormViewModelTest {
                 tagFieldState = TagFieldState.Closed,
                 tags = persistentListOf(),
                 tagOptions = persistentListOf(),
-                showParentTaskField = false,
-                parentTask = null,
-                parentTaskOptions = persistentListOf(),
+                showParentField = false,
+                parent = null,
                 changed = false,
                 userMessage = null,
             )
@@ -1876,9 +1741,8 @@ class TaskFormViewModelTest {
                     tagFieldState = TagFieldState.Hidden,
                     tags = persistentListOf(),
                     tagOptions = persistentListOf(),
-                    showParentTaskField = false,
-                    parentTask = null,
-                    parentTaskOptions = persistentListOf(),
+                    showParentField = false,
+                    parent = null,
                     changed = true,
                     userMessage = UserMessage.String(R.string.task_form_save_error_edit),
                 )
@@ -1927,9 +1791,8 @@ class TaskFormViewModelTest {
                     tagFieldState = TagFieldState.Hidden,
                     tags = persistentListOf(),
                     tagOptions = persistentListOf(),
-                    showParentTaskField = false,
-                    parentTask = parentTask,
-                    parentTaskOptions = persistentListOf(),
+                    showParentField = false,
+                    parent = parentTask.toNamedEntity(),
                     changed = false,
                     userMessage = UserMessage.String(R.string.task_form_fetch_parent_task_error),
                 )
@@ -1989,9 +1852,8 @@ class TaskFormViewModelTest {
                     tagFieldState = TagFieldState.Hidden,
                     tags = persistentListOf(),
                     tagOptions = persistentListOf(),
-                    showParentTaskField = false,
-                    parentTask = null,
-                    parentTaskOptions = persistentListOf(),
+                    showParentField = false,
+                    parent = null,
                     changed = false,
                     userMessage = UserMessage.String(R.string.task_form_fetch_parent_task_error),
                 )
@@ -2050,9 +1912,8 @@ class TaskFormViewModelTest {
                     tagFieldState = TagFieldState.Hidden,
                     tags = persistentListOf(tag),
                     tagOptions = persistentListOf(),
-                    showParentTaskField = false,
-                    parentTask = null,
-                    parentTaskOptions = persistentListOf(),
+                    showParentField = false,
+                    parent = null,
                     changed = false,
                     userMessage = UserMessage.String(R.string.task_form_fetch_tags_error),
                 )
@@ -2110,9 +1971,8 @@ class TaskFormViewModelTest {
                     tagFieldState = TagFieldState.Hidden,
                     tags = persistentListOf(),
                     tagOptions = persistentListOf(),
-                    showParentTaskField = false,
-                    parentTask = null,
-                    parentTaskOptions = persistentListOf(),
+                    showParentField = false,
+                    parent = null,
                     changed = false,
                     userMessage = UserMessage.String(R.string.task_form_fetch_tags_error),
                 )

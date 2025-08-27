@@ -92,6 +92,7 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     onEditRecurrence = {},
+                    onEditParent = {},
                     taskFormViewModel = viewModel,
                 )
             }
@@ -114,6 +115,7 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     onEditRecurrence = {},
+                    onEditParent = {},
                     taskFormViewModel = viewModel,
                 )
             }
@@ -152,6 +154,7 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     onEditRecurrence = {},
+                    onEditParent = {},
                     taskFormViewModel = viewModel,
                 )
             }
@@ -193,6 +196,7 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     onEditRecurrence = {},
+                    onEditParent = {},
                     taskFormViewModel = viewModel,
                 )
             }
@@ -238,6 +242,7 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     onEditRecurrence = {},
+                    onEditParent = {},
                     taskFormViewModel = viewModel,
                 )
             }
@@ -283,6 +288,7 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     onEditRecurrence = {},
+                    onEditParent = {},
                     taskFormViewModel = viewModel,
                 )
             }
@@ -323,6 +329,7 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     onEditRecurrence = {},
+                    onEditParent = {},
                     taskFormViewModel = viewModel,
                 )
             }
@@ -365,6 +372,7 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     onEditRecurrence = {},
+                    onEditParent = {},
                     taskFormViewModel = viewModel,
                 )
             }
@@ -412,6 +420,7 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     onEditRecurrence = {},
+                    onEditParent = {},
                     taskFormViewModel = viewModel,
                 )
             }
@@ -451,13 +460,14 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     onEditRecurrence = {},
+                    onEditParent = {},
                     taskFormViewModel = viewModel,
                 )
             }
         }
 
         composeTestRule.onNodeWithText(
-            stringResource(R.string.parent_task_label), useUnmergedTree = true
+            stringResource(R.string.add_parent_task_button), useUnmergedTree = true
         ).assertIsDisplayed()
     }
 
@@ -490,13 +500,14 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = { userMessage = it },
                     onEditRecurrence = {},
+                    onEditParent = {},
                     taskFormViewModel = viewModel,
                 )
             }
         }
 
         composeTestRule.onNodeWithText(
-            stringResource(R.string.parent_task_label), useUnmergedTree = true
+            stringResource(R.string.add_parent_task_button), useUnmergedTree = true
         ).assertDoesNotExist()
         assertThat(userMessage).isEqualTo(UserMessage.String(R.string.task_form_fetch_parent_task_error))
     }
@@ -517,6 +528,7 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     onEditRecurrence = {},
+                    onEditParent = {},
                     taskFormViewModel = viewModel,
                 )
             }
@@ -558,6 +570,7 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = { userMessage = it },
                     onEditRecurrence = {},
+                    onEditParent = {},
                     taskFormViewModel = viewModel,
                 )
             }
@@ -587,6 +600,7 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     onEditRecurrence = {},
+                    onEditParent = {},
                     taskFormViewModel = viewModel,
                 )
             }
@@ -617,89 +631,6 @@ class TaskFormScreenTest {
     }
 
     @Test
-    fun displaysMatchingTaskOptions_whenParentTaskSearchedFor() {
-        val query = loremFaker.verbs.base()
-        val tasks = List(3) {
-            Task(
-                id = it + 1L,
-                createdAt = faker.random.randomPastDate().toInstant(),
-                name = "$query ${loremFaker.lorem.unique.words()}",
-            )
-        }
-        val viewModel = createTaskFormViewModelForNew { db ->
-            tasks.forEach(db::insertTask)
-        }
-
-        composeTestRule.setContent {
-            DiswantinTheme {
-                TaskFormScreen(
-                    onPopBackStack = {},
-                    setTopBarState = {},
-                    topBarAction = null,
-                    topBarActionHandled = {},
-                    setUserMessage = {},
-                    onEditRecurrence = {},
-                    taskFormViewModel = viewModel,
-                )
-            }
-        }
-
-        composeTestRule.onNodeWithText(
-            stringResource(R.string.parent_task_label), useUnmergedTree = true
-        ).onParent().performTextInput(query)
-
-        composeTestRule.waitUntilExactlyOneExists(hasText(tasks[0].name))
-        composeTestRule.onNodeWithText(tasks[0].name).assertIsDisplayed()
-        composeTestRule.onNodeWithText(tasks[1].name).assertIsDisplayed()
-        composeTestRule.onNodeWithText(tasks[2].name).assertIsDisplayed()
-    }
-
-    @Test
-    fun displaysErrorMessage_whenSearchParentTasksFails() {
-        var userMessage: UserMessage? = null
-        val query = loremFaker.verbs.base()
-        val clock = createClock()
-        val db = FakeDatabase().apply {
-            insertTask(genTask())
-        }
-        val taskRepository = spyk(FakeTaskRepository(db, clock))
-        every { taskRepository.search(any(), any()) } returns flow {
-            throw RuntimeException("Test")
-        }
-
-        val tagRepository = FakeTagRepository(db)
-        val viewModel = TaskFormViewModel(
-            SavedStateHandle(),
-            taskRepository,
-            tagRepository,
-            clock,
-            createLocale(),
-        )
-
-        composeTestRule.setContent {
-            DiswantinTheme {
-                TaskFormScreen(
-                    onPopBackStack = {},
-                    setTopBarState = {},
-                    topBarAction = null,
-                    topBarActionHandled = {},
-                    setUserMessage = { userMessage = it },
-                    onEditRecurrence = {},
-                    taskFormViewModel = viewModel,
-                )
-            }
-        }
-
-        composeTestRule.onNodeWithText(
-            stringResource(R.string.parent_task_label), useUnmergedTree = true
-        ).onParent().performTextInput(query)
-
-        composeTestRule.waitUntil {
-            userMessage == UserMessage.String(R.string.search_task_options_error)
-        }
-    }
-
-    @Test
     fun displaysMatchingTagOptions_whenTagSearchedFor() {
         val query = loremFaker.verbs.base()
         val tags = List(3) {
@@ -719,6 +650,7 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = {},
                     onEditRecurrence = {},
+                    onEditParent = {},
                     taskFormViewModel = viewModel,
                 )
             }
@@ -769,6 +701,7 @@ class TaskFormScreenTest {
                     topBarActionHandled = {},
                     setUserMessage = { userMessage = it },
                     onEditRecurrence = {},
+                    onEditParent = {},
                     taskFormViewModel = viewModel,
                 )
             }
@@ -802,6 +735,7 @@ class TaskFormScreenTest {
                     topBarActionHandled = { topBarActionState.value = null },
                     setUserMessage = {},
                     onEditRecurrence = {},
+                    onEditParent = {},
                     taskFormViewModel = viewModel,
                 )
             }
@@ -855,6 +789,7 @@ class TaskFormScreenTest {
                     topBarActionHandled = { topBarActionState.value = null },
                     setUserMessage = { userMessage = it },
                     onEditRecurrence = {},
+                    onEditParent = {},
                     taskFormViewModel = viewModel,
                 )
             }
@@ -890,6 +825,7 @@ class TaskFormScreenTest {
                     topBarActionHandled = { topBarActionState.value = null },
                     setUserMessage = {},
                     onEditRecurrence = {},
+                    onEditParent = {},
                     taskFormViewModel = viewModel,
                 )
             }
@@ -952,6 +888,7 @@ class TaskFormScreenTest {
                     topBarActionHandled = { topBarActionState.value = null },
                     setUserMessage = { userMessage = it },
                     onEditRecurrence = {},
+                    onEditParent = {},
                     taskFormViewModel = viewModel,
                 )
             }

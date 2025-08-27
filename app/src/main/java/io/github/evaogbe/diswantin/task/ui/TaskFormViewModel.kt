@@ -9,6 +9,7 @@ import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.data.Result
 import io.github.evaogbe.diswantin.data.getOrDefault
 import io.github.evaogbe.diswantin.task.data.EditTaskForm
+import io.github.evaogbe.diswantin.task.data.NamedEntity
 import io.github.evaogbe.diswantin.task.data.NewTaskForm
 import io.github.evaogbe.diswantin.task.data.PathUpdateType
 import io.github.evaogbe.diswantin.task.data.RecurrenceType
@@ -82,9 +83,7 @@ class TaskFormViewModel @Inject constructor(
 
     private val scheduledTime = MutableStateFlow<LocalTime?>(null)
 
-    private val parentTask = MutableStateFlow<Task?>(null)
-
-    private val parentTaskQuery = MutableStateFlow("")
+    private val parent = MutableStateFlow<NamedEntity?>(null)
 
     private val tagFieldState = MutableStateFlow(TagFieldState.Closed)
 
@@ -119,8 +118,10 @@ class TaskFormViewModel @Inject constructor(
             }
     } ?: flowOf(Result.Success(emptyList()))
 
-    private val existingParentTaskStream = taskId?.let { id ->
-        taskRepository.getParent(id).map<Task?, Result<Task?>> { Result.Success(it) }.catch { e ->
+    private val existingParentStream = taskId?.let { id ->
+        taskRepository.getParent(id).map<Task?, Result<NamedEntity?>> { task ->
+            Result.Success(task?.toNamedEntity())
+        }.catch { e ->
             Timber.e(e, "Failed to fetch parent task by child id: %d", id)
             userMessage.value = UserMessage.String(R.string.task_form_fetch_parent_task_error)
             emit(Result.Failure(e))
@@ -129,8 +130,7 @@ class TaskFormViewModel @Inject constructor(
 
     private val existingTagsStream = taskId?.let { id ->
         tagRepository.getTagsByTaskId(id, size = Task.MAX_TAGS)
-            .map<List<Tag>, Result<List<Tag>>> { Result.Success(it) }
-            .catch { e ->
+            .map<List<Tag>, Result<List<Tag>>> { Result.Success(it) }.catch { e ->
                 Timber.e(e, "Failed to fetch tags by task id: %d", id)
                 userMessage.value = UserMessage.String(R.string.task_form_fetch_tags_error)
                 tagFieldState.value = TagFieldState.Hidden
@@ -153,18 +153,7 @@ class TaskFormViewModel @Inject constructor(
         scheduledDate,
         scheduledTime,
         taskCountStream,
-        parentTask,
-        parentTaskQuery,
-        parentTaskQuery.flatMapLatest { query ->
-            if (query.isBlank()) {
-                flowOf(emptyList())
-            } else {
-                taskRepository.search(query.trim(), size = 20).catch { e ->
-                    Timber.e(e, "Failed to search for task by query: %s", query)
-                    userMessage.value = UserMessage.String(R.string.search_task_options_error)
-                }
-            }
-        },
+        parent,
         tagFieldState,
         tags,
         tagQuery,
@@ -183,7 +172,7 @@ class TaskFormViewModel @Inject constructor(
         existingTaskStream,
         existingRecurrencesStream,
         existingTagsStream,
-        existingParentTaskStream,
+        existingParentStream,
     ) { args ->
         val initialName = args[0] as String
         val initialNote = args[1] as String
@@ -197,19 +186,17 @@ class TaskFormViewModel @Inject constructor(
         val scheduledDate = args[9] as LocalDate?
         val scheduledTime = args[10] as LocalTime?
         val taskCountResult = args[11] as Result<Long>
-        val parentTask = args[12] as Task?
-        val parentTaskQuery = (args[13] as String).trim()
-        val parentTaskOptions = args[14] as List<Task>
-        val tagFieldState = args[15] as TagFieldState
-        val tags = args[16] as ImmutableList<Tag>
-        val tagQuery = (args[17] as String).trim()
-        val tagOptions = args[18] as List<Tag>
-        val isSaved = args[19] as Boolean
-        val userMessage = args[20] as UserMessage?
-        val existingTaskResult = args[21] as Result<Task?>
-        val existingRecurrencesResult = args[22] as Result<List<TaskRecurrence>>
-        val existingTagsResult = args[23] as Result<List<Tag>>
-        val existingParentTaskResult = args[24] as Result<Task?>
+        val parent = args[12] as NamedEntity?
+        val tagFieldState = args[13] as TagFieldState
+        val tags = args[14] as ImmutableList<Tag>
+        val tagQuery = (args[15] as String).trim()
+        val tagOptions = args[16] as List<Tag>
+        val isSaved = args[17] as Boolean
+        val userMessage = args[18] as UserMessage?
+        val existingTaskResult = args[19] as Result<Task?>
+        val existingRecurrencesResult = args[20] as Result<List<TaskRecurrence>>
+        val existingTagsResult = args[21] as Result<List<Tag>>
+        val existingParentResult = args[22] as Result<NamedEntity?>
 
         if (isSaved) {
             TaskFormUiState.Saved
@@ -219,13 +206,9 @@ class TaskFormViewModel @Inject constructor(
                     val singleTagOption = tagOptions.singleOrNull()?.name
                     val hasTagOptions =
                         tags.none { it.name == tagQuery } || tagQuery != singleTagOption
-                    val showParentTaskField =
-                        existingParentTaskResult.isSuccess && taskCountResult.getOrDefault(
-                            0L
-                        ) > if (taskId == null) 0L else 1L
-                    val singleParentTaskOption = parentTaskOptions.singleOrNull()?.name
-                    val hasParentTaskOptions =
-                        parentTaskQuery != parentTask?.name || parentTaskQuery != singleParentTaskOption
+                    val taskCount = taskCountResult.getOrDefault(0L)
+                    val hasOtherTasks = taskCount > if (taskId == null) 0L else 1L
+                    val showParentField = existingParentResult.isSuccess && hasOtherTasks
                     val existingTags =
                         existingTagsResult.getOrNull()?.toPersistentList() ?: persistentListOf()
                     val existingRecurrenceUiState =
@@ -247,13 +230,8 @@ class TaskFormViewModel @Inject constructor(
                         } else {
                             persistentListOf()
                         },
-                        showParentTaskField = showParentTaskField,
-                        parentTask = parentTask,
-                        parentTaskOptions = if (hasParentTaskOptions) {
-                            parentTaskOptions.filter { it.id != taskId }.toImmutableList()
-                        } else {
-                            persistentListOf()
-                        },
+                        showParentField = showParentField,
+                        parent = parent,
                         changed = listOf(
                             name == existingTask?.name.orEmpty(),
                             note == existingTask?.note.orEmpty(),
@@ -265,7 +243,7 @@ class TaskFormViewModel @Inject constructor(
                             scheduledTime == existingTask?.scheduledTime,
                             tags == existingTags,
                             recurrenceUiState == existingRecurrenceUiState,
-                            parentTask == existingParentTaskResult.getOrNull(),
+                            parent == existingParentResult.getOrNull(),
                         ).contains(false),
                         userMessage = userMessage,
                     )
@@ -326,7 +304,7 @@ class TaskFormViewModel @Inject constructor(
             recurrenceUiState.value = existingRecurrencesStream.first().getOrNull()?.let {
                 TaskRecurrenceUiState.tryFromEntities(it, locale)
             }
-            parentTask.value = existingParentTaskStream.first().getOrNull()
+            parent.value = existingParentStream.first().getOrNull()
             tags.value =
                 existingTagsStream.first().getOrNull()?.toPersistentList() ?: persistentListOf()
         }
@@ -367,11 +345,10 @@ class TaskFormViewModel @Inject constructor(
         scheduledTime.value = value
     }
 
-    fun updateParentTask(value: Task?) {
-        parentTask.value = value
-        if (value == null) {
-            parentTaskQuery.value = ""
-        }
+    fun updateParent(value: NamedEntity?) {
+        parent.value = value
+        initialName.value = name.value
+        initialNote.value = note.value
     }
 
     fun startEditTag() {
@@ -403,10 +380,6 @@ class TaskFormViewModel @Inject constructor(
             startAfterDate.value = null
             scheduledDate.value = null
         }
-    }
-
-    fun searchParentTasks(query: String) {
-        parentTaskQuery.value = query
     }
 
     fun searchTags(query: String) {
@@ -463,7 +436,7 @@ class TaskFormViewModel @Inject constructor(
                 scheduledTime = state.scheduledTime,
                 tagIds = state.tags.map { it.id }.toSet(),
                 recurrences = recurrences,
-                parentTaskId = state.parentTask?.id,
+                parentTaskId = state.parent?.id,
                 clock = clock,
             )
             viewModelScope.launch {
@@ -484,7 +457,7 @@ class TaskFormViewModel @Inject constructor(
                     val existingTags = existingTagsStream.first()
                     val existingRecurrences =
                         existingRecurrencesStream.first().getOrDefault(emptyList())
-                    val existingParent = existingParentTaskStream.first()
+                    val existingParent = existingParentStream.first()
                     val hasTags = tagFieldState.value != TagFieldState.Hidden
                     val taskCount = taskCountStream.first()
                     val existingTagIds = if (hasTags) {
@@ -516,12 +489,12 @@ class TaskFormViewModel @Inject constructor(
                             parentUpdateType = when {
                                 taskCount.isFailure -> PathUpdateType.Keep
                                 existingParent.fold(
-                                    onSuccess = { it?.id == state.parentTask?.id },
+                                    onSuccess = { it?.id == state.parent?.id },
                                     onFailure = { true },
                                 ) -> PathUpdateType.Keep
 
-                                state.parentTask == null -> PathUpdateType.Remove
-                                else -> PathUpdateType.Replace(state.parentTask.id)
+                                state.parent == null -> PathUpdateType.Remove
+                                else -> PathUpdateType.Replace(state.parent.id)
                             },
                             existingTask = existingTask,
                             existingTagIds = existingTagIds,
