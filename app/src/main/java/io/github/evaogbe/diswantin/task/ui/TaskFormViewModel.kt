@@ -9,7 +9,6 @@ import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.data.Result
 import io.github.evaogbe.diswantin.data.getOrDefault
 import io.github.evaogbe.diswantin.task.data.EditTaskForm
-import io.github.evaogbe.diswantin.task.data.NamedEntity
 import io.github.evaogbe.diswantin.task.data.NewTaskForm
 import io.github.evaogbe.diswantin.task.data.PathUpdateType
 import io.github.evaogbe.diswantin.task.data.RecurrenceType
@@ -83,7 +82,7 @@ class TaskFormViewModel @Inject constructor(
 
     private val scheduledTime = MutableStateFlow<LocalTime?>(null)
 
-    private val parent = MutableStateFlow<NamedEntity?>(null)
+    private val parent = MutableStateFlow<ParentTask?>(null)
 
     private val tagFieldState = MutableStateFlow(TagFieldState.Closed)
 
@@ -119,8 +118,8 @@ class TaskFormViewModel @Inject constructor(
     } ?: flowOf(Result.Success(emptyList()))
 
     private val existingParentStream = taskId?.let { id ->
-        taskRepository.getParent(id).map<Task?, Result<NamedEntity?>> { task ->
-            Result.Success(task?.toNamedEntity())
+        taskRepository.getParent(id).map<Task?, Result<ParentTask?>> { task ->
+            Result.Success(task?.let(ParentTask::fromTask))
         }.catch { e ->
             Timber.e(e, "Failed to fetch parent task by child id: %d", id)
             userMessage.value = UserMessage.String(R.string.task_form_fetch_parent_task_error)
@@ -186,7 +185,7 @@ class TaskFormViewModel @Inject constructor(
         val scheduledDate = args[9] as LocalDate?
         val scheduledTime = args[10] as LocalTime?
         val taskCountResult = args[11] as Result<Long>
-        val parent = args[12] as NamedEntity?
+        val parent = args[12] as ParentTask?
         val tagFieldState = args[13] as TagFieldState
         val tags = args[14] as ImmutableList<Tag>
         val tagQuery = (args[15] as String).trim()
@@ -196,7 +195,7 @@ class TaskFormViewModel @Inject constructor(
         val existingTaskResult = args[19] as Result<Task?>
         val existingRecurrencesResult = args[20] as Result<List<TaskRecurrence>>
         val existingTagsResult = args[21] as Result<List<Tag>>
-        val existingParentResult = args[22] as Result<NamedEntity?>
+        val existingParentResult = args[22] as Result<ParentTask?>
 
         if (isSaved) {
             TaskFormUiState.Saved
@@ -345,7 +344,7 @@ class TaskFormViewModel @Inject constructor(
         scheduledTime.value = value
     }
 
-    fun updateParent(value: NamedEntity?) {
+    fun updateParent(value: ParentTask?) {
         parent.value = value
     }
 

@@ -47,7 +47,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.evaogbe.diswantin.R
-import io.github.evaogbe.diswantin.task.data.NamedEntity
 import io.github.evaogbe.diswantin.task.data.RecurrenceType
 import io.github.evaogbe.diswantin.task.data.Tag
 import io.github.evaogbe.diswantin.task.data.Task
@@ -272,7 +271,7 @@ fun TaskFormLayout(
     startEditTag: () -> Unit,
     tagQuery: TextFieldState,
     onTagSearch: (String) -> Unit,
-    onParentTaskChange: (NamedEntity?) -> Unit,
+    onParentTaskChange: (ParentTask?) -> Unit,
     onEditParent: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -750,7 +749,7 @@ private fun TaskFormScreenPreview_Edit() {
                     ),
                     tagOptions = persistentListOf(),
                     showParentField = true,
-                    parent = NamedEntity(id = 1L, name = "Brush teeth"),
+                    parent = ParentTask(id = 1L, name = "Brush teeth"),
                     changed = false,
                     userMessage = null,
                 ),

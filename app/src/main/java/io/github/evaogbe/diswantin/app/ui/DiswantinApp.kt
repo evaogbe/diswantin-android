@@ -51,6 +51,7 @@ import io.github.evaogbe.diswantin.task.ui.CurrentTaskScreen
 import io.github.evaogbe.diswantin.task.ui.CurrentTaskTopBar
 import io.github.evaogbe.diswantin.task.ui.CurrentTaskTopBarAction
 import io.github.evaogbe.diswantin.task.ui.CurrentTaskTopBarState
+import io.github.evaogbe.diswantin.task.ui.ParentTask
 import io.github.evaogbe.diswantin.task.ui.TagDetailRoute
 import io.github.evaogbe.diswantin.task.ui.TagDetailScreen
 import io.github.evaogbe.diswantin.task.ui.TagDetailTopBar
@@ -386,13 +387,19 @@ fun DiswantinApp() {
             }
             navigation<TaskFormRoute>(startDestination = TaskFormRoute.Main()) {
                 composable<TaskFormRoute.Main> { backStackEntry ->
+                    val previousQueryText by rememberSaveable {
+                        mutableStateOf(query.text.toString())
+                    }
                     val parentEntry = remember(backStackEntry) {
                         navController.getBackStackEntry(TaskFormRoute)
                     }
                     val taskFormViewModel = hiltViewModel<TaskFormViewModel>(parentEntry)
 
                     TaskFormScreen(
-                        onPopBackStack = navController::popBackStack,
+                        onPopBackStack = {
+                            query.setTextAndPlaceCursorAtEnd(previousQueryText)
+                            navController.popBackStack()
+                        },
                         setTopBarState = {
                             topBarState = TopBarState.TaskForm(uiState = it, action = null)
                         },
@@ -455,7 +462,7 @@ fun DiswantinApp() {
                         },
                         onAddTask = null,
                         onSelectSearchResult = {
-                            taskFormViewModel.updateParent(it)
+                            taskFormViewModel.updateParent(ParentTask(id = it.id, name = it.name))
                             navController.popBackStack()
                         },
                     )

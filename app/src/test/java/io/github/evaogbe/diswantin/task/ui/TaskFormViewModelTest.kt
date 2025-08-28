@@ -151,7 +151,7 @@ class TaskFormViewModelTest {
                 tags = persistentListOf(tag),
                 tagOptions = persistentListOf(),
                 showParentField = true,
-                parent = parentTask.toNamedEntity(),
+                parent = ParentTask.fromTask(parentTask),
                 changed = false,
                 userMessage = null,
             )
@@ -590,7 +590,7 @@ class TaskFormViewModelTest {
                 viewModel.uiState.collect()
             }
 
-            viewModel.updateParent(parentTask.toNamedEntity())
+            viewModel.updateParent(ParentTask.fromTask(parentTask))
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 TaskFormUiState.Success(
@@ -607,7 +607,7 @@ class TaskFormViewModelTest {
                     tags = persistentListOf(),
                     tagOptions = persistentListOf(),
                     showParentField = true,
-                    parent = parentTask.toNamedEntity(),
+                    parent = ParentTask.fromTask(parentTask),
                     changed = true,
                     userMessage = null,
                 )
@@ -1792,7 +1792,7 @@ class TaskFormViewModelTest {
                     tags = persistentListOf(),
                     tagOptions = persistentListOf(),
                     showParentField = false,
-                    parent = parentTask.toNamedEntity(),
+                    parent = ParentTask.fromTask(parentTask),
                     changed = false,
                     userMessage = UserMessage.String(R.string.task_form_fetch_parent_task_error),
                 )

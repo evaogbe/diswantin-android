@@ -66,7 +66,6 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import io.github.evaogbe.diswantin.R
-import io.github.evaogbe.diswantin.task.data.NamedEntity
 import io.github.evaogbe.diswantin.ui.button.ButtonWithIcon
 import io.github.evaogbe.diswantin.ui.dialog.DiswantinDatePickerDialog
 import io.github.evaogbe.diswantin.ui.dialog.DiswantinDateRangePickerDialog
@@ -155,7 +154,7 @@ fun TaskSearchScreen(
     topBarAction: TaskSearchTopBarAction?,
     topBarActionHandled: () -> Unit,
     onAddTask: ((String) -> Unit)?,
-    onSelectSearchResult: (NamedEntity) -> Unit,
+    onSelectSearchResult: (TaskSearchResult) -> Unit,
     taskSearchViewModel: TaskSearchViewModel = hiltViewModel(),
 ) {
     val searchResultPagingItems =
@@ -337,7 +336,7 @@ fun TaskSearchScreen(
     searchResultItems: LazyPagingItems<TaskSummaryUiState>,
     uiState: TaskSearchUiState,
     onAddTask: ((String) -> Unit)?,
-    onSelectSearchResult: (NamedEntity) -> Unit,
+    onSelectSearchResult: (TaskSearchResult) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val dateFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT)
@@ -456,7 +455,7 @@ fun TaskSearchScreen(
 fun TaskSearchLayout(
     query: String,
     searchResultItems: LazyPagingItems<TaskSummaryUiState>,
-    onSelectSearchResult: (NamedEntity) -> Unit,
+    onSelectSearchResult: (TaskSearchResult) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     TaskSearchLayout(
@@ -468,8 +467,8 @@ fun TaskSearchLayout(
                 val searchResult = searchResultItems[index]!!
                 SearchResultItem(
                     searchResult = searchResult,
+                    onSelectSearchResult = { onSelectSearchResult(it.toSearchResult()) },
                     query = query,
-                    onSelectSearchResult = onSelectSearchResult,
                 )
                 HorizontalDivider()
             }
@@ -507,8 +506,8 @@ fun TaskSearchLayout(
 @Composable
 private fun SearchResultItem(
     searchResult: TaskSummaryUiState,
+    onSelectSearchResult: (TaskSummaryUiState) -> Unit,
     query: String,
-    onSelectSearchResult: (NamedEntity) -> Unit,
 ) {
     val resources = LocalResources.current
 
@@ -547,7 +546,7 @@ private fun SearchResultItem(
                 },
             )
         },
-        modifier = Modifier.clickable { onSelectSearchResult(searchResult.toNamedEntity()) },
+        modifier = Modifier.clickable { onSelectSearchResult(searchResult) },
     )
 }
 
@@ -718,8 +717,8 @@ private fun TaskSearchLayoutPreview() {
                     items(searchResults, TaskSummaryUiState::id) { searchResult ->
                         SearchResultItem(
                             searchResult = searchResult,
-                            query = "Bru",
                             onSelectSearchResult = {},
+                            query = "Bru",
                         )
                         HorizontalDivider()
                     }

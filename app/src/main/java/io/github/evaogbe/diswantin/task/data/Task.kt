@@ -20,8 +20,6 @@ data class Task(
     @ColumnInfo("scheduled_time") val scheduledTime: LocalTime? = null,
     @ColumnInfo(defaultValue = "") val note: String = "",
 ) {
-    fun toNamedEntity() = NamedEntity(id = id, name = name)
-
     companion object {
         const val MAX_TAGS = 10
     }
