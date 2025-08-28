@@ -389,6 +389,7 @@ fun DiswantinApp() {
                     val parentEntry = remember(backStackEntry) {
                         navController.getBackStackEntry(TaskFormRoute)
                     }
+                    val taskFormViewModel = hiltViewModel<TaskFormViewModel>(parentEntry)
 
                     TaskFormScreen(
                         onPopBackStack = navController::popBackStack,
@@ -403,13 +404,15 @@ fun DiswantinApp() {
                         },
                         setUserMessage = { userMessage = it },
                         onEditRecurrence = {
+                            taskFormViewModel.commitInputs()
                             navController.navigate(route = TaskFormRoute.Recurrence)
                         },
                         onEditParent = {
                             query.setTextAndPlaceCursorAtEnd(it)
+                            taskFormViewModel.commitInputs()
                             navController.navigate(route = TaskFormRoute.TaskSearch)
                         },
-                        taskFormViewModel = hiltViewModel(parentEntry),
+                        taskFormViewModel = taskFormViewModel,
                     )
                 }
                 composable<TaskFormRoute.Recurrence> { backStackEntry ->
