@@ -76,7 +76,6 @@ import kotlin.time.Duration.Companion.hours
 @Composable
 fun CurrentTaskTopBar(
     uiState: CurrentTaskTopBarState,
-    onSearch: () -> Unit,
     onRefresh: () -> Unit,
     onSkip: () -> Unit,
     modifier: Modifier = Modifier,
@@ -87,13 +86,6 @@ fun CurrentTaskTopBar(
         title = {},
         modifier = modifier,
         actions = {
-            IconButton(onClick = onSearch) {
-                Icon(
-                    painterResource(R.drawable.outline_search_24),
-                    contentDescription = stringResource(R.string.search_tasks_button),
-                )
-            }
-
             IconButton(onClick = { menuExpanded = !menuExpanded }) {
                 Icon(
                     painterResource(R.drawable.outline_more_vert_24),
@@ -400,7 +392,6 @@ private fun CurrentTaskScreenPreview_Present() {
             topBar = {
                 CurrentTaskTopBar(
                     uiState = CurrentTaskTopBarState(canSkip = true),
-                    onSearch = {},
                     onRefresh = {},
                     onSkip = {},
                 )
@@ -433,7 +424,6 @@ private fun CurrentTaskScreenPreview_withNote() {
             topBar = {
                 CurrentTaskTopBar(
                     uiState = CurrentTaskTopBarState(canSkip = false),
-                    onSearch = {},
                     onRefresh = {},
                     onSkip = {},
                 )
@@ -467,7 +457,6 @@ private fun CurrentTaskScreenPreview_Empty() {
             topBar = {
                 CurrentTaskTopBar(
                     uiState = CurrentTaskTopBarState(canSkip = false),
-                    onSearch = {},
                     onRefresh = {},
                     onSkip = {},
                 )

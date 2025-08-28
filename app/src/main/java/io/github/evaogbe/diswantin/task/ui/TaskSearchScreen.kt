@@ -96,7 +96,7 @@ import kotlin.time.Duration.Companion.milliseconds
 @Composable
 fun TaskSearchTopBar(
     query: TextFieldState,
-    onBackClick: () -> Unit,
+    onBackClick: (() -> Unit)?,
     onSearch: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -132,11 +132,13 @@ fun TaskSearchTopBar(
         },
         modifier = modifier,
         navigationIcon = {
-            IconButton(onClick = onBackClick) {
-                Icon(
-                    painterResource(R.drawable.baseline_arrow_back_24),
-                    contentDescription = stringResource(R.string.back_button),
-                )
+            if (onBackClick != null) {
+                IconButton(onClick = onBackClick) {
+                    Icon(
+                        painterResource(R.drawable.baseline_arrow_back_24),
+                        contentDescription = stringResource(R.string.back_button),
+                    )
+                }
             }
         },
     )

@@ -37,4 +37,4 @@ data object TaskFormRoute {
 data class TagDetailRoute(val id: Long)
 
 @Serializable
-object TaskSearchRoute
+object TaskSearchRoute : BottomBarRoute

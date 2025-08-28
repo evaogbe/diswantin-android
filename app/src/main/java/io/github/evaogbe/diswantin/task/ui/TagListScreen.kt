@@ -15,7 +15,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.typography
@@ -60,19 +59,8 @@ import kotlinx.coroutines.flow.flowOf
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TagListTopBar(onSearch: () -> Unit, modifier: Modifier = Modifier) {
-    TopAppBar(
-        title = {},
-        modifier = modifier,
-        actions = {
-            IconButton(onClick = onSearch) {
-                Icon(
-                    painterResource(R.drawable.outline_search_24),
-                    contentDescription = stringResource(R.string.search_tasks_button),
-                )
-            }
-        },
-    )
+fun TagListTopBar(modifier: Modifier = Modifier) {
+    TopAppBar(title = {}, modifier = modifier)
 }
 
 @Composable
@@ -209,7 +197,7 @@ private fun TagListScreenPreview_Present() {
     )
 
     DiswantinTheme {
-        Scaffold(topBar = { TagListTopBar(onSearch = {}) }) { innerPadding ->
+        Scaffold(topBar = { TagListTopBar() }) { innerPadding ->
             TagListLayout(
                 tagItems = {
                     items(tagItems, key = Tag::id) { tag ->
@@ -227,7 +215,7 @@ private fun TagListScreenPreview_Present() {
 @Composable
 private fun TagListScreenPreview_Empty() {
     DiswantinTheme {
-        Scaffold(topBar = { TagListTopBar(onSearch = {}) }) { innerPadding ->
+        Scaffold(topBar = { TagListTopBar() }) { innerPadding ->
             EmptyTagListLayout(
                 onAddTag = {},
                 modifier = Modifier.padding(innerPadding),
