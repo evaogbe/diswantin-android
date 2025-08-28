@@ -47,21 +47,6 @@ interface TaskDao {
                     GROUP BY task_id
                 ) s ON s.task_id = t.id
                 WHERE (c.done_at IS NULL OR (r.task_id IS NOT NULL AND c.done_at < :startOfToday))
-                    AND (
-                        t.scheduled_date IS NULL
-                        OR t.scheduled_date < :today
-                        OR (
-                            t.scheduled_date = :today
-                            AND (t.scheduled_time IS NULL OR t.scheduled_time <= :currentTime)
-                        )
-                    )
-                    AND (
-                        r.task_id IS NULL
-                            OR t.scheduled_time IS NULL
-                            OR t.scheduled_time <= :currentTime
-                    )
-                    AND (t.start_after_date IS NULL OR t.start_after_date <= :today)
-                    AND (t.start_after_time IS NULL OR t.start_after_time <= :currentTime)
                     AND (s.skipped_at IS NULL OR s.skipped_at < :startOfToday)
                     AND (r.start IS NULL OR r.start <= :today)
                     AND CASE r.type
@@ -260,6 +245,22 @@ interface TaskDao {
         ) leaf ON leaf.descendant = p.descendant AND leaf.depth = p.depth
         JOIN task td ON p.descendant = td.id
         LEFT JOIN (SELECT DISTINCT task_id FROM task_recurrence) rd ON rd.task_id = td.id
+        LEFT JOIN (SELECT DISTINCT task_id FROM task_recurrence) r ON r.task_id = t.id
+        WHERE (
+            t.scheduled_date IS NULL
+            OR t.scheduled_date < :today
+            OR (
+                t.scheduled_date = :today
+                    AND (t.scheduled_time IS NULL OR t.scheduled_time <= :currentTime)
+                )
+            )
+            AND (
+                r.task_id IS NULL
+                    OR t.scheduled_time IS NULL
+                    OR t.scheduled_time <= :currentTime
+            )
+            AND (t.start_after_date IS NULL OR t.start_after_date <= :today)
+            AND (t.start_after_time IS NULL OR t.start_after_time <= :currentTime)
         ORDER BY
             t.scheduled_date IS NULL,
             t.scheduled_date,

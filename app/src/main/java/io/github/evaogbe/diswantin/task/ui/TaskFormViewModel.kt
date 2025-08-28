@@ -347,8 +347,6 @@ class TaskFormViewModel @Inject constructor(
 
     fun updateParent(value: NamedEntity?) {
         parent.value = value
-        initialName.value = name.value
-        initialNote.value = note.value
     }
 
     fun startEditTag() {
@@ -384,6 +382,11 @@ class TaskFormViewModel @Inject constructor(
 
     fun searchTags(query: String) {
         tagQuery.value = query
+    }
+
+    fun commitInputs() {
+        initialName.value = name.value
+        initialNote.value = note.value
     }
 
     fun saveTask() {
