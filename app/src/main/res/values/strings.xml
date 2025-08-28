@@ -186,6 +186,7 @@
     <string name="task_search_empty">No matching to-dos</string>
     <string name="task_search_error">Something went wrong searching for to-dos</string>
     <string name="task_search_title">Search to-dos</string>
+    <string name="task_search_title_bottom_bar">Search</string>
     <string name="tasks_label">To-dos</string>
     <string name="time_picker_dialog_title">Select time</string>
     <string name="time_picker_switch_to_dial_mode">Switch to clock input mode</string>

@@ -125,10 +125,6 @@ fun DiswantinApp() {
                 is TopBarState.CurrentTask -> {
                     CurrentTaskTopBar(
                         uiState = state.uiState,
-                        onSearch = {
-                            query.clearText()
-                            navController.navigate(route = TaskSearchRoute)
-                        },
                         onRefresh = {
                             topBarState = state.copy(action = CurrentTaskTopBarAction.Refresh)
                         },
@@ -139,21 +135,11 @@ fun DiswantinApp() {
                 }
 
                 is TopBarState.Advice -> {
-                    AdviceTopBar(
-                        onSearch = {
-                            query.clearText()
-                            navController.navigate(route = TaskSearchRoute)
-                        },
-                    )
+                    AdviceTopBar()
                 }
 
                 is TopBarState.TagList -> {
-                    TagListTopBar(
-                        onSearch = {
-                            query.clearText()
-                            navController.navigate(route = TaskSearchRoute)
-                        },
-                    )
+                    TagListTopBar()
                 }
 
                 is TopBarState.TaskDetail -> {
@@ -215,7 +201,11 @@ fun DiswantinApp() {
                 is TopBarState.TaskSearch -> {
                     TaskSearchTopBar(
                         query = query,
-                        onBackClick = navController::popBackStack,
+                        onBackClick = if (currentDestination?.hasRoute<TaskFormRoute.TaskSearch>() != false) {
+                            { navController.popBackStack() }
+                        } else {
+                            null
+                        },
                         onSearch = {
                             topBarState = state.copy(action = TaskSearchTopBarAction.Search)
                         },
@@ -232,6 +222,7 @@ fun DiswantinApp() {
                         }
                     },
                     navigate = {
+                        query.clearText()
                         navController.navigate(it.route) {
                             popUpTo(navController.graph.findStartDestination().id) {
                                 saveState = true
@@ -489,7 +480,11 @@ fun DiswantinBottomBar(
                     )
                 },
                 label = {
-                    Text(stringResource(destination.titleId), textAlign = TextAlign.Center)
+                    Text(
+                        stringResource(destination.titleId),
+                        textAlign = TextAlign.Center,
+                        maxLines = 1,
+                    )
                 },
             )
         }
@@ -518,8 +513,8 @@ private fun DiswantinScaffoldPreview() {
                     actions = {
                         IconButton(onClick = {}) {
                             Icon(
-                                painterResource(R.drawable.outline_search_24),
-                                contentDescription = stringResource(R.string.search_tasks_button),
+                                painterResource(R.drawable.outline_more_vert_24),
+                                contentDescription = stringResource(R.string.more_actions_button),
                             )
                         }
                     },
