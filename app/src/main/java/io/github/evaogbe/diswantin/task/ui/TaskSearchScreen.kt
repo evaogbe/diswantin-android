@@ -411,11 +411,7 @@ fun TaskSearchScreen(
                 }
 
                 is LoadState.NotLoading -> {
-                    LaunchedEffect(Unit) {
-                        if (!hasSearched) {
-                            hasSearched = true
-                        }
-                    }
+                    hasSearched = true
 
                     TaskSearchLayout(
                         query = query,
@@ -486,7 +482,7 @@ fun TaskSearchLayout(
         LazyColumn(
             modifier = Modifier
                 .widthIn(max = ScreenLg)
-                .fillMaxSize(),
+                .fillMaxWidth(),
         ) {
             searchResultItems()
         }

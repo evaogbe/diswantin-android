@@ -16,17 +16,7 @@ import java.time.LocalTime
 @Dao
 interface TaskDao {
     @Query(
-        """SELECT
-            t.*,
-            td.scheduled_date AS scheduled_date_priority,
-            td.scheduled_time AS scheduled_time_priority,
-            td.deadline_date AS deadline_date_priority,
-            td.deadline_time AS deadline_time_priority,
-            rd.task_id IS NOT NULL AS recurring_priority,
-            td.start_after_date AS start_after_date_priority,
-            td.start_after_time AS start_after_time_priority,
-            td.created_at AS created_at_priority,
-            td.id AS id_priority
+        """SELECT t.*
         FROM task t
         JOIN task_path p ON p.ancestor = t.id
         JOIN (
@@ -244,8 +234,8 @@ interface TaskDao {
             GROUP BY p.descendant
         ) leaf ON leaf.descendant = p.descendant AND leaf.depth = p.depth
         JOIN task td ON p.descendant = td.id
-        LEFT JOIN (SELECT DISTINCT task_id FROM task_recurrence) rd ON rd.task_id = td.id
         LEFT JOIN (SELECT DISTINCT task_id FROM task_recurrence) r ON r.task_id = t.id
+        LEFT JOIN (SELECT DISTINCT task_id FROM task_recurrence) rd ON rd.task_id = td.id
         WHERE (
             t.scheduled_date IS NULL
             OR t.scheduled_date < :today
@@ -262,33 +252,61 @@ interface TaskDao {
             AND (t.start_after_date IS NULL OR t.start_after_date <= :today)
             AND (t.start_after_time IS NULL OR t.start_after_time <= :currentTime)
         ORDER BY
-            t.scheduled_date IS NULL,
-            t.scheduled_date,
-            t.scheduled_time IS NULL,
-            t.scheduled_time,
-            scheduled_date_priority IS NULL,
-            scheduled_date_priority,
-            scheduled_time_priority IS NULL,
-            scheduled_time_priority,
-            recurring_priority DESC,
-            t.deadline_date IS NULL,
+            CASE
+            WHEN t.scheduled_date IS NOT NULL THEN t.scheduled_date
+            WHEN r.task_id IS NOT NULL AND t.scheduled_time IS NOT NULL THEN :today
+            ELSE '999999999-12-31'
+            END,
+            t.scheduled_date IS NULL AND t.scheduled_time IS NULL,
+            CASE
+                WHEN t.scheduled_time IS NOT NULL THEN t.scheduled_time
+                WHEN t.scheduled_date IS NOT NULL THEN '00:00'
+                ELSE '23:59'
+            END,
+            t.deadline_date IS NULL OR t.deadline_date >= :today,
+            t.deadline_time IS NULL OR t.deadline_time > :overdueTime,
+            CASE
+            WHEN td.scheduled_date IS NOT NULL THEN td.scheduled_date
+            WHEN rd.task_id IS NOT NULL AND td.scheduled_time IS NOT NULL THEN :today
+            ELSE '999999999-12-31'
+            END,
+            td.scheduled_date IS NULL AND td.scheduled_time IS NULL,
+            CASE
+                WHEN td.scheduled_time IS NOT NULL THEN td.scheduled_time
+                WHEN td.scheduled_date IS NOT NULL THEN '00:00'
+                ELSE '23:59'
+            END,
+            td.deadline_date IS NULL OR td.deadline_date >= :today,
+            td.deadline_time IS NULL OR td.deadline_time > :overdueTime,
+            t.start_after_time IS NOT NULL,
+            CASE
+            WHEN t.deadline_date IS NOT NULL THEN t.deadline_date
+            WHEN r.task_id IS NOT NULL THEN :today
+            ELSE '999999999-12-31'
+            END,
             t.deadline_time IS NULL,
-            deadline_date_priority IS NULL,
-            deadline_time_priority IS NULL,
-            start_after_time_priority IS NOT NULL,
-            deadline_date_priority,
-            deadline_time_priority,
-            start_after_date_priority,
-            start_after_time_priority,
-            created_at_priority,
-            id_priority
-        LIMIT 20"""
+            r.task_id IS NULL,
+            t.deadline_time,
+            CASE
+            WHEN td.deadline_date IS NOT NULL THEN td.deadline_date
+            WHEN rd.task_id IS NOT NULL THEN :today
+            ELSE '999999999-12-31'
+            END,
+            td.deadline_time IS NULL,
+            rd.task_id IS NULL,
+            td.deadline_time,
+            t.start_after_date,
+            t.start_after_time,
+            t.created_at,
+            t.id
+        LIMIT 1"""
     )
-    fun getTaskPriorities(
+    fun getCurrentTask(
         today: LocalDate,
         currentTime: LocalTime,
         startOfToday: Instant,
-    ): Flow<List<TaskPriority>>
+        overdueTime: LocalTime,
+    ): Flow<Task?>
 
     @Query("SELECT * FROM task WHERE id = :id LIMIT 1")
     fun getById(id: Long): Flow<Task>

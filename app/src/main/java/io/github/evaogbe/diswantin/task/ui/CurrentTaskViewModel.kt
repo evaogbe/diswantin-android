@@ -32,7 +32,8 @@ class CurrentTaskViewModel @Inject constructor(
     private val taskRepository: TaskRepository,
     private val clock: Clock,
 ) : ViewModel() {
-    private val currentTaskParams = MutableStateFlow(CurrentTaskParams(ZonedDateTime.now(clock)))
+    private val currentTaskParams =
+        MutableStateFlow(CurrentTaskParams.create(ZonedDateTime.now(clock)))
 
     private val isRefreshing = MutableStateFlow(false)
 
@@ -80,7 +81,7 @@ class CurrentTaskViewModel @Inject constructor(
     )
 
     fun refresh() {
-        currentTaskParams.value = CurrentTaskParams(ZonedDateTime.now(clock))
+        currentTaskParams.value = CurrentTaskParams.create(ZonedDateTime.now(clock))
     }
 
     fun skipCurrentTask() {
@@ -89,7 +90,7 @@ class CurrentTaskViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 taskRepository.skip(task.id)
-                currentTaskParams.value = CurrentTaskParams(ZonedDateTime.now(clock))
+                currentTaskParams.value = CurrentTaskParams.create(ZonedDateTime.now(clock))
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -116,7 +117,7 @@ class CurrentTaskViewModel @Inject constructor(
             }
 
             if (markedDone) {
-                currentTaskParams.value = CurrentTaskParams(ZonedDateTime.now(clock))
+                currentTaskParams.value = CurrentTaskParams.create(ZonedDateTime.now(clock))
             }
         }
     }

@@ -24,7 +24,6 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
-import java.time.ZoneId
 import java.time.ZonedDateTime
 
 class FakeTaskRepository(
@@ -66,40 +65,52 @@ class FakeTaskRepository(
             if (ancestor == null || descendant == null) {
                 null
             } else {
-                descendant to ancestor
+                ancestor to descendant
             }
         }.sortedWith(
-            compareBy<Pair<Task, Task>, ZonedDateTime?>(nullsLast()) { (_, task) ->
+            compareBy<Pair<Task, Task>, ZonedDateTime?>(nullsLast()) { (task) ->
                 dateTimePartsToZonedDateTime(
                     task.scheduledDate,
                     task.scheduledTime,
                     LocalTime.MIN,
                 )
-            }.thenComparing { (_, task) ->
-                task.deadlineDate?.let { it >= params.today } != false
-            }.thenComparing { (_, task) ->
-                task.deadlineTime?.let { it > params.currentTime.plusHours(1) } != false
-            }.thenComparing({ (task) ->
-                dateTimePartsToZonedDateTime(
-                    task.scheduledDate,
-                    task.scheduledTime,
-                    LocalTime.MIN,
-                )
-            }, nullsLast()).thenComparing { (task) ->
+            }.thenComparing { (task) ->
                 task.deadlineDate?.let { it >= params.today } != false
             }.thenComparing { (task) ->
-                task.deadlineTime?.let { it > params.currentTime.plusHours(1) } != false
+                task.deadlineTime?.let { it > params.overdueTime } != false
+            }.thenComparing({ (_, task) ->
+                dateTimePartsToZonedDateTime(
+                    task.scheduledDate,
+                    task.scheduledTime,
+                    LocalTime.MIN,
+                )
+            }, nullsLast()).thenComparing { (_, task) ->
+                task.deadlineDate?.let { it >= params.today } != false
+            }.thenComparing { (_, task) ->
+                task.deadlineTime?.let { it > params.overdueTime } != false
             }.thenComparing { (task) -> task.startAfterTime != null }.thenComparing({ (task) ->
                 dateTimePartsToZonedDateTime(
                     task.deadlineDate,
                     task.deadlineTime,
                     LocalTime.MAX,
                 ) ?: if (taskRecurrences.values.any { it.taskId == task.id }) {
-                    params.endOfToday
+                    params.today.atTime(LocalTime.MAX).atZone(clock.zone)
+                } else {
+                    null
+                }
+            }, nullsLast()).thenComparing({ (_, task) ->
+                dateTimePartsToZonedDateTime(
+                    task.deadlineDate,
+                    task.deadlineTime,
+                    LocalTime.MAX,
+                ) ?: if (taskRecurrences.values.any { it.taskId == task.id }) {
+                    params.today.atTime(LocalTime.MAX).atZone(clock.zone)
                 } else {
                     null
                 }
             }, nullsLast()).thenComparing { (task) ->
+                !taskRecurrences.values.any { it.taskId == task.id }
+            }.thenComparing { (_, task) ->
                 !taskRecurrences.values.any { it.taskId == task.id }
             }.thenComparing({ (task) ->
                 dateTimePartsToZonedDateTime(
@@ -135,7 +146,7 @@ class FakeTaskRepository(
         time: LocalTime?,
         defaultTime: LocalTime,
     ) = when {
-        date != null -> date.atTime(time ?: defaultTime).atZone(ZoneId.systemDefault())
+        date != null -> date.atTime(time ?: defaultTime).atZone(clock.zone)
         time != null -> ZonedDateTime.now(clock).with(time)
         else -> null
     }

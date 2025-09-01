@@ -55,7 +55,7 @@ class LocalTaskRepositoryTest {
         val clock = Clock.fixed(now.toInstant(), now.zone)
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
 
-        taskRepository.getCurrentTask(CurrentTaskParams(now)).test {
+        taskRepository.getCurrentTask(CurrentTaskParams.create(now)).test {
             assertThat(awaitItem()).isNull()
 
             var task1 = taskRepository.create(
@@ -330,11 +330,11 @@ class LocalTaskRepositoryTest {
                 EditTaskForm(
                     name = task1.name,
                     note = task1.note,
-                    deadlineDate = task1.deadlineDate,
-                    deadlineTime = LocalTime.parse("23:59"),
+                    deadlineDate = LocalDate.parse("2024-08-23"),
+                    deadlineTime = LocalTime.parse("23:58"),
                     startAfterDate = task1.startAfterDate,
                     startAfterTime = task1.startAfterTime,
-                    scheduledDate = null,
+                    scheduledDate = task1.scheduledDate,
                     scheduledTime = task1.scheduledTime,
                     tagIds = emptySet(),
                     recurrences = emptyList(),
@@ -353,7 +353,7 @@ class LocalTaskRepositoryTest {
                     name = task2.name,
                     note = task2.note,
                     deadlineDate = task2.deadlineDate,
-                    deadlineTime = LocalTime.parse("23:58"),
+                    deadlineTime = LocalTime.parse("23:57"),
                     startAfterDate = task2.startAfterDate,
                     startAfterTime = task2.startAfterTime,
                     scheduledDate = task2.scheduledDate,
@@ -725,7 +725,7 @@ class LocalTaskRepositoryTest {
         val clock = Clock.fixed(now.toInstant(), now.zone)
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
 
-        taskRepository.getCurrentTask(CurrentTaskParams(now)).test {
+        taskRepository.getCurrentTask(CurrentTaskParams.create(now)).test {
             assertThat(awaitItem()).isNull()
 
             var task = taskRepository.create(
@@ -938,7 +938,7 @@ class LocalTaskRepositoryTest {
         val clock = Clock.fixed(now.toInstant(), now.zone)
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
 
-        taskRepository.getCurrentTask(CurrentTaskParams(now)).test {
+        taskRepository.getCurrentTask(CurrentTaskParams.create(now)).test {
             assertThat(awaitItem()).isNull()
 
             var task = taskRepository.create(
@@ -1109,7 +1109,7 @@ class LocalTaskRepositoryTest {
         val clock = Clock.fixed(now.toInstant(), now.zone)
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
 
-        taskRepository.getCurrentTask(CurrentTaskParams(now)).test {
+        taskRepository.getCurrentTask(CurrentTaskParams.create(now)).test {
             assertThat(awaitItem()).isNull()
 
             val task1 = taskRepository.create(
@@ -1174,9 +1174,7 @@ class LocalTaskRepositoryTest {
                 today = LocalDate.parse("2024-08-23"),
                 currentTime = LocalTime.parse("13:00"),
                 startOfToday = Instant.parse("2024-08-24T04:00:00Z"),
-                endOfToday = ZonedDateTime.parse(
-                    "2024-08-24T23:59:59.999-04:00[America/New_York]"
-                ),
+                overdueTime = LocalTime.parse("14:00"),
             ),
         ).test {
             assertThat(awaitItem()).isNull()
@@ -1346,7 +1344,7 @@ class LocalTaskRepositoryTest {
         val clock = Clock.fixed(now.toInstant(), now.zone)
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
 
-        taskRepository.getCurrentTask(CurrentTaskParams(now)).test {
+        taskRepository.getCurrentTask(CurrentTaskParams.create(now)).test {
             assertThat(awaitItem()).isNull()
 
             var task = taskRepository.create(
@@ -1441,7 +1439,7 @@ class LocalTaskRepositoryTest {
         val clock = Clock.fixed(now.toInstant(), now.zone)
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
 
-        taskRepository.getCurrentTask(CurrentTaskParams(now)).test {
+        taskRepository.getCurrentTask(CurrentTaskParams.create(now)).test {
             assertThat(awaitItem()).isNull()
 
             var task = taskRepository.create(
@@ -1601,7 +1599,7 @@ class LocalTaskRepositoryTest {
         val clock = Clock.fixed(now.toInstant(), now.zone)
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
 
-        taskRepository.getCurrentTask(CurrentTaskParams(now)).test {
+        taskRepository.getCurrentTask(CurrentTaskParams.create(now)).test {
             assertThat(awaitItem()).isNull()
 
             var task = taskRepository.create(
@@ -1696,7 +1694,7 @@ class LocalTaskRepositoryTest {
         val clock = Clock.fixed(now.toInstant(), now.zone)
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
 
-        taskRepository.getCurrentTask(CurrentTaskParams(now)).test {
+        taskRepository.getCurrentTask(CurrentTaskParams.create(now)).test {
             assertThat(awaitItem()).isNull()
 
             val task = taskRepository.create(
@@ -1778,7 +1776,7 @@ class LocalTaskRepositoryTest {
         val clock = Clock.fixed(now.toInstant(), now.zone)
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
 
-        taskRepository.getCurrentTask(CurrentTaskParams(now)).test {
+        taskRepository.getCurrentTask(CurrentTaskParams.create(now)).test {
             assertThat(awaitItem()).isNull()
 
             val task = taskRepository.create(
@@ -1859,7 +1857,7 @@ class LocalTaskRepositoryTest {
         val clock = Clock.fixed(now.toInstant(), now.zone)
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
 
-        taskRepository.getCurrentTask(CurrentTaskParams(now)).test {
+        taskRepository.getCurrentTask(CurrentTaskParams.create(now)).test {
             assertThat(awaitItem()).isNull()
 
             val task = taskRepository.create(
@@ -1939,7 +1937,7 @@ class LocalTaskRepositoryTest {
         val clock = Clock.fixed(now.toInstant(), now.zone)
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
 
-        taskRepository.getCurrentTask(CurrentTaskParams(now)).test {
+        taskRepository.getCurrentTask(CurrentTaskParams.create(now)).test {
             assertThat(awaitItem()).isNull()
 
             val task = taskRepository.create(
@@ -2019,7 +2017,7 @@ class LocalTaskRepositoryTest {
         val clock = Clock.fixed(now.toInstant(), now.zone)
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
 
-        taskRepository.getCurrentTask(CurrentTaskParams(now)).test {
+        taskRepository.getCurrentTask(CurrentTaskParams.create(now)).test {
             assertThat(awaitItem()).isNull()
 
             val task = taskRepository.create(
@@ -2099,7 +2097,7 @@ class LocalTaskRepositoryTest {
         val clock = Clock.fixed(now.toInstant(), now.zone)
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
 
-        taskRepository.getCurrentTask(CurrentTaskParams(now)).test {
+        taskRepository.getCurrentTask(CurrentTaskParams.create(now)).test {
             assertThat(awaitItem()).isNull()
 
             val task = taskRepository.create(
@@ -2179,7 +2177,7 @@ class LocalTaskRepositoryTest {
         val clock = Clock.fixed(now.toInstant(), now.zone)
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
 
-        taskRepository.getCurrentTask(CurrentTaskParams(now)).test {
+        taskRepository.getCurrentTask(CurrentTaskParams.create(now)).test {
             assertThat(awaitItem()).isNull()
 
             var task = taskRepository.create(
@@ -2303,7 +2301,7 @@ class LocalTaskRepositoryTest {
         val clock = Clock.fixed(now.toInstant(), now.zone)
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
 
-        taskRepository.getCurrentTask(CurrentTaskParams(now)).test {
+        taskRepository.getCurrentTask(CurrentTaskParams.create(now)).test {
             assertThat(awaitItem()).isNull()
 
             var task = taskRepository.create(
@@ -2398,7 +2396,7 @@ class LocalTaskRepositoryTest {
         val clock = Clock.fixed(now.toInstant(), now.zone)
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
 
-        taskRepository.getCurrentTask(CurrentTaskParams(now)).test {
+        taskRepository.getCurrentTask(CurrentTaskParams.create(now)).test {
             assertThat(awaitItem()).isNull()
 
             val task = taskRepository.create(
