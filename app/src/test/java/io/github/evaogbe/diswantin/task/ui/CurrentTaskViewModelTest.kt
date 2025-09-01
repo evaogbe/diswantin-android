@@ -6,17 +6,16 @@ import assertk.assertions.isInstanceOf
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
 import assertk.assertions.prop
-import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.EditTaskForm
 import io.github.evaogbe.diswantin.task.data.PathUpdateType
 import io.github.evaogbe.diswantin.task.data.RecurrenceType
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskDetail
 import io.github.evaogbe.diswantin.task.data.TaskRecurrence
+import io.github.evaogbe.diswantin.task.data.TaskRepository
 import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.MainDispatcherRule
-import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
 import io.mockk.coEvery
@@ -63,7 +62,11 @@ class CurrentTaskViewModelTest {
             }
 
             assertThat(viewModel.uiState.value).isEqualTo(
-                CurrentTaskUiState.Present(currentTask = task1, canSkip = false)
+                CurrentTaskUiState.Present(
+                    currentTask = task1,
+                    isRefreshing = false,
+                    canSkip = false,
+                )
             )
 
             taskRepository.update(
@@ -88,6 +91,7 @@ class CurrentTaskViewModelTest {
             assertThat(viewModel.uiState.value).isEqualTo(
                 CurrentTaskUiState.Present(
                     currentTask = task1.copy(name = name),
+                    isRefreshing = false,
                     canSkip = false,
                 )
             )
@@ -96,17 +100,15 @@ class CurrentTaskViewModelTest {
     @Test
     fun `uiState emits failure when fetch current task fails`() =
         runTest(mainDispatcherRule.testDispatcher) {
-            val clock = createClock()
             val task = genTasks(1).single()
-            val db = FakeDatabase().apply {
-                insertTask(task)
-            }
-            val taskRepository = spyk(FakeTaskRepository(db, clock))
-            every { taskRepository.getCurrentTask(any()) } returns flow {
-                throw RuntimeException("Test")
-            }
-
-            val viewModel = CurrentTaskViewModel(taskRepository, clock)
+            val viewModel = createCurrentTaskViewModel(
+                initDatabase = { db -> db.insertTask(task) },
+                initTaskRepositorySpy = { repository ->
+                    every { repository.getCurrentTask(any()) } returns flow {
+                        throw RuntimeException("Test")
+                    }
+                },
+            )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -139,7 +141,7 @@ class CurrentTaskViewModelTest {
         }
 
         assertThat(viewModel.uiState.value).isEqualTo(
-            CurrentTaskUiState.Present(currentTask = task, canSkip = true)
+            CurrentTaskUiState.Present(currentTask = task, isRefreshing = false, canSkip = true)
         )
     }
 
@@ -173,9 +175,15 @@ class CurrentTaskViewModelTest {
             }
 
             assertThat(viewModel.uiState.value).isEqualTo(
-                CurrentTaskUiState.Present(currentTask = task, canSkip = false)
+                CurrentTaskUiState.Present(
+                    currentTask = task,
+                    isRefreshing = false,
+                    canSkip = false,
+                )
             )
-            assertThat(viewModel.userMessage.value).isEqualTo(UserMessage.String(R.string.current_task_fetch_recurrences_error))
+            assertThat(viewModel.userMessage.value).isEqualTo(
+                CurrentTaskUserMessage.FetchRecurrencesError
+            )
         }
 
     @Test
@@ -204,13 +212,21 @@ class CurrentTaskViewModelTest {
             }
 
             assertThat(viewModel.uiState.value).isEqualTo(
-                CurrentTaskUiState.Present(currentTask = task1, canSkip = true)
+                CurrentTaskUiState.Present(
+                    currentTask = task1,
+                    isRefreshing = false,
+                    canSkip = true,
+                )
             )
 
             viewModel.skipCurrentTask()
 
             assertThat(viewModel.uiState.value).isEqualTo(
-                CurrentTaskUiState.Present(currentTask = task2, canSkip = false)
+                CurrentTaskUiState.Present(
+                    currentTask = task2,
+                    isRefreshing = false,
+                    canSkip = false,
+                )
             )
         }
 
@@ -244,9 +260,9 @@ class CurrentTaskViewModelTest {
             viewModel.skipCurrentTask()
 
             assertThat(viewModel.uiState.value).isEqualTo(
-                CurrentTaskUiState.Present(currentTask = task, canSkip = true)
+                CurrentTaskUiState.Present(currentTask = task, isRefreshing = false, canSkip = true)
             )
-            assertThat(viewModel.userMessage.value).isEqualTo(UserMessage.String(R.string.current_task_skip_error))
+            assertThat(viewModel.userMessage.value).isEqualTo(CurrentTaskUserMessage.SkipError)
         }
 
     @Test
@@ -267,13 +283,21 @@ class CurrentTaskViewModelTest {
             }
 
             assertThat(viewModel.uiState.value).isEqualTo(
-                CurrentTaskUiState.Present(currentTask = task1, canSkip = false)
+                CurrentTaskUiState.Present(
+                    currentTask = task1,
+                    isRefreshing = false,
+                    canSkip = false,
+                )
             )
 
             viewModel.markCurrentTaskDone()
 
             assertThat(viewModel.uiState.value).isEqualTo(
-                CurrentTaskUiState.Present(currentTask = task2, canSkip = false)
+                CurrentTaskUiState.Present(
+                    currentTask = task2,
+                    isRefreshing = false,
+                    canSkip = false,
+                )
             )
             assertThat(viewModel.userMessage.value).isNull()
             assertThat(taskRepository.getTaskDetailById(task1.id).first()).isNotNull()
@@ -283,16 +307,13 @@ class CurrentTaskViewModelTest {
     @Test
     fun `markCurrentTaskDone shows error message when repository throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
-            val clock = createClock()
             val task = genTasks(1).single()
-            val db = FakeDatabase().apply {
-                insertTask(task)
-            }
-            val taskRepository = spyk(FakeTaskRepository(db, clock))
-
-            coEvery { taskRepository.markDone(any()) } throws RuntimeException("Test")
-
-            val viewModel = CurrentTaskViewModel(taskRepository, clock)
+            val viewModel = createCurrentTaskViewModel(
+                initDatabase = { db -> db.insertTask(task) },
+                initTaskRepositorySpy = { repository ->
+                    coEvery { repository.markDone(any()) } throws RuntimeException("Test")
+                },
+            )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -302,9 +323,13 @@ class CurrentTaskViewModelTest {
             viewModel.markCurrentTaskDone()
 
             assertThat(viewModel.uiState.value).isEqualTo(
-                CurrentTaskUiState.Present(currentTask = task, canSkip = false)
+                CurrentTaskUiState.Present(
+                    currentTask = task,
+                    isRefreshing = false,
+                    canSkip = false,
+                )
             )
-            assertThat(viewModel.userMessage.value).isEqualTo(UserMessage.String(R.string.current_task_mark_done_error))
+            assertThat(viewModel.userMessage.value).isEqualTo(CurrentTaskUserMessage.MarkDoneError)
         }
 
     private fun genTasks(count: Int) = generateSequence(
@@ -323,4 +348,15 @@ class CurrentTaskViewModelTest {
 
     private fun createClock() =
         Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
+
+    private fun createCurrentTaskViewModel(
+        initDatabase: (FakeDatabase) -> Unit,
+        initTaskRepositorySpy: (TaskRepository) -> Unit,
+    ): CurrentTaskViewModel {
+        val clock = createClock()
+        val db = FakeDatabase().also(initDatabase)
+        val taskRepository = spyk(FakeTaskRepository(db, clock))
+        initTaskRepositorySpy(taskRepository)
+        return CurrentTaskViewModel(taskRepository, clock)
+    }
 }

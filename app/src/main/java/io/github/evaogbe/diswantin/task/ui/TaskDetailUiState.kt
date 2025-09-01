@@ -3,7 +3,6 @@ package io.github.evaogbe.diswantin.task.ui
 import android.os.Parcelable
 import io.github.evaogbe.diswantin.task.data.Tag
 import io.github.evaogbe.diswantin.task.data.TaskDetail
-import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.parcelize.Parcelize
@@ -18,6 +17,10 @@ data class TaskDetailTopBarState(val taskId: Long?, val isDone: Boolean) : Parce
 
 enum class TaskDetailTopBarAction {
     MarkDone, UnmarkDone, Delete
+}
+
+enum class TaskDetailUserMessage {
+    MarkDoneError, UnmarkDoneError, DeleteError
 }
 
 sealed interface TaskDetailUiState {
@@ -36,7 +39,7 @@ sealed interface TaskDetailUiState {
         val isDone: Boolean,
         val parent: TaskSummaryUiState?,
         val tags: ImmutableList<Tag>,
-        val userMessage: UserMessage?,
+        val userMessage: TaskDetailUserMessage?,
     ) : TaskDetailUiState {
         val summary = TaskSummaryUiState(id = id, name = name, isDone = isDone)
     }
@@ -48,7 +51,7 @@ sealed interface TaskDetailUiState {
             task: TaskDetail,
             tags: List<Tag>,
             recurrence: TaskRecurrenceUiState?,
-            userMessage: UserMessage?,
+            userMessage: TaskDetailUserMessage?,
             doneBefore: Instant,
         ) = Success(
             id = task.id,

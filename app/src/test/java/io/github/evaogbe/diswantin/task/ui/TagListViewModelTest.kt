@@ -4,11 +4,9 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isEqualToIgnoringGivenProperties
 import assertk.assertions.isNull
-import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.Tag
 import io.github.evaogbe.diswantin.testing.FakeTagRepository
 import io.github.evaogbe.diswantin.testing.MainDispatcherRule
-import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import io.github.serpro69.kfaker.lorem.LoremFaker
 import io.mockk.coEvery
 import io.mockk.spyk
@@ -48,7 +46,7 @@ class TagListViewModelTest {
     fun `saveTag shows error message when repository throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val name = loremFaker.lorem.words()
-            val tagRepository = spyk(FakeTagRepository())
+            val tagRepository = spyk<FakeTagRepository>()
             coEvery { tagRepository.create(any()) } throws RuntimeException("Test")
 
             val viewModel = TagListViewModel(tagRepository)
@@ -59,8 +57,6 @@ class TagListViewModelTest {
 
             viewModel.saveTag(name)
 
-            assertThat(viewModel.userMessage.value).isEqualTo(
-                UserMessage.String(R.string.tag_form_save_error_new)
-            )
+            assertThat(viewModel.userMessage.value).isEqualTo(TagListUserMessage.CreateError)
         }
 }

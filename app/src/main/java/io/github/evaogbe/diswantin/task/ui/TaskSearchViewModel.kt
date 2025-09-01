@@ -1,5 +1,6 @@
 package io.github.evaogbe.diswantin.task.ui
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.cachedIn
@@ -8,8 +9,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.evaogbe.diswantin.task.data.TaskRepository
 import io.github.evaogbe.diswantin.task.data.TaskSearchCriteria
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
@@ -20,13 +21,15 @@ import java.time.LocalTime
 import java.time.ZonedDateTime
 import java.util.regex.Pattern
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.seconds
 
 @HiltViewModel
 class TaskSearchViewModel @Inject constructor(
+    savedStateHandle: SavedStateHandle,
     taskRepository: TaskRepository,
     clock: Clock,
 ) : ViewModel() {
-    private val criteria = MutableStateFlow(TaskSearchCriteria())
+    private val criteria = savedStateHandle.getMutableStateFlow(CRITERIA_KEY, TaskSearchCriteria())
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val searchResultPagingData = criteria.filterNot { it.isEmpty }.flatMapLatest { criteria ->
@@ -42,7 +45,7 @@ class TaskSearchViewModel @Inject constructor(
         TaskSearchUiState(hasCriteria = !criteria.isEmpty)
     }.stateIn(
         scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000L),
+        started = SharingStarted.WhileSubscribed(5.seconds),
         initialValue = TaskSearchUiState(hasCriteria = false),
     )
 
@@ -68,3 +71,5 @@ class TaskSearchViewModel @Inject constructor(
 fun String.findOccurrences(query: String) = query.trim().split("""\s+""".toRegex()).flatMap {
     Pattern.quote(it).toRegex(RegexOption.IGNORE_CASE).findAll(this).map(MatchResult::range)
 }
+
+private const val CRITERIA_KEY = "criteria"

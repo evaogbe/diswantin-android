@@ -17,7 +17,7 @@ import io.github.evaogbe.diswantin.testing.FakeTagRepository
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.stringResource
 import io.github.evaogbe.diswantin.ui.loadstate.PendingLayoutTestTag
-import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
+import io.github.evaogbe.diswantin.ui.snackbar.SnackbarState
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
@@ -51,7 +51,7 @@ class TagDetailScreenTest {
                     onPopBackStack = {},
                     topBarAction = null,
                     topBarActionHandled = {},
-                    setUserMessage = {},
+                    showSnackbar = {},
                     onSelectTask = {},
                     tagDetailViewModel = viewModel,
                 )
@@ -74,7 +74,7 @@ class TagDetailScreenTest {
                     onPopBackStack = {},
                     topBarAction = null,
                     topBarActionHandled = {},
-                    setUserMessage = {},
+                    showSnackbar = {},
                     onSelectTask = {},
                     tagDetailViewModel = viewModel,
                 )
@@ -104,7 +104,7 @@ class TagDetailScreenTest {
                     onPopBackStack = { onPopBackStackCalled = true },
                     topBarAction = topBarAction,
                     topBarActionHandled = { topBarActionState.value = null },
-                    setUserMessage = {},
+                    showSnackbar = {},
                     onSelectTask = {},
                     tagDetailViewModel = viewModel,
                 )
@@ -119,7 +119,7 @@ class TagDetailScreenTest {
 
     @Test
     fun displaysErrorMessage_whenDeleteTagFails() {
-        var userMessage: UserMessage? = null
+        var snackbarState: SnackbarState? = null
         val topBarActionState = MutableStateFlow<TagDetailTopBarAction?>(null)
         val tag = genTag()
         val tasks = genTasks()
@@ -147,7 +147,7 @@ class TagDetailScreenTest {
                     onPopBackStack = {},
                     topBarAction = topBarAction,
                     topBarActionHandled = { topBarActionState.value = null },
-                    setUserMessage = { userMessage = it },
+                    showSnackbar = { snackbarState = it },
                     onSelectTask = {},
                     tagDetailViewModel = viewModel,
                 )
@@ -157,7 +157,7 @@ class TagDetailScreenTest {
         topBarActionState.value = TagDetailTopBarAction.Delete
 
         composeTestRule.waitUntil {
-            userMessage == UserMessage.String(R.string.tag_detail_delete_error)
+            snackbarState?.matches(stringResource(R.string.tag_detail_delete_error)) == true
         }
     }
 

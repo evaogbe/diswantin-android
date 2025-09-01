@@ -1,11 +1,12 @@
 package io.github.evaogbe.diswantin.task.ui
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.paging.testing.asSnapshot
 import assertk.assertThat
 import assertk.assertions.containsExactly
 import assertk.assertions.isEqualTo
 import io.github.evaogbe.diswantin.task.data.Task
-import io.github.evaogbe.diswantin.task.data.TaskRepository
+import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.MainDispatcherRule
 import io.github.serpro69.kfaker.Faker
@@ -42,8 +43,9 @@ class TaskSearchViewModelTest {
                     name = faker.string.regexify(namePattern),
                 )
             }
-            val taskRepository = FakeTaskRepository.withTasks(tasks)
-            val viewModel = createTaskSearchViewModel(taskRepository)
+            val viewModel = createTaskSearchViewModel { db ->
+                tasks.forEach(db::insertTask)
+            }
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -92,6 +94,12 @@ class TaskSearchViewModelTest {
             assertThat(viewModel.uiState.value).isEqualTo(TaskSearchUiState(hasCriteria = false))
         }
 
-    private fun createTaskSearchViewModel(taskRepository: TaskRepository) =
-        TaskSearchViewModel(taskRepository, Clock.systemDefaultZone())
+    private fun createTaskSearchViewModel(
+        initDatabase: (FakeDatabase) -> Unit,
+    ): TaskSearchViewModel {
+        val clock = Clock.systemDefaultZone()
+        val db = FakeDatabase().also(initDatabase)
+        val taskRepository = FakeTaskRepository(db, clock)
+        return TaskSearchViewModel(SavedStateHandle(), taskRepository, clock)
+    }
 }

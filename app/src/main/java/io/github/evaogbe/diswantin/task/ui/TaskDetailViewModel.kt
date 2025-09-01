@@ -7,7 +7,6 @@ import androidx.navigation.toRoute
 import androidx.paging.cachedIn
 import androidx.paging.map
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.data.Result
 import io.github.evaogbe.diswantin.task.data.Tag
 import io.github.evaogbe.diswantin.task.data.TagRepository
@@ -15,10 +14,10 @@ import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskDetail
 import io.github.evaogbe.diswantin.task.data.TaskRecurrence
 import io.github.evaogbe.diswantin.task.data.TaskRepository
-import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
@@ -31,6 +30,7 @@ import java.time.LocalTime
 import java.time.ZonedDateTime
 import java.util.Locale
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.seconds
 
 @HiltViewModel
 class TaskDetailViewModel @Inject constructor(
@@ -44,7 +44,7 @@ class TaskDetailViewModel @Inject constructor(
 
     private val initialized = MutableStateFlow(false)
 
-    private val userMessage = MutableStateFlow<UserMessage?>(null)
+    private val userMessage = MutableStateFlow<TaskDetailUserMessage?>(null)
 
     val childTaskPagingData = taskRepository.getChildren(taskId).map { pagingData ->
         val doneBefore = ZonedDateTime.now(clock).with(LocalTime.MIN).toInstant()
@@ -96,7 +96,7 @@ class TaskDetailViewModel @Inject constructor(
         }.fold(onSuccess = { it }, onFailure = TaskDetailUiState::Failure)
     }.stateIn(
         scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000L),
+        started = SharingStarted.WhileSubscribed(5.seconds),
         initialValue = TaskDetailUiState.Pending
     )
 
@@ -108,7 +108,7 @@ class TaskDetailViewModel @Inject constructor(
                 throw e
             } catch (e: Exception) {
                 Timber.e(e, "Failed to mark task done: %s", taskId)
-                userMessage.value = UserMessage.String(R.string.task_detail_mark_done_error)
+                userMessage.value = TaskDetailUserMessage.MarkDoneError
             }
         }
     }
@@ -121,7 +121,7 @@ class TaskDetailViewModel @Inject constructor(
                 throw e
             } catch (e: Exception) {
                 Timber.e(e, "Failed to unmark task done: %s", taskId)
-                userMessage.value = UserMessage.String(R.string.task_detail_unmark_done_error)
+                userMessage.value = TaskDetailUserMessage.UnmarkDoneError
             }
         }
     }
@@ -134,7 +134,7 @@ class TaskDetailViewModel @Inject constructor(
                 throw e
             } catch (e: Exception) {
                 Timber.e(e, "Failed to delete task: %s", taskId)
-                userMessage.value = UserMessage.String(R.string.task_detail_delete_error)
+                userMessage.value = TaskDetailUserMessage.DeleteError
             }
         }
     }

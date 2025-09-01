@@ -33,13 +33,17 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -59,7 +63,8 @@ import io.github.evaogbe.diswantin.ui.form.ClearableLayout
 import io.github.evaogbe.diswantin.ui.form.EditFieldButton
 import io.github.evaogbe.diswantin.ui.loadstate.LoadFailureLayout
 import io.github.evaogbe.diswantin.ui.loadstate.PendingLayout
-import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
+import io.github.evaogbe.diswantin.ui.snackbar.SnackbarHandler
+import io.github.evaogbe.diswantin.ui.snackbar.SnackbarState
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.evaogbe.diswantin.ui.theme.ScreenLg
 import io.github.evaogbe.diswantin.ui.theme.SpaceMd
@@ -121,23 +126,36 @@ fun TaskFormScreen(
     setTopBarState: (TaskFormTopBarState) -> Unit,
     topBarAction: TaskFormTopBarAction?,
     topBarActionHandled: () -> Unit,
-    setUserMessage: (UserMessage) -> Unit,
+    showSnackbar: SnackbarHandler,
     onEditRecurrence: () -> Unit,
     onEditParent: (String) -> Unit,
     taskFormViewModel: TaskFormViewModel = hiltViewModel(),
 ) {
+    val currentOnPopBackStack by rememberUpdatedState(onPopBackStack)
+    val currentTopBarActionHandled by rememberUpdatedState(topBarActionHandled)
+    val currentShowSnackbar by rememberUpdatedState(showSnackbar)
     val uiState by taskFormViewModel.uiState.collectAsStateWithLifecycle()
+    val isSuccess by remember {
+        derivedStateOf { uiState is TaskFormUiState.Success }
+    }
+    val changed by remember {
+        derivedStateOf {
+            (uiState as? TaskFormUiState.Success)?.changed == true
+        }
+    }
     val isNew = taskFormViewModel.isNew
     val name = rememberTextFieldState()
     val note = rememberTextFieldState()
     val tagQuery = rememberTextFieldState()
     var showDialog by rememberSaveable { mutableStateOf(false) }
+    val resources = LocalResources.current
+    val currentResources by rememberUpdatedState(resources)
 
-    LaunchedEffect(uiState, name.text, isNew) {
+    LaunchedEffect(name.text, isNew, isSuccess, setTopBarState) {
         setTopBarState(
             TaskFormTopBarState(
                 isNew = isNew,
-                showSave = isNew || uiState is TaskFormUiState.Success,
+                showSave = isNew || isSuccess,
                 saveEnabled = name.text.isNotBlank(),
             )
         )
@@ -148,16 +166,16 @@ fun TaskFormScreen(
             null -> {}
             TaskFormTopBarAction.Save -> {
                 taskFormViewModel.saveTask()
-                topBarActionHandled()
+                currentTopBarActionHandled()
             }
 
             TaskFormTopBarAction.Close -> {
-                if ((uiState as? TaskFormUiState.Success)?.changed == true) {
+                if (changed) {
                     showDialog = true
                 } else {
-                    onPopBackStack()
+                    currentOnPopBackStack()
                 }
-                topBarActionHandled()
+                currentTopBarActionHandled()
             }
         }
     }
@@ -173,7 +191,7 @@ fun TaskFormScreen(
 
         is TaskFormUiState.Saved -> {
             LaunchedEffect(Unit) {
-                onPopBackStack()
+                currentOnPopBackStack()
             }
 
             PendingLayout()
@@ -181,9 +199,52 @@ fun TaskFormScreen(
 
         is TaskFormUiState.Success -> {
             LaunchedEffect(state.userMessage) {
-                if (state.userMessage != null) {
-                    setUserMessage(state.userMessage)
-                    taskFormViewModel.userMessageShown()
+                when (state.userMessage) {
+                    null -> {}
+                    TaskFormUserMessage.FetchParentTaskError -> {
+                        currentShowSnackbar(
+                            SnackbarState.create(
+                                currentResources.getString(R.string.task_form_fetch_parent_task_error)
+                            )
+                        )
+                        taskFormViewModel.userMessageShown()
+                    }
+
+                    TaskFormUserMessage.FetchTagsError -> {
+                        currentShowSnackbar(
+                            SnackbarState.create(
+                                currentResources.getString(R.string.task_form_fetch_tags_error)
+                            )
+                        )
+                        taskFormViewModel.userMessageShown()
+                    }
+
+                    TaskFormUserMessage.SearchTagsError -> {
+                        currentShowSnackbar(
+                            SnackbarState.create(
+                                currentResources.getString(R.string.search_tag_options_error)
+                            )
+                        )
+                        taskFormViewModel.userMessageShown()
+                    }
+
+                    TaskFormUserMessage.CreateError -> {
+                        currentShowSnackbar(
+                            SnackbarState.create(
+                                currentResources.getString(R.string.task_form_save_error_new)
+                            )
+                        )
+                        taskFormViewModel.userMessageShown()
+                    }
+
+                    TaskFormUserMessage.EditError -> {
+                        currentShowSnackbar(
+                            SnackbarState.create(
+                                currentResources.getString(R.string.task_form_save_error_edit)
+                            )
+                        )
+                        taskFormViewModel.userMessageShown()
+                    }
                 }
             }
 
@@ -622,7 +683,7 @@ fun TaskFormLayout(
 }
 
 @Composable
-fun TagList(tags: ImmutableList<Tag>, onRemoveTag: (Tag) -> Unit) {
+private fun TagList(tags: ImmutableList<Tag>, onRemoveTag: (Tag) -> Unit) {
     FlowRow(horizontalArrangement = Arrangement.spacedBy(SpaceSm)) {
         tags.forEach { tag ->
             InputChip(

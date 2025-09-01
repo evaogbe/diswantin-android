@@ -364,12 +364,4 @@ class FakeTaskRepository(
     override suspend fun skip(id: Long) {
         db.insertTaskSkip(TaskSkip(taskId = id, skippedAt = Instant.now(clock)))
     }
-
-    companion object {
-        fun withTasks(initialTasks: Iterable<Task>): FakeTaskRepository {
-            val db = FakeDatabase()
-            initialTasks.forEach(db::insertTask)
-            return FakeTaskRepository(db)
-        }
-    }
 }

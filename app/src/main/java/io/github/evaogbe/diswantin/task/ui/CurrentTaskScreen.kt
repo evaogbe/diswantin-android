@@ -32,14 +32,17 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -56,7 +59,8 @@ import io.github.evaogbe.diswantin.ui.button.FilledTonalButtonWithIcon
 import io.github.evaogbe.diswantin.ui.button.OutlinedButtonWithIcon
 import io.github.evaogbe.diswantin.ui.loadstate.LoadFailureLayout
 import io.github.evaogbe.diswantin.ui.loadstate.PendingLayout
-import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
+import io.github.evaogbe.diswantin.ui.snackbar.SnackbarHandler
+import io.github.evaogbe.diswantin.ui.snackbar.SnackbarState
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.evaogbe.diswantin.ui.theme.IconSizeLg
 import io.github.evaogbe.diswantin.ui.theme.ScreenLg
@@ -137,17 +141,25 @@ fun CurrentTaskScreen(
     setTopBarState: (CurrentTaskTopBarState) -> Unit,
     topBarAction: CurrentTaskTopBarAction?,
     topBarActionHandled: () -> Unit,
-    setUserMessage: (UserMessage) -> Unit,
+    showSnackbar: SnackbarHandler,
     onNavigateToAdvice: () -> Unit,
     onAddTask: () -> Unit,
     onNavigateToTask: (Long) -> Unit,
     currentTaskViewModel: CurrentTaskViewModel = hiltViewModel(),
 ) {
+    val currentTopBarActionHandled by rememberUpdatedState(topBarActionHandled)
+    val currentShowSnackbar by rememberUpdatedState(showSnackbar)
     val uiState by currentTaskViewModel.uiState.collectAsStateWithLifecycle()
-    val isRefreshing by currentTaskViewModel.isRefreshing.collectAsStateWithLifecycle()
+    val canSkip by remember {
+        derivedStateOf {
+            (uiState as? CurrentTaskUiState.Present)?.canSkip == true
+        }
+    }
     val userMessage by currentTaskViewModel.userMessage.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
     var showBottomSheet by rememberSaveable { mutableStateOf(false) }
+    val resources = LocalResources.current
+    val currentResources by rememberUpdatedState(resources)
 
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         currentTaskViewModel.refresh()
@@ -164,12 +176,8 @@ fun CurrentTaskScreen(
         }
     }
 
-    LaunchedEffect(uiState) {
-        setTopBarState(
-            CurrentTaskTopBarState(
-                canSkip = (uiState as? CurrentTaskUiState.Present)?.canSkip == true,
-            ),
-        )
+    LaunchedEffect(canSkip, setTopBarState) {
+        setTopBarState(CurrentTaskTopBarState(canSkip = canSkip))
     }
 
     LaunchedEffect(topBarAction) {
@@ -177,20 +185,45 @@ fun CurrentTaskScreen(
             null -> {}
             CurrentTaskTopBarAction.Refresh -> {
                 currentTaskViewModel.refresh()
-                topBarActionHandled()
+                currentTopBarActionHandled()
             }
 
             CurrentTaskTopBarAction.Skip -> {
                 showBottomSheet = true
-                topBarActionHandled()
+                currentTopBarActionHandled()
             }
         }
     }
 
-    userMessage?.let { message ->
-        LaunchedEffect(message) {
-            setUserMessage(message)
-            currentTaskViewModel.userMessageShown()
+    LaunchedEffect(userMessage) {
+        when (userMessage) {
+            null -> {}
+            CurrentTaskUserMessage.FetchRecurrencesError -> {
+                currentShowSnackbar(
+                    SnackbarState.create(
+                        currentResources.getString(R.string.current_task_fetch_recurrences_error)
+                    )
+                )
+                currentTaskViewModel.userMessageShown()
+            }
+
+            CurrentTaskUserMessage.SkipError -> {
+                currentShowSnackbar(
+                    SnackbarState.create(
+                        currentResources.getString(R.string.current_task_skip_error)
+                    )
+                )
+                currentTaskViewModel.userMessageShown()
+            }
+
+            CurrentTaskUserMessage.MarkDoneError -> {
+                currentShowSnackbar(
+                    SnackbarState.create(
+                        currentResources.getString(R.string.current_task_mark_done_error)
+                    )
+                )
+                currentTaskViewModel.userMessageShown()
+            }
         }
     }
 
@@ -202,7 +235,7 @@ fun CurrentTaskScreen(
 
         is CurrentTaskUiState.Empty -> {
             EmptyCurrentTaskLayout(
-                isRefreshing = isRefreshing,
+                isRefreshing = state.isRefreshing,
                 onRefresh = currentTaskViewModel::refresh,
                 onAddTask = onAddTask,
             )
@@ -211,7 +244,6 @@ fun CurrentTaskScreen(
         is CurrentTaskUiState.Present -> {
             CurrentTaskLayout(
                 uiState = state,
-                isRefreshing = isRefreshing,
                 onRefresh = currentTaskViewModel::refresh,
                 onNavigateToTask = onNavigateToTask,
                 onMarkTaskDone = currentTaskViewModel::markCurrentTaskDone,
@@ -285,14 +317,13 @@ private fun SkipSheetLayout(onDismiss: (DismissSkipSheetReason) -> Unit) {
 @Composable
 fun CurrentTaskLayout(
     uiState: CurrentTaskUiState.Present,
-    isRefreshing: Boolean,
     onRefresh: () -> Unit,
     onNavigateToTask: (Long) -> Unit,
     onMarkTaskDone: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
-        PullToRefreshBox(isRefreshing = isRefreshing, onRefresh = onRefresh) {
+        PullToRefreshBox(isRefreshing = uiState.isRefreshing, onRefresh = onRefresh) {
             Column(
                 modifier = Modifier
                     .padding(horizontal = SpaceLg, vertical = SpaceMd)
@@ -404,9 +435,9 @@ private fun CurrentTaskScreenPreview_Present() {
                         createdAt = Instant.now(),
                         name = "Brush teeth",
                     ),
+                    isRefreshing = false,
                     canSkip = true,
                 ),
-                isRefreshing = false,
                 onRefresh = {},
                 onNavigateToTask = {},
                 onMarkTaskDone = {},
@@ -437,9 +468,9 @@ private fun CurrentTaskScreenPreview_withNote() {
                         name = "Brush teeth",
                         note = "Don't forget to floss and rinse with mouthwash",
                     ),
+                    isRefreshing = false,
                     canSkip = false,
                 ),
-                isRefreshing = false,
                 onRefresh = {},
                 onNavigateToTask = {},
                 onMarkTaskDone = {},

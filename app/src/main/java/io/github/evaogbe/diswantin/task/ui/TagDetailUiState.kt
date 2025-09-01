@@ -2,7 +2,6 @@ package io.github.evaogbe.diswantin.task.ui
 
 import android.os.Parcelable
 import io.github.evaogbe.diswantin.task.data.Tag
-import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import kotlinx.parcelize.Parcelize
 
 @Parcelize
@@ -12,6 +11,10 @@ enum class TagDetailTopBarAction {
     Edit, Delete
 }
 
+enum class TagDetailUserMessage {
+    EditError, DeleteError
+}
+
 sealed interface TagDetailUiState {
     data object Pending : TagDetailUiState
 
@@ -19,7 +22,7 @@ sealed interface TagDetailUiState {
 
     data class Success(
         val tag: Tag,
-        val userMessage: UserMessage?,
+        val userMessage: TagDetailUserMessage?,
     ) : TagDetailUiState
 
     data object Deleted : TagDetailUiState

@@ -7,16 +7,15 @@ import androidx.navigation.toRoute
 import androidx.paging.cachedIn
 import androidx.paging.map
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.data.Result
 import io.github.evaogbe.diswantin.task.data.EditTagForm
 import io.github.evaogbe.diswantin.task.data.Tag
 import io.github.evaogbe.diswantin.task.data.TagRepository
 import io.github.evaogbe.diswantin.task.data.TaskRepository
-import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
@@ -29,6 +28,7 @@ import java.time.Clock
 import java.time.LocalTime
 import java.time.ZonedDateTime
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.seconds
 
 @HiltViewModel
 class TagDetailViewModel @Inject constructor(
@@ -41,7 +41,7 @@ class TagDetailViewModel @Inject constructor(
 
     private val initialized = MutableStateFlow(false)
 
-    private val userMessage = MutableStateFlow<UserMessage?>(null)
+    private val userMessage = MutableStateFlow<TagDetailUserMessage?>(null)
 
     val taskSummaryPagingData = taskRepository.getTaskSummariesByTagId(tagId).map { pagingData ->
         val doneBefore = ZonedDateTime.now(clock).with(LocalTime.MIN).toInstant()
@@ -86,7 +86,7 @@ class TagDetailViewModel @Inject constructor(
         )
     }.stateIn(
         scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000L),
+        started = SharingStarted.WhileSubscribed(5.seconds),
         initialValue = TagDetailUiState.Pending,
     )
 
@@ -106,7 +106,7 @@ class TagDetailViewModel @Inject constructor(
                 throw e
             } catch (e: Exception) {
                 Timber.e(e, "Failed to update tag with id: %s", tagId)
-                userMessage.value = UserMessage.String(R.string.tag_form_save_error_edit)
+                userMessage.value = TagDetailUserMessage.EditError
             }
         }
     }
@@ -121,7 +121,7 @@ class TagDetailViewModel @Inject constructor(
                 throw e
             } catch (e: Exception) {
                 Timber.e(e, "Failed to delete tag: %s", tag)
-                userMessage.value = UserMessage.String(R.string.tag_detail_delete_error)
+                userMessage.value = TagDetailUserMessage.DeleteError
             }
         }
     }

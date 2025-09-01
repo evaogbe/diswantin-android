@@ -27,10 +27,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -44,7 +46,8 @@ import io.github.evaogbe.diswantin.task.data.Tag
 import io.github.evaogbe.diswantin.ui.loadstate.LoadFailureLayout
 import io.github.evaogbe.diswantin.ui.loadstate.PendingLayout
 import io.github.evaogbe.diswantin.ui.loadstate.pagedListFooter
-import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
+import io.github.evaogbe.diswantin.ui.snackbar.SnackbarHandler
+import io.github.evaogbe.diswantin.ui.snackbar.SnackbarState
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.evaogbe.diswantin.ui.theme.ScreenLg
 import io.github.evaogbe.diswantin.ui.theme.SpaceMd
@@ -113,25 +116,30 @@ fun TagDetailScreen(
     onPopBackStack: () -> Unit,
     topBarAction: TagDetailTopBarAction?,
     topBarActionHandled: () -> Unit,
-    setUserMessage: (UserMessage) -> Unit,
+    showSnackbar: SnackbarHandler,
     onSelectTask: (Long) -> Unit,
     tagDetailViewModel: TagDetailViewModel = hiltViewModel(),
 ) {
+    val currentOnPopBackStack by rememberUpdatedState(onPopBackStack)
+    val currentTopBarActionHandled by rememberUpdatedState(topBarActionHandled)
+    val currentShowSnackbar by rememberUpdatedState(showSnackbar)
     val taskPagingItems = tagDetailViewModel.taskSummaryPagingData.collectAsLazyPagingItems()
     val uiState by tagDetailViewModel.uiState.collectAsStateWithLifecycle()
     var showBottomSheet by rememberSaveable { mutableStateOf(false) }
+    val resources = LocalResources.current
+    val currentResources by rememberUpdatedState(resources)
 
     LaunchedEffect(topBarAction) {
         when (topBarAction) {
             null -> {}
             TagDetailTopBarAction.Edit -> {
                 showBottomSheet = true
-                topBarActionHandled()
+                currentTopBarActionHandled()
             }
 
             TagDetailTopBarAction.Delete -> {
                 tagDetailViewModel.deleteTag()
-                topBarActionHandled()
+                currentTopBarActionHandled()
             }
         }
     }
@@ -147,7 +155,7 @@ fun TagDetailScreen(
 
         is TagDetailUiState.Deleted -> {
             LaunchedEffect(Unit) {
-                onPopBackStack()
+                currentOnPopBackStack()
             }
 
             PendingLayout()
@@ -159,14 +167,31 @@ fun TagDetailScreen(
                 is LoadState.Error -> {
                     LoadFailureLayout(
                         message = stringResource(R.string.tag_detail_fetch_error),
+                        onRetry = taskPagingItems::retry,
                     )
                 }
 
                 is LoadState.NotLoading -> {
                     LaunchedEffect(state.userMessage) {
-                        if (state.userMessage != null) {
-                            setUserMessage(state.userMessage)
-                            tagDetailViewModel.userMessageShown()
+                        when (state.userMessage) {
+                            null -> {}
+                            TagDetailUserMessage.EditError -> {
+                                currentShowSnackbar(
+                                    SnackbarState.create(
+                                        currentResources.getString(R.string.tag_form_save_error_edit)
+                                    )
+                                )
+                                tagDetailViewModel.userMessageShown()
+                            }
+
+                            TagDetailUserMessage.DeleteError -> {
+                                currentShowSnackbar(
+                                    SnackbarState.create(
+                                        currentResources.getString(R.string.tag_detail_delete_error)
+                                    )
+                                )
+                                tagDetailViewModel.userMessageShown()
+                            }
                         }
                     }
 

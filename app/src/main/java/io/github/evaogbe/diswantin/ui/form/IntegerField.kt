@@ -4,6 +4,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.InputTransformation
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -22,9 +23,15 @@ fun OutlinedIntegerField(
 ) {
     val state = rememberTextFieldState(initialText = if (value == 0) "" else value.toString())
 
-    LaunchedEffect(Unit) {
-        snapshotFlow { state.text }.collectLatest {
-            onValueChange(it.toString().toIntOrNull() ?: 0)
+    LaunchedEffect(value) {
+        if (value != 0 && state.text.toString().toIntOrNull() != value) {
+            state.setTextAndPlaceCursorAtEnd(value.toString())
+        }
+    }
+
+    LaunchedEffect(state, onValueChange) {
+        snapshotFlow { state.text.toString() }.collectLatest {
+            onValueChange(it.toIntOrNull() ?: 0)
         }
     }
 

@@ -18,11 +18,13 @@ data class TaskDetailRoute(val id: Long)
 @Serializable
 data object TaskFormRoute {
     @Serializable
-    data class Main(val id: Long? = null, val name: String? = null) {
+    data class Main(val id: Long?, val name: String?) {
         companion object {
-            fun new(name: String?) = Main(name = name)
+            val Start = Main(id = null, name = null)
 
-            fun edit(id: Long) = Main(id = id)
+            fun new(name: String?) = Main(id = null, name = name)
+
+            fun edit(id: Long) = Main(id = id, name = null)
         }
     }
 

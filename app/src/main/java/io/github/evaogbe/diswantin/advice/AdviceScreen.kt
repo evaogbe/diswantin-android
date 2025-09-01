@@ -1,4 +1,4 @@
-package io.github.evaogbe.diswantin.task.ui
+package io.github.evaogbe.diswantin.advice
 
 import android.graphics.Typeface
 import android.text.style.StyleSpan

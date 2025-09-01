@@ -29,25 +29,31 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -69,10 +75,11 @@ import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.ui.button.ButtonWithIcon
 import io.github.evaogbe.diswantin.ui.dialog.DiswantinDatePickerDialog
 import io.github.evaogbe.diswantin.ui.dialog.DiswantinDateRangePickerDialog
-import io.github.evaogbe.diswantin.ui.form.AutoFocusTextField
 import io.github.evaogbe.diswantin.ui.loadstate.LoadFailureLayout
 import io.github.evaogbe.diswantin.ui.loadstate.PendingLayout
 import io.github.evaogbe.diswantin.ui.loadstate.pagedListFooter
+import io.github.evaogbe.diswantin.ui.snackbar.SnackbarHandler
+import io.github.evaogbe.diswantin.ui.snackbar.SnackbarState
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.evaogbe.diswantin.ui.theme.IconSizeLg
 import io.github.evaogbe.diswantin.ui.theme.ScreenLg
@@ -81,6 +88,7 @@ import io.github.evaogbe.diswantin.ui.theme.SpaceMd
 import io.github.evaogbe.diswantin.ui.theme.SpaceXl
 import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -101,9 +109,13 @@ fun TaskSearchTopBar(
 ) {
     TopAppBar(
         title = {
-            AutoFocusTextField(
+            val focusRequester = remember { FocusRequester() }
+
+            TextField(
                 state = query,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .focusRequester(focusRequester),
                 placeholder = { Text(stringResource(R.string.task_search_title)) },
                 trailingIcon = if (query.text.isNotEmpty()) {
                     {
@@ -128,6 +140,10 @@ fun TaskSearchTopBar(
                     unfocusedContainerColor = Color.Transparent,
                 )
             )
+
+            LaunchedEffect(Unit) {
+                focusRequester.requestFocus()
+            }
         },
         modifier = modifier,
         navigationIcon = {
@@ -153,10 +169,12 @@ fun TaskSearchScreen(
     query: String,
     topBarAction: TaskSearchTopBarAction?,
     topBarActionHandled: () -> Unit,
+    showSnackbar: SnackbarHandler,
     onAddTask: ((String) -> Unit)?,
     onSelectSearchResult: (TaskSearchResult) -> Unit,
     taskSearchViewModel: TaskSearchViewModel = hiltViewModel(),
 ) {
+    val currentTopBarActionHandled by rememberUpdatedState(topBarActionHandled)
     val searchResultPagingItems =
         taskSearchViewModel.searchResultPagingData.collectAsLazyPagingItems()
     val uiState by taskSearchViewModel.uiState.collectAsStateWithLifecycle()
@@ -196,7 +214,7 @@ fun TaskSearchScreen(
                     doneDateRange = doneDateRange,
                     recurrenceDate = recurrenceDate,
                 )
-                topBarActionHandled()
+                currentTopBarActionHandled()
             }
         }
     }
@@ -262,62 +280,35 @@ fun TaskSearchScreen(
         },
         searchResultItems = searchResultPagingItems,
         uiState = uiState,
+        showSnackbar = showSnackbar,
         onAddTask = onAddTask,
         onSelectSearchResult = onSelectSearchResult,
     )
 
-    when (filterDialogType) {
-        null -> {}
-        FilterDialogType.DeadlineDateRange -> {
-            DiswantinDateRangePickerDialog(
-                onDismiss = { filterDialogType = null },
-                dateRange = deadlineDateRange,
-                onSelectDateRange = {
-                    deadlineDateRange = it
-                    scheduledDateRange = null
-                },
-            )
-        }
-
-        FilterDialogType.StartAfterDateRange -> {
-            DiswantinDateRangePickerDialog(
-                onDismiss = { filterDialogType = null },
-                dateRange = startAfterDateRange,
-                onSelectDateRange = {
-                    startAfterDateRange = it
-                    scheduledDateRange = null
-                },
-            )
-        }
-
-        FilterDialogType.ScheduledDateRange -> {
-            DiswantinDateRangePickerDialog(
-                onDismiss = { filterDialogType = null },
-                dateRange = scheduledDateRange,
-                onSelectDateRange = {
-                    scheduledDateRange = it
-                    deadlineDateRange = null
-                    startAfterDateRange = null
-                },
-            )
-        }
-
-        FilterDialogType.DoneDateRange -> {
-            DiswantinDateRangePickerDialog(
-                onDismiss = { filterDialogType = null },
-                dateRange = doneDateRange,
-                onSelectDateRange = { doneDateRange = it },
-            )
-        }
-
-        FilterDialogType.RecurrenceDate -> {
-            DiswantinDatePickerDialog(
-                onDismiss = { filterDialogType = null },
-                date = recurrenceDate,
-                onSelectDate = { recurrenceDate = it },
-            )
-        }
-    }
+    FilterDialog(
+        filterDialogType = filterDialogType,
+        onDismiss = { filterDialogType = null },
+        deadlineDateRange = deadlineDateRange,
+        onSelectDeadlineDateRange = {
+            deadlineDateRange = it
+            scheduledDateRange = null
+        },
+        startAfterDateRange = startAfterDateRange,
+        onSelectStartAfterDateRange = {
+            startAfterDateRange = it
+            scheduledDateRange = null
+        },
+        scheduledDateRange = scheduledDateRange,
+        onSelectScheduledDateRange = {
+            scheduledDateRange = it
+            deadlineDateRange = null
+            startAfterDateRange = null
+        },
+        doneDateRange = doneDateRange,
+        onSelectDoneDateRange = { doneDateRange = it },
+        recurrenceDate = recurrenceDate,
+        onSelectRecurrenceDate = { recurrenceDate = it },
+    )
 }
 
 @Composable
@@ -335,118 +326,105 @@ fun TaskSearchScreen(
     onRecurrenceChipClick: () -> Unit,
     searchResultItems: LazyPagingItems<TaskSummaryUiState>,
     uiState: TaskSearchUiState,
+    showSnackbar: SnackbarHandler,
     onAddTask: ((String) -> Unit)?,
     onSelectSearchResult: (TaskSearchResult) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val dateFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT)
+    val currentShowSnackbar by rememberUpdatedState(showSnackbar)
+    var hasSearched by rememberSaveable { mutableStateOf(false) }
+    val resources = LocalResources.current
+    val currentResources by rememberUpdatedState(resources)
 
     Column(modifier = modifier) {
-        Row(
-            modifier = Modifier
-                .padding(horizontal = SpaceMd)
-                .horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(SpaceMd),
-        ) {
-            FilterChip(
-                selected = deadlineDateRange != null,
-                onClick = onDeadlineChipClick,
-                label = {
-                    Text(
-                        text = deadlineDateRange?.let {
-                            stringResource(
-                                R.string.deadline_chip_label,
-                                it.first.format(dateFormatter),
-                                it.second.format(dateFormatter),
-                            )
-                        } ?: stringResource(R.string.deadline_label),
-                    )
-                },
-            )
-            FilterChip(
-                selected = startAfterDateRange != null,
-                onClick = onStartAfterChipClick,
-                label = {
-                    Text(
-                        text = startAfterDateRange?.let {
-                            stringResource(
-                                R.string.start_after_chip_label,
-                                it.first.format(dateFormatter),
-                                it.second.format(dateFormatter),
-                            )
-                        } ?: stringResource(R.string.start_after_label),
-                    )
-                },
-            )
-            FilterChip(
-                selected = scheduledDateRange != null,
-                onClick = onScheduledChipClick,
-                label = {
-                    Text(
-                        text = scheduledDateRange?.let {
-                            stringResource(
-                                R.string.scheduled_chip_label,
-                                it.first.format(dateFormatter),
-                                it.second.format(dateFormatter),
-                            )
-                        } ?: stringResource(R.string.scheduled_at_label),
-                    )
-                },
-            )
-            FilterChip(
-                selected = doneDateRange != null,
-                onClick = onDoneChipClick,
-                label = {
-                    Text(
-                        text = doneDateRange?.let {
-                            stringResource(
-                                R.string.done_chip_label_selected,
-                                it.first.format(dateFormatter),
-                                it.second.format(dateFormatter),
-                            )
-                        } ?: stringResource(R.string.done_chip_label_unselected),
-                    )
-                },
-            )
-            FilterChip(
-                selected = recurrenceDate != null,
-                onClick = onRecurrenceChipClick,
-                label = {
-                    Text(text = recurrenceDate?.let {
-                        stringResource(
-                            R.string.recurrence_chip_label_selected,
-                            it.format(dateFormatter),
-                        )
-                    } ?: stringResource(R.string.recurrence_chip_label_unselected))
-                },
-            )
-        }
+        FilterRowLayout(
+            deadlineDateRange = deadlineDateRange,
+            onDeadlineChipClick = onDeadlineChipClick,
+            startAfterDateRange = startAfterDateRange,
+            onStartAfterChipClick = onStartAfterChipClick,
+            scheduledDateRange = scheduledDateRange,
+            onScheduledChipClick = onScheduledChipClick,
+            doneDateRange = doneDateRange,
+            onDoneChipClick = onDoneChipClick,
+            recurrenceDate = recurrenceDate,
+            onRecurrenceChipClick = onRecurrenceChipClick,
+        )
 
-        if (uiState.hasCriteria) {
-            when (searchResultItems.loadState.refresh) {
-                is LoadState.Loading -> PendingLayout()
+        when {
+            !uiState.hasCriteria -> InitialTaskSearchLayout()
+            hasSearched -> when (searchResultItems.loadState.refresh) {
+                is LoadState.Loading -> {
+                    var dimmed by rememberSaveable { mutableStateOf(false) }
+
+                    LaunchedEffect(Unit) {
+                        delay(150.milliseconds)
+                        dimmed = true
+                    }
+
+                    TaskSearchLayout(
+                        query = query,
+                        searchResultItems = searchResultItems,
+                        onSelectSearchResult = onSelectSearchResult,
+                        onAddTask = onAddTask,
+                        dimmed = dimmed,
+                    )
+                }
+
                 is LoadState.Error -> {
-                    LoadFailureLayout(message = stringResource(R.string.task_search_error))
+                    LaunchedEffect(Unit) {
+                        currentShowSnackbar(
+                            SnackbarState.create(
+                                currentResources.getString(R.string.task_search_error),
+                            ).withAction(
+                                currentResources.getString(R.string.retry_button),
+                                searchResultItems::retry,
+                            )
+                        )
+                    }
+
+                    TaskSearchLayout(
+                        query = query,
+                        searchResultItems = searchResultItems,
+                        onSelectSearchResult = onSelectSearchResult,
+                        onAddTask = onAddTask,
+                        dimmed = true,
+                    )
                 }
 
                 is LoadState.NotLoading -> {
-                    if (searchResultItems.itemCount > 0) {
-                        TaskSearchLayout(
-                            query = query,
-                            searchResultItems = searchResultItems,
-                            onSelectSearchResult = onSelectSearchResult,
-                        )
-                    } else {
-                        EmptyTaskSearchLayout(
-                            onAddTask = if (onAddTask != null) {
-                                { onAddTask(query.trim()) }
-                            } else null,
-                        )
-                    }
+                    TaskSearchLayout(
+                        query = query,
+                        searchResultItems = searchResultItems,
+                        onSelectSearchResult = onSelectSearchResult,
+                        onAddTask = onAddTask,
+                    )
                 }
             }
-        } else {
-            InitialTaskSearchLayout()
+
+            else -> when (searchResultItems.loadState.refresh) {
+                is LoadState.Loading -> PendingLayout()
+                is LoadState.Error -> {
+                    LoadFailureLayout(
+                        message = stringResource(R.string.task_search_error),
+                        onRetry = searchResultItems::retry,
+                    )
+                }
+
+                is LoadState.NotLoading -> {
+                    LaunchedEffect(Unit) {
+                        if (!hasSearched) {
+                            hasSearched = true
+                        }
+                    }
+
+                    TaskSearchLayout(
+                        query = query,
+                        searchResultItems = searchResultItems,
+                        onSelectSearchResult = onSelectSearchResult,
+                        onAddTask = onAddTask,
+                    )
+                }
+            }
         }
     }
 }
@@ -456,32 +434,44 @@ fun TaskSearchLayout(
     query: String,
     searchResultItems: LazyPagingItems<TaskSummaryUiState>,
     onSelectSearchResult: (TaskSearchResult) -> Unit,
+    onAddTask: ((String) -> Unit)?,
     modifier: Modifier = Modifier,
+    dimmed: Boolean = false,
 ) {
-    TaskSearchLayout(
-        searchResultItems = {
-            items(
-                searchResultItems.itemCount,
-                key = searchResultItems.itemKey(TaskSummaryUiState::id),
-            ) { index ->
-                val searchResult = searchResultItems[index]!!
-                SearchResultItem(
-                    searchResult = searchResult,
-                    onSelectSearchResult = { onSelectSearchResult(it.toSearchResult()) },
-                    query = query,
-                )
-                HorizontalDivider()
-            }
+    if (searchResultItems.itemCount > 0) {
+        TaskSearchLayout(
+            searchResultItems = {
+                items(
+                    searchResultItems.itemCount,
+                    key = searchResultItems.itemKey(TaskSummaryUiState::id),
+                ) { index ->
+                    val searchResult = searchResultItems[index]!!
+                    SearchResultItem(
+                        searchResult = searchResult,
+                        onSelectSearchResult = { onSelectSearchResult(it.toSearchResult()) },
+                        query = query,
+                        dimmed = dimmed,
+                    )
+                    HorizontalDivider()
+                }
 
-            pagedListFooter(
-                pagingItems = searchResultItems,
-                errorMessage = {
-                    Text(stringResource(R.string.task_search_error))
-                },
-            )
-        },
-        modifier = modifier,
-    )
+                pagedListFooter(
+                    pagingItems = searchResultItems,
+                    errorMessage = {
+                        Text(stringResource(R.string.task_search_error))
+                    },
+                )
+            },
+            modifier = modifier,
+        )
+    } else {
+        EmptyTaskSearchLayout(
+            onAddTask = if (onAddTask != null) {
+                { onAddTask(query.trim()) }
+            } else null,
+            dimmed = dimmed,
+        )
+    }
 }
 
 @Composable
@@ -508,6 +498,7 @@ private fun SearchResultItem(
     searchResult: TaskSummaryUiState,
     onSelectSearchResult: (TaskSummaryUiState) -> Unit,
     query: String,
+    dimmed: Boolean = false,
 ) {
     val resources = LocalResources.current
 
@@ -547,16 +538,25 @@ private fun SearchResultItem(
             )
         },
         modifier = Modifier.clickable { onSelectSearchResult(searchResult) },
+        colors = if (dimmed) {
+            ListItemDefaults.colors(containerColor = colorScheme.surfaceDim)
+        } else {
+            ListItemDefaults.colors()
+        },
     )
 }
 
 @Composable
-fun EmptyTaskSearchLayout(onAddTask: (() -> Unit)?, modifier: Modifier = Modifier) {
+fun EmptyTaskSearchLayout(
+    onAddTask: (() -> Unit)?,
+    modifier: Modifier = Modifier,
+    dimmed: Boolean = false,
+) {
     Surface(
         modifier = modifier
             .imePadding()
             .fillMaxSize(),
-        color = colorScheme.surfaceVariant,
+        color = if (dimmed) colorScheme.surfaceDim else colorScheme.surfaceVariant,
     ) {
         Column(
             modifier = Modifier
@@ -590,9 +590,167 @@ fun EmptyTaskSearchLayout(onAddTask: (() -> Unit)?, modifier: Modifier = Modifie
 }
 
 @Composable
+private fun FilterDialog(
+    filterDialogType: FilterDialogType?,
+    onDismiss: () -> Unit,
+    deadlineDateRange: Pair<LocalDate, LocalDate>?,
+    onSelectDeadlineDateRange: (Pair<LocalDate, LocalDate>) -> Unit,
+    startAfterDateRange: Pair<LocalDate, LocalDate>?,
+    onSelectStartAfterDateRange: (Pair<LocalDate, LocalDate>) -> Unit,
+    scheduledDateRange: Pair<LocalDate, LocalDate>?,
+    onSelectScheduledDateRange: (Pair<LocalDate, LocalDate>) -> Unit,
+    doneDateRange: Pair<LocalDate, LocalDate>?,
+    onSelectDoneDateRange: (Pair<LocalDate, LocalDate>) -> Unit,
+    recurrenceDate: LocalDate?,
+    onSelectRecurrenceDate: (LocalDate) -> Unit,
+) {
+    when (filterDialogType) {
+        null -> {}
+        FilterDialogType.DeadlineDateRange -> {
+            DiswantinDateRangePickerDialog(
+                onDismiss = onDismiss,
+                dateRange = deadlineDateRange,
+                onSelectDateRange = onSelectDeadlineDateRange,
+            )
+        }
+
+        FilterDialogType.StartAfterDateRange -> {
+            DiswantinDateRangePickerDialog(
+                onDismiss = onDismiss,
+                dateRange = startAfterDateRange,
+                onSelectDateRange = onSelectStartAfterDateRange,
+            )
+        }
+
+        FilterDialogType.ScheduledDateRange -> {
+            DiswantinDateRangePickerDialog(
+                onDismiss = onDismiss,
+                dateRange = scheduledDateRange,
+                onSelectDateRange = onSelectScheduledDateRange,
+            )
+        }
+
+        FilterDialogType.DoneDateRange -> {
+            DiswantinDateRangePickerDialog(
+                onDismiss = onDismiss,
+                dateRange = doneDateRange,
+                onSelectDateRange = onSelectDoneDateRange,
+            )
+        }
+
+        FilterDialogType.RecurrenceDate -> {
+            DiswantinDatePickerDialog(
+                onDismiss = onDismiss,
+                date = recurrenceDate,
+                onSelectDate = onSelectRecurrenceDate,
+            )
+        }
+    }
+}
+
+@Composable
+private fun FilterRowLayout(
+    deadlineDateRange: Pair<LocalDate, LocalDate>?,
+    onDeadlineChipClick: () -> Unit,
+    startAfterDateRange: Pair<LocalDate, LocalDate>?,
+    onStartAfterChipClick: () -> Unit,
+    scheduledDateRange: Pair<LocalDate, LocalDate>?,
+    onScheduledChipClick: () -> Unit,
+    doneDateRange: Pair<LocalDate, LocalDate>?,
+    onDoneChipClick: () -> Unit,
+    recurrenceDate: LocalDate?,
+    onRecurrenceChipClick: () -> Unit
+) {
+    val dateFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT)
+
+    Row(
+        modifier = Modifier
+            .padding(horizontal = SpaceMd)
+            .horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(SpaceMd),
+    ) {
+        FilterChip(
+            selected = deadlineDateRange != null,
+            onClick = onDeadlineChipClick,
+            label = {
+                Text(
+                    text = deadlineDateRange?.let {
+                        stringResource(
+                            R.string.deadline_chip_label,
+                            it.first.format(dateFormatter),
+                            it.second.format(dateFormatter),
+                        )
+                    } ?: stringResource(R.string.deadline_label),
+                )
+            },
+        )
+        FilterChip(
+            selected = startAfterDateRange != null,
+            onClick = onStartAfterChipClick,
+            label = {
+                Text(
+                    text = startAfterDateRange?.let {
+                        stringResource(
+                            R.string.start_after_chip_label,
+                            it.first.format(dateFormatter),
+                            it.second.format(dateFormatter),
+                        )
+                    } ?: stringResource(R.string.start_after_label),
+                )
+            },
+        )
+        FilterChip(
+            selected = scheduledDateRange != null,
+            onClick = onScheduledChipClick,
+            label = {
+                Text(
+                    text = scheduledDateRange?.let {
+                        stringResource(
+                            R.string.scheduled_chip_label,
+                            it.first.format(dateFormatter),
+                            it.second.format(dateFormatter),
+                        )
+                    } ?: stringResource(R.string.scheduled_at_label),
+                )
+            },
+        )
+        FilterChip(
+            selected = doneDateRange != null,
+            onClick = onDoneChipClick,
+            label = {
+                Text(
+                    text = doneDateRange?.let {
+                        stringResource(
+                            R.string.done_chip_label_selected,
+                            it.first.format(dateFormatter),
+                            it.second.format(dateFormatter),
+                        )
+                    } ?: stringResource(R.string.done_chip_label_unselected),
+                )
+            },
+        )
+        FilterChip(
+            selected = recurrenceDate != null,
+            onClick = onRecurrenceChipClick,
+            label = {
+                Text(text = recurrenceDate?.let {
+                    stringResource(
+                        R.string.recurrence_chip_label_selected,
+                        it.format(dateFormatter),
+                    )
+                } ?: stringResource(R.string.recurrence_chip_label_unselected))
+            },
+        )
+    }
+}
+
+const val InitialTaskSearchLayoutTestTag = "InitialTaskSearchLayoutTestTag"
+
+@Composable
 fun InitialTaskSearchLayout(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
+            .testTag(InitialTaskSearchLayoutTestTag)
             .fillMaxSize()
             .background(color = colorScheme.surfaceVariant),
     )
@@ -640,6 +798,7 @@ private fun TaskSearchScreenPreview_Present() {
                 onRecurrenceChipClick = {},
                 searchResultItems = searchResultItems,
                 uiState = TaskSearchUiState(hasCriteria = true),
+                showSnackbar = {},
                 onAddTask = {},
                 onSelectSearchResult = {},
                 modifier = Modifier.padding(innerPadding),
@@ -693,6 +852,7 @@ private fun TaskSearchScreenPreview_Initial() {
                 onRecurrenceChipClick = {},
                 searchResultItems = searchResultItems,
                 uiState = TaskSearchUiState(hasCriteria = false),
+                showSnackbar = {},
                 onAddTask = {},
                 onSelectSearchResult = {},
                 modifier = Modifier.padding(innerPadding),
