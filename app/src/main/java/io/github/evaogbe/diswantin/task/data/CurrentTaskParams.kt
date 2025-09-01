@@ -10,14 +10,22 @@ data class CurrentTaskParams(
     val today: LocalDate,
     val currentTime: LocalTime,
     val startOfToday: Instant,
-    val endOfToday: ZonedDateTime,
+    val overdueTime: LocalTime,
 ) {
     val now: LocalDateTime = today.atTime(currentTime)
 
-    constructor(now: ZonedDateTime) : this(
-        now.toLocalDate(),
-        now.toLocalTime(),
-        now.with(LocalTime.MIN).toInstant(),
-        now.with(LocalTime.MAX),
-    )
+    companion object {
+        fun create(now: ZonedDateTime): CurrentTaskParams {
+            val today = now.toLocalDate()
+            val currentTime = now.toLocalTime()
+            val startOfToday = now.with(LocalTime.MIN).toInstant()
+            val overdueTime = currentTime.plusHours(1)
+            return CurrentTaskParams(
+                today = today,
+                currentTime = currentTime,
+                startOfToday = startOfToday,
+                overdueTime = if (overdueTime > currentTime) overdueTime else LocalTime.MAX,
+            )
+        }
+    }
 }

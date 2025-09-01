@@ -4,7 +4,7 @@ import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
 
 interface TaskRepository {
-    fun getCurrentTask(params: CurrentTaskParams): Flow<Task?>
+    fun getCurrentTask(params: CurrentTaskParams): Flow<CurrentTask?>
 
     fun getById(id: Long): Flow<Task>
 

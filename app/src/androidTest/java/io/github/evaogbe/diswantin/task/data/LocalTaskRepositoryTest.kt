@@ -55,7 +55,7 @@ class LocalTaskRepositoryTest {
         val clock = Clock.fixed(now.toInstant(), now.zone)
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
 
-        taskRepository.getCurrentTask(CurrentTaskParams(now)).test {
+        taskRepository.getCurrentTask(CurrentTaskParams.create(now)).test {
             assertThat(awaitItem()).isNull()
 
             var task1 = taskRepository.create(
@@ -75,7 +75,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task1)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task1.toCurrentTask(recurring = false))
 
             // Created at ascending
             var task2 = taskRepository.create(
@@ -95,7 +96,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task2)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task2.toCurrentTask(recurring = false))
 
             // Start after date nulls first
             task2 = taskRepository.update(
@@ -117,7 +119,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task1)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task1.toCurrentTask(recurring = false))
 
             // Start after date ascending
             task1 = taskRepository.update(
@@ -139,7 +142,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task2)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task2.toCurrentTask(recurring = false))
 
             // Deadline date before start after date
             task1 = taskRepository.update(
@@ -161,7 +165,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task1)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task1.toCurrentTask(recurring = false))
 
             // Deadline date ascending
             task2 = taskRepository.update(
@@ -183,7 +188,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task2)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task2.toCurrentTask(recurring = false))
 
             // Scheduled date before deadline date
             task1 = taskRepository.update(
@@ -205,7 +211,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task1)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task1.toCurrentTask(recurring = false))
 
             // Scheduled date ascending
             task2 = taskRepository.update(
@@ -227,7 +234,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task2)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task2.toCurrentTask(recurring = false))
 
             // Scheduled date before recurring
             task2 = taskRepository.update(
@@ -256,7 +264,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task1)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task1.toCurrentTask(recurring = false))
 
             // Recurring without start after time before non-recurring
             task1 = taskRepository.update(
@@ -278,7 +287,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task2)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task2.toCurrentTask(recurring = true))
 
             // Non-recurring before recurring with start after time
             var taskRecurrences2 = taskRepository.getTaskRecurrencesByTaskId(task2.id).first()
@@ -301,7 +311,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task1)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task1.toCurrentTask(recurring = false))
 
             // Start after time ascending
             task1 = taskRepository.update(
@@ -323,18 +334,19 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task2)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task2.toCurrentTask(recurring = true))
 
             // Default deadline time for recurring task is max time
             task1 = taskRepository.update(
                 EditTaskForm(
                     name = task1.name,
                     note = task1.note,
-                    deadlineDate = task1.deadlineDate,
-                    deadlineTime = LocalTime.parse("23:59"),
+                    deadlineDate = LocalDate.parse("2024-08-23"),
+                    deadlineTime = LocalTime.parse("23:58"),
                     startAfterDate = task1.startAfterDate,
                     startAfterTime = task1.startAfterTime,
-                    scheduledDate = null,
+                    scheduledDate = task1.scheduledDate,
                     scheduledTime = task1.scheduledTime,
                     tagIds = emptySet(),
                     recurrences = emptyList(),
@@ -345,7 +357,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task1)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task1.toCurrentTask(recurring = false))
 
             // Deadline time ascending
             task2 = taskRepository.update(
@@ -353,7 +366,7 @@ class LocalTaskRepositoryTest {
                     name = task2.name,
                     note = task2.note,
                     deadlineDate = task2.deadlineDate,
-                    deadlineTime = LocalTime.parse("23:58"),
+                    deadlineTime = LocalTime.parse("23:57"),
                     startAfterDate = task2.startAfterDate,
                     startAfterTime = task2.startAfterTime,
                     scheduledDate = task2.scheduledDate,
@@ -367,7 +380,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task2)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task2.toCurrentTask(recurring = true))
 
             // Deadline time before start after time
             task1 = taskRepository.update(
@@ -389,7 +403,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task1)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task1.toCurrentTask(recurring = false))
 
             // Overdue recurring tasks before not due tasks
             task2 = taskRepository.update(
@@ -411,7 +426,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task2)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task2.toCurrentTask(recurring = true))
 
             // Overdue non-recurring task before not due task
             task1 = taskRepository.update(
@@ -433,7 +449,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task2)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task2.toCurrentTask(recurring = true))
 
             task2 = taskRepository.update(
                 EditTaskForm(
@@ -454,7 +471,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task1)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task1.toCurrentTask(recurring = false))
 
             // Scheduled time before deadline time
             task2 = taskRepository.update(
@@ -476,7 +494,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task2)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task2.toCurrentTask(recurring = true))
 
             // Scheduled time ascending
             task1 = taskRepository.update(
@@ -498,7 +517,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task1)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task1.toCurrentTask(recurring = false))
 
             // Earlier scheduled date with later scheduled time first
             var task3 = taskRepository.create(
@@ -518,7 +538,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task3)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task3.toCurrentTask(recurring = false))
 
             // Parent task before child task
             task3 = taskRepository.update(
@@ -540,7 +561,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task1)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task1.toCurrentTask(recurring = false))
 
             // Scheduled time ordered by ancestor
             task2 = taskRepository.update(
@@ -562,7 +584,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task2)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task2.toCurrentTask(recurring = true))
 
             // Parent not occurring on day does not block child task
             task2 = taskRepository.update(
@@ -592,7 +615,8 @@ class LocalTaskRepositoryTest {
             )
             taskRecurrences2 = taskRepository.getTaskRecurrencesByTaskId(task2.id).first()
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task3)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task3.toCurrentTask(recurring = false))
 
             // Child task not occurring on day does not affect parent task priority
             task3 = taskRepository.update(
@@ -622,7 +646,8 @@ class LocalTaskRepositoryTest {
             )
             val taskRecurrences3 = taskRepository.getTaskRecurrencesByTaskId(task3.id).first()
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task1)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task1.toCurrentTask(recurring = false))
 
             task2 = taskRepository.update(
                 EditTaskForm(
@@ -651,7 +676,8 @@ class LocalTaskRepositoryTest {
             )
             taskRecurrences2 = taskRepository.getTaskRecurrencesByTaskId(task2.id).first()
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task2)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task2.toCurrentTask(recurring = true))
 
             // Parent task scheduled in future pushes back child task
             task1 = taskRepository.update(
@@ -673,7 +699,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task2)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task2.toCurrentTask(recurring = true))
 
             taskRepository.update(
                 EditTaskForm(
@@ -694,7 +721,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task1)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task1.toCurrentTask(recurring = false))
 
             taskRepository.update(
                 EditTaskForm(
@@ -715,7 +743,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task1)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task1.toCurrentTask(recurring = false))
         }
     }
 
@@ -725,7 +754,7 @@ class LocalTaskRepositoryTest {
         val clock = Clock.fixed(now.toInstant(), now.zone)
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
 
-        taskRepository.getCurrentTask(CurrentTaskParams(now)).test {
+        taskRepository.getCurrentTask(CurrentTaskParams.create(now)).test {
             assertThat(awaitItem()).isNull()
 
             var task = taskRepository.create(
@@ -745,7 +774,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task.toCurrentTask(recurring = false))
 
             task = taskRepository.update(
                 EditTaskForm(
@@ -787,7 +817,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task.toCurrentTask(recurring = false))
 
             task = taskRepository.update(
                 EditTaskForm(
@@ -829,7 +860,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task.toCurrentTask(recurring = false))
 
             task = taskRepository.update(
                 EditTaskForm(
@@ -850,7 +882,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task.toCurrentTask(recurring = false))
 
             task = taskRepository.update(
                 EditTaskForm(
@@ -900,7 +933,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task.toCurrentTask(recurring = true))
 
             task = taskRepository.update(
                 EditTaskForm(
@@ -928,7 +962,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task.toCurrentTask(recurring = true))
         }
     }
 
@@ -938,7 +973,7 @@ class LocalTaskRepositoryTest {
         val clock = Clock.fixed(now.toInstant(), now.zone)
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
 
-        taskRepository.getCurrentTask(CurrentTaskParams(now)).test {
+        taskRepository.getCurrentTask(CurrentTaskParams.create(now)).test {
             assertThat(awaitItem()).isNull()
 
             var task = taskRepository.create(
@@ -958,7 +993,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task.toCurrentTask(recurring = false))
 
             task = taskRepository.update(
                 EditTaskForm(
@@ -1000,7 +1036,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task.toCurrentTask(recurring = false))
 
             task = taskRepository.update(
                 EditTaskForm(
@@ -1042,7 +1079,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task.toCurrentTask(recurring = false))
 
             task = taskRepository.update(
                 EditTaskForm(
@@ -1099,7 +1137,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task.toCurrentTask(recurring = true))
         }
     }
 
@@ -1109,7 +1148,7 @@ class LocalTaskRepositoryTest {
         val clock = Clock.fixed(now.toInstant(), now.zone)
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
 
-        taskRepository.getCurrentTask(CurrentTaskParams(now)).test {
+        taskRepository.getCurrentTask(CurrentTaskParams.create(now)).test {
             assertThat(awaitItem()).isNull()
 
             val task1 = taskRepository.create(
@@ -1136,7 +1175,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task1)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task1.toCurrentTask(recurring = true))
 
             taskRepository.skip(task1.id)
 
@@ -1159,7 +1199,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task2)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task2.toCurrentTask(recurring = false))
         }
     }
 
@@ -1174,9 +1215,7 @@ class LocalTaskRepositoryTest {
                 today = LocalDate.parse("2024-08-23"),
                 currentTime = LocalTime.parse("13:00"),
                 startOfToday = Instant.parse("2024-08-24T04:00:00Z"),
-                endOfToday = ZonedDateTime.parse(
-                    "2024-08-24T23:59:59.999-04:00[America/New_York]"
-                ),
+                overdueTime = LocalTime.parse("14:00"),
             ),
         ).test {
             assertThat(awaitItem()).isNull()
@@ -1198,7 +1237,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task1)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task1.toCurrentTask(recurring = false))
 
             val task2 = taskRepository.create(
                 NewTaskForm(
@@ -1217,11 +1257,13 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task1)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task1.toCurrentTask(recurring = false))
 
             taskRepository.markDone(task1.id)
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task2)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task2.toCurrentTask(recurring = false))
 
             val task3 = taskRepository.create(
                 NewTaskForm(
@@ -1240,7 +1282,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task2)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task2.toCurrentTask(recurring = false))
 
             taskRepository.update(
                 EditTaskForm(
@@ -1261,7 +1304,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task2)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task2.toCurrentTask(recurring = false))
 
             taskRepository.update(
                 EditTaskForm(
@@ -1289,7 +1333,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task3)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task3.toCurrentTask(recurring = false))
 
             taskRepository.update(
                 EditTaskForm(
@@ -1311,7 +1356,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task2)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task2.toCurrentTask(recurring = false))
 
             taskRepository.update(
                 EditTaskForm(
@@ -1332,11 +1378,13 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task2)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task2.toCurrentTask(recurring = false))
 
             taskRepository.markDone(task2.id)
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task3)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task3.toCurrentTask(recurring = false))
         }
     }
 
@@ -1346,7 +1394,7 @@ class LocalTaskRepositoryTest {
         val clock = Clock.fixed(now.toInstant(), now.zone)
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
 
-        taskRepository.getCurrentTask(CurrentTaskParams(now)).test {
+        taskRepository.getCurrentTask(CurrentTaskParams.create(now)).test {
             assertThat(awaitItem()).isNull()
 
             var task = taskRepository.create(
@@ -1373,7 +1421,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task.toCurrentTask(recurring = true))
 
             task = taskRepository.update(
                 EditTaskForm(
@@ -1431,7 +1480,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task.toCurrentTask(recurring = true))
         }
     }
 
@@ -1441,7 +1491,7 @@ class LocalTaskRepositoryTest {
         val clock = Clock.fixed(now.toInstant(), now.zone)
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
 
-        taskRepository.getCurrentTask(CurrentTaskParams(now)).test {
+        taskRepository.getCurrentTask(CurrentTaskParams.create(now)).test {
             assertThat(awaitItem()).isNull()
 
             var task = taskRepository.create(
@@ -1474,7 +1524,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task.toCurrentTask(recurring = true))
 
             task = taskRepository.update(
                 EditTaskForm(
@@ -1532,7 +1583,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task.toCurrentTask(recurring = true))
 
             task = taskRepository.update(
                 EditTaskForm(
@@ -1590,7 +1642,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task.toCurrentTask(recurring = true))
 
         }
     }
@@ -1601,7 +1654,7 @@ class LocalTaskRepositoryTest {
         val clock = Clock.fixed(now.toInstant(), now.zone)
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
 
-        taskRepository.getCurrentTask(CurrentTaskParams(now)).test {
+        taskRepository.getCurrentTask(CurrentTaskParams.create(now)).test {
             assertThat(awaitItem()).isNull()
 
             var task = taskRepository.create(
@@ -1628,7 +1681,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task.toCurrentTask(recurring = true))
 
             task = taskRepository.update(
                 EditTaskForm(
@@ -1686,7 +1740,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task.toCurrentTask(recurring = true))
         }
     }
 
@@ -1696,7 +1751,7 @@ class LocalTaskRepositoryTest {
         val clock = Clock.fixed(now.toInstant(), now.zone)
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
 
-        taskRepository.getCurrentTask(CurrentTaskParams(now)).test {
+        taskRepository.getCurrentTask(CurrentTaskParams.create(now)).test {
             assertThat(awaitItem()).isNull()
 
             val task = taskRepository.create(
@@ -1723,7 +1778,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task.toCurrentTask(recurring = true))
 
             listOf(
                 LocalDate.parse("2022-01-31"),
@@ -1767,7 +1823,7 @@ class LocalTaskRepositoryTest {
                 )
 
                 assertThat(awaitItem(), name = "task starting at $start").isNotNull()
-                    .isDataClassEqualTo(task)
+                    .isDataClassEqualTo(task.toCurrentTask(recurring = true))
             }
         }
     }
@@ -1778,7 +1834,7 @@ class LocalTaskRepositoryTest {
         val clock = Clock.fixed(now.toInstant(), now.zone)
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
 
-        taskRepository.getCurrentTask(CurrentTaskParams(now)).test {
+        taskRepository.getCurrentTask(CurrentTaskParams.create(now)).test {
             assertThat(awaitItem()).isNull()
 
             val task = taskRepository.create(
@@ -1805,7 +1861,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task.toCurrentTask(recurring = true))
 
             listOf(
                 LocalDate.parse("2023-03-31"),
@@ -1848,7 +1905,7 @@ class LocalTaskRepositoryTest {
                 )
 
                 assertThat(awaitItem(), name = "task starting at $start").isNotNull()
-                    .isDataClassEqualTo(task)
+                    .isDataClassEqualTo(task.toCurrentTask(recurring = true))
             }
         }
     }
@@ -1859,7 +1916,7 @@ class LocalTaskRepositoryTest {
         val clock = Clock.fixed(now.toInstant(), now.zone)
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
 
-        taskRepository.getCurrentTask(CurrentTaskParams(now)).test {
+        taskRepository.getCurrentTask(CurrentTaskParams.create(now)).test {
             assertThat(awaitItem()).isNull()
 
             val task = taskRepository.create(
@@ -1886,7 +1943,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task.toCurrentTask(recurring = true))
 
             listOf(
                 LocalDate.parse("2023-03-31"),
@@ -1928,7 +1986,7 @@ class LocalTaskRepositoryTest {
                 )
 
                 assertThat(awaitItem(), name = "task starting at $start").isNotNull()
-                    .isDataClassEqualTo(task)
+                    .isDataClassEqualTo(task.toCurrentTask(recurring = true))
             }
         }
     }
@@ -1939,7 +1997,7 @@ class LocalTaskRepositoryTest {
         val clock = Clock.fixed(now.toInstant(), now.zone)
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
 
-        taskRepository.getCurrentTask(CurrentTaskParams(now)).test {
+        taskRepository.getCurrentTask(CurrentTaskParams.create(now)).test {
             assertThat(awaitItem()).isNull()
 
             val task = taskRepository.create(
@@ -1966,7 +2024,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task.toCurrentTask(recurring = true))
 
             listOf(
                 LocalDate.parse("2023-03-31"),
@@ -2008,7 +2067,7 @@ class LocalTaskRepositoryTest {
                 )
 
                 assertThat(awaitItem(), name = "task starting at $start").isNotNull()
-                    .isDataClassEqualTo(task)
+                    .isDataClassEqualTo(task.toCurrentTask(recurring = true))
             }
         }
     }
@@ -2019,7 +2078,7 @@ class LocalTaskRepositoryTest {
         val clock = Clock.fixed(now.toInstant(), now.zone)
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
 
-        taskRepository.getCurrentTask(CurrentTaskParams(now)).test {
+        taskRepository.getCurrentTask(CurrentTaskParams.create(now)).test {
             assertThat(awaitItem()).isNull()
 
             val task = taskRepository.create(
@@ -2046,7 +2105,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task.toCurrentTask(recurring = true))
 
             listOf(
                 LocalDate.parse("2023-03-31"),
@@ -2088,7 +2148,7 @@ class LocalTaskRepositoryTest {
                 )
 
                 assertThat(awaitItem(), name = "task starting at $start").isNotNull()
-                    .isDataClassEqualTo(task)
+                    .isDataClassEqualTo(task.toCurrentTask(recurring = true))
             }
         }
     }
@@ -2099,7 +2159,7 @@ class LocalTaskRepositoryTest {
         val clock = Clock.fixed(now.toInstant(), now.zone)
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
 
-        taskRepository.getCurrentTask(CurrentTaskParams(now)).test {
+        taskRepository.getCurrentTask(CurrentTaskParams.create(now)).test {
             assertThat(awaitItem()).isNull()
 
             val task = taskRepository.create(
@@ -2126,7 +2186,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task.toCurrentTask(recurring = true))
 
             listOf(
                 LocalDate.parse("2023-03-31"),
@@ -2168,7 +2229,7 @@ class LocalTaskRepositoryTest {
                 )
 
                 assertThat(awaitItem(), name = "task starting at $start").isNotNull()
-                    .isDataClassEqualTo(task)
+                    .isDataClassEqualTo(task.toCurrentTask(recurring = true))
             }
         }
     }
@@ -2179,7 +2240,7 @@ class LocalTaskRepositoryTest {
         val clock = Clock.fixed(now.toInstant(), now.zone)
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
 
-        taskRepository.getCurrentTask(CurrentTaskParams(now)).test {
+        taskRepository.getCurrentTask(CurrentTaskParams.create(now)).test {
             assertThat(awaitItem()).isNull()
 
             var task = taskRepository.create(
@@ -2206,7 +2267,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task.toCurrentTask(recurring = true))
 
             task = taskRepository.update(
                 EditTaskForm(
@@ -2264,7 +2326,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task.toCurrentTask(recurring = true))
 
             taskRepository.update(
                 EditTaskForm(
@@ -2303,7 +2366,7 @@ class LocalTaskRepositoryTest {
         val clock = Clock.fixed(now.toInstant(), now.zone)
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
 
-        taskRepository.getCurrentTask(CurrentTaskParams(now)).test {
+        taskRepository.getCurrentTask(CurrentTaskParams.create(now)).test {
             assertThat(awaitItem()).isNull()
 
             var task = taskRepository.create(
@@ -2330,7 +2393,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task.toCurrentTask(recurring = true))
 
             task = taskRepository.update(
                 EditTaskForm(
@@ -2388,7 +2452,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task.toCurrentTask(recurring = true))
         }
     }
 
@@ -2398,7 +2463,7 @@ class LocalTaskRepositoryTest {
         val clock = Clock.fixed(now.toInstant(), now.zone)
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
 
-        taskRepository.getCurrentTask(CurrentTaskParams(now)).test {
+        taskRepository.getCurrentTask(CurrentTaskParams.create(now)).test {
             assertThat(awaitItem()).isNull()
 
             val task = taskRepository.create(
@@ -2425,7 +2490,8 @@ class LocalTaskRepositoryTest {
                 )
             )
 
-            assertThat(awaitItem()).isNotNull().isDataClassEqualTo(task)
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task.toCurrentTask(recurring = true))
         }
     }
 
@@ -5338,6 +5404,9 @@ class LocalTaskRepositoryTest {
             )
         )
     }
+
+    private fun Task.toCurrentTask(recurring: Boolean) =
+        CurrentTask(id = id, name = name, note = note, recurring = recurring)
 
     private fun createLocalTaskRepository(
         clock: Clock, testScheduler: TestCoroutineScheduler? = null

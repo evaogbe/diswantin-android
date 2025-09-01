@@ -4,8 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.evaogbe.diswantin.data.Result
+import io.github.evaogbe.diswantin.task.data.CurrentTask
 import io.github.evaogbe.diswantin.task.data.CurrentTaskParams
-import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -16,7 +16,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
@@ -32,7 +31,8 @@ class CurrentTaskViewModel @Inject constructor(
     private val taskRepository: TaskRepository,
     private val clock: Clock,
 ) : ViewModel() {
-    private val currentTaskParams = MutableStateFlow(CurrentTaskParams(ZonedDateTime.now(clock)))
+    private val currentTaskParams =
+        MutableStateFlow(CurrentTaskParams.create(ZonedDateTime.now(clock)))
 
     private val isRefreshing = MutableStateFlow(false)
 
@@ -41,37 +41,32 @@ class CurrentTaskViewModel @Inject constructor(
     val userMessage = _userMessage.asStateFlow()
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val uiState = currentTaskParams.flatMapLatest { params ->
-        isRefreshing.value = true
-        taskRepository.getCurrentTask(params).onEach { isRefreshing.value = false }
-            .map<Task?, Result<Task?>> { Result.Success(it) }.catch { e ->
-                Timber.e(e, "Failed to fetch current task")
-                emit(Result.Failure(e))
-            }
-    }.flatMapLatest { taskResult ->
+    val uiState = combine(
+        currentTaskParams.flatMapLatest { params ->
+            isRefreshing.value = true
+            taskRepository.getCurrentTask(params)
+                .map<CurrentTask?, Result<CurrentTask?>> { Result.Success(it) }.catch { e ->
+                    Timber.e(e, "Failed to fetch current task")
+                    emit(Result.Failure(e))
+                }.onEach { isRefreshing.value = false }
+        },
+        isRefreshing,
+    ) { taskResult, isRefreshing ->
         taskResult.fold(
             onSuccess = { task ->
-                val canSkip = task?.let { t ->
-                    taskRepository.getTaskRecurrencesByTaskId(t.id).map { it.isNotEmpty() }
-                        .catch { e ->
-                            Timber.e(e, "Failed to fetch current task recurrences")
-                            _userMessage.value = CurrentTaskUserMessage.FetchRecurrencesError
-                            emit(false)
-                        }
-                } ?: flowOf(false)
-                combine(isRefreshing, canSkip) { isRefreshing, canSkip ->
-                    if (task == null) {
-                        CurrentTaskUiState.Empty(isRefreshing = isRefreshing)
-                    } else {
-                        CurrentTaskUiState.Present(
-                            currentTask = task,
-                            isRefreshing = isRefreshing,
-                            canSkip = canSkip,
-                        )
-                    }
+                if (task == null) {
+                    CurrentTaskUiState.Empty(isRefreshing = isRefreshing)
+                } else {
+                    CurrentTaskUiState.Present(
+                        id = task.id,
+                        name = task.name,
+                        note = task.note,
+                        isRefreshing = isRefreshing,
+                        canSkip = task.recurring,
+                    )
                 }
             },
-            onFailure = { flowOf(CurrentTaskUiState.Failure(it)) },
+            onFailure = CurrentTaskUiState::Failure,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -80,43 +75,43 @@ class CurrentTaskViewModel @Inject constructor(
     )
 
     fun refresh() {
-        currentTaskParams.value = CurrentTaskParams(ZonedDateTime.now(clock))
+        currentTaskParams.value = CurrentTaskParams.create(ZonedDateTime.now(clock))
     }
 
     fun skipCurrentTask() {
-        val task = (uiState.value as? CurrentTaskUiState.Present)?.currentTask ?: return
+        val taskId = (uiState.value as? CurrentTaskUiState.Present)?.id ?: return
 
         viewModelScope.launch {
             try {
-                taskRepository.skip(task.id)
-                currentTaskParams.value = CurrentTaskParams(ZonedDateTime.now(clock))
+                taskRepository.skip(taskId)
+                currentTaskParams.value = CurrentTaskParams.create(ZonedDateTime.now(clock))
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Timber.e(e, "Failed to skip task: %s", task)
+                Timber.e(e, "Failed to skip task: %s", taskId)
                 _userMessage.value = CurrentTaskUserMessage.SkipError
             }
         }
     }
 
     fun markCurrentTaskDone() {
-        val task = (uiState.value as? CurrentTaskUiState.Present)?.currentTask ?: return
+        val taskId = (uiState.value as? CurrentTaskUiState.Present)?.id ?: return
 
         viewModelScope.launch {
             var markedDone = false
 
             try {
-                taskRepository.markDone(task.id)
+                taskRepository.markDone(taskId)
                 markedDone = true
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Timber.e(e, "Failed to mark task done: %s", task)
+                Timber.e(e, "Failed to mark task done: %s", taskId)
                 _userMessage.value = CurrentTaskUserMessage.MarkDoneError
             }
 
             if (markedDone) {
-                currentTaskParams.value = CurrentTaskParams(ZonedDateTime.now(clock))
+                currentTaskParams.value = CurrentTaskParams.create(ZonedDateTime.now(clock))
             }
         }
     }

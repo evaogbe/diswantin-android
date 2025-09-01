@@ -53,7 +53,6 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.flowWithLifecycle
 import io.github.evaogbe.diswantin.R
-import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.ui.button.ButtonWithIcon
 import io.github.evaogbe.diswantin.ui.button.FilledTonalButtonWithIcon
 import io.github.evaogbe.diswantin.ui.button.OutlinedButtonWithIcon
@@ -73,7 +72,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
-import java.time.Instant
 import kotlin.time.Duration.Companion.hours
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -198,14 +196,6 @@ fun CurrentTaskScreen(
     LaunchedEffect(userMessage) {
         when (userMessage) {
             null -> {}
-            CurrentTaskUserMessage.FetchRecurrencesError -> {
-                currentShowSnackbar(
-                    SnackbarState.create(
-                        currentResources.getString(R.string.current_task_fetch_recurrences_error)
-                    )
-                )
-                currentTaskViewModel.userMessageShown()
-            }
 
             CurrentTaskUserMessage.SkipError -> {
                 currentShowSnackbar(
@@ -336,15 +326,15 @@ fun CurrentTaskLayout(
                 SelectionContainer {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            text = uiState.currentTask.name,
+                            text = uiState.name,
                             textAlign = TextAlign.Center,
                             style = typography.displaySmall
                         )
                         Spacer(Modifier.size(SpaceMd))
 
-                        if (uiState.currentTask.note.isNotEmpty()) {
+                        if (uiState.note.isNotEmpty()) {
                             Text(
-                                text = uiState.currentTask.note,
+                                text = uiState.note,
                                 color = colorScheme.onSurfaceVariant,
                                 textAlign = TextAlign.Center,
                                 style = typography.titleLarge,
@@ -358,7 +348,7 @@ fun CurrentTaskLayout(
                     horizontalArrangement = Arrangement.SpaceAround,
                 ) {
                     OutlinedButtonWithIcon(
-                        onClick = { onNavigateToTask(uiState.currentTask.id) },
+                        onClick = { onNavigateToTask(uiState.id) },
                         painter = painterResource(R.drawable.baseline_receipt_24),
                         text = stringResource(R.string.current_task_view_details_button),
                     )
@@ -430,11 +420,9 @@ private fun CurrentTaskScreenPreview_Present() {
         ) { innerPadding ->
             CurrentTaskLayout(
                 uiState = CurrentTaskUiState.Present(
-                    currentTask = Task(
-                        id = 1L,
-                        createdAt = Instant.now(),
-                        name = "Brush teeth",
-                    ),
+                    id = 1L,
+                    name = "Brush teeth",
+                    note = "",
                     isRefreshing = false,
                     canSkip = true,
                 ),
@@ -462,12 +450,9 @@ private fun CurrentTaskScreenPreview_withNote() {
         ) { innerPadding ->
             CurrentTaskLayout(
                 uiState = CurrentTaskUiState.Present(
-                    currentTask = Task(
-                        id = 1L,
-                        createdAt = Instant.now(),
-                        name = "Brush teeth",
-                        note = "Don't forget to floss and rinse with mouthwash",
-                    ),
+                    id = 1L,
+                    name = "Brush teeth",
+                    note = "Don't forget to floss and rinse with mouthwash",
                     isRefreshing = false,
                     canSkip = false,
                 ),

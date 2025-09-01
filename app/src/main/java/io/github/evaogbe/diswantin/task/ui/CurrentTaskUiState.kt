@@ -1,7 +1,6 @@
 package io.github.evaogbe.diswantin.task.ui
 
 import android.os.Parcelable
-import io.github.evaogbe.diswantin.task.data.Task
 import kotlinx.parcelize.Parcelize
 
 @Parcelize
@@ -12,7 +11,7 @@ enum class CurrentTaskTopBarAction {
 }
 
 enum class CurrentTaskUserMessage {
-    FetchRecurrencesError, SkipError, MarkDoneError
+    SkipError, MarkDoneError
 }
 
 sealed interface CurrentTaskUiState {
@@ -22,6 +21,11 @@ sealed interface CurrentTaskUiState {
 
     data class Empty(val isRefreshing: Boolean) : CurrentTaskUiState
 
-    data class Present(val currentTask: Task, val isRefreshing: Boolean, val canSkip: Boolean) :
-        CurrentTaskUiState
+    data class Present(
+        val id: Long,
+        val name: String,
+        val note: String,
+        val isRefreshing: Boolean,
+        val canSkip: Boolean,
+    ) : CurrentTaskUiState
 }

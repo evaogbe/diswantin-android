@@ -102,15 +102,17 @@ fun DiswantinApp() {
 
     val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
-    val showSnackbar: SnackbarHandler = { state ->
-        coroutineScope.launch {
-            val result = snackbarHostState.showSnackbar(
-                message = state.message,
-                actionLabel = state.actionLabel,
-                withDismissAction = state.actionLabel != null,
-            )
-            if (result == SnackbarResult.ActionPerformed) {
-                state.onAction()
+    val showSnackbar = remember<SnackbarHandler> {
+        { state ->
+            coroutineScope.launch {
+                val result = snackbarHostState.showSnackbar(
+                    message = state.message,
+                    actionLabel = state.actionLabel,
+                    withDismissAction = state.actionLabel != null,
+                )
+                if (result == SnackbarResult.ActionPerformed) {
+                    state.onAction()
+                }
             }
         }
     }
