@@ -16,7 +16,7 @@ import java.time.LocalTime
 @Dao
 interface TaskDao {
     @Query(
-        """SELECT t.*
+        """SELECT t.id, t.name, t.note, r.task_id IS NOT NULL AS recurring
         FROM task t
         JOIN task_path p ON p.ancestor = t.id
         JOIN (
@@ -306,7 +306,7 @@ interface TaskDao {
         currentTime: LocalTime,
         startOfToday: Instant,
         overdueTime: LocalTime,
-    ): Flow<Task?>
+    ): Flow<CurrentTask?>
 
     @Query("SELECT * FROM task WHERE id = :id LIMIT 1")
     fun getById(id: Long): Flow<Task>

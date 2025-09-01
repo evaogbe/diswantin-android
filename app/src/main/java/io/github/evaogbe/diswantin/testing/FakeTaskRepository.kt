@@ -3,6 +3,7 @@ package io.github.evaogbe.diswantin.testing
 import androidx.paging.LoadState
 import androidx.paging.LoadStates
 import androidx.paging.PagingData
+import io.github.evaogbe.diswantin.task.data.CurrentTask
 import io.github.evaogbe.diswantin.task.data.CurrentTaskParams
 import io.github.evaogbe.diswantin.task.data.EditTaskForm
 import io.github.evaogbe.diswantin.task.data.NewTaskForm
@@ -33,14 +34,24 @@ class FakeTaskRepository(
     val tasks
         get() = db.taskTable.value.values
 
-    override fun getCurrentTask(params: CurrentTaskParams): Flow<Task?> = combine(
+    override fun getCurrentTask(params: CurrentTaskParams) = combine(
         db.taskTable,
         db.taskPathTable,
         db.taskCompletionTable,
         db.taskRecurrenceTable,
         db.taskSkipTable,
     ) { tasks, taskPaths, taskCompletions, taskRecurrences, taskSkips ->
-        val availableTaskIds = tasks.values.filter { task ->
+        val availableAncestorIds = tasks.values.filter { task ->
+            val recurrences = taskRecurrences.values.filter {
+                it.taskId == task.id
+            }
+            val doneAt =
+                taskCompletions.values.filter { it.taskId == task.id }.maxOfOrNull { it.doneAt }
+            val isDone = doneAt != null && (recurrences.isEmpty() || doneAt >= params.startOfToday)
+            val doesRecurToday = recurrences.isEmpty() || doesRecurOnDate(recurrences, params.today)
+            !isDone && doesRecurToday
+        }.map { it.id }.toSet()
+        val availableDescendantIds = tasks.values.filter { task ->
             val recurrences = taskRecurrences.values.filter {
                 it.taskId == task.id
             }
@@ -54,10 +65,9 @@ class FakeTaskRepository(
             val isScheduledFuture = isScheduledAtFuture(task, params.now)
             val doesStartFuture = doesStartAfterFuture(task, params.now)
             !isDone && !isSkipped && doesRecurToday && !isScheduledFuture && !doesStartFuture
-
         }.map { it.id }.toSet()
         taskPaths.values.asSequence().filter { path ->
-            path.ancestor in availableTaskIds && path.descendant in availableTaskIds
+            path.ancestor in availableAncestorIds && path.descendant in availableDescendantIds
         }.groupBy { it.descendant }.mapNotNull { (_, paths) ->
             val leaf = paths.maxBy { it.depth }
             val ancestor = tasks[leaf.ancestor]
@@ -67,6 +77,13 @@ class FakeTaskRepository(
             } else {
                 ancestor to descendant
             }
+        }.filter { (task) ->
+            val isSkipped =
+                taskSkips.values.filter { it.taskId == task.id }.maxOfOrNull { it.skippedAt }
+                    ?.let { it >= params.startOfToday } == true
+            val isScheduledFuture = isScheduledAtFuture(task, params.now)
+            val doesStartFuture = doesStartAfterFuture(task, params.now)
+            !isSkipped && !isScheduledFuture && !doesStartFuture
         }.sortedWith(
             compareBy<Pair<Task, Task>, ZonedDateTime?>(nullsLast()) { (task) ->
                 dateTimePartsToZonedDateTime(
@@ -120,7 +137,14 @@ class FakeTaskRepository(
                 )
             }, nullsFirst()).thenComparing { (task) -> task.createdAt }
                 .thenComparing { (task) -> task.id },
-        ).firstNotNullOfOrNull { it.second }
+        ).firstNotNullOfOrNull { (task) ->
+            CurrentTask(
+                id = task.id,
+                name = task.name,
+                note = task.note,
+                recurring = taskRecurrences.values.any { it.taskId == task.id },
+            )
+        }
     }
 
     private fun isScheduledAtFuture(task: Task, now: LocalDateTime): Boolean {

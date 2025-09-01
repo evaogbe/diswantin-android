@@ -63,7 +63,9 @@ class CurrentTaskViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 CurrentTaskUiState.Present(
-                    currentTask = task1,
+                    id = task1.id,
+                    name = task1.name,
+                    note = task1.note,
                     isRefreshing = false,
                     canSkip = false,
                 )
@@ -90,7 +92,9 @@ class CurrentTaskViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 CurrentTaskUiState.Present(
-                    currentTask = task1.copy(name = name),
+                    id = task1.id,
+                    name = name,
+                    note = task1.note,
                     isRefreshing = false,
                     canSkip = false,
                 )
@@ -141,50 +145,15 @@ class CurrentTaskViewModelTest {
         }
 
         assertThat(viewModel.uiState.value).isEqualTo(
-            CurrentTaskUiState.Present(currentTask = task, isRefreshing = false, canSkip = true)
+            CurrentTaskUiState.Present(
+                id = task.id,
+                name = task.name,
+                note = task.note,
+                isRefreshing = false,
+                canSkip = true,
+            )
         )
     }
-
-    @Test
-    fun `uiState cannot skip when fetch task recurrences fails`() =
-        runTest(mainDispatcherRule.testDispatcher) {
-            val clock =
-                Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
-            val task = genTasks(1).single()
-            val db = FakeDatabase().apply {
-                insertTask(task)
-                insertTaskRecurrence(
-                    TaskRecurrence(
-                        taskId = task.id,
-                        start = LocalDate.parse("2024-08-22"),
-                        type = RecurrenceType.Day,
-                        step = 1,
-                    )
-                )
-            }
-            val taskRepository = spyk(FakeTaskRepository(db, clock))
-            every { taskRepository.getTaskRecurrencesByTaskId(any()) } returns flow {
-                throw RuntimeException("Test")
-            }
-
-            val viewModel = CurrentTaskViewModel(taskRepository, clock)
-
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-                viewModel.uiState.collect()
-                viewModel.userMessage.collect()
-            }
-
-            assertThat(viewModel.uiState.value).isEqualTo(
-                CurrentTaskUiState.Present(
-                    currentTask = task,
-                    isRefreshing = false,
-                    canSkip = false,
-                )
-            )
-            assertThat(viewModel.userMessage.value).isEqualTo(
-                CurrentTaskUserMessage.FetchRecurrencesError
-            )
-        }
 
     @Test
     fun `skipCurrentTask replaces current task with next task`() =
@@ -213,7 +182,9 @@ class CurrentTaskViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 CurrentTaskUiState.Present(
-                    currentTask = task1,
+                    id = task1.id,
+                    name = task1.name,
+                    note = task1.note,
                     isRefreshing = false,
                     canSkip = true,
                 )
@@ -223,7 +194,9 @@ class CurrentTaskViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 CurrentTaskUiState.Present(
-                    currentTask = task2,
+                    id = task2.id,
+                    name = task2.name,
+                    note = task2.note,
                     isRefreshing = false,
                     canSkip = false,
                 )
@@ -260,7 +233,13 @@ class CurrentTaskViewModelTest {
             viewModel.skipCurrentTask()
 
             assertThat(viewModel.uiState.value).isEqualTo(
-                CurrentTaskUiState.Present(currentTask = task, isRefreshing = false, canSkip = true)
+                CurrentTaskUiState.Present(
+                    id = task.id,
+                    name = task.name,
+                    note = task.note,
+                    isRefreshing = false,
+                    canSkip = true,
+                )
             )
             assertThat(viewModel.userMessage.value).isEqualTo(CurrentTaskUserMessage.SkipError)
         }
@@ -284,7 +263,9 @@ class CurrentTaskViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 CurrentTaskUiState.Present(
-                    currentTask = task1,
+                    id = task1.id,
+                    name = task1.name,
+                    note = task1.note,
                     isRefreshing = false,
                     canSkip = false,
                 )
@@ -294,7 +275,9 @@ class CurrentTaskViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 CurrentTaskUiState.Present(
-                    currentTask = task2,
+                    id = task2.id,
+                    name = task2.name,
+                    note = task2.note,
                     isRefreshing = false,
                     canSkip = false,
                 )
@@ -324,7 +307,9 @@ class CurrentTaskViewModelTest {
 
             assertThat(viewModel.uiState.value).isEqualTo(
                 CurrentTaskUiState.Present(
-                    currentTask = task,
+                    id = task.id,
+                    name = task.name,
+                    note = task.note,
                     isRefreshing = false,
                     canSkip = false,
                 )

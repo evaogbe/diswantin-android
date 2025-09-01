@@ -23,7 +23,6 @@
     <string name="discard_confirmation_dialog_title">Discard changes?</string>
     <string name="current_task_empty">No upcoming to-dos</string>
     <string name="current_task_fetch_error">Something went wrong loading the current to-do</string>
-    <string name="current_task_fetch_recurrences_error">Something went wrong loading to-do info</string>
     <string name="current_task_mark_done_button">Done</string>
     <string name="current_task_mark_done_error">Something went wrong marking the to-do as done</string>
     <string name="current_task_skip_error">Something went wrong skipping the to-do</string>
