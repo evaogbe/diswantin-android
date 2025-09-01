@@ -3,7 +3,6 @@ package io.github.evaogbe.diswantin.task.ui
 import android.os.Parcelable
 import io.github.evaogbe.diswantin.task.data.Tag
 import io.github.evaogbe.diswantin.task.data.Task
-import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.parcelize.Parcelize
 import java.time.LocalDate
@@ -20,11 +19,16 @@ enum class TaskFormTopBarAction {
     Save, Close
 }
 
+enum class TaskFormUserMessage {
+    FetchParentTaskError, FetchTagsError, SearchTagsError, CreateError, EditError
+}
+
 enum class TagFieldState {
     Open, Closed, Hidden
 }
 
-data class ParentTask(val id: Long, val name: String) {
+@Parcelize
+data class ParentTask(val id: Long, val name: String) : Parcelable {
     companion object {
         fun fromTask(task: Task) = ParentTask(id = task.id, name = task.name)
     }
@@ -51,7 +55,7 @@ sealed interface TaskFormUiState {
         val showParentField: Boolean,
         val parent: ParentTask?,
         val changed: Boolean,
-        val userMessage: UserMessage?,
+        val userMessage: TaskFormUserMessage?,
     ) : TaskFormUiState {
         val canSchedule =
             listOf(deadlineDate, deadlineTime, startAfterDate, startAfterTime).all { it == null }

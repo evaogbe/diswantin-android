@@ -16,19 +16,22 @@ import androidx.compose.ui.test.performTextReplacement
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import assertk.assertThat
-import assertk.assertions.isEqualTo
+import assertk.assertions.isNotNull
 import assertk.assertions.isTrue
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.RecurrenceType
 import io.github.evaogbe.diswantin.task.data.Tag
+import io.github.evaogbe.diswantin.task.data.TagRepository
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskRecurrence
+import io.github.evaogbe.diswantin.task.data.TaskRepository
 import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTagRepository
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
+import io.github.evaogbe.diswantin.testing.matchesSnackbar
 import io.github.evaogbe.diswantin.testing.stringResource
 import io.github.evaogbe.diswantin.ui.loadstate.PendingLayoutTestTag
-import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
+import io.github.evaogbe.diswantin.ui.snackbar.SnackbarState
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
@@ -39,6 +42,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flow
 import org.junit.Rule
 import org.junit.Test
+import timber.log.Timber
 import java.time.Clock
 import java.util.Locale
 
@@ -81,7 +85,7 @@ class TaskFormScreenTest {
 
     @Test
     fun displaysErrorMessage_withFailureUi() {
-        val viewModel = createTaskFormViewModelForEdit {}
+        val viewModel = createTaskFormViewModelForEdit({})
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -90,7 +94,7 @@ class TaskFormScreenTest {
                     setTopBarState = {},
                     topBarAction = null,
                     topBarActionHandled = {},
-                    setUserMessage = {},
+                    showSnackbar = {},
                     onEditRecurrence = {},
                     onEditParent = {},
                     taskFormViewModel = viewModel,
@@ -113,7 +117,7 @@ class TaskFormScreenTest {
                     setTopBarState = {},
                     topBarAction = null,
                     topBarActionHandled = {},
-                    setUserMessage = {},
+                    showSnackbar = {},
                     onEditRecurrence = {},
                     onEditParent = {},
                     taskFormViewModel = viewModel,
@@ -137,13 +141,13 @@ class TaskFormScreenTest {
 
     @Test
     fun doesNotDisplayAddScheduleButton_whenNonRecurringTaskHasDeadline() {
-        val viewModel = createTaskFormViewModelForEdit { db ->
+        val viewModel = createTaskFormViewModelForEdit({ db ->
             db.insertTask(
                 genTask().copy(
                     deadlineDate = faker.random.randomFutureDate().toLocalDate()
                 )
             )
-        }
+        })
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -152,7 +156,7 @@ class TaskFormScreenTest {
                     setTopBarState = {},
                     topBarAction = null,
                     topBarActionHandled = {},
-                    setUserMessage = {},
+                    showSnackbar = {},
                     onEditRecurrence = {},
                     onEditParent = {},
                     taskFormViewModel = viewModel,
@@ -179,13 +183,13 @@ class TaskFormScreenTest {
 
     @Test
     fun doesNotDisplayAddScheduleButton_whenNonRecurringTaskHasStartAfter() {
-        val viewModel = createTaskFormViewModelForEdit { db ->
+        val viewModel = createTaskFormViewModelForEdit({ db ->
             db.insertTask(
                 genTask().copy(
                     startAfterDate = faker.random.randomFutureDate().toLocalDate()
                 )
             )
-        }
+        })
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -194,7 +198,7 @@ class TaskFormScreenTest {
                     setTopBarState = {},
                     topBarAction = null,
                     topBarActionHandled = {},
-                    setUserMessage = {},
+                    showSnackbar = {},
                     onEditRecurrence = {},
                     onEditParent = {},
                     taskFormViewModel = viewModel,
@@ -221,7 +225,7 @@ class TaskFormScreenTest {
     @Test
     fun doesNotDisplayAddScheduleButton_whenRecurringTaskHasDeadline() {
         val task = genTask().copy(deadlineTime = faker.random.randomFutureDate().toLocalTime())
-        val viewModel = createTaskFormViewModelForEdit { db ->
+        val viewModel = createTaskFormViewModelForEdit({ db ->
             db.insertTask(task)
             db.insertTaskRecurrence(
                 TaskRecurrence(
@@ -231,7 +235,7 @@ class TaskFormScreenTest {
                     step = 1
                 )
             )
-        }
+        })
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -240,7 +244,7 @@ class TaskFormScreenTest {
                     setTopBarState = {},
                     topBarAction = null,
                     topBarActionHandled = {},
-                    setUserMessage = {},
+                    showSnackbar = {},
                     onEditRecurrence = {},
                     onEditParent = {},
                     taskFormViewModel = viewModel,
@@ -267,7 +271,7 @@ class TaskFormScreenTest {
     @Test
     fun doesNotDisplayAddScheduleButton_whenRecurringTaskHasStartAfter() {
         val task = genTask().copy(startAfterTime = faker.random.randomFutureDate().toLocalTime())
-        val viewModel = createTaskFormViewModelForEdit { db ->
+        val viewModel = createTaskFormViewModelForEdit({ db ->
             db.insertTask(task)
             db.insertTaskRecurrence(
                 TaskRecurrence(
@@ -277,7 +281,7 @@ class TaskFormScreenTest {
                     step = 1
                 )
             )
-        }
+        })
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -286,7 +290,7 @@ class TaskFormScreenTest {
                     setTopBarState = {},
                     topBarAction = null,
                     topBarActionHandled = {},
-                    setUserMessage = {},
+                    showSnackbar = {},
                     onEditRecurrence = {},
                     onEditParent = {},
                     taskFormViewModel = viewModel,
@@ -312,13 +316,13 @@ class TaskFormScreenTest {
 
     @Test
     fun displaysAddScheduleTimeButton_whenNonRecurringTaskHasScheduledDate() {
-        val viewModel = createTaskFormViewModelForEdit { db ->
+        val viewModel = createTaskFormViewModelForEdit({ db ->
             db.insertTask(
                 genTask().copy(
                     scheduledDate = faker.random.randomFutureDate().toLocalDate()
                 )
             )
-        }
+        })
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -327,7 +331,7 @@ class TaskFormScreenTest {
                     setTopBarState = {},
                     topBarAction = null,
                     topBarActionHandled = {},
-                    setUserMessage = {},
+                    showSnackbar = {},
                     onEditRecurrence = {},
                     onEditParent = {},
                     taskFormViewModel = viewModel,
@@ -354,14 +358,14 @@ class TaskFormScreenTest {
     @Test
     fun displaysScheduleTime_whenNonRecurringTaskHasScheduledTime() {
         val scheduledAt = faker.random.randomFutureDate()
-        val viewModel = createTaskFormViewModelForEdit { db ->
+        val viewModel = createTaskFormViewModelForEdit({ db ->
             db.insertTask(
                 genTask().copy(
                     scheduledDate = scheduledAt.toLocalDate(),
                     scheduledTime = scheduledAt.toLocalTime()
                 )
             )
-        }
+        })
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -370,7 +374,7 @@ class TaskFormScreenTest {
                     setTopBarState = {},
                     topBarAction = null,
                     topBarActionHandled = {},
-                    setUserMessage = {},
+                    showSnackbar = {},
                     onEditRecurrence = {},
                     onEditParent = {},
                     taskFormViewModel = viewModel,
@@ -399,7 +403,7 @@ class TaskFormScreenTest {
     @Test
     fun displaysScheduledTime_whenRecurringTaskHasScheduledTime() {
         val task = genTask().copy(scheduledTime = faker.random.randomFutureDate().toLocalTime())
-        val viewModel = createTaskFormViewModelForEdit { db ->
+        val viewModel = createTaskFormViewModelForEdit({ db ->
             db.insertTask(task)
             db.insertTaskRecurrence(
                 TaskRecurrence(
@@ -409,7 +413,7 @@ class TaskFormScreenTest {
                     step = 1
                 )
             )
-        }
+        })
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -418,7 +422,7 @@ class TaskFormScreenTest {
                     setTopBarState = {},
                     topBarAction = null,
                     topBarActionHandled = {},
-                    setUserMessage = {},
+                    showSnackbar = {},
                     onEditRecurrence = {},
                     onEditParent = {},
                     taskFormViewModel = viewModel,
@@ -446,10 +450,10 @@ class TaskFormScreenTest {
 
     @Test
     fun displaysParentTaskField_whenHasOtherTasks() {
-        val viewModel = createTaskFormViewModelForEdit { db ->
+        val viewModel = createTaskFormViewModelForEdit({ db ->
             db.insertTask(genTask())
             db.insertTask(genTask(id = 2L))
-        }
+        })
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -458,7 +462,7 @@ class TaskFormScreenTest {
                     setTopBarState = {},
                     topBarAction = null,
                     topBarActionHandled = {},
-                    setUserMessage = {},
+                    showSnackbar = {},
                     onEditRecurrence = {},
                     onEditParent = {},
                     taskFormViewModel = viewModel,
@@ -473,22 +477,17 @@ class TaskFormScreenTest {
 
     @Test
     fun displaysErrorMessage_whenFetchExistingParentTaskFails() {
-        var userMessage: UserMessage? = null
-        val clock = createClock()
-        val db = FakeDatabase().apply {
-            insertTask(genTask())
-            insertTask(genTask(id = 2L))
-        }
-        val taskRepository = spyk(FakeTaskRepository(db, clock))
-        every { taskRepository.getParent(any()) } returns flow { throw RuntimeException("Test") }
-
-        val tagRepository = FakeTagRepository(db)
-        val viewModel = TaskFormViewModel(
-            createSavedStateHandleForEdit(),
-            taskRepository,
-            tagRepository,
-            clock,
-            createLocale(),
+        var snackbarState: SnackbarState? = null
+        val viewModel = createTaskFormViewModelForEdit(
+            initDatabase = { db ->
+                db.insertTask(genTask())
+                db.insertTask(genTask(id = 2L))
+            },
+            initTaskRepositorySpy = { repository ->
+                every { repository.getParent(any()) } returns flow {
+                    throw RuntimeException("Test")
+                }
+            },
         )
 
         composeTestRule.setContent {
@@ -498,7 +497,7 @@ class TaskFormScreenTest {
                     setTopBarState = {},
                     topBarAction = null,
                     topBarActionHandled = {},
-                    setUserMessage = { userMessage = it },
+                    showSnackbar = { snackbarState = it },
                     onEditRecurrence = {},
                     onEditParent = {},
                     taskFormViewModel = viewModel,
@@ -509,15 +508,16 @@ class TaskFormScreenTest {
         composeTestRule.onNodeWithText(
             stringResource(R.string.add_parent_task_button), useUnmergedTree = true
         ).assertDoesNotExist()
-        assertThat(userMessage).isEqualTo(UserMessage.String(R.string.task_form_fetch_parent_task_error))
+        assertThat(snackbarState).isNotNull()
+            .matchesSnackbar(stringResource(R.string.task_form_fetch_parent_task_error))
     }
 
     @Test
     fun displaysTagField_whenHasTags() {
-        val viewModel = createTaskFormViewModelForEdit { db ->
+        val viewModel = createTaskFormViewModelForEdit({ db ->
             db.insertTask(genTask())
             db.insertTag(Tag(name = loremFaker.lorem.words()))
-        }
+        })
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -526,7 +526,7 @@ class TaskFormScreenTest {
                     setTopBarState = {},
                     topBarAction = null,
                     topBarActionHandled = {},
-                    setUserMessage = {},
+                    showSnackbar = {},
                     onEditRecurrence = {},
                     onEditParent = {},
                     taskFormViewModel = viewModel,
@@ -541,24 +541,17 @@ class TaskFormScreenTest {
 
     @Test
     fun displaysErrorMessage_whenFetchExistingTagFails() {
-        var userMessage: UserMessage? = null
-        val clock = createClock()
-        val db = FakeDatabase().apply {
-            insertTask(genTask())
-            insertTag(Tag(name = loremFaker.lorem.words()))
-        }
-        val taskRepository = FakeTaskRepository(db, clock)
-        val tagRepository = spyk(FakeTagRepository(db))
-        every { tagRepository.getTagsByTaskId(any(), any()) } returns flow {
-            throw RuntimeException("Test")
-        }
-
-        val viewModel = TaskFormViewModel(
-            createSavedStateHandleForEdit(),
-            taskRepository,
-            tagRepository,
-            clock,
-            createLocale(),
+        var snackbarState: SnackbarState? = null
+        val viewModel = createTaskFormViewModelForEdit(
+            initDatabase = { db ->
+                db.insertTask(genTask())
+                db.insertTag(Tag(name = loremFaker.lorem.words()))
+            },
+            initTagRepositorySpy = { repository ->
+                every { repository.getTagsByTaskId(any(), any()) } returns flow {
+                    throw RuntimeException("Test")
+                }
+            },
         )
 
         composeTestRule.setContent {
@@ -568,7 +561,7 @@ class TaskFormScreenTest {
                     setTopBarState = {},
                     topBarAction = null,
                     topBarActionHandled = {},
-                    setUserMessage = { userMessage = it },
+                    showSnackbar = { snackbarState = it },
                     onEditRecurrence = {},
                     onEditParent = {},
                     taskFormViewModel = viewModel,
@@ -579,7 +572,8 @@ class TaskFormScreenTest {
         composeTestRule.onNodeWithText(
             stringResource(R.string.tag_name_label), useUnmergedTree = true
         ).assertDoesNotExist()
-        assertThat(userMessage).isEqualTo(UserMessage.String(R.string.task_form_fetch_tags_error))
+        assertThat(snackbarState).isNotNull()
+            .matchesSnackbar(stringResource(R.string.task_form_fetch_tags_error))
     }
 
     @Test
@@ -587,9 +581,10 @@ class TaskFormScreenTest {
         val tags = List(10) {
             Tag(id = it + 1L, name = loremFaker.lorem.unique.words())
         }
-        val viewModel = createTaskFormViewModelForNew { db ->
+        Timber.d("tags: $tags")
+        val viewModel = createTaskFormViewModelForNew({ db ->
             tags.forEach(db::insertTag)
-        }
+        })
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -598,7 +593,7 @@ class TaskFormScreenTest {
                     setTopBarState = {},
                     topBarAction = null,
                     topBarActionHandled = {},
-                    setUserMessage = {},
+                    showSnackbar = {},
                     onEditRecurrence = {},
                     onEditParent = {},
                     taskFormViewModel = viewModel,
@@ -618,6 +613,7 @@ class TaskFormScreenTest {
             composeTestRule.onNodeWithText(tag.name).performClick()
         }
 
+        composeTestRule.waitForIdle()
         composeTestRule.waitUntilDoesNotExist(hasText(stringResource(R.string.tag_name_label)))
         composeTestRule.onNodeWithText(
             stringResource(R.string.tag_name_label), useUnmergedTree = true
@@ -636,10 +632,10 @@ class TaskFormScreenTest {
         val tags = List(3) {
             Tag(id = it + 1L, name = "$query ${loremFaker.lorem.unique.words()}")
         }
-        val viewModel = createTaskFormViewModelForEdit { db ->
+        val viewModel = createTaskFormViewModelForEdit({ db ->
             db.insertTask(genTask())
-            tags.forEach { db.insertTag(it) }
-        }
+            tags.forEach(db::insertTag)
+        })
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -648,7 +644,7 @@ class TaskFormScreenTest {
                     setTopBarState = {},
                     topBarAction = null,
                     topBarActionHandled = {},
-                    setUserMessage = {},
+                    showSnackbar = {},
                     onEditRecurrence = {},
                     onEditParent = {},
                     taskFormViewModel = viewModel,
@@ -670,26 +666,19 @@ class TaskFormScreenTest {
 
     @Test
     fun displaysErrorMessage_whenSearchTagsFails() {
-        var userMessage: UserMessage? = null
+        var snackbarState: SnackbarState? = null
         val query = loremFaker.verbs.base()
         val tag = Tag(name = faker.string.regexify("""$query \w+"""))
-        val clock = createClock()
-        val db = FakeDatabase().apply {
-            insertTask(genTask())
-            insertTag(tag)
-        }
-        val taskRepository = FakeTaskRepository(db, clock)
-        val tagRepository = spyk(FakeTagRepository(db))
-        every { tagRepository.search(any(), any()) } returns flow {
-            throw RuntimeException("Test")
-        }
-
-        val viewModel = TaskFormViewModel(
-            createSavedStateHandleForEdit(),
-            taskRepository,
-            tagRepository,
-            clock,
-            createLocale(),
+        val viewModel = createTaskFormViewModelForEdit(
+            initDatabase = { db ->
+                db.insertTask(genTask())
+                db.insertTag(tag)
+            },
+            initTagRepositorySpy = { repository ->
+                every { repository.search(any(), any()) } returns flow {
+                    throw RuntimeException("Test")
+                }
+            },
         )
 
         composeTestRule.setContent {
@@ -699,7 +688,7 @@ class TaskFormScreenTest {
                     setTopBarState = {},
                     topBarAction = null,
                     topBarActionHandled = {},
-                    setUserMessage = { userMessage = it },
+                    showSnackbar = { snackbarState = it },
                     onEditRecurrence = {},
                     onEditParent = {},
                     taskFormViewModel = viewModel,
@@ -713,7 +702,7 @@ class TaskFormScreenTest {
         ).onParent().performTextInput(query)
 
         composeTestRule.waitUntil {
-            userMessage == UserMessage.String(R.string.search_tag_options_error)
+            snackbarState?.matches(stringResource(R.string.search_tag_options_error)) == true
         }
     }
 
@@ -733,7 +722,7 @@ class TaskFormScreenTest {
                     setTopBarState = {},
                     topBarAction = topBarAction,
                     topBarActionHandled = { topBarActionState.value = null },
-                    setUserMessage = {},
+                    showSnackbar = {},
                     onEditRecurrence = {},
                     onEditParent = {},
                     taskFormViewModel = viewModel,
@@ -761,21 +750,14 @@ class TaskFormScreenTest {
 
     @Test
     fun displaysErrorMessage_withSaveErrorForNew() {
-        var userMessage: UserMessage? = null
+        var snackbarState: SnackbarState? = null
         val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
         val topBarActionState = MutableStateFlow<TaskFormTopBarAction?>(null)
-        val clock = createClock()
-        val db = FakeDatabase()
-        val taskRepository = spyk(FakeTaskRepository(db, clock))
-        coEvery { taskRepository.create(any()) } throws RuntimeException("Test")
-
-        val tagRepository = FakeTagRepository(db)
-        val viewModel = TaskFormViewModel(
-            SavedStateHandle(),
-            taskRepository,
-            tagRepository,
-            clock,
-            createLocale(),
+        val viewModel = createTaskFormViewModelForNew(
+            initDatabase = {},
+            initTaskRepositorySpy = { repository ->
+                coEvery { repository.create(any()) } throws RuntimeException("Test")
+            },
         )
 
         composeTestRule.setContent {
@@ -787,7 +769,7 @@ class TaskFormScreenTest {
                     setTopBarState = {},
                     topBarAction = topBarAction,
                     topBarActionHandled = { topBarActionState.value = null },
-                    setUserMessage = { userMessage = it },
+                    showSnackbar = { snackbarState = it },
                     onEditRecurrence = {},
                     onEditParent = {},
                     taskFormViewModel = viewModel,
@@ -800,7 +782,7 @@ class TaskFormScreenTest {
         topBarActionState.value = TaskFormTopBarAction.Save
 
         composeTestRule.waitUntil {
-            userMessage == UserMessage.String(R.string.task_form_save_error_new)
+            snackbarState?.matches(stringResource(R.string.task_form_save_error_new)) == true
         }
     }
 
@@ -810,9 +792,9 @@ class TaskFormScreenTest {
         var onPopBackStackCalled = false
         val topBarActionState = MutableStateFlow<TaskFormTopBarAction?>(null)
         val task = genTask().copy(deadlineDate = faker.random.randomFutureDate().toLocalDate())
-        val viewModel = createTaskFormViewModelForEdit { db ->
+        val viewModel = createTaskFormViewModelForEdit({ db ->
             db.insertTask(task)
-        }
+        })
 
         composeTestRule.setContent {
             val topBarAction by topBarActionState.collectAsStateWithLifecycle()
@@ -823,7 +805,7 @@ class TaskFormScreenTest {
                     setTopBarState = {},
                     topBarAction = topBarAction,
                     topBarActionHandled = { topBarActionState.value = null },
-                    setUserMessage = {},
+                    showSnackbar = {},
                     onEditRecurrence = {},
                     onEditParent = {},
                     taskFormViewModel = viewModel,
@@ -857,24 +839,15 @@ class TaskFormScreenTest {
 
     @Test
     fun displaysErrorMessage_withSaveErrorForEdit() {
-        var userMessage: UserMessage? = null
+        var snackbarState: SnackbarState? = null
         val topBarActionState = MutableStateFlow<TaskFormTopBarAction?>(null)
         val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
         val task = genTask()
-        val clock = createClock()
-        val db = FakeDatabase().apply {
-            insertTask(task)
-        }
-        val taskRepository = spyk(FakeTaskRepository(db, clock))
-        coEvery { taskRepository.update(any()) } throws RuntimeException("Test")
-
-        val tagRepository = FakeTagRepository(db)
-        val viewModel = TaskFormViewModel(
-            createSavedStateHandleForEdit(),
-            taskRepository,
-            tagRepository,
-            clock,
-            createLocale(),
+        val viewModel = createTaskFormViewModelForEdit(
+            initDatabase = { db -> db.insertTask(task) },
+            initTaskRepositorySpy = { repository ->
+                coEvery { repository.update(any()) } throws RuntimeException("Test")
+            },
         )
 
         composeTestRule.setContent {
@@ -886,7 +859,7 @@ class TaskFormScreenTest {
                     setTopBarState = {},
                     topBarAction = topBarAction,
                     topBarActionHandled = { topBarActionState.value = null },
-                    setUserMessage = { userMessage = it },
+                    showSnackbar = { snackbarState = it },
                     onEditRecurrence = {},
                     onEditParent = {},
                     taskFormViewModel = viewModel,
@@ -899,7 +872,7 @@ class TaskFormScreenTest {
         topBarActionState.value = TaskFormTopBarAction.Save
 
         composeTestRule.waitUntil {
-            userMessage == UserMessage.String(R.string.task_form_save_error_edit)
+            snackbarState?.matches(stringResource(R.string.task_form_save_error_edit)) == true
         }
     }
 
@@ -909,35 +882,63 @@ class TaskFormScreenTest {
         name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
     )
 
-    private fun createSavedStateHandleForEdit() = SavedStateHandle(mapOf("id" to 1L))
+    private fun createSavedStateHandleForNew(): SavedStateHandle =
+        SavedStateHandle(mapOf("id" to null, "name" to null))
+
+    private fun createSavedStateHandleForEdit() =
+        SavedStateHandle(mapOf("id" to 1L, "name" to null))
 
     private fun createClock() = Clock.systemDefaultZone()
 
     private fun createLocale() = Locale.getDefault()
 
     private fun createTaskFormViewModelForNew(
-        initDatabase: (FakeDatabase) -> Unit = {}
+        initDatabase: (FakeDatabase) -> Unit = {},
+        initTaskRepositorySpy: ((TaskRepository) -> Unit)? = null,
+        initTagRepositorySpy: ((TagRepository) -> Unit)? = null,
     ): TaskFormViewModel {
         val clock = createClock()
         val db = FakeDatabase().also(initDatabase)
+        val taskRepository = if (initTaskRepositorySpy == null) {
+            FakeTaskRepository(db, clock)
+        } else {
+            spyk(FakeTaskRepository(db, clock)).also(initTaskRepositorySpy)
+        }
+        val tagRepository = if (initTagRepositorySpy == null) {
+            FakeTagRepository(db)
+        } else {
+            spyk(FakeTagRepository(db)).also(initTagRepositorySpy)
+        }
         return TaskFormViewModel(
-            SavedStateHandle(),
-            FakeTaskRepository(db, clock),
-            FakeTagRepository(db),
+            createSavedStateHandleForNew(),
+            taskRepository,
+            tagRepository,
             clock,
             createLocale(),
         )
     }
 
     private fun createTaskFormViewModelForEdit(
-        initDatabase: (FakeDatabase) -> Unit
+        initDatabase: (FakeDatabase) -> Unit,
+        initTaskRepositorySpy: ((TaskRepository) -> Unit)? = null,
+        initTagRepositorySpy: ((TagRepository) -> Unit)? = null,
     ): TaskFormViewModel {
         val clock = createClock()
         val db = FakeDatabase().also(initDatabase)
+        val taskRepository = if (initTaskRepositorySpy == null) {
+            FakeTaskRepository(db, clock)
+        } else {
+            spyk(FakeTaskRepository(db, clock)).also(initTaskRepositorySpy)
+        }
+        val tagRepository = if (initTagRepositorySpy == null) {
+            FakeTagRepository(db)
+        } else {
+            spyk(FakeTagRepository(db)).also(initTagRepositorySpy)
+        }
         return TaskFormViewModel(
             createSavedStateHandleForEdit(),
-            FakeTaskRepository(db, clock),
-            FakeTagRepository(db),
+            taskRepository,
+            tagRepository,
             clock,
             createLocale(),
         )

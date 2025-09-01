@@ -10,14 +10,13 @@ import assertk.assertions.isEqualToIgnoringGivenProperties
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isNotNull
 import assertk.assertions.prop
-import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.Tag
+import io.github.evaogbe.diswantin.task.data.TagRepository
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTagRepository
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.MainDispatcherRule
-import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
 import io.mockk.coEvery
@@ -51,10 +50,10 @@ class TagDetailViewModelTest {
     fun `uiState fetches tag by id`() = runTest(mainDispatcherRule.testDispatcher) {
         val tag = genTag()
         val tasks = genTasks()
-        val viewModel = createTagDetailViewModel { db ->
+        val viewModel = createTagDetailViewModel({ db ->
             tasks.forEach(db::insertTask)
             db.insertTag(tag = tag, taskIds = tasks.map { it.id }.toSet())
-        }
+        })
 
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect()
@@ -75,22 +74,20 @@ class TagDetailViewModelTest {
     }
 
     @Test
-    fun `uiState emits failure when tag not found`() =
-        runTest(mainDispatcherRule.testDispatcher) {
-            val viewModel = createTagDetailViewModel {}
+    fun `uiState emits failure when tag not found`() = runTest(mainDispatcherRule.testDispatcher) {
+        val viewModel = createTagDetailViewModel({})
 
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-                viewModel.uiState.collect()
-            }
-
-            assertThat(viewModel.uiState.value).isEqualTo(TagDetailUiState.Pending)
-
-            advanceUntilIdle()
-
-            assertThat(viewModel.uiState.value).isInstanceOf<TagDetailUiState.Failure>()
-                .prop(TagDetailUiState.Failure::exception)
-                .isInstanceOf<NullPointerException>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiState.collect()
         }
+
+        assertThat(viewModel.uiState.value).isEqualTo(TagDetailUiState.Pending)
+
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value).isInstanceOf<TagDetailUiState.Failure>()
+            .prop(TagDetailUiState.Failure::exception).isInstanceOf<NullPointerException>()
+    }
 
     @Test
     fun `uiState emits failure when repository throws`() =
@@ -98,22 +95,16 @@ class TagDetailViewModelTest {
             val exception = RuntimeException("Test")
             val tag = genTag()
             val tasks = genTasks()
-            val clock = createClock()
-            val db = FakeDatabase().apply {
-                tasks.forEach(::insertTask)
-                insertTag(tag = tag, taskIds = tasks.map { it.id }.toSet())
-            }
-            val taskRepository = FakeTaskRepository(db, clock)
-            val tagRepository = spyk(FakeTagRepository(db))
-            every { tagRepository.getById(any()) } returns flow {
-                throw exception
-            }
-
-            val viewModel = TagDetailViewModel(
-                createSavedStateHandle(),
-                tagRepository,
-                taskRepository,
-                clock,
+            val viewModel = createTagDetailViewModel(
+                initDatabase = { db ->
+                    tasks.forEach(db::insertTask)
+                    db.insertTag(tag = tag, taskIds = tasks.map { it.id }.toSet())
+                },
+                initTagRepositorySpy = { repository ->
+                    every { repository.getById(any()) } returns flow {
+                        throw exception
+                    }
+                },
             )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
@@ -180,19 +171,11 @@ class TagDetailViewModelTest {
         runTest(mainDispatcherRule.testDispatcher) {
             val name = loremFaker.lorem.words()
             val tag = genTag()
-            val clock = createClock()
-            val db = FakeDatabase().apply {
-                insertTag(tag = tag)
-            }
-            val taskRepository = FakeTaskRepository(db, clock)
-            val tagRepository = spyk(FakeTagRepository(db))
-            coEvery { tagRepository.update(any()) } throws RuntimeException("Test")
-
-            val viewModel = TagDetailViewModel(
-                createSavedStateHandle(),
-                tagRepository,
-                taskRepository,
-                clock,
+            val viewModel = createTagDetailViewModel(
+                initDatabase = { db -> db.insertTag(tag = tag) },
+                initTagRepositorySpy = { repository ->
+                    coEvery { repository.update(any()) } throws RuntimeException("Test")
+                },
             )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
@@ -216,7 +199,7 @@ class TagDetailViewModelTest {
             assertThat(viewModel.uiState.value).isEqualTo(
                 TagDetailUiState.Success(
                     tag = tag,
-                    userMessage = UserMessage.String(R.string.tag_form_save_error_edit),
+                    userMessage = TagDetailUserMessage.EditError,
                 )
             )
         }
@@ -268,20 +251,14 @@ class TagDetailViewModelTest {
         runTest(mainDispatcherRule.testDispatcher) {
             val tag = genTag()
             val tasks = genTasks()
-            val clock = createClock()
-            val db = FakeDatabase().apply {
-                tasks.forEach(::insertTask)
-                insertTag(tag = tag, taskIds = tasks.map { it.id }.toSet())
-            }
-            val taskRepository = FakeTaskRepository(db, clock)
-            val tagRepository = spyk(FakeTagRepository(db))
-            coEvery { tagRepository.delete(any()) } throws RuntimeException("Test")
-
-            val viewModel = TagDetailViewModel(
-                createSavedStateHandle(),
-                tagRepository,
-                taskRepository,
-                clock,
+            val viewModel = createTagDetailViewModel(
+                initDatabase = { db ->
+                    tasks.forEach(db::insertTask)
+                    db.insertTag(tag = tag, taskIds = tasks.map { it.id }.toSet())
+                },
+                initTagRepositorySpy = { repository ->
+                    coEvery { repository.delete(any()) } throws RuntimeException("Test")
+                },
             )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
@@ -307,7 +284,7 @@ class TagDetailViewModelTest {
             assertThat(viewModel.uiState.value).isEqualTo(
                 TagDetailUiState.Success(
                     tag = tag,
-                    userMessage = UserMessage.String(R.string.tag_detail_delete_error),
+                    userMessage = TagDetailUserMessage.DeleteError,
                 )
             )
             assertThat(viewModel.taskSummaryPagingData.asSnapshot()).isEqualTo(taskSummaries)
@@ -345,13 +322,20 @@ class TagDetailViewModelTest {
 
     private fun createTagDetailViewModel(
         initDatabase: (FakeDatabase) -> Unit,
+        initTagRepositorySpy: ((TagRepository) -> Unit)? = null,
     ): TagDetailViewModel {
         val clock = createClock()
         val db = FakeDatabase().also(initDatabase)
+        val tagRepository = if (initTagRepositorySpy == null) {
+            FakeTagRepository(db)
+        } else {
+            spyk(FakeTagRepository(db)).also(initTagRepositorySpy)
+        }
+        val taskRepository = FakeTaskRepository(db, clock)
         return TagDetailViewModel(
             createSavedStateHandle(),
-            FakeTagRepository(db),
-            FakeTaskRepository(db, clock),
+            tagRepository,
+            taskRepository,
             clock,
         )
     }

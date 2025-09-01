@@ -62,16 +62,15 @@ data class NewTaskForm(
         }
     }
 
-    val newTask
-        get() = Task(
-            createdAt = Instant.now(clock),
-            name = name.trim(),
-            note = note.trim(),
-            deadlineDate = deadlineDate,
-            deadlineTime = deadlineTime,
-            startAfterDate = startAfterDate,
-            startAfterTime = startAfterTime,
-            scheduledDate = scheduledDate,
-            scheduledTime = scheduledTime,
-        )
+    val newTask = Task(
+        createdAt = Instant.now(clock),
+        name = name.trim(),
+        note = note.trim(),
+        deadlineDate = deadlineDate,
+        deadlineTime = deadlineTime,
+        startAfterDate = startAfterDate,
+        startAfterTime = startAfterTime,
+        scheduledDate = scheduledDate,
+        scheduledTime = scheduledTime,
+    )
 }

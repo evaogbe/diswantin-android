@@ -12,7 +12,7 @@ class LocalTagRepository @Inject constructor(
     private val tagDao: TagDao,
     @param:IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : TagRepository {
-    override val tagPagingData = Pager(PagingConfig(pageSize = 20)) {
+    override val tagPagingData = Pager(PagingConfig(pageSize = 40)) {
         tagDao.getTagPagingSource()
     }.flow
 

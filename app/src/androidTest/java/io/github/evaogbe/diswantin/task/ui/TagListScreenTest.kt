@@ -17,7 +17,7 @@ import io.github.evaogbe.diswantin.task.data.Tag
 import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTagRepository
 import io.github.evaogbe.diswantin.testing.stringResource
-import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
+import io.github.evaogbe.diswantin.ui.snackbar.SnackbarState
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.serpro69.kfaker.lorem.LoremFaker
 import io.mockk.coEvery
@@ -48,7 +48,7 @@ class TagListScreenTest {
             DiswantinTheme {
                 TagListScreen(
                     onSelectTag = {},
-                    setUserMessage = {},
+                    showSnackbar = {},
                     fabClicked = false,
                     fabClickHandled = {},
                     tagListViewModel = viewModel,
@@ -70,7 +70,7 @@ class TagListScreenTest {
             DiswantinTheme {
                 TagListScreen(
                     onSelectTag = {},
-                    setUserMessage = {},
+                    showSnackbar = {},
                     fabClicked = false,
                     fabClickHandled = {},
                     tagListViewModel = viewModel,
@@ -101,7 +101,7 @@ class TagListScreenTest {
             DiswantinTheme {
                 TagListScreen(
                     onSelectTag = {},
-                    setUserMessage = {},
+                    showSnackbar = {},
                     fabClicked = false,
                     fabClickHandled = {},
                     tagListViewModel = viewModel,
@@ -124,7 +124,7 @@ class TagListScreenTest {
             DiswantinTheme {
                 TagListScreen(
                     onSelectTag = {},
-                    setUserMessage = {},
+                    showSnackbar = {},
                     fabClicked = fabClicked,
                     fabClickHandled = { fabClicked = false },
                     tagListViewModel = viewModel,
@@ -142,9 +142,9 @@ class TagListScreenTest {
 
     @Test
     fun displaysErrorMessage_withSaveError() {
-        var userMessage: UserMessage? = null
+        var snackbarState: SnackbarState? = null
         val name = loremFaker.lorem.words()
-        val tagRepository = spyk(FakeTagRepository())
+        val tagRepository = spyk<FakeTagRepository>()
         coEvery { tagRepository.create(any()) } throws RuntimeException("Test")
 
         val viewModel = TagListViewModel(tagRepository)
@@ -153,7 +153,7 @@ class TagListScreenTest {
             DiswantinTheme {
                 TagListScreen(
                     onSelectTag = {},
-                    setUserMessage = { userMessage = it },
+                    showSnackbar = { snackbarState = it },
                     fabClicked = true,
                     fabClickHandled = {},
                     tagListViewModel = viewModel,
@@ -167,7 +167,7 @@ class TagListScreenTest {
 
         composeTestRule.waitForIdle()
         composeTestRule.waitUntil {
-            userMessage == UserMessage.String(R.string.tag_form_save_error_new)
+            snackbarState?.matches(stringResource(R.string.tag_form_save_error_new)) == true
         }
     }
 }

@@ -18,7 +18,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
@@ -49,12 +48,11 @@ fun <T : Any> AutocompleteField(
 ) {
     var expanded by remember(options) { mutableStateOf(options.isNotEmpty()) }
     val focusRequester = remember { FocusRequester() }
-    val currentQuery by rememberUpdatedState(query.text)
 
-    LaunchedEffect(onSearch) {
-        snapshotFlow { currentQuery }.debounce(150.milliseconds).distinctUntilChanged()
+    LaunchedEffect(query, onSearch) {
+        snapshotFlow { query.text.toString() }.debounce(150.milliseconds).distinctUntilChanged()
             .collectLatest {
-                onSearch(it.toString())
+                onSearch(it)
             }
     }
 

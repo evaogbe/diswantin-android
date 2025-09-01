@@ -87,13 +87,13 @@ class LocalTaskRepository @Inject constructor(
 
     override fun getTaskSummariesByTagId(tagId: Long): Flow<PagingData<TaskSummary>> {
         val startOfToday = ZonedDateTime.now(clock).with(LocalTime.MIN).toInstant()
-        return Pager(PagingConfig(pageSize = 20)) {
+        return Pager(PagingConfig(pageSize = 40)) {
             taskDao.getTaskSummariesByTagId(tagId, startOfToday)
         }.flow.flowOn(ioDispatcher)
     }
 
     override fun searchTaskSummaries(criteria: TaskSearchCriteria) =
-        Pager(PagingConfig(pageSize = 30)) {
+        Pager(PagingConfig(pageSize = 50)) {
             if (criteria.name.isEmpty()) {
                 taskDao.filterTaskSummaries(
                     deadlineStartDate = criteria.deadlineDateRange?.first,
@@ -146,7 +146,7 @@ class LocalTaskRepository @Inject constructor(
 
     override fun getParent(id: Long) = taskDao.getParent(id).flowOn(ioDispatcher)
 
-    override fun getChildren(id: Long) = Pager(PagingConfig(pageSize = 20)) {
+    override fun getChildren(id: Long) = Pager(PagingConfig(pageSize = 40)) {
         taskDao.getChildren(id)
     }.flow.flowOn(ioDispatcher)
 
@@ -156,9 +156,8 @@ class LocalTaskRepository @Inject constructor(
     override fun getCount() = taskDao.getCount().flowOn(ioDispatcher)
 
     override suspend fun create(form: NewTaskForm): Task {
-        val task = form.newTask
         return withContext(ioDispatcher) {
-            task.copy(id = taskDao.insert(form))
+            form.newTask.copy(id = taskDao.insert(form))
         }
     }
 

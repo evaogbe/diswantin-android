@@ -5,16 +5,18 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import assertk.assertThat
-import assertk.assertions.isEqualTo
+import assertk.assertions.isNotNull
 import assertk.assertions.isTrue
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.RecurrenceType
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskRecurrence
+import io.github.evaogbe.diswantin.task.data.TaskRepository
 import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
+import io.github.evaogbe.diswantin.testing.matchesSnackbar
 import io.github.evaogbe.diswantin.testing.stringResource
-import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
+import io.github.evaogbe.diswantin.ui.snackbar.SnackbarState
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
@@ -40,9 +42,9 @@ class CurrentTaskScreenTest {
     @Test
     fun displaysCurrentTaskName_withCurrentTask() {
         val task = genTasks(1).single()
-        val viewModel = createCurrentTaskViewModel { db ->
+        val viewModel = createCurrentTaskViewModel({ db ->
             db.insertTask(task)
-        }
+        })
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -50,7 +52,7 @@ class CurrentTaskScreenTest {
                     setTopBarState = {},
                     topBarAction = null,
                     topBarActionHandled = {},
-                    setUserMessage = {},
+                    showSnackbar = {},
                     onNavigateToAdvice = {},
                     onAddTask = {},
                     onNavigateToTask = {},
@@ -64,7 +66,7 @@ class CurrentTaskScreenTest {
 
     @Test
     fun displaysEmptyMessage_withoutCurrentTask() {
-        val viewModel = createCurrentTaskViewModel {}
+        val viewModel = createCurrentTaskViewModel({})
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -72,7 +74,7 @@ class CurrentTaskScreenTest {
                     setTopBarState = {},
                     topBarAction = null,
                     topBarActionHandled = {},
-                    setUserMessage = {},
+                    showSnackbar = {},
                     onNavigateToAdvice = {},
                     onAddTask = {},
                     onNavigateToTask = {},
@@ -88,16 +90,14 @@ class CurrentTaskScreenTest {
     @Test
     fun displayErrorMessage_withFailureUi() {
         val task = genTasks(1).single()
-        val clock = createClock()
-        val db = FakeDatabase().apply {
-            insertTask(task)
-        }
-        val taskRepository = spyk(FakeTaskRepository(db, clock))
-        every { taskRepository.getCurrentTask(any()) } returns flow {
-            throw RuntimeException("Test")
-        }
-
-        val viewModel = CurrentTaskViewModel(taskRepository, clock)
+        val viewModel = createCurrentTaskViewModel(
+            initDatabase = { db -> db.insertTask(task) },
+            initTaskRepositorySpy = { repository ->
+                every { repository.getCurrentTask(any()) } returns flow {
+                    throw RuntimeException("Test")
+                }
+            },
+        )
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -105,7 +105,7 @@ class CurrentTaskScreenTest {
                     setTopBarState = {},
                     topBarAction = null,
                     topBarActionHandled = {},
-                    setUserMessage = {},
+                    showSnackbar = {},
                     onNavigateToAdvice = {},
                     onAddTask = {},
                     onNavigateToTask = {},
@@ -121,7 +121,7 @@ class CurrentTaskScreenTest {
     @Test
     fun callsOnAddTask_whenClickAddTask() {
         var onAddTaskCalled = false
-        val viewModel = createCurrentTaskViewModel {}
+        val viewModel = createCurrentTaskViewModel({})
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -129,7 +129,7 @@ class CurrentTaskScreenTest {
                     setTopBarState = {},
                     topBarAction = null,
                     topBarActionHandled = {},
-                    setUserMessage = {},
+                    showSnackbar = {},
                     onNavigateToAdvice = {},
                     onAddTask = { onAddTaskCalled = true },
                     onNavigateToTask = {},
@@ -169,7 +169,7 @@ class CurrentTaskScreenTest {
                     setTopBarState = {},
                     topBarAction = CurrentTaskTopBarAction.Skip,
                     topBarActionHandled = {},
-                    setUserMessage = {},
+                    showSnackbar = {},
                     onNavigateToAdvice = {},
                     onAddTask = {},
                     onNavigateToTask = {},
@@ -186,7 +186,7 @@ class CurrentTaskScreenTest {
 
     @Test
     fun displaysErrorMessage_whenSkipFails() {
-        var userMessage: UserMessage? = null
+        var snackbarState: SnackbarState? = null
         val clock =
             Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
         val task = genTasks(1).single()
@@ -212,7 +212,7 @@ class CurrentTaskScreenTest {
                     setTopBarState = {},
                     topBarAction = CurrentTaskTopBarAction.Skip,
                     topBarActionHandled = {},
-                    setUserMessage = { userMessage = it },
+                    showSnackbar = { snackbarState = it },
                     onNavigateToAdvice = {},
                     onAddTask = {},
                     onNavigateToTask = {},
@@ -225,16 +225,17 @@ class CurrentTaskScreenTest {
             .performClick()
 
         composeTestRule.onNodeWithText(task.name).assertIsDisplayed()
-        assertThat(userMessage).isEqualTo(UserMessage.String(R.string.current_task_skip_error))
+        assertThat(snackbarState).isNotNull()
+            .matchesSnackbar(stringResource(R.string.current_task_skip_error))
     }
 
     @Test
     fun displaysNextTaskName_whenClickMarkDone() {
         val (task1, task2) = genTasks(2)
-        val viewModel = createCurrentTaskViewModel { db ->
+        val viewModel = createCurrentTaskViewModel({ db ->
             db.insertTask(task1)
             db.insertTask(task2)
-        }
+        })
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -242,7 +243,7 @@ class CurrentTaskScreenTest {
                     setTopBarState = {},
                     topBarAction = null,
                     topBarActionHandled = {},
-                    setUserMessage = {},
+                    showSnackbar = {},
                     onNavigateToAdvice = {},
                     onAddTask = {},
                     onNavigateToTask = {},
@@ -261,16 +262,14 @@ class CurrentTaskScreenTest {
 
     @Test
     fun displaysErrorMessage_whenMarkDoneFails() {
-        var userMessage: UserMessage? = null
-        val clock = createClock()
+        var snackbarState: SnackbarState? = null
         val task = genTasks(1).single()
-        val db = FakeDatabase().apply {
-            insertTask(task)
-        }
-        val taskRepository = spyk(FakeTaskRepository(db, clock))
-        coEvery { taskRepository.markDone(any()) } throws RuntimeException("Test")
-
-        val viewModel = CurrentTaskViewModel(taskRepository, clock)
+        val viewModel = createCurrentTaskViewModel(
+            initDatabase = { db -> db.insertTask(task) },
+            initTaskRepositorySpy = { repository ->
+                coEvery { repository.markDone(any()) } throws RuntimeException("Test")
+            },
+        )
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -278,7 +277,7 @@ class CurrentTaskScreenTest {
                     setTopBarState = {},
                     topBarAction = null,
                     topBarActionHandled = {},
-                    setUserMessage = { userMessage = it },
+                    showSnackbar = { snackbarState = it },
                     onNavigateToAdvice = {},
                     onAddTask = {},
                     onNavigateToTask = {},
@@ -291,7 +290,7 @@ class CurrentTaskScreenTest {
             .performClick()
 
         composeTestRule.waitUntil {
-            userMessage == UserMessage.String(R.string.current_task_mark_done_error)
+            snackbarState?.matches(stringResource(R.string.current_task_mark_done_error)) == true
         }
     }
 
@@ -313,11 +312,16 @@ class CurrentTaskScreenTest {
         Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
 
     private fun createCurrentTaskViewModel(
-        initDatabase: (FakeDatabase) -> Unit
+        initDatabase: (FakeDatabase) -> Unit,
+        initTaskRepositorySpy: ((TaskRepository) -> Unit)? = null,
     ): CurrentTaskViewModel {
         val clock = createClock()
         val db = FakeDatabase().also(initDatabase)
-        val taskRepository = FakeTaskRepository(db, clock)
+        val taskRepository = if (initTaskRepositorySpy == null) {
+            FakeTaskRepository(db, clock)
+        } else {
+            spyk(FakeTaskRepository(db, clock)).also(initTaskRepositorySpy)
+        }
         return CurrentTaskViewModel(taskRepository, clock)
     }
 }

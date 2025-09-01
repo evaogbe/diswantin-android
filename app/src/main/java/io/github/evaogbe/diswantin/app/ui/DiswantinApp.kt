@@ -18,6 +18,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -25,10 +26,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -43,9 +44,9 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
 import androidx.navigation.toRoute
 import io.github.evaogbe.diswantin.R
+import io.github.evaogbe.diswantin.advice.AdviceScreen
+import io.github.evaogbe.diswantin.advice.AdviceTopBar
 import io.github.evaogbe.diswantin.task.ui.AdviceRoute
-import io.github.evaogbe.diswantin.task.ui.AdviceScreen
-import io.github.evaogbe.diswantin.task.ui.AdviceTopBar
 import io.github.evaogbe.diswantin.task.ui.CurrentTaskRoute
 import io.github.evaogbe.diswantin.task.ui.CurrentTaskScreen
 import io.github.evaogbe.diswantin.task.ui.CurrentTaskTopBar
@@ -76,9 +77,10 @@ import io.github.evaogbe.diswantin.task.ui.TaskSearchRoute
 import io.github.evaogbe.diswantin.task.ui.TaskSearchScreen
 import io.github.evaogbe.diswantin.task.ui.TaskSearchTopBar
 import io.github.evaogbe.diswantin.task.ui.TaskSearchTopBarAction
-import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
+import io.github.evaogbe.diswantin.ui.snackbar.SnackbarHandler
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
+import kotlinx.coroutines.launch
 
 @Composable
 fun DiswantinApp() {
@@ -98,21 +100,18 @@ fun DiswantinApp() {
 
     var fabClicked by rememberSaveable { mutableStateOf(false) }
 
-    val resources = LocalResources.current
-    var userMessage by remember { mutableStateOf<UserMessage?>(null) }
+    val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
-
-    userMessage?.let { message ->
-        LaunchedEffect(message, snackbarHostState) {
-            snackbarHostState.showSnackbar(
-                when (message) {
-                    is UserMessage.String -> resources.getString(message.resId)
-                    is UserMessage.Plural -> {
-                        resources.getQuantityString(message.resId, message.count, message.count)
-                    }
-                }
+    val showSnackbar: SnackbarHandler = { state ->
+        coroutineScope.launch {
+            val result = snackbarHostState.showSnackbar(
+                message = state.message,
+                actionLabel = state.actionLabel,
+                withDismissAction = state.actionLabel != null,
             )
-            userMessage = null
+            if (result == SnackbarResult.ActionPerformed) {
+                state.onAction()
+            }
         }
     }
 
@@ -278,7 +277,7 @@ fun DiswantinApp() {
                             topBarState = it
                         }
                     },
-                    setUserMessage = { userMessage = it },
+                    showSnackbar = showSnackbar,
                     onNavigateToAdvice = {
                         navController.navigate(route = AdviceRoute) {
                             popUpTo(navController.graph.findStartDestination().id) {
@@ -298,21 +297,25 @@ fun DiswantinApp() {
             }
             composable<AdviceRoute> {
                 LaunchedEffect(Unit) {
-                    topBarState = TopBarState.Advice
+                    if (topBarState !is TopBarState.Advice) {
+                        topBarState = TopBarState.Advice
+                    }
                 }
 
                 AdviceScreen()
             }
             composable<TagListRoute> {
                 LaunchedEffect(Unit) {
-                    topBarState = TopBarState.TagList
+                    if (topBarState !is TopBarState.TagList) {
+                        topBarState = TopBarState.TagList
+                    }
                 }
 
                 TagListScreen(
                     onSelectTag = {
                         navController.navigate(route = TagDetailRoute(id = it))
                     },
-                    setUserMessage = { userMessage = it },
+                    showSnackbar = showSnackbar,
                     fabClicked = fabClicked,
                     fabClickHandled = { fabClicked = false },
                 )
@@ -329,7 +332,7 @@ fun DiswantinApp() {
                             topBarState = it
                         }
                     },
-                    setUserMessage = { userMessage = it },
+                    showSnackbar = showSnackbar,
                     onNavigateToTask = {
                         navController.navigate(route = TaskDetailRoute(id = it))
                     },
@@ -356,7 +359,7 @@ fun DiswantinApp() {
                             topBarState = it
                         }
                     },
-                    setUserMessage = { userMessage = it },
+                    showSnackbar = showSnackbar,
                     onSelectTask = {
                         navController.navigate(route = TaskDetailRoute(id = it))
                     },
@@ -377,6 +380,7 @@ fun DiswantinApp() {
                             topBarState = it
                         }
                     },
+                    showSnackbar = showSnackbar,
                     onAddTask = {
                         navController.navigate(route = TaskFormRoute.Main.new(name = it))
                     },
@@ -385,7 +389,7 @@ fun DiswantinApp() {
                     },
                 )
             }
-            navigation<TaskFormRoute>(startDestination = TaskFormRoute.Main()) {
+            navigation<TaskFormRoute>(startDestination = TaskFormRoute.Main.Start) {
                 composable<TaskFormRoute.Main> { backStackEntry ->
                     val previousQueryText by rememberSaveable {
                         mutableStateOf(query.text.toString())
@@ -409,7 +413,7 @@ fun DiswantinApp() {
                                 topBarState = it
                             }
                         },
-                        setUserMessage = { userMessage = it },
+                        showSnackbar = showSnackbar,
                         onEditRecurrence = {
                             taskFormViewModel.commitInputs()
                             navController.navigate(route = TaskFormRoute.Recurrence)
@@ -428,7 +432,9 @@ fun DiswantinApp() {
                     }
 
                     LaunchedEffect(Unit) {
-                        topBarState = TopBarState.TaskRecurrenceForm(action = null)
+                        if (topBarState !is TopBarState.TaskRecurrenceForm) {
+                            topBarState = TopBarState.TaskRecurrenceForm(action = null)
+                        }
                     }
 
                     TaskRecurrentFormScreen(
@@ -460,6 +466,7 @@ fun DiswantinApp() {
                                 topBarState = it
                             }
                         },
+                        showSnackbar = showSnackbar,
                         onAddTask = null,
                         onSelectSearchResult = {
                             taskFormViewModel.updateParent(ParentTask(id = it.id, name = it.name))

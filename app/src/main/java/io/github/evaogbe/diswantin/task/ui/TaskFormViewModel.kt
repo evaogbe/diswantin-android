@@ -1,11 +1,13 @@
 package io.github.evaogbe.diswantin.task.ui
 
+import android.os.Bundle
+import androidx.core.os.BundleCompat
+import androidx.core.os.bundleOf
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.data.Result
 import io.github.evaogbe.diswantin.data.getOrDefault
 import io.github.evaogbe.diswantin.task.data.EditTaskForm
@@ -17,16 +19,18 @@ import io.github.evaogbe.diswantin.task.data.TagRepository
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskRecurrence
 import io.github.evaogbe.diswantin.task.data.TaskRepository
-import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toPersistentList
+import kotlinx.collections.immutable.toPersistentSet
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
@@ -45,6 +49,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.util.Locale
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.seconds
 
 @HiltViewModel
 class TaskFormViewModel @Inject constructor(
@@ -60,9 +65,10 @@ class TaskFormViewModel @Inject constructor(
 
     val isNew = taskId == null
 
-    private val initialName = MutableStateFlow(route.name.orEmpty())
+    private val initialName =
+        savedStateHandle.getMutableStateFlow(INITIAL_NAME_KEY, route.name.orEmpty())
 
-    private val initialNote = MutableStateFlow("")
+    private val initialNote = savedStateHandle.getMutableStateFlow(INITIAL_NOTE_KEY, "")
 
     private val name = MutableStateFlow("")
 
@@ -70,34 +76,41 @@ class TaskFormViewModel @Inject constructor(
 
     private val recurrenceUiState = MutableStateFlow<TaskRecurrenceUiState?>(null)
 
-    private val deadlineDate = MutableStateFlow<LocalDate?>(null)
+    private val deadlineDate =
+        savedStateHandle.getMutableStateFlow<LocalDate?>(DEADLINE_DATE_KEY, null)
 
-    private val deadlineTime = MutableStateFlow<LocalTime?>(null)
+    private val deadlineTime =
+        savedStateHandle.getMutableStateFlow<LocalTime?>(DEADLINE_TIME_KEY, null)
 
-    private val startAfterDate = MutableStateFlow<LocalDate?>(null)
+    private val startAfterDate =
+        savedStateHandle.getMutableStateFlow<LocalDate?>(START_AFTER_DATE_KEY, null)
 
-    private val startAfterTime = MutableStateFlow<LocalTime?>(null)
+    private val startAfterTime =
+        savedStateHandle.getMutableStateFlow<LocalTime?>(START_AFTER_TIME_KEY, null)
 
-    private val scheduledDate = MutableStateFlow<LocalDate?>(null)
+    private val scheduledDate =
+        savedStateHandle.getMutableStateFlow<LocalDate?>(SCHEDULED_DATE_KEY, null)
 
-    private val scheduledTime = MutableStateFlow<LocalTime?>(null)
+    private val scheduledTime =
+        savedStateHandle.getMutableStateFlow<LocalTime?>(SCHEDULE_TIME_KEY, null)
 
-    private val parent = MutableStateFlow<ParentTask?>(null)
+    private val parent = savedStateHandle.getMutableStateFlow<ParentTask?>(PARENT_KEY, null)
 
-    private val tagFieldState = MutableStateFlow(TagFieldState.Closed)
+    private val tagFieldState =
+        savedStateHandle.getMutableStateFlow(TAG_FIELD_STATE_KEY, TagFieldState.Closed)
 
     private val tags = MutableStateFlow(persistentListOf<Tag>())
 
-    private val tagQuery = MutableStateFlow("")
+    private val tagQuery = savedStateHandle.getMutableStateFlow(TAG_QUERY_KEY, "")
 
     private val isSaved = MutableStateFlow(false)
 
-    private val userMessage = MutableStateFlow<UserMessage?>(null)
+    private val userMessage = MutableStateFlow<TaskFormUserMessage?>(null)
 
     private val taskCountStream =
         taskRepository.getCount().map<Long, Result<Long>> { Result.Success(it) }.catch { e ->
             Timber.e(e, "Failed to fetch task count")
-            userMessage.value = UserMessage.String(R.string.task_form_fetch_parent_task_error)
+            userMessage.value = TaskFormUserMessage.FetchParentTaskError
             emit(Result.Failure(e))
         }
 
@@ -122,7 +135,7 @@ class TaskFormViewModel @Inject constructor(
             Result.Success(task?.let(ParentTask::fromTask))
         }.catch { e ->
             Timber.e(e, "Failed to fetch parent task by child id: %d", id)
-            userMessage.value = UserMessage.String(R.string.task_form_fetch_parent_task_error)
+            userMessage.value = TaskFormUserMessage.FetchParentTaskError
             emit(Result.Failure(e))
         }
     } ?: flowOf(Result.Success(null))
@@ -131,7 +144,7 @@ class TaskFormViewModel @Inject constructor(
         tagRepository.getTagsByTaskId(id, size = Task.MAX_TAGS)
             .map<List<Tag>, Result<List<Tag>>> { Result.Success(it) }.catch { e ->
                 Timber.e(e, "Failed to fetch tags by task id: %d", id)
-                userMessage.value = UserMessage.String(R.string.task_form_fetch_tags_error)
+                userMessage.value = TaskFormUserMessage.FetchTagsError
                 tagFieldState.value = TagFieldState.Hidden
                 emit(Result.Failure(e))
             }
@@ -162,7 +175,7 @@ class TaskFormViewModel @Inject constructor(
             } else {
                 tagRepository.search(query.trim(), size = Task.MAX_TAGS * 2).catch { e ->
                     Timber.e(e, "Failed to search for tag by query: %s", query)
-                    userMessage.value = UserMessage.String(R.string.search_tag_options_error)
+                    userMessage.value = TaskFormUserMessage.SearchTagsError
                 }
             }
         },
@@ -191,7 +204,7 @@ class TaskFormViewModel @Inject constructor(
         val tagQuery = (args[15] as String).trim()
         val tagOptions = args[16] as List<Tag>
         val isSaved = args[17] as Boolean
-        val userMessage = args[18] as UserMessage?
+        val userMessage = args[18] as TaskFormUserMessage?
         val existingTaskResult = args[19] as Result<Task?>
         val existingRecurrencesResult = args[20] as Result<List<TaskRecurrence>>
         val existingTagsResult = args[21] as Result<List<Tag>>
@@ -206,7 +219,7 @@ class TaskFormViewModel @Inject constructor(
                     val hasTagOptions =
                         tags.none { it.name == tagQuery } || tagQuery != singleTagOption
                     val taskCount = taskCountResult.getOrDefault(0L)
-                    val hasOtherTasks = taskCount > if (taskId == null) 0L else 1L
+                    val hasOtherTasks = taskCount > if (isNew) 0L else 1L
                     val showParentField = existingParentResult.isSuccess && hasOtherTasks
                     val existingTags =
                         existingTagsResult.getOrNull()?.toPersistentList() ?: persistentListOf()
@@ -252,7 +265,7 @@ class TaskFormViewModel @Inject constructor(
         }
     }.stateIn(
         scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000L),
+        started = SharingStarted.WhileSubscribed(5.seconds),
         initialValue = TaskFormUiState.Pending,
     )
 
@@ -279,33 +292,53 @@ class TaskFormViewModel @Inject constructor(
     val currentWeekday: DayOfWeek = LocalDate.now(clock).dayOfWeek
 
     init {
+        val recurrencesBundle = savedStateHandle.get<Bundle>(RECURRENCES_KEY)
+        if (recurrencesBundle != null) {
+            recurrenceUiState.value = recurrencesBundle.restoreTaskRecurrenceUiState()
+        }
+        savedStateHandle.setSavedStateProvider(RECURRENCES_KEY) {
+            recurrenceUiState.value?.bundle ?: Bundle()
+        }
+
+        val tagsBundle = savedStateHandle.get<Bundle>(TAGS_KEY)
+        if (tagsBundle != null) {
+            tags.value = tagsBundle.restoreTags()
+        }
+        savedStateHandle.setSavedStateProvider(TAGS_KEY) {
+            bundleOf(TAGS_KEY to tags.value.toTypedArray())
+        }
+
         tagRepository.hasTagsStream.onEach { hasTags ->
             if (!hasTags) {
                 tagFieldState.value = TagFieldState.Hidden
             }
         }.catch { e ->
             Timber.e(e, "Failed to query has tags")
-            userMessage.value = UserMessage.String(R.string.task_form_fetch_tags_error)
+            userMessage.value = TaskFormUserMessage.FetchTagsError
             tagFieldState.value = TagFieldState.Hidden
         }.launchIn(viewModelScope)
-        viewModelScope.launch {
-            val existingTask = existingTaskStream.first().getOrNull() ?: return@launch
-            initialName.value = existingTask.name
-            initialNote.value = existingTask.note
-            name.value = existingTask.name
-            note.value = existingTask.note
-            deadlineDate.value = existingTask.deadlineDate
-            deadlineTime.value = existingTask.deadlineTime
-            startAfterDate.value = existingTask.startAfterDate
-            startAfterTime.value = existingTask.startAfterTime
-            scheduledDate.value = existingTask.scheduledDate
-            scheduledTime.value = existingTask.scheduledTime
-            recurrenceUiState.value = existingRecurrencesStream.first().getOrNull()?.let {
-                TaskRecurrenceUiState.tryFromEntities(it, locale)
+
+        if (!isNew && savedStateHandle.get<Boolean>(INITIALIZED_KEY) != true) {
+            viewModelScope.launch {
+                val existingTask = existingTaskStream.first().getOrNull() ?: return@launch
+                initialName.value = existingTask.name
+                initialNote.value = existingTask.note
+                name.value = existingTask.name
+                note.value = existingTask.note
+                deadlineDate.value = existingTask.deadlineDate
+                deadlineTime.value = existingTask.deadlineTime
+                startAfterDate.value = existingTask.startAfterDate
+                startAfterTime.value = existingTask.startAfterTime
+                scheduledDate.value = existingTask.scheduledDate
+                scheduledTime.value = existingTask.scheduledTime
+                recurrenceUiState.value = existingRecurrencesStream.first().getOrNull()?.let {
+                    TaskRecurrenceUiState.tryFromEntities(it, locale)
+                }
+                parent.value = existingParentStream.first().getOrNull()
+                tags.value =
+                    existingTagsStream.first().getOrNull()?.toPersistentList() ?: persistentListOf()
+                savedStateHandle[INITIALIZED_KEY] = true
             }
-            parent.value = existingParentStream.first().getOrNull()
-            tags.value =
-                existingTagsStream.first().getOrNull()?.toPersistentList() ?: persistentListOf()
         }
     }
 
@@ -426,7 +459,7 @@ class TaskFormViewModel @Inject constructor(
             }
         }
 
-        if (taskId == null) {
+        if (isNew) {
             val form = NewTaskForm(
                 name = name.value,
                 note = note.value,
@@ -449,7 +482,7 @@ class TaskFormViewModel @Inject constructor(
                     throw e
                 } catch (e: Exception) {
                     Timber.e(e, "Failed to create task with form: %s", form)
-                    userMessage.value = UserMessage.String(R.string.task_form_save_error_new)
+                    userMessage.value = TaskFormUserMessage.CreateError
                 }
             }
         } else {
@@ -508,7 +541,7 @@ class TaskFormViewModel @Inject constructor(
                     throw e
                 } catch (e: Exception) {
                     Timber.e(e, "Failed to update task with id: %d", taskId)
-                    userMessage.value = UserMessage.String(R.string.task_form_save_error_edit)
+                    userMessage.value = TaskFormUserMessage.EditError
                 }
             }
         }
@@ -517,4 +550,78 @@ class TaskFormViewModel @Inject constructor(
     fun userMessageShown() {
         userMessage.value = null
     }
+
+    private val TaskRecurrenceUiState.bundle
+        get() = bundleOf(
+            RECURRENCE_START_KEY to start,
+            RECURRENCE_TYPE_KEY to type,
+            RECURRENCE_STEP_KEY to step,
+            RECURRENCE_WEEKDAYS_KEY to weekdays.map { it.value }.toIntArray(),
+        )
+
+    private fun Bundle.restoreTaskRecurrenceUiState(): TaskRecurrenceUiState? {
+        val start = BundleCompat.getSerializable(this, RECURRENCE_START_KEY, LocalDate::class.java)
+        val type =
+            BundleCompat.getSerializable(this, RECURRENCE_TYPE_KEY, RecurrenceType::class.java)
+        val step = getInt(RECURRENCE_STEP_KEY)
+        val weekdays =
+            getIntArray(RECURRENCE_WEEKDAYS_KEY)?.map(DayOfWeek::of).orEmpty().toPersistentSet()
+        return if (start != null && type != null && step > 0) {
+            TaskRecurrenceUiState(
+                start = start,
+                type = type,
+                step = step,
+                weekdays = weekdays,
+                locale = locale,
+            )
+        } else {
+            null
+        }
+    }
+
+    private fun Bundle.restoreTags(): PersistentList<Tag> {
+        return BundleCompat.getParcelableArray(this, TAGS_KEY, Tag::class.java)
+            .orEmpty().map { it as Tag }.toTypedArray().toPersistentList()
+    }
+
+    override fun onCleared() {
+        commitInputs()
+        super.onCleared()
+    }
 }
+
+private const val INITIALIZED_KEY = "initialized"
+
+private const val INITIAL_NAME_KEY = "initialName"
+
+private const val INITIAL_NOTE_KEY = "initialNote"
+
+private const val DEADLINE_DATE_KEY = "deadlineDate"
+
+private const val DEADLINE_TIME_KEY = "deadlineTime"
+
+private const val START_AFTER_DATE_KEY = "startAfterDate"
+
+private const val START_AFTER_TIME_KEY = "startAfterTime"
+
+private const val SCHEDULED_DATE_KEY = "scheduledDate"
+
+private const val SCHEDULE_TIME_KEY = "scheduledTime"
+
+private const val RECURRENCES_KEY = "recurrences"
+
+private const val RECURRENCE_START_KEY = "recurrenceStart"
+
+private const val RECURRENCE_TYPE_KEY = "recurrenceType"
+
+private const val RECURRENCE_STEP_KEY = "recurrenceStep"
+
+private const val RECURRENCE_WEEKDAYS_KEY = "recurrenceWeekdays"
+
+private const val PARENT_KEY = "parent"
+
+private const val TAGS_KEY = "tags"
+
+private const val TAG_FIELD_STATE_KEY = "tagFieldState"
+
+private const val TAG_QUERY_KEY = "tagQuery"

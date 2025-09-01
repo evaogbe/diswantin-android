@@ -26,10 +26,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -48,7 +50,8 @@ import io.github.evaogbe.diswantin.ui.button.ButtonWithIcon
 import io.github.evaogbe.diswantin.ui.loadstate.LoadFailureLayout
 import io.github.evaogbe.diswantin.ui.loadstate.PendingLayout
 import io.github.evaogbe.diswantin.ui.loadstate.pagedListFooter
-import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
+import io.github.evaogbe.diswantin.ui.snackbar.SnackbarHandler
+import io.github.evaogbe.diswantin.ui.snackbar.SnackbarState
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.evaogbe.diswantin.ui.theme.IconSizeLg
 import io.github.evaogbe.diswantin.ui.theme.ScreenLg
@@ -66,14 +69,17 @@ fun TagListTopBar(modifier: Modifier = Modifier) {
 @Composable
 fun TagListScreen(
     onSelectTag: (Long) -> Unit,
-    setUserMessage: (UserMessage) -> Unit,
+    showSnackbar: SnackbarHandler,
     fabClicked: Boolean,
     fabClickHandled: () -> Unit,
     tagListViewModel: TagListViewModel = hiltViewModel(),
 ) {
+    val currentShowSnackbar by rememberUpdatedState(showSnackbar)
     val tagPagingItems = tagListViewModel.tagPagingData.collectAsLazyPagingItems()
     val userMessage by tagListViewModel.userMessage.collectAsStateWithLifecycle()
     var showBottomSheet by rememberSaveable(fabClicked) { mutableStateOf(fabClicked) }
+    val resources = LocalResources.current
+    val currentResources by rememberUpdatedState(resources)
 
     when (tagPagingItems.loadState.refresh) {
         is LoadState.Loading -> PendingLayout()
@@ -86,9 +92,16 @@ fun TagListScreen(
 
         is LoadState.NotLoading -> {
             LaunchedEffect(userMessage) {
-                userMessage?.let {
-                    setUserMessage(it)
-                    tagListViewModel.userMessageShown()
+                when (userMessage) {
+                    null -> {}
+                    TagListUserMessage.CreateError -> {
+                        currentShowSnackbar(
+                            SnackbarState.create(
+                                currentResources.getString(R.string.tag_form_save_error_new)
+                            )
+                        )
+                        tagListViewModel.userMessageShown()
+                    }
                 }
             }
 

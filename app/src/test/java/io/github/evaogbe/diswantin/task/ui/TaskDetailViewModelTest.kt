@@ -8,15 +8,15 @@ import assertk.assertions.containsExactly
 import assertk.assertions.isEqualTo
 import assertk.assertions.isInstanceOf
 import assertk.assertions.prop
-import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.RecurrenceType
+import io.github.evaogbe.diswantin.task.data.TagRepository
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskRecurrence
+import io.github.evaogbe.diswantin.task.data.TaskRepository
 import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTagRepository
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.MainDispatcherRule
-import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
 import io.mockk.coEvery
@@ -115,7 +115,7 @@ class TaskDetailViewModelTest {
 
     @Test
     fun `uiState emits failure when task not found`() = runTest(mainDispatcherRule.testDispatcher) {
-        val viewModel = createTaskDetailViewModel {}
+        val viewModel = createTaskDetailViewModel({})
 
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect()
@@ -129,20 +129,11 @@ class TaskDetailViewModelTest {
     fun `uiState emits failure when fetch task detail throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val exception = RuntimeException("Test")
-            val clock = createClock()
-            val db = FakeDatabase().apply {
-                insertTask(genTask())
-            }
-            val taskRepository = spyk(FakeTaskRepository(db, clock))
-            every { taskRepository.getTaskDetailById(any()) } returns flow { throw exception }
-
-            val tagRepository = FakeTagRepository(db)
-            val viewModel = TaskDetailViewModel(
-                createSavedStateHandle(),
-                taskRepository,
-                tagRepository,
-                clock,
-                createLocale(),
+            val viewModel = createTaskDetailViewModel(
+                initDatabase = { db -> db.insertTask(genTask()) },
+                initTaskRepositorySpy = { repository ->
+                    every { repository.getTaskDetailById(any()) } returns flow { throw exception }
+                },
             )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
@@ -157,23 +148,13 @@ class TaskDetailViewModelTest {
         runTest(mainDispatcherRule.testDispatcher) {
             val exception = RuntimeException("Test")
             val task = genTask()
-            val clock = createClock()
-            val db = FakeDatabase().apply {
-                insertTask(task)
-            }
-            val taskRepository = spyk(FakeTaskRepository(db, clock))
-            every { taskRepository.getTaskRecurrencesByTaskId(any()) } returns flow {
-                throw exception
-            }
-
-            val tagRepository = FakeTagRepository(db)
-            val viewModel = TaskDetailViewModel(
-                createSavedStateHandle(),
-                taskRepository,
-                tagRepository,
-                clock,
-                createLocale(),
-            )
+            val viewModel = createTaskDetailViewModel(
+                initDatabase = { db -> db.insertTask(task) },
+                initTaskRepositorySpy = { repository ->
+                    every { repository.getTaskRecurrencesByTaskId(any()) } returns flow {
+                        throw exception
+                    }
+                })
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -187,20 +168,13 @@ class TaskDetailViewModelTest {
         runTest(mainDispatcherRule.testDispatcher) {
             val exception = RuntimeException("Test")
             val task = genTask()
-            val clock = createClock()
-            val db = FakeDatabase().apply {
-                insertTask(task)
-            }
-            val taskRepository = FakeTaskRepository(db, clock)
-            val tagRepository = spyk(FakeTagRepository(db))
-            every { tagRepository.getTagsByTaskId(any(), any()) } returns flow { throw exception }
-
-            val viewModel = TaskDetailViewModel(
-                createSavedStateHandle(),
-                taskRepository,
-                tagRepository,
-                clock,
-                createLocale(),
+            val viewModel = createTaskDetailViewModel(
+                initDatabase = { db -> db.insertTask(task) },
+                initTagRepositorySpy = { repository ->
+                    every { repository.getTagsByTaskId(any(), any()) } returns flow {
+                        throw exception
+                    }
+                },
             )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
@@ -289,21 +263,11 @@ class TaskDetailViewModelTest {
     fun `markTaskDone shows error message when repository throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val task = genTask()
-            val clock = createClock()
-            val db = FakeDatabase().apply {
-                insertTask(task)
-            }
-            val taskRepository = spyk(FakeTaskRepository(db, clock))
-            coEvery { taskRepository.markDone(any()) } throws RuntimeException("Test")
-
-            val tagRepository = FakeTagRepository(db)
-            val viewModel = TaskDetailViewModel(
-                createSavedStateHandle(),
-                taskRepository,
-                tagRepository,
-                clock,
-                createLocale(),
-            )
+            val viewModel = createTaskDetailViewModel(
+                initDatabase = { db -> db.insertTask(task) },
+                initTaskRepositorySpy = { repository ->
+                    coEvery { repository.markDone(any()) } throws RuntimeException("Test")
+                })
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -323,7 +287,7 @@ class TaskDetailViewModelTest {
                     isDone = false,
                     parent = null,
                     tags = persistentListOf(),
-                    userMessage = UserMessage.String(R.string.task_detail_mark_done_error),
+                    userMessage = TaskDetailUserMessage.MarkDoneError,
                 )
             )
         }
@@ -368,7 +332,7 @@ class TaskDetailViewModelTest {
                     isDone = true,
                     parent = null,
                     tags = persistentListOf(),
-                    userMessage = UserMessage.String(R.string.task_detail_unmark_done_error),
+                    userMessage = TaskDetailUserMessage.UnmarkDoneError,
                 )
             )
         }
@@ -376,9 +340,9 @@ class TaskDetailViewModelTest {
     @Test
     fun `deleteTask sets uiState to deleted`() = runTest(mainDispatcherRule.testDispatcher) {
         val task = genTask()
-        val viewModel = createTaskDetailViewModel { db ->
+        val viewModel = createTaskDetailViewModel({ db ->
             db.insertTask(task)
-        }
+        })
 
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect()
@@ -409,20 +373,11 @@ class TaskDetailViewModelTest {
     fun `deleteTask shows error message when repository throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val task = genTask()
-            val clock = createClock()
-            val db = FakeDatabase().apply {
-                insertTask(task)
-            }
-            val taskRepository = spyk(FakeTaskRepository(db, clock))
-            coEvery { taskRepository.delete(any()) } throws RuntimeException("Test")
-
-            val tagRepository = FakeTagRepository(db)
-            val viewModel = TaskDetailViewModel(
-                createSavedStateHandle(),
-                taskRepository,
-                tagRepository,
-                clock,
-                createLocale(),
+            val viewModel = createTaskDetailViewModel(
+                initDatabase = { db -> db.insertTask(task) },
+                initTaskRepositorySpy = { repository ->
+                    coEvery { repository.delete(any()) } throws RuntimeException("Test")
+                },
             )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
@@ -443,7 +398,7 @@ class TaskDetailViewModelTest {
                     isDone = false,
                     parent = null,
                     tags = persistentListOf(),
-                    userMessage = UserMessage.String(R.string.task_detail_delete_error),
+                    userMessage = TaskDetailUserMessage.DeleteError,
                 )
             )
         }
@@ -466,13 +421,27 @@ class TaskDetailViewModelTest {
 
     private fun createLocale(): Locale = Locale.US
 
-    private fun createTaskDetailViewModel(initDatabase: (FakeDatabase) -> Unit): TaskDetailViewModel {
+    private fun createTaskDetailViewModel(
+        initDatabase: (FakeDatabase) -> Unit,
+        initTaskRepositorySpy: ((TaskRepository) -> Unit)? = null,
+        initTagRepositorySpy: ((TagRepository) -> Unit)? = null,
+    ): TaskDetailViewModel {
         val clock = createClock()
         val db = FakeDatabase().also(initDatabase)
+        val taskRepository = if (initTaskRepositorySpy == null) {
+            FakeTaskRepository(db, clock)
+        } else {
+            spyk(FakeTaskRepository(db, clock)).also(initTaskRepositorySpy)
+        }
+        val tagRepository = if (initTagRepositorySpy == null) {
+            FakeTagRepository(db)
+        } else {
+            spyk(FakeTagRepository(db)).also(initTagRepositorySpy)
+        }
         return TaskDetailViewModel(
             createSavedStateHandle(),
-            FakeTaskRepository(db, clock),
-            FakeTagRepository(db),
+            taskRepository,
+            tagRepository,
             clock,
             createLocale(),
         )

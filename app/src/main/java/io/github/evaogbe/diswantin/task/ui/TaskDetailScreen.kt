@@ -33,9 +33,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -51,7 +53,8 @@ import io.github.evaogbe.diswantin.task.data.Tag
 import io.github.evaogbe.diswantin.ui.loadstate.LoadFailureLayout
 import io.github.evaogbe.diswantin.ui.loadstate.PendingLayout
 import io.github.evaogbe.diswantin.ui.loadstate.pagedListFooter
-import io.github.evaogbe.diswantin.ui.snackbar.UserMessage
+import io.github.evaogbe.diswantin.ui.snackbar.SnackbarHandler
+import io.github.evaogbe.diswantin.ui.snackbar.SnackbarState
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.evaogbe.diswantin.ui.theme.ScreenLg
 import io.github.evaogbe.diswantin.ui.theme.SpaceMd
@@ -146,15 +149,20 @@ fun TaskDetailScreen(
     setTopBarState: (TaskDetailTopBarState) -> Unit,
     topBarAction: TaskDetailTopBarAction?,
     topBarActionHandled: () -> Unit,
-    setUserMessage: (UserMessage) -> Unit,
+    showSnackbar: SnackbarHandler,
     onNavigateToTask: (Long) -> Unit,
     onNavigateToTag: (Long) -> Unit,
     taskDetailViewModel: TaskDetailViewModel = hiltViewModel(),
 ) {
+    val currentOnPopBackstack by rememberUpdatedState(onPopBackStack)
+    val currentTopBarActionHandled by rememberUpdatedState(topBarActionHandled)
+    val currentShowSnackbar by rememberUpdatedState(showSnackbar)
     val childTaskPagingItems = taskDetailViewModel.childTaskPagingData.collectAsLazyPagingItems()
     val uiState by taskDetailViewModel.uiState.collectAsStateWithLifecycle()
+    val resources = LocalResources.current
+    val currentResources by rememberUpdatedState(resources)
 
-    LaunchedEffect(uiState) {
+    LaunchedEffect(uiState, setTopBarState) {
         setTopBarState(
             TaskDetailTopBarState(
                 taskId = (uiState as? TaskDetailUiState.Success)?.id,
@@ -168,17 +176,17 @@ fun TaskDetailScreen(
             null -> {}
             TaskDetailTopBarAction.MarkDone -> {
                 taskDetailViewModel.markTaskDone()
-                topBarActionHandled()
+                currentTopBarActionHandled()
             }
 
             TaskDetailTopBarAction.UnmarkDone -> {
                 taskDetailViewModel.unmarkTaskDone()
-                topBarActionHandled()
+                currentTopBarActionHandled()
             }
 
             TaskDetailTopBarAction.Delete -> {
                 taskDetailViewModel.deleteTask()
-                topBarActionHandled()
+                currentTopBarActionHandled()
             }
         }
     }
@@ -194,7 +202,7 @@ fun TaskDetailScreen(
 
         is TaskDetailUiState.Deleted -> {
             LaunchedEffect(Unit) {
-                onPopBackStack()
+                currentOnPopBackstack()
             }
 
             PendingLayout()
@@ -204,14 +212,42 @@ fun TaskDetailScreen(
             when (childTaskPagingItems.loadState.refresh) {
                 is LoadState.Loading -> PendingLayout()
                 is LoadState.Error -> {
-                    LoadFailureLayout(message = stringResource(R.string.task_detail_fetch_error))
+                    LoadFailureLayout(
+                        message = stringResource(R.string.task_detail_fetch_error),
+                        onRetry = childTaskPagingItems::retry,
+                    )
                 }
 
                 is LoadState.NotLoading -> {
                     LaunchedEffect(state.userMessage) {
-                        if (state.userMessage != null) {
-                            setUserMessage(state.userMessage)
-                            taskDetailViewModel.userMessageShown()
+                        when (state.userMessage) {
+                            null -> {}
+                            TaskDetailUserMessage.MarkDoneError -> {
+                                currentShowSnackbar(
+                                    SnackbarState.create(
+                                        currentResources.getString(R.string.task_detail_mark_done_error)
+                                    )
+                                )
+                                taskDetailViewModel.userMessageShown()
+                            }
+
+                            TaskDetailUserMessage.UnmarkDoneError -> {
+                                currentShowSnackbar(
+                                    SnackbarState.create(
+                                        currentResources.getString(R.string.task_detail_unmark_done_error)
+                                    )
+                                )
+                                taskDetailViewModel.userMessageShown()
+                            }
+
+                            TaskDetailUserMessage.DeleteError -> {
+                                currentShowSnackbar(
+                                    SnackbarState.create(
+                                        currentResources.getString(R.string.task_detail_delete_error)
+                                    )
+                                )
+                                taskDetailViewModel.userMessageShown()
+                            }
                         }
                     }
 

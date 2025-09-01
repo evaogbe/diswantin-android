@@ -18,9 +18,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import io.github.evaogbe.diswantin.R
@@ -61,6 +65,8 @@ fun TagFormSheetLayout(
     name: TextFieldState,
     onSave: () -> Unit,
 ) {
+    val focusRequester = remember { FocusRequester() }
+
     Column(
         modifier = Modifier.padding(SpaceMd),
     ) {
@@ -75,7 +81,9 @@ fun TagFormSheetLayout(
         Spacer(Modifier.size(SpaceMd))
         OutlinedTextField(
             state = name,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .focusRequester(focusRequester),
             label = { Text(stringResource(R.string.name_label)) },
             keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
             onKeyboardAction = { performDefaultAction ->
@@ -92,6 +100,10 @@ fun TagFormSheetLayout(
         ) {
             Text(stringResource(R.string.save_button))
         }
+    }
+
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
     }
 }
 
