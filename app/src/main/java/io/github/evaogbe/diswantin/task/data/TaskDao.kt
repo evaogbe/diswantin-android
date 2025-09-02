@@ -263,8 +263,6 @@ interface TaskDao {
                 WHEN t.scheduled_date IS NOT NULL THEN '00:00'
                 ELSE '23:59'
             END,
-            t.deadline_date IS NULL OR t.deadline_date >= :today,
-            t.deadline_time IS NULL OR t.deadline_time > :overdueTime,
             CASE
             WHEN td.scheduled_date IS NOT NULL THEN td.scheduled_date
             WHEN rd.task_id IS NOT NULL AND td.scheduled_time IS NOT NULL THEN :today
@@ -276,6 +274,8 @@ interface TaskDao {
                 WHEN td.scheduled_date IS NOT NULL THEN '00:00'
                 ELSE '23:59'
             END,
+            t.deadline_date IS NULL OR t.deadline_date >= :today,
+            t.deadline_time IS NULL OR t.deadline_time > :overdueTime,
             td.deadline_date IS NULL OR td.deadline_date >= :today,
             td.deadline_time IS NULL OR td.deadline_time > :overdueTime,
             t.start_after_time IS NOT NULL,
