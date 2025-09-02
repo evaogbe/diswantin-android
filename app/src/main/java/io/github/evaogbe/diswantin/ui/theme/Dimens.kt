@@ -8,6 +8,7 @@ val SpaceMd = 16.dp
 val SpaceLg = 24.dp
 val SpaceXl = 40.dp
 
-val IconSizeLg = 96.dp
+val IconSizeLg = 32.dp
+val IconSizeXl = 96.dp
 
 val ScreenLg = 1024.dp

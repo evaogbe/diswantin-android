@@ -3,7 +3,7 @@ package io.github.evaogbe.diswantin.app.ui
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import io.github.evaogbe.diswantin.R
-import io.github.evaogbe.diswantin.task.ui.AdviceRoute
+import io.github.evaogbe.diswantin.advice.AdviceRoute
 import io.github.evaogbe.diswantin.task.ui.CurrentTaskRoute
 import io.github.evaogbe.diswantin.task.ui.TagListRoute
 import io.github.evaogbe.diswantin.task.ui.TaskSearchRoute
@@ -18,8 +18,4 @@ enum class BottomBarDestination(
     Advice(AdviceRoute, R.string.advice_title, R.drawable.psychiatry_24px),
     Search(TaskSearchRoute, R.string.task_search_title_bottom_bar, R.drawable.outline_search_24),
     TagList(TagListRoute, R.string.tag_list_title, R.drawable.baseline_label_24);
-
-    companion object {
-        val routeNames = entries.map { it.route::class.qualifiedName }
-    }
 }

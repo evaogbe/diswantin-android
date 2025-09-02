@@ -11,7 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.tooling.preview.Preview
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
-import io.github.evaogbe.diswantin.ui.theme.IconSizeLg
+import io.github.evaogbe.diswantin.ui.theme.IconSizeXl
 
 const val PendingLayoutTestTag = "PendingLayoutTestTag"
 
@@ -23,7 +23,7 @@ fun PendingLayout(modifier: Modifier = Modifier) {
             .fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        CircularProgressIndicator(modifier = Modifier.size(IconSizeLg))
+        CircularProgressIndicator(modifier = Modifier.size(IconSizeXl))
     }
 }
 

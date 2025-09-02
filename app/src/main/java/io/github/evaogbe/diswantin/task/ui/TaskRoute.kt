@@ -4,9 +4,6 @@ import io.github.evaogbe.diswantin.ui.navigation.BottomBarRoute
 import kotlinx.serialization.Serializable
 
 @Serializable
-object AdviceRoute : BottomBarRoute
-
-@Serializable
 object CurrentTaskRoute : BottomBarRoute
 
 @Serializable
@@ -16,7 +13,7 @@ object TagListRoute : BottomBarRoute
 data class TaskDetailRoute(val id: Long)
 
 @Serializable
-data object TaskFormRoute {
+object TaskFormRoute {
     @Serializable
     data class Main(val id: Long?, val name: String?) {
         companion object {
@@ -29,10 +26,10 @@ data object TaskFormRoute {
     }
 
     @Serializable
-    data object Recurrence
+    object Recurrence
 
     @Serializable
-    data object TaskSearch
+    object TaskSearch
 }
 
 @Serializable

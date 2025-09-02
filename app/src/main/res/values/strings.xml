@@ -1,4 +1,6 @@
 <resources>
+    <string name="accordion_collapsed">Collapsed</string>
+    <string name="accordion_expanded">Expanded</string>
     <string name="add_button">Add</string>
     <string name="add_deadline_date_button">Add deadline date</string>
     <string name="add_deadline_time_button">Add deadline time</string>
@@ -10,6 +12,51 @@
     <string name="add_start_after_time_button">Add start after time</string>
     <string name="add_task_button">Add to-do</string>
     <string name="add_tag_button">Add tag</string>
+    <string name="advice_body_sensation_intro"><![CDATA[<b>STOP</b>. Take a deep breath. Observe your body sensations]]></string>
+    <string name="advice_body_sensation_hungry_button">Hungry</string>
+    <string name="advice_body_sensation_other_button">Other</string>
+    <string name="advice_body_sensation_pain_button">In pain</string>
+    <string name="advice_body_sensation_tired_button">Tired</string>
+    <string name="advice_check_the_facts_step1">Name the emotion and rate the intensity</string>
+    <string name="advice_check_the_facts_step2">Describe the prompting event</string>
+    <string name="advice_check_the_facts_step3">List the possible interpretations</string>
+    <string name="advice_check_the_facts_step4">Assess the probability of a threat. List other possible outcomes</string>
+    <string name="advice_check_the_facts_step5">Imagine yourself coping with the worst case scenario</string>
+    <string name="advice_check_the_facts_step6">If your emotions and their intensity fit the facts, then problem-solve. Otherwise, act opposite to the emotion</string>
+    <string name="advice_distress_level_intro">Observe your distress level</string>
+    <string name="advice_distress_low_button">Low</string>
+    <string name="advice_distress_high_button">High</string>
+    <string name="advice_distress_extreme_button">Extreme</string>
+    <string name="advice_extreme_distress_intro">If you are in crisis, call 911 or seek medical attention</string>
+    <string name="advice_tipp_step1">Dunk your head in cold water</string>
+    <string name="advice_tipp_step2">Do an intense exercise</string>
+    <string name="advice_tipp_step3">Breath deeply and slowly</string>
+    <string name="advice_tipp_step4">Tense and relax your muscles</string>
+    <string name="advice_high_distress_suggestion_day_off"><![CDATA[Plan a <b>day off</b>]]></string>
+    <string name="advice_high_distress_suggestion_friend"><![CDATA[Call/text/video chat/visit a <b>friend</b>. Try to brighten their day or ask them if you can vent]]></string>
+    <string name="advice_high_distress_suggestion_meds"><![CDATA[Talk to your doctor about a <b>medication</b> adjustment]]></string>
+    <string name="advice_high_distress_suggestion_meditate"><![CDATA[<b>Meditate</b> for 1 minute. Focus on your surroundings, breathing, urges, body sensations, feelings, worries, or thoughts]]></string>
+    <string name="advice_high_distress_suggestion_move"><![CDATA[<b>Move</b> your body]]></string>
+    <string name="advice_high_distress_suggestion_move_backyard">go out to the backyard</string>
+    <string name="advice_high_distress_suggestion_move_block">walk around the block</string>
+    <string name="advice_high_distress_suggestion_move_dance">dance</string>
+    <string name="advice_high_distress_suggestion_move_home">walk around your home</string>
+    <string name="advice_high_distress_suggestion_move_library">go to the library</string>
+    <string name="advice_high_distress_suggestion_move_stretch">stretch</string>
+    <string name="advice_high_distress_suggestion_move_wiggle">wiggle</string>
+    <string name="advice_hungry_suggestion_snack"><![CDATA[Grab a <b>snack</b>]]></string>
+    <string name="advice_low_distress_details_button">Details</string>
+    <string name="advice_low_distress_suggestion_body_double"><![CDATA[<b>Body double</b>. Invite a friend to sit with you while you do the task]]></string>
+    <string name="advice_low_distress_suggestion_break_down_task"><![CDATA[Be <b>flexible</b> about how much of the task needs to be completed. Do just the first <b>2 minutes</b>]]></string>
+    <string name="advice_low_distress_suggestion_journal"><![CDATA[Write in a <b>journal</b>]]></string>
+    <string name="advice_low_distress_wise_mind">Observe your thoughts and feelings. Proceed honoring your emotions and thoughts</string>
+    <string name="advice_pain_suggestion_bath"><![CDATA[Take a <b>bath</b>]]></string>
+    <string name="advice_pain_suggestion_hot_pack"><![CDATA[Use a <b>hot pack</b>]]></string>
+    <string name="advice_pain_suggestion_massage"><![CDATA[<b>Massage</b> the area]]></string>
+    <string name="advice_pain_suggestion_meds"><![CDATA[Take pain <b>medication</b>]]></string>
+    <string name="advice_pain_suggestion_stretch"><![CDATA[<b>Stretch</b> your muscles]]></string>
+    <string name="advice_pain_suggestion_tea"><![CDATA[Drink ginger <b>tea</b>]]></string>
+    <string name="advice_tired_suggestion_nap"><![CDATA[Take a <b>nap</b>]]></string>
     <string name="advice_title">Advice</string>
     <string name="app_name">Diswantin</string>
     <string name="back_button">Back</string>
@@ -17,6 +64,7 @@
     <string name="child_tasks_label">Next to-dos</string>
     <string name="clear_button">Clear</string>
     <string name="close_button">Close</string>
+    <string name="continue_button">Continue</string>
     <string name="discard_confirmation_dialog_confirm_button">Discard</string>
     <string name="discard_confirmation_dialog_dismiss_button">Keep editing</string>
     <string name="discard_confirmation_dialog_text">You have unsaved changes. Do you want to discard the changes?</string>
@@ -109,6 +157,7 @@
     </plurals>
     <string name="refresh_button">Refresh</string>
     <string name="remove_button">Remove</string>
+    <string name="restart_button">Restart</string>
     <string name="retry_button">Retry</string>
     <string name="save_button">Save</string>
     <string name="scheduled_at_label">Scheduled at</string>
@@ -127,35 +176,6 @@
     <string name="start_after_chip_label">Start: %1$s-%2$s</string>
     <string name="start_after_time_label">Start after time</string>
     <string name="start_date_label">Start date</string>
-    <string name="suggestion_item_body_doubling"><![CDATA[<b>Body double</b>. Invite a friend to sit with you while you do the task]]></string>
-    <string name="suggestion_item_break_down_task"><![CDATA[Be <b>flexible</b> about how much of the task needs to be completed. Do just the first <b>2 minutes</b>]]></string>
-    <string name="suggestion_item_check_the_facts"><![CDATA[<b>Check the Facts</b>]]></string>
-    <string-array name="suggestion_item_check_the_facts_steps">
-        <item>Name the emotion and rate the intensity</item>
-        <item>Describe the prompting event</item>
-        <item>List the possible interpretations</item>
-        <item>Assess the probability of a threat. List other possible outcomes</item>
-        <item>Imagine yourself coping with the worst case scenario</item>
-        <item>If your emotions and their intensity fit the facts, then problem-solve. Otherwise, act opposite to the emotion</item>
-    </string-array>
-    <string name="suggestion_item_day_off"><![CDATA[Plan a <b>day off</b>]]></string>
-    <string name="suggestion_item_friend"><![CDATA[Call/text/video chat/visit a <b>friend</b>. Try to brighten their day or ask them if you can vent]]></string>
-    <string name="suggestion_item_journal"><![CDATA[Write in a <b>journal</b>]]></string>
-    <string name="suggestion_item_meditate"><![CDATA[<b>Meditate</b> for 1 minute. Focus on your surroundings, breathing, urges, body sensations, feelings, worries, or thoughts]]></string>
-    <string name="suggestion_item_meds"><![CDATA[Talk to your doctor about a <b>medication</b> adjustment]]></string>
-    <string name="suggestion_item_move"><![CDATA[<b>Move</b> your body]]></string>
-    <string-array name="suggestion_item_move_sublist">
-        <item>wiggle</item>
-        <item>stretch</item>
-        <item>dance</item>
-        <item>walk around your home</item>
-        <item>walk around the block</item>
-        <item>go out to the backyard</item>
-        <item>go to the library</item>
-    </string-array>
-    <string name="suggestion_item_sleep"><![CDATA[Sleepy? Take a <b>nap</b>]]></string>
-    <string name="suggestion_item_snack"><![CDATA[Hungry? Grab a <b>snack</b>]]></string>
-    <string name="suggestion_item_stop"><![CDATA[<b>STOP</b>. Take a deep breath. Observe your distress level, body sensations, thoughts, and feelings. Proceed honoring your emotions and thoughts]]></string>
     <string name="tag_detail_delete_error">Something went wrong deleting the tag</string>
     <string name="tag_detail_fetch_error">Something went wrong loading the tag</string>
     <string name="tag_detail_fetch_tasks_error">Something went wrong loading the to-dos</string>

@@ -61,7 +61,7 @@ import io.github.evaogbe.diswantin.ui.loadstate.PendingLayout
 import io.github.evaogbe.diswantin.ui.snackbar.SnackbarHandler
 import io.github.evaogbe.diswantin.ui.snackbar.SnackbarState
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
-import io.github.evaogbe.diswantin.ui.theme.IconSizeLg
+import io.github.evaogbe.diswantin.ui.theme.IconSizeXl
 import io.github.evaogbe.diswantin.ui.theme.ScreenLg
 import io.github.evaogbe.diswantin.ui.theme.SpaceLg
 import io.github.evaogbe.diswantin.ui.theme.SpaceMd
@@ -386,7 +386,7 @@ fun EmptyCurrentTaskLayout(
                 Icon(
                     painter = painterResource(R.drawable.baseline_add_task_24),
                     contentDescription = null,
-                    modifier = Modifier.size(IconSizeLg),
+                    modifier = Modifier.size(IconSizeXl),
                 )
                 Spacer(Modifier.size(SpaceXl))
                 Text(
