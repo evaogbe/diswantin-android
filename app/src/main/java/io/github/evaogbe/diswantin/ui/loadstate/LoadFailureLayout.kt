@@ -24,7 +24,7 @@ import androidx.compose.ui.text.style.TextAlign
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.ui.button.OutlinedButtonWithIcon
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
-import io.github.evaogbe.diswantin.ui.theme.IconSizeLg
+import io.github.evaogbe.diswantin.ui.theme.IconSizeXl
 import io.github.evaogbe.diswantin.ui.theme.ScreenLg
 import io.github.evaogbe.diswantin.ui.theme.SpaceLg
 import io.github.evaogbe.diswantin.ui.theme.SpaceMd
@@ -46,7 +46,7 @@ fun LoadFailureLayout(
             Icon(
                 painter = painterResource(R.drawable.baseline_sentiment_very_dissatisfied_24),
                 contentDescription = null,
-                modifier = Modifier.size(IconSizeLg),
+                modifier = Modifier.size(IconSizeXl),
             )
             Spacer(Modifier.size(SpaceXl))
             SelectionContainer(modifier = Modifier.widthIn(max = ScreenLg)) {

@@ -22,12 +22,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.ui.button.TextButtonWithIcon
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
+import io.github.evaogbe.diswantin.ui.theme.IconSizeLg
 import io.github.evaogbe.diswantin.ui.theme.SpaceMd
 import io.github.evaogbe.diswantin.ui.theme.SpaceSm
 import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
@@ -60,7 +60,7 @@ private fun NextPagePendingLayout() {
             .padding(SpaceSm),
         contentAlignment = Alignment.TopCenter,
     ) {
-        CircularProgressIndicator(modifier = Modifier.size(32.dp))
+        CircularProgressIndicator(modifier = Modifier.size(IconSizeLg))
     }
 }
 

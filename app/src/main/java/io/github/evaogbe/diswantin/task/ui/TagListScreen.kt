@@ -53,7 +53,7 @@ import io.github.evaogbe.diswantin.ui.loadstate.pagedListFooter
 import io.github.evaogbe.diswantin.ui.snackbar.SnackbarHandler
 import io.github.evaogbe.diswantin.ui.snackbar.SnackbarState
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
-import io.github.evaogbe.diswantin.ui.theme.IconSizeLg
+import io.github.evaogbe.diswantin.ui.theme.IconSizeXl
 import io.github.evaogbe.diswantin.ui.theme.ScreenLg
 import io.github.evaogbe.diswantin.ui.theme.SpaceLg
 import io.github.evaogbe.diswantin.ui.theme.SpaceXl
@@ -182,7 +182,7 @@ fun EmptyTagListLayout(onAddTag: () -> Unit, modifier: Modifier = Modifier) {
             Icon(
                 painter = painterResource(R.drawable.outline_new_label_24),
                 contentDescription = null,
-                modifier = Modifier.size(IconSizeLg),
+                modifier = Modifier.size(IconSizeXl),
             )
             Spacer(Modifier.size(SpaceXl))
             Text(

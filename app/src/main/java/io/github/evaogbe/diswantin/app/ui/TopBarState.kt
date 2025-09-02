@@ -21,7 +21,10 @@ sealed interface TopBarState : Parcelable {
     ) : TopBarState
 
     @Parcelize
-    data object Advice : TopBarState
+    data object AdviceStart : TopBarState
+
+    @Parcelize
+    data object AdviceInner : TopBarState
 
     @Parcelize
     data object TagList : TopBarState

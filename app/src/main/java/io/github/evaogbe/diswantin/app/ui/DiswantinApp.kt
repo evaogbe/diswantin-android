@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.clearText
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
@@ -34,6 +35,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -44,9 +46,18 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
 import androidx.navigation.toRoute
 import io.github.evaogbe.diswantin.R
-import io.github.evaogbe.diswantin.advice.AdviceScreen
-import io.github.evaogbe.diswantin.advice.AdviceTopBar
-import io.github.evaogbe.diswantin.task.ui.AdviceRoute
+import io.github.evaogbe.diswantin.advice.AdviceRoute
+import io.github.evaogbe.diswantin.advice.BodySensationAdviceScreen
+import io.github.evaogbe.diswantin.advice.CheckTheFactsScreen
+import io.github.evaogbe.diswantin.advice.DistressLevelAdviceScreen
+import io.github.evaogbe.diswantin.advice.ExtremeDistressAdviceScreen
+import io.github.evaogbe.diswantin.advice.HighDistressAdviceScreen
+import io.github.evaogbe.diswantin.advice.HungryAdviceScreen
+import io.github.evaogbe.diswantin.advice.InnerAdviceTopBar
+import io.github.evaogbe.diswantin.advice.LowDistressAdviceScreen
+import io.github.evaogbe.diswantin.advice.PainAdviceScreen
+import io.github.evaogbe.diswantin.advice.StartAdviceTopBar
+import io.github.evaogbe.diswantin.advice.TiredAdviceScreen
 import io.github.evaogbe.diswantin.task.ui.CurrentTaskRoute
 import io.github.evaogbe.diswantin.task.ui.CurrentTaskScreen
 import io.github.evaogbe.diswantin.task.ui.CurrentTaskTopBar
@@ -123,100 +134,17 @@ fun DiswantinApp() {
 
     Scaffold(
         topBar = {
-            when (val state = topBarState) {
-                is TopBarState.CurrentTask -> {
-                    CurrentTaskTopBar(
-                        uiState = state.uiState,
-                        onRefresh = {
-                            topBarState = state.copy(action = CurrentTaskTopBarAction.Refresh)
-                        },
-                        onSkip = {
-                            topBarState = state.copy(action = CurrentTaskTopBarAction.Skip)
-                        },
-                    )
-                }
-
-                is TopBarState.Advice -> {
-                    AdviceTopBar()
-                }
-
-                is TopBarState.TagList -> {
-                    TagListTopBar()
-                }
-
-                is TopBarState.TaskDetail -> {
-                    TaskDetailTopBar(
-                        uiState = state.uiState,
-                        onBackClick = navController::popBackStack,
-                        onEditTask = {
-                            navController.navigate(route = TaskFormRoute.Main.edit(id = it))
-                        },
-                        onDeleteTask = {
-                            topBarState = state.copy(action = TaskDetailTopBarAction.Delete)
-                        },
-                        onMarkTaskDone = {
-                            topBarState = state.copy(action = TaskDetailTopBarAction.MarkDone)
-                        },
-                        onUnmarkTaskDone = {
-                            topBarState = state.copy(action = TaskDetailTopBarAction.UnmarkDone)
-                        },
-                    )
-                }
-
-                is TopBarState.TaskForm -> {
-                    TaskFormTopBar(
-                        uiState = state.uiState,
-                        onClose = {
-                            topBarState = state.copy(action = TaskFormTopBarAction.Close)
-                        },
-                        onSave = {
-                            topBarState = state.copy(action = TaskFormTopBarAction.Save)
-                        },
-                    )
-                }
-
-                is TopBarState.TaskRecurrenceForm -> {
-                    TaskRecurrenceFormTopBar(
-                        onClose = navController::popBackStack,
-                        onConfirm = {
-                            topBarState = state.copy(
-                                action = TaskRecurrenceFormTopBarAction.Confirm,
-                            )
-                            navController.popBackStack()
-                        },
-                    )
-                }
-
-                is TopBarState.TagDetail -> {
-                    TagDetailTopBar(
-                        uiState = state.uiState,
-                        onBackClick = navController::popBackStack,
-                        onEditTag = {
-                            topBarState = state.copy(action = TagDetailTopBarAction.Edit)
-                        },
-                        onDeleteTag = {
-                            topBarState = state.copy(action = TagDetailTopBarAction.Delete)
-                        },
-                    )
-                }
-
-                is TopBarState.TaskSearch -> {
-                    TaskSearchTopBar(
-                        query = query,
-                        onBackClick = if (currentDestination?.hasRoute<TaskFormRoute.TaskSearch>() != false) {
-                            { navController.popBackStack() }
-                        } else {
-                            null
-                        },
-                        onSearch = {
-                            topBarState = state.copy(action = TaskSearchTopBarAction.Search)
-                        },
-                    )
-                }
-            }
+            DiswantinTopBar(
+                topBarState = topBarState,
+                setTopBarState = { topBarState = it },
+                query = query,
+                navController = navController,
+            )
         },
         bottomBar = {
-            if (currentDestination?.route in BottomBarDestination.routeNames) {
+            if (currentDestination?.hierarchy.orEmpty().any { dest ->
+                    BottomBarDestination.entries.any { dest.hasRoute(it.route::class) }
+                }) {
                 DiswantinBottomBar(
                     isCurrentRoute = { dest ->
                         currentDestination?.hierarchy.orEmpty().any {
@@ -249,7 +177,7 @@ fun DiswantinApp() {
                     )
                 }
 
-                currentDestination?.hasRoute<AdviceRoute>() == true -> {
+                currentDestination?.hierarchy.orEmpty().any { it.hasRoute<AdviceRoute>() } -> {
                     DiswantinFab(
                         onClick = {
                             navController.navigate(route = TaskFormRoute.Main.new(name = null))
@@ -296,15 +224,6 @@ fun DiswantinApp() {
                         navController.navigate(route = TaskDetailRoute(id = it))
                     },
                 )
-            }
-            composable<AdviceRoute> {
-                LaunchedEffect(Unit) {
-                    if (topBarState !is TopBarState.Advice) {
-                        topBarState = TopBarState.Advice
-                    }
-                }
-
-                AdviceScreen()
             }
             composable<TagListRoute> {
                 LaunchedEffect(Unit) {
@@ -477,6 +396,234 @@ fun DiswantinApp() {
                     )
                 }
             }
+            navigation<AdviceRoute>(startDestination = AdviceRoute.BodySensation) {
+                composable<AdviceRoute.BodySensation> {
+                    LaunchedEffect(Unit) {
+                        if (topBarState !is TopBarState.AdviceStart) {
+                            topBarState = TopBarState.AdviceStart
+                        }
+                    }
+
+                    BodySensationAdviceScreen(
+                        onHungryClick = { navController.navigate(route = AdviceRoute.Hungry) },
+                        onTiredClick = { navController.navigate(route = AdviceRoute.Tired) },
+                        onPainClick = { navController.navigate(route = AdviceRoute.Pain) },
+                        onOtherClick = {
+                            navController.navigate(route = AdviceRoute.DistressLevel)
+                        },
+                    )
+                }
+                composable<AdviceRoute.Hungry> {
+                    LaunchedEffect(Unit) {
+                        if (topBarState !is TopBarState.AdviceInner) {
+                            topBarState = TopBarState.AdviceInner
+                        }
+                    }
+
+                    HungryAdviceScreen(
+                        onContinueClick = {
+                            navController.navigate(route = AdviceRoute.DistressLevel)
+                        },
+                    )
+                }
+                composable<AdviceRoute.Tired> {
+                    LaunchedEffect(Unit) {
+                        if (topBarState !is TopBarState.AdviceInner) {
+                            topBarState = TopBarState.AdviceInner
+                        }
+                    }
+
+                    TiredAdviceScreen(
+                        onContinueClick = {
+                            navController.navigate(route = AdviceRoute.DistressLevel)
+                        },
+                    )
+                }
+                composable<AdviceRoute.Pain> {
+                    LaunchedEffect(Unit) {
+                        if (topBarState !is TopBarState.AdviceInner) {
+                            topBarState = TopBarState.AdviceInner
+                        }
+                    }
+
+                    PainAdviceScreen(
+                        onContinueClick = {
+                            navController.navigate(route = AdviceRoute.DistressLevel)
+                        },
+                    )
+                }
+                composable<AdviceRoute.DistressLevel> {
+                    LaunchedEffect(Unit) {
+                        if (topBarState !is TopBarState.AdviceInner) {
+                            topBarState = TopBarState.AdviceInner
+                        }
+                    }
+
+                    DistressLevelAdviceScreen(
+                        onLowClick = {
+                            navController.navigate(route = AdviceRoute.LowDistress)
+                        },
+                        onHighClick = {
+                            navController.navigate(route = AdviceRoute.HighDistress)
+                        },
+                        onExtremeClick = {
+                            navController.navigate(route = AdviceRoute.ExtremeDistress)
+                        },
+                    )
+                }
+                composable<AdviceRoute.LowDistress> {
+                    LaunchedEffect(Unit) {
+                        if (topBarState !is TopBarState.AdviceInner) {
+                            topBarState = TopBarState.AdviceInner
+                        }
+                    }
+
+                    LowDistressAdviceScreen(
+                        onCheckTheFactsClick = {
+                            navController.navigate(route = AdviceRoute.CheckTheFacts)
+                        },
+                    )
+                }
+                composable<AdviceRoute.CheckTheFacts> {
+                    LaunchedEffect(Unit) {
+                        if (topBarState !is TopBarState.AdviceInner) {
+                            topBarState = TopBarState.AdviceInner
+                        }
+                    }
+
+                    CheckTheFactsScreen()
+                }
+                composable<AdviceRoute.HighDistress> {
+                    LaunchedEffect(Unit) {
+                        if (topBarState !is TopBarState.AdviceInner) {
+                            topBarState = TopBarState.AdviceInner
+                        }
+                    }
+
+                    HighDistressAdviceScreen()
+                }
+                composable<AdviceRoute.ExtremeDistress> {
+                    LaunchedEffect(Unit) {
+                        if (topBarState !is TopBarState.AdviceInner) {
+                            topBarState = TopBarState.AdviceInner
+                        }
+                    }
+
+                    ExtremeDistressAdviceScreen()
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun DiswantinTopBar(
+    topBarState: TopBarState,
+    setTopBarState: (TopBarState) -> Unit,
+    query: TextFieldState,
+    navController: NavController,
+) {
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentDestination = navBackStackEntry?.destination
+
+    when (topBarState) {
+        is TopBarState.CurrentTask -> {
+            CurrentTaskTopBar(
+                uiState = topBarState.uiState,
+                onRefresh = {
+                    setTopBarState(topBarState.copy(action = CurrentTaskTopBarAction.Refresh))
+                },
+                onSkip = {
+                    setTopBarState(topBarState.copy(action = CurrentTaskTopBarAction.Skip))
+                },
+            )
+        }
+
+        is TopBarState.AdviceStart -> {
+            StartAdviceTopBar()
+        }
+
+        is TopBarState.AdviceInner -> {
+            InnerAdviceTopBar(
+                onBackClick = navController::popBackStack,
+                onRestart = { navController.navigate(route = AdviceRoute.BodySensation) },
+            )
+        }
+
+        is TopBarState.TagList -> {
+            TagListTopBar()
+        }
+
+        is TopBarState.TaskDetail -> {
+            TaskDetailTopBar(
+                uiState = topBarState.uiState,
+                onBackClick = navController::popBackStack,
+                onEditTask = {
+                    navController.navigate(route = TaskFormRoute.Main.edit(id = it))
+                },
+                onDeleteTask = {
+                    setTopBarState(topBarState.copy(action = TaskDetailTopBarAction.Delete))
+                },
+                onMarkTaskDone = {
+                    setTopBarState(topBarState.copy(action = TaskDetailTopBarAction.MarkDone))
+                },
+                onUnmarkTaskDone = {
+                    setTopBarState(topBarState.copy(action = TaskDetailTopBarAction.UnmarkDone))
+                },
+            )
+        }
+
+        is TopBarState.TaskForm -> {
+            TaskFormTopBar(
+                uiState = topBarState.uiState,
+                onClose = {
+                    setTopBarState(topBarState.copy(action = TaskFormTopBarAction.Close))
+                },
+                onSave = {
+                    setTopBarState(topBarState.copy(action = TaskFormTopBarAction.Save))
+                },
+            )
+        }
+
+        is TopBarState.TaskRecurrenceForm -> {
+            TaskRecurrenceFormTopBar(
+                onClose = navController::popBackStack,
+                onConfirm = {
+                    setTopBarState(
+                        topBarState.copy(
+                            action = TaskRecurrenceFormTopBarAction.Confirm
+                        )
+                    )
+                    navController.popBackStack()
+                },
+            )
+        }
+
+        is TopBarState.TagDetail -> {
+            TagDetailTopBar(
+                uiState = topBarState.uiState,
+                onBackClick = navController::popBackStack,
+                onEditTag = {
+                    setTopBarState(topBarState.copy(action = TagDetailTopBarAction.Edit))
+                },
+                onDeleteTag = {
+                    setTopBarState(topBarState.copy(action = TagDetailTopBarAction.Delete))
+                },
+            )
+        }
+
+        is TopBarState.TaskSearch -> {
+            val isNested = currentDestination?.hasRoute<TaskFormRoute.TaskSearch>() != false
+
+            TaskSearchTopBar(
+                query = query,
+                onBackClick = if (isNested) {
+                    { navController.popBackStack() }
+                } else null,
+                onSearch = {
+                    setTopBarState(topBarState.copy(action = TaskSearchTopBarAction.Search))
+                },
+            )
         }
     }
 }
