@@ -21,7 +21,45 @@ class DoesRecurOnDateTest(
                 listOf(
                     TaskRecurrence(
                         taskId = 0,
-                        start = LocalDate.parse("2024-08-22"),
+                        startDate = LocalDate.parse("2024-08-25"),
+                        type = RecurrenceType.Day,
+                        step = 1,
+                    ),
+                ),
+                LocalDate.parse("2024-08-24"),
+                false,
+            ),
+            arrayOf(
+                listOf(
+                    TaskRecurrence(
+                        taskId = 0,
+                        startDate = LocalDate.parse("2024-08-22"),
+                        type = RecurrenceType.Day,
+                        step = 1,
+                        endDate = LocalDate.parse("2024-08-23"),
+                    ),
+                ),
+                LocalDate.parse("2024-08-24"),
+                false,
+            ),
+            arrayOf(
+                listOf(
+                    TaskRecurrence(
+                        taskId = 0,
+                        startDate = LocalDate.parse("2024-08-22"),
+                        type = RecurrenceType.Day,
+                        step = 1,
+                        endDate = LocalDate.parse("2024-08-24"),
+                    ),
+                ),
+                LocalDate.parse("2024-08-24"),
+                true,
+            ),
+            arrayOf(
+                listOf(
+                    TaskRecurrence(
+                        taskId = 0,
+                        startDate = LocalDate.parse("2024-08-22"),
                         type = RecurrenceType.Day,
                         step = 2,
                     ),
@@ -33,7 +71,7 @@ class DoesRecurOnDateTest(
                 listOf(
                     TaskRecurrence(
                         taskId = 0,
-                        start = LocalDate.parse("2024-08-23"),
+                        startDate = LocalDate.parse("2024-08-23"),
                         type = RecurrenceType.Day,
                         step = 2,
                     ),
@@ -45,13 +83,13 @@ class DoesRecurOnDateTest(
                 listOf(
                     TaskRecurrence(
                         taskId = 0,
-                        start = LocalDate.parse("2024-08-16"),
+                        startDate = LocalDate.parse("2024-08-16"),
                         type = RecurrenceType.Week,
                         step = 1,
                     ),
                     TaskRecurrence(
                         taskId = 0,
-                        start = LocalDate.parse("2024-08-17"),
+                        startDate = LocalDate.parse("2024-08-17"),
                         type = RecurrenceType.Week,
                         step = 1,
                     ),
@@ -63,13 +101,31 @@ class DoesRecurOnDateTest(
                 listOf(
                     TaskRecurrence(
                         taskId = 0,
-                        start = LocalDate.parse("2024-08-15"),
+                        startDate = LocalDate.parse("2024-08-16"),
+                        type = RecurrenceType.Week,
+                        step = 2,
+                    ),
+                    TaskRecurrence(
+                        taskId = 0,
+                        startDate = LocalDate.parse("2024-08-17"),
+                        type = RecurrenceType.Week,
+                        step = 2,
+                    ),
+                ),
+                LocalDate.parse("2024-08-24"),
+                false,
+            ),
+            arrayOf(
+                listOf(
+                    TaskRecurrence(
+                        taskId = 0,
+                        startDate = LocalDate.parse("2024-08-15"),
                         type = RecurrenceType.Week,
                         step = 1,
                     ),
                     TaskRecurrence(
                         taskId = 0,
-                        start = LocalDate.parse("2024-08-16"),
+                        startDate = LocalDate.parse("2024-08-16"),
                         type = RecurrenceType.Week,
                         step = 1,
                     ),
@@ -81,7 +137,7 @@ class DoesRecurOnDateTest(
                 listOf(
                     TaskRecurrence(
                         taskId = 0,
-                        start = LocalDate.parse("2024-07-24"),
+                        startDate = LocalDate.parse("2024-07-24"),
                         type = RecurrenceType.DayOfMonth,
                         step = 1,
                     ),
@@ -93,7 +149,19 @@ class DoesRecurOnDateTest(
                 listOf(
                     TaskRecurrence(
                         taskId = 0,
-                        start = LocalDate.parse("2024-07-27"),
+                        startDate = LocalDate.parse("2024-07-24"),
+                        type = RecurrenceType.DayOfMonth,
+                        step = 2,
+                    ),
+                ),
+                LocalDate.parse("2024-08-24"),
+                false,
+            ),
+            arrayOf(
+                listOf(
+                    TaskRecurrence(
+                        taskId = 0,
+                        startDate = LocalDate.parse("2024-07-27"),
                         type = RecurrenceType.DayOfMonth,
                         step = 1,
                     ),
@@ -105,7 +173,7 @@ class DoesRecurOnDateTest(
                 listOf(
                     TaskRecurrence(
                         taskId = 0,
-                        start = LocalDate.parse("2024-03-31"),
+                        startDate = LocalDate.parse("2024-03-31"),
                         type = RecurrenceType.DayOfMonth,
                         step = 1,
                     ),
@@ -117,7 +185,7 @@ class DoesRecurOnDateTest(
                 listOf(
                     TaskRecurrence(
                         taskId = 0,
-                        start = LocalDate.parse("2024-03-31"),
+                        startDate = LocalDate.parse("2024-03-31"),
                         type = RecurrenceType.DayOfMonth,
                         step = 1,
                     ),
@@ -129,7 +197,7 @@ class DoesRecurOnDateTest(
                 listOf(
                     TaskRecurrence(
                         taskId = 0,
-                        start = LocalDate.parse("2024-06-30"),
+                        startDate = LocalDate.parse("2024-06-30"),
                         type = RecurrenceType.DayOfMonth,
                         step = 1,
                     ),
@@ -141,7 +209,7 @@ class DoesRecurOnDateTest(
                 listOf(
                     TaskRecurrence(
                         taskId = 0,
-                        start = LocalDate.parse("2024-07-27"),
+                        startDate = LocalDate.parse("2024-07-27"),
                         type = RecurrenceType.WeekOfMonth,
                         step = 1,
                     ),
@@ -153,7 +221,19 @@ class DoesRecurOnDateTest(
                 listOf(
                     TaskRecurrence(
                         taskId = 0,
-                        start = LocalDate.parse("2024-07-24"),
+                        startDate = LocalDate.parse("2024-07-27"),
+                        type = RecurrenceType.WeekOfMonth,
+                        step = 2,
+                    ),
+                ),
+                LocalDate.parse("2024-08-24"),
+                false,
+            ),
+            arrayOf(
+                listOf(
+                    TaskRecurrence(
+                        taskId = 0,
+                        startDate = LocalDate.parse("2024-07-24"),
                         type = RecurrenceType.WeekOfMonth,
                         step = 1,
                     ),
@@ -165,7 +245,7 @@ class DoesRecurOnDateTest(
                 listOf(
                     TaskRecurrence(
                         taskId = 0,
-                        start = LocalDate.parse("2023-08-24"),
+                        startDate = LocalDate.parse("2023-08-24"),
                         type = RecurrenceType.Year,
                         step = 1,
                     ),
@@ -177,7 +257,19 @@ class DoesRecurOnDateTest(
                 listOf(
                     TaskRecurrence(
                         taskId = 0,
-                        start = LocalDate.parse("2023-07-24"),
+                        startDate = LocalDate.parse("2023-08-24"),
+                        type = RecurrenceType.Year,
+                        step = 2,
+                    ),
+                ),
+                LocalDate.parse("2024-08-24"),
+                false,
+            ),
+            arrayOf(
+                listOf(
+                    TaskRecurrence(
+                        taskId = 0,
+                        startDate = LocalDate.parse("2023-07-24"),
                         type = RecurrenceType.Year,
                         step = 1,
                     ),
@@ -189,7 +281,7 @@ class DoesRecurOnDateTest(
                 listOf(
                     TaskRecurrence(
                         taskId = 0,
-                        start = LocalDate.parse("2020-02-29"),
+                        startDate = LocalDate.parse("2020-02-29"),
                         type = RecurrenceType.Year,
                         step = 1,
                     ),
@@ -201,7 +293,7 @@ class DoesRecurOnDateTest(
                 listOf(
                     TaskRecurrence(
                         taskId = 0,
-                        start = LocalDate.parse("2020-02-29"),
+                        startDate = LocalDate.parse("2020-02-29"),
                         type = RecurrenceType.Year,
                         step = 1,
                     ),
@@ -214,6 +306,8 @@ class DoesRecurOnDateTest(
 
     @Test
     fun `returns whether any of the recurrences occur on the date`() {
-        assertThat(doesRecurOnDate(recurrences, date)).isEqualTo(expected)
+        assertThat(
+            doesRecurOnDate(recurrences, date), name = "date of $date has recurrences: $recurrences"
+        ).isEqualTo(expected)
     }
 }

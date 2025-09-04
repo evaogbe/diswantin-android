@@ -28,7 +28,7 @@ class TaskRecurrenceFormScreenTest {
     private val loremFaker = LoremFaker()
 
     private val faker = Faker()
-    
+
     @Test
     fun displaysDefaultRecurrence_whenNew() {
         val clock =
@@ -67,7 +67,7 @@ class TaskRecurrenceFormScreenTest {
             db.insertTaskRecurrence(
                 TaskRecurrence(
                     taskId = task.id,
-                    start = LocalDate.parse("2024-07-22"),
+                    startDate = LocalDate.parse("2024-07-22"),
                     type = RecurrenceType.DayOfMonth,
                     step = 2
                 )

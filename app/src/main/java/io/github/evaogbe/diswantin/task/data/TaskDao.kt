@@ -38,19 +38,20 @@ interface TaskDao {
                 ) s ON s.task_id = t.id
                 WHERE (c.done_at IS NULL OR (r.task_id IS NOT NULL AND c.done_at < :startOfToday))
                     AND (s.skipped_at IS NULL OR s.skipped_at < :startOfToday)
-                    AND (r.start IS NULL OR r.start <= :today)
+                    AND (r.start_date IS NULL OR r.start_date <= :today)
+                    AND (r.end_date IS NULL OR r.end_date >= :today)
                     AND CASE r.type
-                        WHEN 0 THEN (julianday(:today) - julianday(r.start)) % r.step = 0
-                        WHEN 1 THEN (julianday(:today) - julianday(r.start)) % (r.step * 7) = 0
+                        WHEN 0 THEN (julianday(:today) - julianday(r.start_date)) % r.step = 0
+                        WHEN 1 THEN (julianday(:today) - julianday(r.start_date)) % (r.step * 7) = 0
                         WHEN 2 THEN (
                                 12
                                 + CAST(strftime('%m', :today) as INT)
-                                - CAST(strftime('%m', r.start) as INT)
+                                - CAST(strftime('%m', r.start_date) as INT)
                             ) % r.step = 0
                             AND (
-                                strftime('%d', r.start) = strftime('%d', :today)
+                                strftime('%d', r.start_date) = strftime('%d', :today)
                                 OR (
-                                    strftime('%m-%d', r.start)
+                                    strftime('%m-%d', r.start_date)
                                         IN (
                                             '01-31', '03-31', '05-31', '07-31', '08-31', '10-31',
                                             '12-31'
@@ -59,7 +60,7 @@ interface TaskDao {
                                         IN ('04-30', '06-30', '09-30', '11-30')
                                 )
                                 OR (
-                                    strftime('%m-%d', r.start)
+                                    strftime('%m-%d', r.start_date)
                                         IN (
                                             '01-31', '02-29', '03-31', '04-30', '05-31', '06-30',
                                             '07-31', '08-31', '09-30', '10-31', '11-30', '12-31'
@@ -83,27 +84,27 @@ interface TaskDao {
                         WHEN 3 THEN (
                                 12
                                 + CAST(strftime('%m', :today) as INT)
-                                - CAST(strftime('%m', r.start) as INT)
+                                - CAST(strftime('%m', r.start_date) as INT)
                             ) % r.step = 0
                             AND CAST((CAST(strftime('%d', :today) as REAL) / 7) as INT)
                                 + (
                                     (CAST(strftime('%d', :today) as REAL) / 7)
                                     > CAST((CAST(strftime('%d', :today) as REAL) / 7) as INT)
                                 )
-                                = CAST((CAST(strftime('%d', r.start) as REAL) / 7) as INT)
+                                = CAST((CAST(strftime('%d', r.start_date) as REAL) / 7) as INT)
                                     + (
-                                        (CAST(strftime('%d', r.start) as REAL) / 7)
-                                        > CAST((CAST(strftime('%d', r.start) as REAL) / 7) as INT)
+                                        (CAST(strftime('%d', r.start_date) as REAL) / 7)
+                                        > CAST((CAST(strftime('%d', r.start_date) as REAL) / 7) as INT)
                                     )
-                            AND strftime('%w', r.start) = strftime('%w', :today)
+                            AND strftime('%w', r.start_date) = strftime('%w', :today)
                         WHEN 4 THEN (
                                 CAST(strftime('%Y', :today) as INT)
-                                - CAST(strftime('%Y', r.start) as INT)
+                                - CAST(strftime('%Y', r.start_date) as INT)
                             ) % r.step = 0
                             AND (
-                                strftime('%m-%d', r.start) = strftime('%m-%d', :today)
+                                strftime('%m-%d', r.start_date) = strftime('%m-%d', :today)
                                 OR (
-                                    strftime('%m-%d', r.start) = '02-29'
+                                    strftime('%m-%d', r.start_date) = '02-29'
                                     AND strftime('%m-%d', :today) = '02-28'
                                     AND (
                                         CAST(strftime('%Y', :today) as INT) & 3 != 0
@@ -151,19 +152,20 @@ interface TaskDao {
                         AND (t.start_after_date IS NULL OR t.start_after_date <= :today)
                         AND (t.start_after_time IS NULL OR t.start_after_time <= :currentTime)
                         AND (s.skipped_at IS NULL OR s.skipped_at < :startOfToday)
-                        AND (r.start IS NULL OR r.start <= :today)
+                        AND (r.start_date IS NULL OR r.start_date <= :today)
+                        AND (r.end_date IS NULL OR r.end_date >= :today)
                         AND CASE r.type
-                            WHEN 0 THEN (julianday(:today) - julianday(r.start)) % r.step = 0
-                            WHEN 1 THEN (julianday(:today) - julianday(r.start)) % (r.step * 7) = 0
+                            WHEN 0 THEN (julianday(:today) - julianday(r.start_date)) % r.step = 0
+                            WHEN 1 THEN (julianday(:today) - julianday(r.start_date)) % (r.step * 7) = 0
                             WHEN 2 THEN (
                                     12
                                     + CAST(strftime('%m', :today) as INT)
-                                    - CAST(strftime('%m', r.start) as INT)
+                                    - CAST(strftime('%m', r.start_date) as INT)
                                 ) % r.step = 0
                                 AND (
-                                    strftime('%d', r.start) = strftime('%d', :today)
+                                    strftime('%d', r.start_date) = strftime('%d', :today)
                                     OR (
-                                        strftime('%m-%d', r.start)
+                                        strftime('%m-%d', r.start_date)
                                             IN (
                                                 '01-31', '03-31', '05-31', '07-31', '08-31',
                                                 '10-31', '12-31'
@@ -172,7 +174,7 @@ interface TaskDao {
                                             IN ('04-30', '06-30', '09-30', '11-30')
                                     )
                                     OR (
-                                        strftime('%m-%d', r.start)
+                                        strftime('%m-%d', r.start_date)
                                             IN (
                                                 '01-31', '02-29', '03-31', '04-30', '05-31',
                                                 '06-30', '07-31', '08-31', '09-30', '10-31',
@@ -197,27 +199,27 @@ interface TaskDao {
                             WHEN 3 THEN (
                                     12
                                     + CAST(strftime('%m', :today) as INT)
-                                    - CAST(strftime('%m', r.start) as INT)
+                                    - CAST(strftime('%m', r.start_date) as INT)
                                 ) % r.step = 0
                                 AND CAST((CAST(strftime('%d', :today) as REAL) / 7) as INT)
                                     + (
                                         (CAST(strftime('%d', :today) as REAL) / 7)
                                         > CAST((CAST(strftime('%d', :today) as REAL) / 7) as INT)
                                     )
-                                    = CAST((CAST(strftime('%d', r.start) as REAL) / 7) as INT)
+                                    = CAST((CAST(strftime('%d', r.start_date) as REAL) / 7) as INT)
                                         + (
-                                            (CAST(strftime('%d', r.start) as REAL) / 7)
-                                            > CAST((CAST(strftime('%d', r.start) as REAL) / 7) as INT)
+                                            (CAST(strftime('%d', r.start_date) as REAL) / 7)
+                                            > CAST((CAST(strftime('%d', r.start_date) as REAL) / 7) as INT)
                                         )
-                                AND strftime('%w', r.start) = strftime('%w', :today)
+                                AND strftime('%w', r.start_date) = strftime('%w', :today)
                             WHEN 4 THEN (
                                     CAST(strftime('%Y', :today) as INT)
-                                    - CAST(strftime('%Y', r.start) as INT)
+                                    - CAST(strftime('%Y', r.start_date) as INT)
                                 ) % r.step = 0
                                 AND (
-                                    strftime('%m-%d', r.start) = strftime('%m-%d', :today)
+                                    strftime('%m-%d', r.start_date) = strftime('%m-%d', :today)
                                     OR (
-                                        strftime('%m-%d', r.start) = '02-29'
+                                        strftime('%m-%d', r.start_date) = '02-29'
                                         AND strftime('%m-%d', :today) = '02-28'
                                         AND (
                                             CAST(strftime('%Y', :today) as INT) & 3 != 0
@@ -395,19 +397,31 @@ interface TaskDao {
                 :deadlineStartDate IS NULL
                 OR :deadlineEndDate IS NULL
                 OR t.deadline_date BETWEEN :deadlineStartDate AND :deadlineEndDate
-                OR (t.deadline_time IS NOT NULL AND r.start <= :deadlineEndDate)
+                OR (
+                    t.deadline_time IS NOT NULL 
+                    AND r.start_date <= :deadlineEndDate 
+                    AND (r.end_date IS NULL OR r.end_date >= :deadlineStartDate)
+                )
             )
             AND (
                 :startAfterStartDate IS NULL
                 OR :startAfterEndDate IS NULL
                 OR t.start_after_date BETWEEN :startAfterStartDate AND :startAfterEndDate
-                OR (t.start_after_time IS NOT NULL AND r.start <= :startAfterEndDate)
+                OR (
+                    t.start_after_time IS NOT NULL
+                    AND r.start_date <= :startAfterEndDate
+                    AND (r.end_date IS NULL OR r.end_date >= :startAfterStartDate)
+                )
             )
             AND (
                 :scheduledStartDate IS NULL
                 OR :scheduledEndDate IS NULL
                 OR t.scheduled_date BETWEEN :scheduledStartDate AND :scheduledEndDate
-                OR (t.scheduled_time IS NOT NULL AND r.start <= :scheduledEndDate)
+                OR (
+                    t.scheduled_time IS NOT NULL
+                    AND r.start_date <= :scheduledEndDate
+                    AND (r.end_date IS NULL OR r.end_date >= :scheduledStartDate)
+                )
             )
             AND (
                 :doneStart IS NULL
@@ -421,19 +435,20 @@ interface TaskDao {
             AND (
                 :recurrenceDate IS NULL
                 OR (
-                    r.start <= :recurrenceDate
+                    r.start_date <= :recurrenceDate
+                    AND (r.end_date IS NULL OR r.end_date >= :recurrenceDate)
                     AND CASE r.type
-                        WHEN 0 THEN (julianday(:recurrenceDate) - julianday(r.start)) % r.step = 0
-                        WHEN 1 THEN (julianday(:recurrenceDate) - julianday(r.start)) % (r.step * 7) = 0
+                        WHEN 0 THEN (julianday(:recurrenceDate) - julianday(r.start_date)) % r.step = 0
+                        WHEN 1 THEN (julianday(:recurrenceDate) - julianday(r.start_date)) % (r.step * 7) = 0
                         WHEN 2 THEN (
                                 12
                                 + CAST(strftime('%m', :recurrenceDate) as INT)
-                                - CAST(strftime('%m', r.start) as INT)
+                                - CAST(strftime('%m', r.start_date) as INT)
                             ) % r.step = 0
                             AND (
-                                strftime('%d', r.start) = strftime('%d', :recurrenceDate)
+                                strftime('%d', r.start_date) = strftime('%d', :recurrenceDate)
                                 OR (
-                                    strftime('%m-%d', r.start)
+                                    strftime('%m-%d', r.start_date)
                                         IN (
                                             '01-31', '03-31', '05-31', '07-31', '08-31',
                                             '10-31', '12-31'
@@ -442,7 +457,7 @@ interface TaskDao {
                                         IN ('04-30', '06-30', '09-30', '11-30')
                                 )
                                 OR (
-                                    strftime('%m-%d', r.start)
+                                    strftime('%m-%d', r.start_date)
                                         IN (
                                             '01-31', '02-29', '03-31', '04-30', '05-31',
                                             '06-30', '07-31', '08-31', '09-30', '10-31',
@@ -467,27 +482,27 @@ interface TaskDao {
                         WHEN 3 THEN (
                                 12
                                 + CAST(strftime('%m', :recurrenceDate) as INT)
-                                - CAST(strftime('%m', r.start) as INT)
+                                - CAST(strftime('%m', r.start_date) as INT)
                             ) % r.step = 0
                             AND CAST((CAST(strftime('%d', :recurrenceDate) as REAL) / 7) as INT)
                                 + (
                                     (CAST(strftime('%d', :recurrenceDate) as REAL) / 7)
                                     > CAST((CAST(strftime('%d', :recurrenceDate) as REAL) / 7) as INT)
                                 )
-                                = CAST((CAST(strftime('%d', r.start) as REAL) / 7) as INT)
+                                = CAST((CAST(strftime('%d', r.start_date) as REAL) / 7) as INT)
                                     + (
-                                        (CAST(strftime('%d', r.start) as REAL) / 7)
-                                        > CAST((CAST(strftime('%d', r.start) as REAL) / 7) as INT)
+                                        (CAST(strftime('%d', r.start_date) as REAL) / 7)
+                                        > CAST((CAST(strftime('%d', r.start_date) as REAL) / 7) as INT)
                                     )
-                            AND strftime('%w', r.start) = strftime('%w', :recurrenceDate)
+                            AND strftime('%w', r.start_date) = strftime('%w', :recurrenceDate)
                         WHEN 4 THEN (
                                 CAST(strftime('%Y', :recurrenceDate) as INT)
-                                - CAST(strftime('%Y', r.start) as INT)
+                                - CAST(strftime('%Y', r.start_date) as INT)
                             ) % r.step = 0
                             AND (
-                                strftime('%m-%d', r.start) = strftime('%m-%d', :recurrenceDate)
+                                strftime('%m-%d', r.start_date) = strftime('%m-%d', :recurrenceDate)
                                 OR (
-                                    strftime('%m-%d', r.start) = '02-29'
+                                    strftime('%m-%d', r.start_date) = '02-29'
                                     AND strftime('%m-%d', :recurrenceDate) = '02-28'
                                     AND (
                                         CAST(strftime('%Y', :recurrenceDate) as INT) & 3 != 0
@@ -548,19 +563,31 @@ interface TaskDao {
                 :deadlineStartDate IS NULL
                 OR :deadlineEndDate IS NULL
                 OR t.deadline_date BETWEEN :deadlineStartDate AND :deadlineEndDate
-                OR (t.deadline_time IS NOT NULL AND r.start <= :deadlineEndDate)
+                OR (
+                    t.deadline_time IS NOT NULL 
+                    AND r.start_date <= :deadlineEndDate 
+                    AND (r.end_date IS NULL OR r.end_date >= :deadlineStartDate)
+                )
             )
             AND (
                 :startAfterStartDate IS NULL
                 OR :startAfterEndDate IS NULL
                 OR t.start_after_date BETWEEN :startAfterStartDate AND :startAfterEndDate
-                OR (t.start_after_time IS NOT NULL AND r.start <= :startAfterEndDate)
+                OR (
+                    t.start_after_time IS NOT NULL
+                    AND r.start_date <= :startAfterEndDate
+                    AND (r.end_date IS NULL OR r.end_date >= :startAfterStartDate)
+                )
             )
             AND (
                 :scheduledStartDate IS NULL
                 OR :scheduledEndDate IS NULL
                 OR t.scheduled_date BETWEEN :scheduledStartDate AND :scheduledEndDate
-                OR (t.scheduled_time IS NOT NULL AND r.start <= :scheduledEndDate)
+                OR (
+                    t.scheduled_time IS NOT NULL
+                    AND r.start_date <= :scheduledEndDate
+                    AND (r.end_date IS NULL OR r.end_date >= :scheduledStartDate)
+                )
             )
             AND (
                 :doneStart IS NULL
@@ -574,19 +601,20 @@ interface TaskDao {
             AND (
                 :recurrenceDate IS NULL
                 OR (
-                    r.start <= :recurrenceDate
+                    r.start_date <= :recurrenceDate
+                    AND (r.end_date IS NULL OR r.end_date >= :recurrenceDate)
                     AND CASE r.type
-                        WHEN 0 THEN (julianday(:recurrenceDate) - julianday(r.start)) % r.step = 0
-                        WHEN 1 THEN (julianday(:recurrenceDate) - julianday(r.start)) % (r.step * 7) = 0
+                        WHEN 0 THEN (julianday(:recurrenceDate) - julianday(r.start_date)) % r.step = 0
+                        WHEN 1 THEN (julianday(:recurrenceDate) - julianday(r.start_date)) % (r.step * 7) = 0
                         WHEN 2 THEN (
                                 12
                                 + CAST(strftime('%m', :recurrenceDate) as INT)
-                                - CAST(strftime('%m', r.start) as INT)
+                                - CAST(strftime('%m', r.start_date) as INT)
                             ) % r.step = 0
                             AND (
-                                strftime('%d', r.start) = strftime('%d', :recurrenceDate)
+                                strftime('%d', r.start_date) = strftime('%d', :recurrenceDate)
                                 OR (
-                                    strftime('%m-%d', r.start)
+                                    strftime('%m-%d', r.start_date)
                                         IN (
                                             '01-31', '03-31', '05-31', '07-31', '08-31',
                                             '10-31', '12-31'
@@ -595,7 +623,7 @@ interface TaskDao {
                                         IN ('04-30', '06-30', '09-30', '11-30')
                                 )
                                 OR (
-                                    strftime('%m-%d', r.start)
+                                    strftime('%m-%d', r.start_date)
                                         IN (
                                             '01-31', '02-29', '03-31', '04-30', '05-31',
                                             '06-30', '07-31', '08-31', '09-30', '10-31',
@@ -620,27 +648,27 @@ interface TaskDao {
                         WHEN 3 THEN (
                                 12
                                 + CAST(strftime('%m', :recurrenceDate) as INT)
-                                - CAST(strftime('%m', r.start) as INT)
+                                - CAST(strftime('%m', r.start_date) as INT)
                             ) % r.step = 0
                             AND CAST((CAST(strftime('%d', :recurrenceDate) as REAL) / 7) as INT)
                                 + (
                                     (CAST(strftime('%d', :recurrenceDate) as REAL) / 7)
                                     > CAST((CAST(strftime('%d', :recurrenceDate) as REAL) / 7) as INT)
                                 )
-                                = CAST((CAST(strftime('%d', r.start) as REAL) / 7) as INT)
+                                = CAST((CAST(strftime('%d', r.start_date) as REAL) / 7) as INT)
                                     + (
-                                        (CAST(strftime('%d', r.start) as REAL) / 7)
-                                        > CAST((CAST(strftime('%d', r.start) as REAL) / 7) as INT)
+                                        (CAST(strftime('%d', r.start_date) as REAL) / 7)
+                                        > CAST((CAST(strftime('%d', r.start_date) as REAL) / 7) as INT)
                                     )
-                            AND strftime('%w', r.start) = strftime('%w', :recurrenceDate)
+                            AND strftime('%w', r.start_date) = strftime('%w', :recurrenceDate)
                         WHEN 4 THEN (
                                 CAST(strftime('%Y', :recurrenceDate) as INT)
-                                - CAST(strftime('%Y', r.start) as INT)
+                                - CAST(strftime('%Y', r.start_date) as INT)
                             ) % r.step = 0
                             AND (
-                                strftime('%m-%d', r.start) = strftime('%m-%d', :recurrenceDate)
+                                strftime('%m-%d', r.start_date) = strftime('%m-%d', :recurrenceDate)
                                 OR (
-                                    strftime('%m-%d', r.start) = '02-29'
+                                    strftime('%m-%d', r.start_date) = '02-29'
                                     AND strftime('%m-%d', :recurrenceDate) = '02-28'
                                     AND (
                                         CAST(strftime('%Y', :recurrenceDate) as INT) & 3 != 0
@@ -724,7 +752,7 @@ interface TaskDao {
     )
     fun getChildren(id: Long): PagingSource<Int, TaskSummary>
 
-    @Query("SELECT * FROM task_recurrence WHERE task_id = :taskId ORDER BY start LIMIT 7")
+    @Query("SELECT * FROM task_recurrence WHERE task_id = :taskId ORDER BY start_date LIMIT 7")
     fun getTaskRecurrencesByTaskId(taskId: Long): Flow<List<TaskRecurrence>>
 
     @Query("SELECT COUNT(*) FROM task")

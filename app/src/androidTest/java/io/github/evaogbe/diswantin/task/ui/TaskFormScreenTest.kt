@@ -230,7 +230,7 @@ class TaskFormScreenTest {
             db.insertTaskRecurrence(
                 TaskRecurrence(
                     taskId = task.id,
-                    start = faker.random.randomPastDate().toLocalDate(),
+                    startDate = faker.random.randomPastDate().toLocalDate(),
                     type = RecurrenceType.Day,
                     step = 1
                 )
@@ -276,7 +276,7 @@ class TaskFormScreenTest {
             db.insertTaskRecurrence(
                 TaskRecurrence(
                     taskId = task.id,
-                    start = faker.random.randomPastDate().toLocalDate(),
+                    startDate = faker.random.randomPastDate().toLocalDate(),
                     type = RecurrenceType.Day,
                     step = 1
                 )
@@ -408,7 +408,7 @@ class TaskFormScreenTest {
             db.insertTaskRecurrence(
                 TaskRecurrence(
                     taskId = task.id,
-                    start = faker.random.randomPastDate().toLocalDate(),
+                    startDate = faker.random.randomPastDate().toLocalDate(),
                     type = RecurrenceType.Day,
                     step = 1
                 )

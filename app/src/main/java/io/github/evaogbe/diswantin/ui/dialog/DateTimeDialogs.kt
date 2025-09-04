@@ -3,11 +3,13 @@ package io.github.evaogbe.diswantin.ui.dialog
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DateRangePicker
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimeInput
@@ -30,6 +32,21 @@ import androidx.compose.ui.res.stringResource
 import io.github.evaogbe.diswantin.R
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.ZoneOffset
+
+class SelectableDatesWithMax(private val maxDate: LocalDate) : SelectableDates {
+    override fun isSelectableDate(utcTimeMillis: Long) =
+        utcTimeMillis <= maxDate.atTime(LocalTime.MAX).toInstant(ZoneOffset.UTC).toEpochMilli()
+
+    override fun isSelectableYear(year: Int) = year <= maxDate.year
+}
+
+class SelectableDatesWithMin(private val minDate: LocalDate) : SelectableDates {
+    override fun isSelectableDate(utcTimeMillis: Long) =
+        utcTimeMillis >= minDate.atTime(LocalTime.MIN).toInstant(ZoneOffset.UTC).toEpochMilli()
+
+    override fun isSelectableYear(year: Int) = year >= minDate.year
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,9 +55,11 @@ fun DiswantinDatePickerDialog(
     date: LocalDate?,
     onSelectDate: (LocalDate) -> Unit,
     modifier: Modifier = Modifier,
+    selectableDates: SelectableDates = DatePickerDefaults.AllDates,
 ) {
     val datePickerState = rememberDatePickerState(
         initialSelectedDate = date,
+        selectableDates = selectableDates,
     )
 
     DatePickerDialog(

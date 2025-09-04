@@ -341,7 +341,7 @@ class FakeTaskRepository(
 
     override fun getTaskRecurrencesByTaskId(taskId: Long) =
         db.taskRecurrenceTable.map { taskRecurrences ->
-            taskRecurrences.values.filter { it.taskId == taskId }.sortedBy { it.start }
+            taskRecurrences.values.filter { it.taskId == taskId }.sortedBy { it.startDate }
         }
 
     override fun getCount() = db.taskTable.map { it.size.toLong() }

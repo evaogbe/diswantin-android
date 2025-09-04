@@ -7,6 +7,7 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import java.time.LocalDate
 import java.time.Month
+import java.time.YearMonth
 import java.time.temporal.ChronoUnit
 import kotlin.math.ceil
 
@@ -16,7 +17,7 @@ enum class RecurrenceType {
 
 @Entity(
     tableName = "task_recurrence",
-    indices = [Index("task_id", "start", unique = true)],
+    indices = [Index("task_id", "start_date", unique = true)],
     foreignKeys = [ForeignKey(
         entity = Task::class,
         parentColumns = ["id"],
@@ -28,48 +29,86 @@ enum class RecurrenceType {
 data class TaskRecurrence(
     @PrimaryKey(autoGenerate = true) val id: Long = 0L,
     @ColumnInfo("task_id") val taskId: Long,
-    val start: LocalDate,
+    @ColumnInfo("start_date") val startDate: LocalDate,
     val type: RecurrenceType,
     val step: Int,
+    @ColumnInfo("end_date") val endDate: LocalDate? = null,
 )
 
 fun doesRecurOnDate(recurrences: List<TaskRecurrence>, date: LocalDate): Boolean {
-    val recurrence = recurrences.first()
-    return when (recurrence.type) {
-        RecurrenceType.Day -> {
-            ChronoUnit.DAYS.between(recurrence.start, date) % recurrence.step == 0L
-        }
+    return recurrences.any { recurrence ->
+        if (recurrence.startDate > date) return false
+        if (recurrence.endDate?.let { it < date } == true) return false
 
-        RecurrenceType.Week -> {
-            recurrences.any {
-                (ChronoUnit.WEEKS.between(it.start, date) % it.step == 0L) &&
-                        it.start.dayOfWeek == date.dayOfWeek
+        when (recurrence.type) {
+            RecurrenceType.Day -> {
+                ChronoUnit.DAYS.between(recurrence.startDate, date) % recurrence.step == 0L
             }
-        }
 
-        RecurrenceType.DayOfMonth -> {
-            (ChronoUnit.MONTHS.between(recurrence.start, date) % recurrence.step == 0L) &&
-                    (recurrence.start.dayOfMonth == date.dayOfMonth ||
-                            (recurrence.start.dayOfMonth > date.dayOfMonth &&
-                                    recurrence.start.dayOfMonth ==
-                                    recurrence.start.lengthOfMonth() &&
-                                    date.dayOfMonth == date.lengthOfMonth()))
-        }
+            RecurrenceType.Week -> {
+                if (ChronoUnit.WEEKS.between(
+                        recurrence.startDate, date
+                    ) % recurrence.step != 0L
+                ) {
+                    return false
+                }
+                recurrence.startDate.dayOfWeek == date.dayOfWeek
+            }
 
-        RecurrenceType.WeekOfMonth -> {
-            (ChronoUnit.MONTHS.between(recurrence.start, date) % recurrence.step == 0L) &&
-                    recurrence.start.dayOfWeek == date.dayOfWeek &&
-                    ceil(recurrence.start.dayOfMonth / 7.0) == ceil(date.dayOfMonth / 7.0)
-        }
+            RecurrenceType.DayOfMonth -> {
+                if (ChronoUnit.MONTHS.between(
+                        recurrence.startDate, date
+                    ) % recurrence.step != 0L
+                ) {
+                    return false
+                }
+                if (recurrence.startDate.dayOfMonth == date.dayOfMonth) {
+                    return true
+                }
+                if (recurrence.startDate.dayOfMonth != recurrence.startDate.lengthOfMonth()) {
+                    return false
+                }
+                if (date.dayOfMonth != date.lengthOfMonth()) {
+                    return false
+                }
+                recurrence.startDate.dayOfMonth > date.dayOfMonth
+            }
 
-        RecurrenceType.Year -> {
-            (ChronoUnit.YEARS.between(recurrence.start, date) % recurrence.step == 0L) &&
-                    recurrence.start.month == date.month &&
-                    (recurrence.start.dayOfMonth == date.dayOfMonth ||
-                            (recurrence.start.month == Month.FEBRUARY &&
-                                    recurrence.start.dayOfMonth == 29 &&
-                                    date.dayOfMonth == 28 &&
-                                    !date.isLeapYear))
+            RecurrenceType.WeekOfMonth -> {
+                if (ChronoUnit.MONTHS.between(
+                        YearMonth.from(recurrence.startDate),
+                        YearMonth.from(date),
+                    ) % recurrence.step != 0L
+                ) {
+                    return false
+                }
+                if (recurrence.startDate.dayOfWeek != date.dayOfWeek) {
+                    return false
+                }
+                ceil(recurrence.startDate.dayOfMonth / 7.0) == ceil(date.dayOfMonth / 7.0)
+            }
+
+            RecurrenceType.Year -> {
+                if (ChronoUnit.YEARS.between(
+                        recurrence.startDate, date
+                    ) % recurrence.step != 0L
+                ) {
+                    return false
+                }
+                if (recurrence.startDate.month != date.month) {
+                    return false
+                }
+                if (recurrence.startDate.dayOfMonth == date.dayOfMonth) {
+                    return true
+                }
+                if (recurrence.startDate.month != Month.FEBRUARY) {
+                    return false
+                }
+                if (recurrence.startDate.dayOfMonth != 29) {
+                    return false
+                }
+                date.dayOfMonth == 28 && !date.isLeapYear
+            }
         }
     }
 }

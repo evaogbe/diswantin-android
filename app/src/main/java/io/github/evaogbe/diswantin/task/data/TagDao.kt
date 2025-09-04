@@ -21,6 +21,7 @@ interface TagDao {
         FROM tag t
         JOIN task_tag tt ON tt.tag_id = t.id
         WHERE tt.task_id = :taskId
+        ORDER BY t.name
         LIMIT :size"""
     )
     fun getTagsByTaskId(taskId: Long, size: Int): Flow<List<Tag>>
@@ -30,6 +31,7 @@ interface TagDao {
         FROM tag
         JOIN tag_fts tf ON tf.name = tag.name
         WHERE tag_fts MATCH :query
+        ORDER BY tag.name
         LIMIT :size"""
     )
     fun search(query: String, size: Int): Flow<List<Tag>>

@@ -76,6 +76,12 @@ data class EditTaskForm(
                 |scheduledDate: $scheduledDate, 
                 |recurrences: $recurrences""".trimMargin()
         }
+        val invalidRecurrences = recurrences.filter { recurrence ->
+            recurrence.endDate?.let { it < recurrence.startDate } == true
+        }
+        require(invalidRecurrences.isEmpty()) {
+            "Must not have recurrence end date before start date, but got $invalidRecurrences"
+        }
 
         val newRecurrenceSet = recurrences.toSet()
         val oldRecurrenceSet = existingRecurrences.map { it.copy(id = 0L) }.toSet()

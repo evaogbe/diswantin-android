@@ -74,7 +74,7 @@ class TaskFormViewModel @Inject constructor(
 
     private val note = MutableStateFlow("")
 
-    private val recurrenceUiState = MutableStateFlow<TaskRecurrenceUiState?>(null)
+    val recurrenceUiState = MutableStateFlow<TaskRecurrenceUiState?>(null)
 
     private val deadlineDate =
         savedStateHandle.getMutableStateFlow<LocalDate?>(DEADLINE_DATE_KEY, null)
@@ -269,27 +269,7 @@ class TaskFormViewModel @Inject constructor(
         initialValue = TaskFormUiState.Pending,
     )
 
-    val recurrenceUiStateOrDefault = recurrenceUiState.map {
-        it ?: TaskRecurrenceUiState(
-            start = startAfterDate.value ?: LocalDate.now(clock),
-            type = RecurrenceType.Day,
-            step = 1,
-            weekdays = persistentSetOf(),
-            locale = locale,
-        )
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000L),
-        initialValue = TaskRecurrenceUiState(
-            start = startAfterDate.value ?: LocalDate.now(clock),
-            type = RecurrenceType.Day,
-            step = 1,
-            weekdays = persistentSetOf(),
-            locale = locale,
-        ),
-    )
-
-    val currentWeekday: DayOfWeek = LocalDate.now(clock).dayOfWeek
+    val today: LocalDate = LocalDate.now(clock)
 
     init {
         val recurrencesBundle = savedStateHandle.get<Bundle>(RECURRENCES_KEY)
@@ -398,7 +378,7 @@ class TaskFormViewModel @Inject constructor(
     fun updateRecurrence(value: TaskRecurrenceUiState?) {
         recurrenceUiState.value =
             if (value?.type == RecurrenceType.Week && value.weekdays.isEmpty()) {
-                value.copy(weekdays = persistentSetOf(value.start.dayOfWeek))
+                value.copy(weekdays = persistentSetOf(value.startDate.dayOfWeek))
             } else {
                 value
             }
@@ -435,12 +415,13 @@ class TaskFormViewModel @Inject constructor(
             null -> emptyList()
             RecurrenceType.Week -> {
                 state.recurrence.weekdays.map {
-                    val start = state.recurrence.start.plusDays(
-                        (7 + it.value - state.recurrence.start.dayOfWeek.value) % 7L
+                    val startDate = state.recurrence.startDate.plusDays(
+                        (7 + it.value - state.recurrence.startDate.dayOfWeek.value) % 7L
                     )
                     TaskRecurrence(
                         taskId = taskId ?: 0L,
-                        start = start,
+                        startDate = startDate,
+                        endDate = state.recurrence.endDate,
                         type = state.recurrence.type,
                         step = state.recurrence.step,
                     )
@@ -451,7 +432,8 @@ class TaskFormViewModel @Inject constructor(
                 listOf(
                     TaskRecurrence(
                         taskId = taskId ?: 0L,
-                        start = state.recurrence.start,
+                        startDate = state.recurrence.startDate,
+                        endDate = state.recurrence.endDate,
                         type = state.recurrence.type,
                         step = state.recurrence.step,
                     )
@@ -553,22 +535,27 @@ class TaskFormViewModel @Inject constructor(
 
     private val TaskRecurrenceUiState.bundle
         get() = bundleOf(
-            RECURRENCE_START_KEY to start,
+            RECURRENCE_START_DATE_KEY to startDate,
+            RECURRENCE_END_DATE_KEY to endDate,
             RECURRENCE_TYPE_KEY to type,
             RECURRENCE_STEP_KEY to step,
             RECURRENCE_WEEKDAYS_KEY to weekdays.map { it.value }.toIntArray(),
         )
 
     private fun Bundle.restoreTaskRecurrenceUiState(): TaskRecurrenceUiState? {
-        val start = BundleCompat.getSerializable(this, RECURRENCE_START_KEY, LocalDate::class.java)
+        val startDate =
+            BundleCompat.getSerializable(this, RECURRENCE_START_DATE_KEY, LocalDate::class.java)
+        val endDate =
+            BundleCompat.getSerializable(this, RECURRENCE_END_DATE_KEY, LocalDate::class.java)
         val type =
             BundleCompat.getSerializable(this, RECURRENCE_TYPE_KEY, RecurrenceType::class.java)
         val step = getInt(RECURRENCE_STEP_KEY)
         val weekdays =
             getIntArray(RECURRENCE_WEEKDAYS_KEY)?.map(DayOfWeek::of).orEmpty().toPersistentSet()
-        return if (start != null && type != null && step > 0) {
+        return if (startDate != null && type != null && step > 0) {
             TaskRecurrenceUiState(
-                start = start,
+                startDate = startDate,
+                endDate = endDate,
                 type = type,
                 step = step,
                 weekdays = weekdays,
@@ -610,7 +597,9 @@ private const val SCHEDULE_TIME_KEY = "scheduledTime"
 
 private const val RECURRENCES_KEY = "recurrences"
 
-private const val RECURRENCE_START_KEY = "recurrenceStart"
+private const val RECURRENCE_START_DATE_KEY = "recurrenceStartDate"
+
+private const val RECURRENCE_END_DATE_KEY = "recurrenceEndDate"
 
 private const val RECURRENCE_TYPE_KEY = "recurrenceType"
 

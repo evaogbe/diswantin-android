@@ -131,7 +131,7 @@ class CurrentTaskViewModelTest {
             insertTaskRecurrence(
                 TaskRecurrence(
                     taskId = task.id,
-                    start = LocalDate.parse("2024-08-22"),
+                    startDate = LocalDate.parse("2024-08-22"),
                     type = RecurrenceType.Day,
                     step = 1,
                 )
@@ -167,7 +167,7 @@ class CurrentTaskViewModelTest {
                 insertTaskRecurrence(
                     TaskRecurrence(
                         taskId = task1.id,
-                        start = LocalDate.parse("2024-08-22"),
+                        startDate = LocalDate.parse("2024-08-22"),
                         type = RecurrenceType.Day,
                         step = 1,
                     )
@@ -214,7 +214,7 @@ class CurrentTaskViewModelTest {
                 insertTaskRecurrence(
                     TaskRecurrence(
                         taskId = task.id,
-                        start = LocalDate.parse("2024-08-22"),
+                        startDate = LocalDate.parse("2024-08-22"),
                         type = RecurrenceType.Day,
                         step = 1,
                     )

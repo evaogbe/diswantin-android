@@ -17,15 +17,16 @@ enum class TaskRecurrenceFormTopBarAction {
 }
 
 data class TaskRecurrenceUiState(
-    val start: LocalDate,
+    val startDate: LocalDate,
+    val endDate: LocalDate?,
     val type: RecurrenceType,
     val step: Int,
     val weekdays: PersistentSet<DayOfWeek>,
     private val locale: Locale,
 ) {
-    val startWeek = ceil(start.dayOfMonth / 7.0).toInt()
+    val startWeek = ceil(startDate.dayOfMonth / 7.0).toInt()
 
-    val startWeekdayText: String = start.dayOfWeek.getDisplayName(TextStyle.FULL, locale)
+    val startWeekdayText: String = startDate.dayOfWeek.getDisplayName(TextStyle.FULL, locale)
 
     val weekdaysText: String
 
@@ -41,11 +42,12 @@ data class TaskRecurrenceUiState(
         fun tryFromEntities(recurrences: List<TaskRecurrence>, locale: Locale) =
             recurrences.firstOrNull()?.let { recurrence ->
                 TaskRecurrenceUiState(
-                    start = recurrence.start,
+                    startDate = recurrence.startDate,
+                    endDate = recurrence.endDate,
                     type = recurrence.type,
                     step = recurrence.step,
                     weekdays = if (recurrence.type == RecurrenceType.Week) {
-                        recurrences.map { it.start.dayOfWeek }.toPersistentSet()
+                        recurrences.map { it.startDate.dayOfWeek }.toPersistentSet()
                     } else {
                         persistentSetOf()
                     },

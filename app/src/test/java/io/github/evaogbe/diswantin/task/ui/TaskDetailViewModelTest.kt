@@ -66,7 +66,8 @@ class TaskDetailViewModelTest {
             insertTaskRecurrence(
                 TaskRecurrence(
                     taskId = task1.id,
-                    start = LocalDate.parse("2024-08-22"),
+                    startDate = LocalDate.parse("2024-08-22"),
+                    endDate = LocalDate.parse("2025-08-22"),
                     type = RecurrenceType.Day,
                     step = 1,
                 ),
@@ -99,7 +100,8 @@ class TaskDetailViewModelTest {
                 formattedStartAfter = null,
                 formattedScheduledAt = null,
                 recurrence = TaskRecurrenceUiState(
-                    start = LocalDate.parse("2024-08-22"),
+                    startDate = LocalDate.parse("2024-08-22"),
+                    endDate = LocalDate.parse("2025-08-22"),
                     type = RecurrenceType.Day,
                     step = 1,
                     weekdays = persistentSetOf(),
