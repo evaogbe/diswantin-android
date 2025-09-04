@@ -283,7 +283,7 @@ interface TaskDao {
             t.start_after_time IS NOT NULL,
             CASE
             WHEN t.deadline_date IS NOT NULL THEN t.deadline_date
-            WHEN r.task_id IS NOT NULL AND t.deadline_time IS NOT NULL THEN :today
+            WHEN r.task_id IS NOT NULL THEN :today
             ELSE '999999999-12-31'
             END,
             t.deadline_time IS NULL,
@@ -291,7 +291,7 @@ interface TaskDao {
             r.task_id IS NULL,
             CASE
             WHEN td.deadline_date IS NOT NULL THEN td.deadline_date
-            WHEN rd.task_id IS NOT NULL AND td.deadline_time IS NOT NULL THEN :today
+            WHEN rd.task_id IS NOT NULL THEN :today
             ELSE '999999999-12-31'
             END,
             td.deadline_time IS NULL,
