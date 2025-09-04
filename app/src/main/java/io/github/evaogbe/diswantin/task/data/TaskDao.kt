@@ -115,7 +115,7 @@ interface TaskDao {
                                     )
                                 )
                             )
-                        ELSE TRUE
+                        ELSE 1
                         END
             )
                 AND p.descendant IN (
@@ -230,7 +230,7 @@ interface TaskDao {
                                         )
                                     )
                                 )
-                            ELSE TRUE
+                            ELSE 1
                             END
                 )
             GROUP BY p.descendant
@@ -283,20 +283,20 @@ interface TaskDao {
             t.start_after_time IS NOT NULL,
             CASE
             WHEN t.deadline_date IS NOT NULL THEN t.deadline_date
-            WHEN r.task_id IS NOT NULL THEN :today
+            WHEN r.task_id IS NOT NULL AND t.deadline_time IS NOT NULL THEN :today
             ELSE '999999999-12-31'
             END,
             t.deadline_time IS NULL,
-            r.task_id IS NULL,
             t.deadline_time,
+            r.task_id IS NULL,
             CASE
             WHEN td.deadline_date IS NOT NULL THEN td.deadline_date
-            WHEN rd.task_id IS NOT NULL THEN :today
+            WHEN rd.task_id IS NOT NULL AND td.deadline_time IS NOT NULL THEN :today
             ELSE '999999999-12-31'
             END,
             td.deadline_time IS NULL,
-            rd.task_id IS NULL,
             td.deadline_time,
+            rd.task_id IS NULL,
             t.start_after_date,
             t.start_after_time,
             t.created_at,
@@ -513,7 +513,7 @@ interface TaskDao {
                                     )
                                 )
                             )
-                        ELSE FALSE
+                        ELSE 0
                         END
                     )
             )
@@ -679,7 +679,7 @@ interface TaskDao {
                                     )
                                 )
                             )
-                        ELSE FALSE
+                        ELSE 0
                         END
                     )
             )
