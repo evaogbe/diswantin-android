@@ -520,10 +520,10 @@ private fun TaskDetailScreenPreview_Detailed() {
                     isDone = true,
                     parent = TaskSummaryUiState(id = 1L, name = "Brush teeth", isDone = false),
                     tags = persistentListOf(
-                        Tag(id = 1L, name = "morning routine"),
+                        Tag(id = 1L, name = "goal"),
                         Tag(id = 2L, name = "hygiene"),
                         Tag(id = 3L, name = "low effort"),
-                        Tag(id = 3L, name = "goal"),
+                        Tag(id = 4L, name = "morning routine"),
                     ),
                     userMessage = null,
                 ),
@@ -557,7 +557,8 @@ private fun TaskDetailLayoutPreview() {
                     formattedStartAfter = null,
                     formattedScheduledAt = formatDateTime(null, LocalTime.now()),
                     recurrence = TaskRecurrenceUiState(
-                        start = LocalDate.now(),
+                        startDate = LocalDate.now(),
+                        endDate = null,
                         type = RecurrenceType.Day,
                         step = 1,
                         weekdays = persistentSetOf(),

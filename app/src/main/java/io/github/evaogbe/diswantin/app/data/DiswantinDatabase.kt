@@ -34,7 +34,7 @@ import java.time.temporal.WeekFields
 import java.util.Locale
 
 @Database(
-    version = 34,
+    version = 35,
     entities = [
         Task::class,
         TaskFts::class,
@@ -69,6 +69,7 @@ import java.util.Locale
         AutoMigration(from = 30, to = 31, spec = DiswantinDatabase.Migration30to31::class),
         AutoMigration(from = 31, to = 32, spec = DiswantinDatabase.Migration31to32::class),
         AutoMigration(from = 33, to = 34, spec = DiswantinDatabase.Migration33to34::class),
+        AutoMigration(from = 34, to = 35, spec = DiswantinDatabase.Migration34to35::class),
     ]
 )
 @TypeConverters(Converters::class)
@@ -113,6 +114,13 @@ abstract class DiswantinDatabase : RoomDatabase() {
 
     @DeleteColumn(tableName = "task", columnName = "category_id")
     class Migration33to34 : AutoMigrationSpec
+
+    @RenameColumn(
+        tableName = "task_recurrence",
+        fromColumnName = "start",
+        toColumnName = "start_date",
+    )
+    class Migration34to35 : AutoMigrationSpec
 
     companion object {
         const val DB_NAME = "diswantin"

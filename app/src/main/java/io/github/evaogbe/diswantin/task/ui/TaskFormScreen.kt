@@ -337,6 +337,8 @@ fun TaskFormLayout(
     modifier: Modifier = Modifier,
 ) {
     var dialogType by rememberSaveable { mutableStateOf<FieldDialogType?>(null) }
+    val dateFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
+    val timeFormatter = DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
 
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         Column(
@@ -385,6 +387,7 @@ fun TaskFormLayout(
                         EditFieldButton(
                             onClick = onEditRecurrence,
                             text = taskRecurrenceText(uiState.recurrence),
+                            modifier = Modifier.weight(1f, fill = false),
                         )
                     }
                 }
@@ -404,9 +407,7 @@ fun TaskFormLayout(
                         ) {
                             EditFieldButton(
                                 onClick = { dialogType = FieldDialogType.DeadlineDate },
-                                text = uiState.deadlineDate.format(
-                                    DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
-                                ),
+                                text = uiState.deadlineDate.format(dateFormatter),
                             )
                         }
                     }
@@ -431,9 +432,7 @@ fun TaskFormLayout(
                         ) {
                             EditFieldButton(
                                 onClick = { dialogType = FieldDialogType.DeadlineTime },
-                                text = uiState.deadlineTime.format(
-                                    DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
-                                ),
+                                text = uiState.deadlineTime.format(timeFormatter),
                             )
                         }
                     }
@@ -458,9 +457,7 @@ fun TaskFormLayout(
                         ) {
                             EditFieldButton(
                                 onClick = { dialogType = FieldDialogType.StartAfterDate },
-                                text = uiState.startAfterDate.format(
-                                    DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
-                                ),
+                                text = uiState.startAfterDate.format(dateFormatter),
                             )
                         }
                     }
@@ -485,9 +482,7 @@ fun TaskFormLayout(
                         ) {
                             EditFieldButton(
                                 onClick = { dialogType = FieldDialogType.StartAfterTime },
-                                text = uiState.startAfterTime.format(
-                                    DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
-                                ),
+                                text = uiState.startAfterTime.format(timeFormatter),
                             )
                         }
                     }
@@ -526,9 +521,7 @@ fun TaskFormLayout(
                         ) {
                             EditFieldButton(
                                 onClick = { dialogType = FieldDialogType.ScheduledDate },
-                                text = uiState.scheduledDate.format(
-                                    DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
-                                ),
+                                text = uiState.scheduledDate.format(dateFormatter),
                             )
                         }
                     }
@@ -553,9 +546,7 @@ fun TaskFormLayout(
                         ) {
                             EditFieldButton(
                                 onClick = { dialogType = FieldDialogType.ScheduledTime },
-                                text = uiState.scheduledTime.format(
-                                    DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
-                                ),
+                                text = uiState.scheduledTime.format(timeFormatter),
                             )
                         }
                     }
@@ -593,9 +584,11 @@ fun TaskFormLayout(
             when (uiState.tagFieldState) {
                 TagFieldState.Open -> {
                     Column {
-                        Text(stringResource(R.string.tags_label), style = typography.titleMedium)
+                        if (uiState.tags.isNotEmpty()) {
+                            Text(stringResource(R.string.tags_label), style = typography.titleMedium)
 
-                        TagList(tags = uiState.tags, onRemoveTag = onRemoveTag)
+                            TagList(tags = uiState.tags, onRemoveTag = onRemoveTag)
+                        }
 
                         AutocompleteField(
                             query = tagQuery,
@@ -611,9 +604,11 @@ fun TaskFormLayout(
 
                 TagFieldState.Closed -> {
                     Column {
-                        Text(stringResource(R.string.tags_label), style = typography.titleMedium)
+                        if (uiState.tags.isNotEmpty()) {
+                            Text(stringResource(R.string.tags_label), style = typography.titleMedium)
 
-                        TagList(tags = uiState.tags, onRemoveTag = onRemoveTag)
+                            TagList(tags = uiState.tags, onRemoveTag = onRemoveTag)
+                        }
 
                         if (uiState.tags.size < Task.MAX_TAGS) {
                             TextButtonWithIcon(
@@ -769,6 +764,8 @@ private fun TaskFormScreenPreview_New() {
 private fun TaskFormScreenPreview_Edit() {
     val name = "Shower"
     val note = "Wash hair and deep condition before appointment at hair salon"
+    val today = LocalDate.now()
+    val currentTime = LocalTime.now()
 
     DiswantinTheme {
         Scaffold(
@@ -789,28 +786,32 @@ private fun TaskFormScreenPreview_Edit() {
                     initialName = name,
                     initialNote = note,
                     recurrence = TaskRecurrenceUiState(
-                        start = LocalDate.now(),
-                        type = RecurrenceType.Day,
-                        step = 1,
+                        startDate = today,
+                        endDate = today.plusYears(1),
+                        type = RecurrenceType.WeekOfMonth,
+                        step = 2,
                         weekdays = persistentSetOf(),
                         locale = Locale.getDefault(),
                     ),
                     deadlineDate = null,
-                    deadlineTime = LocalTime.now().plusHours(1),
+                    deadlineTime = currentTime.plusHours(1),
                     startAfterDate = null,
-                    startAfterTime = LocalTime.now(),
+                    startAfterTime = currentTime,
                     scheduledDate = null,
                     scheduledTime = null,
                     tagFieldState = TagFieldState.Closed,
                     tags = persistentListOf(
-                        Tag(id = 1L, name = "morning routine"),
+                        Tag(id = 1L, name = "goal"),
                         Tag(id = 2L, name = "hygiene"),
                         Tag(id = 3L, name = "low effort"),
-                        Tag(id = 3L, name = "goal"),
+                        Tag(id = 4L, name = "morning routine"),
                     ),
                     tagOptions = persistentListOf(),
                     showParentField = true,
-                    parent = ParentTask(id = 1L, name = "Brush teeth"),
+                    parent = ParentTask(
+                        id = 1L,
+                        name = "Schedule appointment with primary care physician",
+                    ),
                     changed = false,
                     userMessage = null,
                 ),

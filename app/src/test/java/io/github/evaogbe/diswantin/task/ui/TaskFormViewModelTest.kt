@@ -106,7 +106,8 @@ class TaskFormViewModelTest {
             insertTaskRecurrence(
                 TaskRecurrence(
                     taskId = task.id,
-                    start = LocalDate.parse("2024-08-22"),
+                    startDate = LocalDate.parse("2024-08-22"),
+                    endDate = LocalDate.parse("2025-08-22"),
                     type = RecurrenceType.Day,
                     step = 1,
                 )
@@ -134,7 +135,8 @@ class TaskFormViewModelTest {
                 initialName = task.name,
                 initialNote = task.note,
                 recurrence = TaskRecurrenceUiState(
-                    start = LocalDate.parse("2024-08-22"),
+                    startDate = LocalDate.parse("2024-08-22"),
+                    endDate = LocalDate.parse("2025-08-22"),
                     type = RecurrenceType.Day,
                     step = 1,
                     weekdays = persistentSetOf(),
@@ -514,7 +516,8 @@ class TaskFormViewModelTest {
             val clock = createClock()
             val locale = createLocale()
             val recurrence = TaskRecurrenceUiState(
-                start = faker.random.randomPastDate().toLocalDate(),
+                startDate = faker.random.randomPastDate().toLocalDate(),
+                endDate = null,
                 type = RecurrenceType.Day,
                 step = 1,
                 weekdays = persistentSetOf(),
@@ -940,7 +943,7 @@ class TaskFormViewModelTest {
                 db.insertTaskRecurrence(
                     TaskRecurrence(
                         taskId = task.id,
-                        start = faker.random.randomPastDate().toLocalDate(),
+                        startDate = faker.random.randomPastDate().toLocalDate(),
                         type = RecurrenceType.Day,
                         step = 1
                     )
@@ -1456,7 +1459,8 @@ class TaskFormViewModelTest {
         viewModel.updateDeadlineTime(LocalTime.parse("17:00"))
         viewModel.updateRecurrence(
             TaskRecurrenceUiState(
-                start = LocalDate.parse("2024-08-22"),
+                startDate = LocalDate.parse("2024-08-22"),
+                endDate = null,
                 type = RecurrenceType.Day,
                 step = 1,
                 weekdays = persistentSetOf(),
@@ -1481,9 +1485,10 @@ class TaskFormViewModelTest {
         assertThat(taskRecurrence).isEqualToIgnoringGivenProperties(
             TaskRecurrence(
                 taskId = task.id,
-                start = LocalDate.parse("2024-08-22"),
+                startDate = LocalDate.parse("2024-08-22"),
                 type = RecurrenceType.Day,
                 step = 1,
+                endDate = null,
             ),
             TaskRecurrence::id,
         )
@@ -1589,7 +1594,8 @@ class TaskFormViewModelTest {
         viewModel.updateScheduledTime(LocalTime.parse("17:00"))
         viewModel.updateRecurrence(
             TaskRecurrenceUiState(
-                start = LocalDate.parse("2024-08-22"),
+                startDate = LocalDate.parse("2024-08-22"),
+                endDate = LocalDate.parse("2025-08-22"),
                 type = RecurrenceType.Week,
                 step = 2,
                 weekdays = persistentSetOf(DayOfWeek.MONDAY, DayOfWeek.THURSDAY),
@@ -1617,15 +1623,17 @@ class TaskFormViewModelTest {
                 .map { it.copy(id = 0) }).containsExactly(
             TaskRecurrence(
                 taskId = task.id,
-                start = LocalDate.parse("2024-08-22"),
+                startDate = LocalDate.parse("2024-08-22"),
                 type = RecurrenceType.Week,
                 step = 2,
+                endDate = LocalDate.parse("2025-08-22"),
             ),
             TaskRecurrence(
                 taskId = task.id,
-                start = LocalDate.parse("2024-08-26"),
+                startDate = LocalDate.parse("2024-08-26"),
                 type = RecurrenceType.Week,
                 step = 2,
+                endDate = LocalDate.parse("2025-08-22"),
             ),
         )
     }

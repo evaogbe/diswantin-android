@@ -1,12 +1,13 @@
 package io.github.evaogbe.diswantin.task.ui
 
+import android.content.res.Resources
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
-import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.tooling.preview.Preview
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.RecurrenceType
@@ -15,18 +16,25 @@ import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toPersistentSet
 import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import java.util.Locale
 
 @Composable
 @ReadOnlyComposable
 fun taskRecurrenceText(recurrence: TaskRecurrenceUiState): String {
-    return when (recurrence.type) {
+    val resources = LocalResources.current
+    return resources.getTaskRecurrenceText(recurrence)
+}
+
+fun Resources.getTaskRecurrenceText(recurrence: TaskRecurrenceUiState): String {
+    val startText = when (recurrence.type) {
         RecurrenceType.Day -> {
-            pluralStringResource(R.plurals.recurrence_daily, recurrence.step, recurrence.step)
+            getQuantityString(R.plurals.recurrence_daily, recurrence.step, recurrence.step)
         }
 
         RecurrenceType.Week -> {
-            pluralStringResource(
+            getQuantityString(
                 R.plurals.recurrence_weekly,
                 recurrence.step,
                 recurrence.step,
@@ -35,41 +43,36 @@ fun taskRecurrenceText(recurrence: TaskRecurrenceUiState): String {
         }
 
         RecurrenceType.DayOfMonth -> {
-            pluralStringResource(
+            getQuantityString(
                 R.plurals.recurrence_monthly_on_day,
                 recurrence.step,
-                recurrence.start.dayOfMonth.ordinal,
                 recurrence.step,
+                recurrence.startDate.dayOfMonth.ordinal,
             )
         }
 
         RecurrenceType.WeekOfMonth -> {
-            val week = recurrence.startWeek
-            pluralStringResource(
-                when (week) {
-                    1 -> R.plurals.recurrence_monthly_on_week_1
-                    2 -> R.plurals.recurrence_monthly_on_week_2
-                    3 -> R.plurals.recurrence_monthly_on_week_3
-                    4 -> R.plurals.recurrence_monthly_on_week_4
-                    5 -> R.plurals.recurrence_monthly_on_week_5
-                    6 -> R.plurals.recurrence_monthly_on_week_6
-                    else -> {
-                        throw IllegalArgumentException(
-                            """Start week must be between 1 and 6, but got 
-                                |start: ${recurrence.start}, 
-                                |week: $week""".trimMargin()
-                        )
-                    }
-                },
+            getQuantityString(
+                R.plurals.recurrence_monthly_on_week,
                 recurrence.step,
                 recurrence.step,
+                recurrence.startWeek.ordinal,
                 recurrence.startWeekdayText,
             )
         }
 
         RecurrenceType.Year -> {
-            pluralStringResource(R.plurals.recurrence_yearly, recurrence.step, recurrence.step)
+            getQuantityString(R.plurals.recurrence_yearly, recurrence.step, recurrence.step)
         }
+    }
+    return if (recurrence.endDate == null) {
+        startText
+    } else {
+        val endText = getString(
+            R.string.recurrence_end,
+            recurrence.endDate.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT)),
+        )
+        "$startText; $endText"
     }
 }
 
@@ -91,77 +94,96 @@ private fun TaskRecurrenceTextPreview() {
     val locale = Locale.getDefault()
     val recurrences = listOf(
         TaskRecurrenceUiState(
-            start = now,
+            startDate = now,
+            endDate = null,
             type = RecurrenceType.Day,
             step = 1,
             weekdays = persistentSetOf(),
             locale = locale,
         ),
         TaskRecurrenceUiState(
-            start = now,
+            startDate = now,
+            endDate = null,
             type = RecurrenceType.Day,
             step = 2,
             weekdays = persistentSetOf(),
             locale = locale,
         ),
         TaskRecurrenceUiState(
-            start = now,
+            startDate = now,
+            endDate = now.plusYears(1),
+            type = RecurrenceType.Day,
+            step = 1,
+            weekdays = persistentSetOf(),
+            locale = locale,
+        ),
+        TaskRecurrenceUiState(
+            startDate = now,
+            endDate = null,
             type = RecurrenceType.Week,
             step = 1,
             weekdays = persistentSetOf(now.dayOfWeek),
             locale = locale,
         ),
         TaskRecurrenceUiState(
-            start = now,
+            startDate = now,
+            endDate = null,
             type = RecurrenceType.Week,
             step = 2,
             weekdays = persistentSetOf(now.dayOfWeek),
             locale = locale,
         ),
         TaskRecurrenceUiState(
-            start = now,
+            startDate = now,
+            endDate = null,
             type = RecurrenceType.Week,
             step = 1,
             weekdays = DayOfWeek.entries.toPersistentSet(),
             locale = locale,
         ),
         TaskRecurrenceUiState(
-            start = now,
+            startDate = now,
+            endDate = null,
             type = RecurrenceType.DayOfMonth,
             step = 1,
             weekdays = persistentSetOf(),
             locale = locale,
         ),
         TaskRecurrenceUiState(
-            start = now,
+            startDate = now,
+            endDate = null,
             type = RecurrenceType.DayOfMonth,
             step = 2,
             weekdays = persistentSetOf(),
             locale = locale,
         ),
         TaskRecurrenceUiState(
-            start = now,
+            startDate = now,
+            endDate = null,
             type = RecurrenceType.WeekOfMonth,
             step = 1,
             weekdays = persistentSetOf(),
             locale = locale,
         ),
         TaskRecurrenceUiState(
-            start = now,
+            startDate = now,
+            endDate = null,
             type = RecurrenceType.WeekOfMonth,
             step = 2,
             weekdays = persistentSetOf(),
             locale = locale,
         ),
         TaskRecurrenceUiState(
-            start = now,
+            startDate = now,
+            endDate = null,
             type = RecurrenceType.Year,
             step = 1,
             weekdays = persistentSetOf(),
             locale = locale,
         ),
         TaskRecurrenceUiState(
-            start = now,
+            startDate = now,
+            endDate = null,
             type = RecurrenceType.Year,
             step = 2,
             weekdays = persistentSetOf(),

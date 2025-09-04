@@ -3,14 +3,11 @@ package io.github.evaogbe.diswantin.task.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -22,6 +19,7 @@ import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
@@ -33,9 +31,6 @@ import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -60,7 +55,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.RecurrenceType
+import io.github.evaogbe.diswantin.ui.button.TextButtonWithIcon
 import io.github.evaogbe.diswantin.ui.dialog.DiswantinDatePickerDialog
+import io.github.evaogbe.diswantin.ui.dialog.SelectableDatesWithMax
+import io.github.evaogbe.diswantin.ui.dialog.SelectableDatesWithMin
+import io.github.evaogbe.diswantin.ui.form.ClearableLayout
 import io.github.evaogbe.diswantin.ui.form.EditFieldButton
 import io.github.evaogbe.diswantin.ui.form.OutlinedIntegerField
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
@@ -114,12 +113,14 @@ fun TaskRecurrentFormScreen(
     topBarActionHandled: () -> Unit,
     taskFormViewModel: TaskFormViewModel = hiltViewModel(),
 ) {
-    val uiState by taskFormViewModel.recurrenceUiStateOrDefault.collectAsStateWithLifecycle()
-    val (start, setStart) = rememberSaveable(uiState) { mutableStateOf(uiState.start) }
-    var type by rememberSaveable(uiState) { mutableStateOf(uiState.type) }
-    val (step, setStep) = rememberSaveable(uiState) { mutableIntStateOf(uiState.step) }
-    var weekdays by rememberSaveable(uiState, saver = persistentSetStateSaver()) {
-        mutableStateOf(uiState.weekdays)
+    val uiState by taskFormViewModel.recurrenceUiState.collectAsStateWithLifecycle()
+    var dirty by rememberSaveable { mutableStateOf(false) }
+    var startDate by rememberSaveable { mutableStateOf(uiState?.startDate) }
+    var endDate by rememberSaveable { mutableStateOf(uiState?.endDate) }
+    var type by rememberSaveable { mutableStateOf(uiState?.type) }
+    var step by rememberSaveable { mutableIntStateOf(uiState?.step ?: 1) }
+    var weekdays by rememberSaveable(saver = persistentSetStateSaver()) {
+        mutableStateOf(uiState?.weekdays ?: persistentSetOf())
     }
 
     LaunchedEffect(topBarAction) {
@@ -128,8 +129,9 @@ fun TaskRecurrentFormScreen(
             TaskRecurrenceFormTopBarAction.Confirm -> {
                 taskFormViewModel.updateRecurrence(
                     TaskRecurrenceUiState(
-                        start = start,
-                        type = type,
+                        startDate = startDate ?: taskFormViewModel.today,
+                        endDate = endDate,
+                        type = type ?: RecurrenceType.Day,
                         step = step,
                         weekdays = if (type == RecurrenceType.Week) weekdays else persistentSetOf(),
                         locale = taskFormViewModel.locale,
@@ -140,21 +142,61 @@ fun TaskRecurrentFormScreen(
         }
     }
 
+    LaunchedEffect(uiState) {
+        if (!dirty) {
+            startDate = uiState?.startDate
+            endDate = uiState?.endDate
+            type = uiState?.type
+            step = uiState?.step ?: 1
+            weekdays = uiState?.weekdays ?: persistentSetOf()
+        }
+    }
+
     TaskRecurrenceFormScreen(
-        start = start,
-        onStartChange = setStart,
-        type = type,
+        startDate = startDate ?: taskFormViewModel.today,
+        onStartDateChange = { value ->
+            startDate = value
+
+            if (value != uiState?.startDate) {
+                dirty = true
+            }
+        },
+        endDate = endDate,
+        onEndDateChange = { value ->
+            endDate = value
+
+            if (value != uiState?.endDate) {
+                dirty = true
+            }
+        },
+        type = type ?: RecurrenceType.Day,
         onTypeChange = { value ->
             if (value == RecurrenceType.Week && weekdays.isEmpty()) {
-                weekdays = persistentSetOf(taskFormViewModel.currentWeekday)
+                weekdays = persistentSetOf(taskFormViewModel.today.dayOfWeek)
             }
 
             type = value
+
+            if (value != uiState?.type) {
+                dirty = true
+            }
         },
         step = step,
-        onStepChange = setStep,
+        onStepChange = { value ->
+            step = value
+
+            if (value != uiState?.step) {
+                dirty = true
+            }
+        },
         weekdays = weekdays,
-        onWeekdaysChange = { weekdays = it },
+        onWeekdaysChange = { value ->
+            weekdays = value
+
+            if (value != uiState?.weekdays) {
+                dirty = true
+            }
+        },
         locale = taskFormViewModel.locale,
     )
 }
@@ -166,11 +208,19 @@ private val TypeOptions = listOf(
     R.plurals.recurrence_year to RecurrenceType.Year,
 )
 
+private val MonthOptions = listOf(RecurrenceType.DayOfMonth, RecurrenceType.WeekOfMonth)
+
+enum class RecurrenceDialogType {
+    Start, End
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskRecurrenceFormScreen(
-    start: LocalDate,
-    onStartChange: (LocalDate) -> Unit,
+    startDate: LocalDate,
+    onStartDateChange: (LocalDate) -> Unit,
+    endDate: LocalDate?,
+    onEndDateChange: (LocalDate?) -> Unit,
     type: RecurrenceType,
     onTypeChange: (RecurrenceType) -> Unit,
     step: Int,
@@ -180,10 +230,39 @@ fun TaskRecurrenceFormScreen(
     locale: Locale,
     modifier: Modifier = Modifier,
 ) {
-    var showDialog by rememberSaveable { mutableStateOf(false) }
-    val typeInput = rememberTextFieldState()
+    var dialogType by rememberSaveable { mutableStateOf<RecurrenceDialogType?>(null) }
+    val typeInput = rememberTextFieldState(
+        initialText = pluralStringResource(
+            when (type) {
+                RecurrenceType.Day -> R.plurals.recurrence_day
+                RecurrenceType.Week -> R.plurals.recurrence_week
+                RecurrenceType.DayOfMonth -> R.plurals.recurrence_month
+                RecurrenceType.WeekOfMonth -> R.plurals.recurrence_month
+                RecurrenceType.Year -> R.plurals.recurrence_year
+            },
+            step,
+        )
+    )
     var typeFieldExpanded by remember { mutableStateOf(false) }
+    val monthInput = rememberTextFieldState(
+        initialText = if (type in MonthOptions) {
+            taskRecurrenceText(
+                TaskRecurrenceUiState(
+                    startDate = startDate,
+                    endDate = null,
+                    type = type,
+                    step = 1,
+                    weekdays = persistentSetOf(),
+                    locale = locale,
+                )
+            )
+        } else {
+            ""
+        }
+    )
+    var monthFieldExpanded by remember { mutableStateOf(false) }
     val resources = LocalResources.current
+    val dateFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
 
     LaunchedEffect(resources, type, step) {
         typeInput.setTextAndPlaceCursorAtEnd(
@@ -200,6 +279,23 @@ fun TaskRecurrenceFormScreen(
         )
     }
 
+    LaunchedEffect(resources, locale, type, startDate) {
+        if (type in MonthOptions) {
+            monthInput.setTextAndPlaceCursorAtEnd(
+                resources.getTaskRecurrenceText(
+                    TaskRecurrenceUiState(
+                        startDate = startDate,
+                        endDate = null,
+                        type = type,
+                        step = 1,
+                        weekdays = persistentSetOf(),
+                        locale = locale,
+                    )
+                )
+            )
+        }
+    }
+
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         Column(
             modifier = Modifier
@@ -211,9 +307,10 @@ fun TaskRecurrenceFormScreen(
             Text(stringResource(R.string.start_date_label), style = typography.bodyLarge)
             Spacer(Modifier.size(SpaceSm))
             EditFieldButton(
-                onClick = { showDialog = true },
-                text = start.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)),
+                onClick = { dialogType = RecurrenceDialogType.Start },
+                text = startDate.format(dateFormatter),
             )
+
             Spacer(Modifier.size(SpaceMd))
             Text(stringResource(R.string.recurrence_step_label), style = typography.bodyLarge)
             Spacer(Modifier.size(SpaceSm))
@@ -255,11 +352,11 @@ fun TaskRecurrenceFormScreen(
                     }
                 }
             }
-            Spacer(Modifier.size(SpaceMd))
 
             when (type) {
                 RecurrenceType.Day -> {}
                 RecurrenceType.Week -> {
+                    Spacer(Modifier.size(SpaceMd))
                     Text(
                         stringResource(R.string.recurrence_weekday_label),
                         style = typography.bodyLarge,
@@ -306,47 +403,106 @@ fun TaskRecurrenceFormScreen(
 
                 RecurrenceType.DayOfMonth,
                 RecurrenceType.WeekOfMonth -> {
+                    Spacer(Modifier.size(SpaceMd))
                     Text(
                         stringResource(R.string.recurrence_monthly_type_label),
                         style = typography.bodyLarge,
                     )
                     Spacer(Modifier.size(SpaceSm))
-                    SingleChoiceSegmentedButtonRow(
-                        modifier = Modifier
-                            .widthIn(max = 512.dp)
-                            .fillMaxWidth()
-                            .height(intrinsicSize = IntrinsicSize.Max),
+                    ExposedDropdownMenuBox(
+                        expanded = monthFieldExpanded,
+                        onExpandedChange = { monthFieldExpanded = it },
                     ) {
-                        SegmentedButton(
-                            selected = type == RecurrenceType.DayOfMonth,
-                            onClick = { onTypeChange(RecurrenceType.DayOfMonth) },
-                            shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
-                            modifier = Modifier.fillMaxHeight(),
+                        OutlinedTextField(
+                            state = monthInput,
+                            modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
+                            readOnly = true,
+                            trailingIcon = {
+                                ExposedDropdownMenuDefaults.TrailingIcon(
+                                    expanded = monthFieldExpanded
+                                )
+                            },
+                            lineLimits = TextFieldLineLimits.SingleLine,
+                        )
+                        ExposedDropdownMenu(
+                            expanded = monthFieldExpanded,
+                            onDismissRequest = { monthFieldExpanded = false },
                         ) {
-                            Text(stringResource(R.string.recurrence_monthly_type_on_day))
-                        }
-                        SegmentedButton(
-                            selected = type == RecurrenceType.WeekOfMonth,
-                            onClick = { onTypeChange(RecurrenceType.WeekOfMonth) },
-                            shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
-                            modifier = Modifier.fillMaxHeight(),
-                        ) {
-                            Text(stringResource(R.string.recurrence_monthly_type_on_week))
+                            MonthOptions.forEach { type ->
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            text = taskRecurrenceText(
+                                                TaskRecurrenceUiState(
+                                                    startDate = startDate,
+                                                    endDate = null,
+                                                    type = type,
+                                                    step = 1,
+                                                    weekdays = persistentSetOf(),
+                                                    locale = locale,
+                                                )
+                                            )
+                                        )
+                                    },
+                                    onClick = {
+                                        onTypeChange(type)
+                                        monthFieldExpanded = false
+                                    },
+                                )
+                            }
                         }
                     }
                 }
 
                 RecurrenceType.Year -> {}
             }
+
+            Spacer(Modifier.size(SpaceMd))
+            if (endDate == null) {
+                TextButtonWithIcon(
+                    onClick = { dialogType = RecurrenceDialogType.End },
+                    painter = painterResource(R.drawable.baseline_schedule_24),
+                    text = stringResource(R.string.add_end_date_button),
+                )
+            } else {
+                Text(text = stringResource(R.string.end_date_label), style = typography.bodyLarge)
+                Spacer(Modifier.size(SpaceSm))
+                ClearableLayout(
+                    onClear = { onEndDateChange(null) },
+                    iconContentDescription = stringResource(R.string.remove_button),
+                ) {
+                    EditFieldButton(
+                        onClick = { dialogType = RecurrenceDialogType.End },
+                        text = endDate.format(dateFormatter),
+                    )
+                }
+            }
         }
     }
 
-    if (showDialog) {
-        DiswantinDatePickerDialog(
-            onDismiss = { showDialog = false },
-            date = start,
-            onSelectDate = onStartChange,
-        )
+    when (dialogType) {
+        null -> {}
+        RecurrenceDialogType.Start -> {
+            DiswantinDatePickerDialog(
+                onDismiss = { dialogType = null },
+                date = startDate,
+                onSelectDate = onStartDateChange,
+                selectableDates = if (endDate == null) {
+                    DatePickerDefaults.AllDates
+                } else {
+                    SelectableDatesWithMax(endDate)
+                },
+            )
+        }
+
+        RecurrenceDialogType.End -> {
+            DiswantinDatePickerDialog(
+                onDismiss = { dialogType = null },
+                date = endDate,
+                onSelectDate = onEndDateChange,
+                selectableDates = SelectableDatesWithMin(startDate)
+            )
+        }
     }
 }
 
@@ -359,12 +515,16 @@ private fun <T> persistentSetStateSaver() = listSaver<MutableState<PersistentSet
 @Composable
 private fun TaskRecurrenceFormScreenPreview_Daily() {
     DiswantinTheme {
-        Scaffold(topBar = {
-            TaskRecurrenceFormTopBar(onClose = {}, onConfirm = {})
-        }) { innerPadding ->
+        Scaffold(
+            topBar = {
+                TaskRecurrenceFormTopBar(onClose = {}, onConfirm = {})
+            },
+        ) { innerPadding ->
             TaskRecurrenceFormScreen(
-                start = LocalDate.now(),
-                onStartChange = {},
+                startDate = LocalDate.now(),
+                onStartDateChange = {},
+                endDate = null,
+                onEndDateChange = {},
                 type = RecurrenceType.Day,
                 onTypeChange = {},
                 step = 1,
@@ -382,12 +542,16 @@ private fun TaskRecurrenceFormScreenPreview_Daily() {
 @Composable
 private fun TaskRecurrenceFormScreenPreview_Weekly() {
     DiswantinTheme {
-        Scaffold(topBar = {
-            TaskRecurrenceFormTopBar(onClose = {}, onConfirm = {})
-        }) { innerPadding ->
+        Scaffold(
+            topBar = {
+                TaskRecurrenceFormTopBar(onClose = {}, onConfirm = {})
+            },
+        ) { innerPadding ->
             TaskRecurrenceFormScreen(
-                start = LocalDate.now(),
-                onStartChange = {},
+                startDate = LocalDate.now(),
+                onStartDateChange = {},
+                endDate = null,
+                onEndDateChange = {},
                 type = RecurrenceType.Week,
                 onTypeChange = {},
                 step = 10,
@@ -401,20 +565,53 @@ private fun TaskRecurrenceFormScreenPreview_Weekly() {
     }
 }
 
-
 @DevicePreviews
 @Composable
 private fun TaskRecurrenceFormScreenPreview_MonthlyOnDay() {
     DiswantinTheme {
-        Scaffold(topBar = {
-            TaskRecurrenceFormTopBar(onClose = {}, onConfirm = {})
-        }) { innerPadding ->
+        Scaffold(
+            topBar = {
+                TaskRecurrenceFormTopBar(onClose = {}, onConfirm = {})
+            },
+        ) { innerPadding ->
             TaskRecurrenceFormScreen(
-                start = LocalDate.now(),
-                onStartChange = {},
+                startDate = LocalDate.now(),
+                onStartDateChange = {},
+                endDate = null,
+                onEndDateChange = {},
                 type = RecurrenceType.DayOfMonth,
                 onTypeChange = {},
                 step = 2,
+                onStepChange = {},
+                weekdays = persistentSetOf(),
+                onWeekdaysChange = {},
+                locale = Locale.getDefault(),
+                modifier = Modifier.padding(innerPadding),
+            )
+        }
+    }
+}
+
+
+@DevicePreviews
+@Composable
+private fun TaskRecurrenceFormScreenPreview_MonthlyOnWeek() {
+    val startDate = LocalDate.now()
+
+    DiswantinTheme {
+        Scaffold(
+            topBar = {
+                TaskRecurrenceFormTopBar(onClose = {}, onConfirm = {})
+            },
+        ) { innerPadding ->
+            TaskRecurrenceFormScreen(
+                startDate = startDate,
+                onStartDateChange = {},
+                endDate = startDate.plusYears(1),
+                onEndDateChange = {},
+                type = RecurrenceType.WeekOfMonth,
+                onTypeChange = {},
+                step = 1,
                 onStepChange = {},
                 weekdays = persistentSetOf(),
                 onWeekdaysChange = {},

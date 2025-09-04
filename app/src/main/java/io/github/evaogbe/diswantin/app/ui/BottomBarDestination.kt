@@ -13,9 +13,20 @@ enum class BottomBarDestination(
     val route: BottomBarRoute,
     @param:StringRes val titleId: Int,
     @param:DrawableRes val iconId: Int,
+    val restoreState: Boolean,
 ) {
-    CurrentTask(CurrentTaskRoute, R.string.current_task_title, R.drawable.baseline_task_alt_24),
-    Advice(AdviceRoute, R.string.advice_title, R.drawable.psychiatry_24px),
-    Search(TaskSearchRoute, R.string.task_search_title_bottom_bar, R.drawable.outline_search_24),
-    TagList(TagListRoute, R.string.tag_list_title, R.drawable.baseline_label_24);
+    CurrentTask(
+        CurrentTaskRoute,
+        R.string.current_task_title,
+        R.drawable.baseline_task_alt_24,
+        true
+    ),
+    Advice(AdviceRoute, R.string.advice_title, R.drawable.psychiatry_24px, true),
+    Search(
+        TaskSearchRoute,
+        R.string.task_search_title_bottom_bar,
+        R.drawable.outline_search_24,
+        false
+    ),
+    TagList(TagListRoute, R.string.tag_list_title, R.drawable.baseline_label_24, true)
 }

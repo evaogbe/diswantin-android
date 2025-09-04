@@ -4,6 +4,7 @@
     <string name="add_button">Add</string>
     <string name="add_deadline_date_button">Add deadline date</string>
     <string name="add_deadline_time_button">Add deadline time</string>
+    <string name="add_end_date_button">Add end date</string>
     <string name="add_parent_task_button">Add previous to-do</string>
     <string name="add_recurrence_button">Does not repeat</string>
     <string name="add_scheduled_at_button">Schedule</string>
@@ -77,6 +78,7 @@
     <string name="current_task_title">To do now</string>
     <string name="current_task_view_details_button">Details</string>
     <string name="edit_button">Edit</string>
+    <string name="end_date_label">End date</string>
     <string name="delete_button">Delete</string>
     <string name="deadline_label">Deadline</string>
     <string name="deadline_date_label">Deadline date</string>
@@ -93,6 +95,7 @@
     <string name="parent_task_label">Previous to-do</string>
     <string name="recurrence_chip_label_unselected">Repeats on</string>
     <string name="recurrence_chip_label_selected">Repeats: %1$s</string>
+    <string name="recurrence_end">until %1$s</string>
     <plurals name="recurrence_daily">
         <item quantity="one">Daily</item>
         <item quantity="other">Every %1$d days</item>
@@ -107,32 +110,12 @@
         <item quantity="other">months</item>
     </plurals>
     <plurals name="recurrence_monthly_on_day">
-        <item quantity="one">Monthly on the %1$s</item>
-        <item quantity="other">Every %2$d months on the %1$s</item>
+        <item quantity="one">Monthly on the %2$s</item>
+        <item quantity="other">Every %1$d months on the %2$s</item>
     </plurals>
-    <plurals name="recurrence_monthly_on_week_1">
-        <item quantity="one">Monthly on the first %2$s</item>
-        <item quantity="other">Every %1$d months on the first %2$s</item>
-    </plurals>
-    <plurals name="recurrence_monthly_on_week_2">
-        <item quantity="one">Monthly on the second %2$s</item>
-        <item quantity="other">Every %1$d months on the second %2$s</item>
-    </plurals>
-    <plurals name="recurrence_monthly_on_week_3">
-        <item quantity="one">Monthly on the third %2$s</item>
-        <item quantity="other">Every %1$d months on the third %2$s</item>
-    </plurals>
-    <plurals name="recurrence_monthly_on_week_4">
-        <item quantity="one">Monthly on the fourth %2$s</item>
-        <item quantity="other">Every %1$d months on the fourth %2$s</item>
-    </plurals>
-    <plurals name="recurrence_monthly_on_week_5">
-        <item quantity="one">Monthly on the fifth %2$s</item>
-        <item quantity="other">Every %1$d months on the fifth %2$s</item>
-    </plurals>
-    <plurals name="recurrence_monthly_on_week_6">
-        <item quantity="one">Monthly on the sixth %2$s</item>
-        <item quantity="other">Every %1$d months on the sixth %2$s</item>
+    <plurals name="recurrence_monthly_on_week">
+        <item quantity="one">Monthly on the %2$s %3$s</item>
+        <item quantity="other">Every %1$d months on the %2$s %3$s</item>
     </plurals>
     <string name="recurrence_monthly_type_label">Repeats on</string>
     <string name="recurrence_monthly_type_on_day">Day of month</string>
@@ -164,7 +147,6 @@
     <string name="scheduled_date_label">Scheduled date</string>
     <string name="scheduled_chip_label">Scheduled: %1$s-%2$s</string>
     <string name="scheduled_time_label">Scheduled time</string>
-    <string name="search_tasks_button">Search to-dos</string>
     <string name="search_tag_options_error">Something went wrong searching for tags</string>
     <string name="skip_button">Skip</string>
     <string name="skip_sheet_confirm_button">Other</string>

@@ -158,7 +158,7 @@ fun DiswantinApp() {
                                 saveState = true
                             }
                             launchSingleTop = true
-                            restoreState = true
+                            restoreState = it.restoreState
                         }
                     },
                 )
