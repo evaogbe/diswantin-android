@@ -118,8 +118,6 @@
         <item quantity="other">Every %1$d months on the %2$s %3$s</item>
     </plurals>
     <string name="recurrence_monthly_type_label">Repeats on</string>
-    <string name="recurrence_monthly_type_on_day">Day of month</string>
-    <string name="recurrence_monthly_type_on_week">Week of month</string>
     <string name="recurrence_step_label">Every</string>
     <plurals name="recurrence_week">
         <item quantity="one">week</item>
