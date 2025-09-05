@@ -97,7 +97,7 @@ class TaskFormViewModelTest {
             startAfterTime = LocalTime.parse("17:00"),
         )
         val parentTask = genTask(id = 2L)
-        val tag = Tag(id = 1L, name = loremFaker.lorem.words())
+        val tag = genTag()
         val clock = createClock()
         val locale = createLocale()
         val db = FakeDatabase().apply {
@@ -477,7 +477,7 @@ class TaskFormViewModelTest {
     @Test
     fun `uiState emits changed when new form and tag changed`() =
         runTest(mainDispatcherRule.testDispatcher) {
-            val tag = Tag(id = 1L, name = loremFaker.lorem.words())
+            val tag = genTag()
             val viewModel = createTaskFormViewModelForNew({ db ->
                 db.insertTag(tag)
             })
@@ -900,7 +900,7 @@ class TaskFormViewModelTest {
     fun `uiState emits changed when edit form and tag changed`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val task = genTask()
-            val tag = Tag(id = 1L, name = loremFaker.lorem.words())
+            val tag = genTag()
             val viewModel = createTaskFormViewModelForEdit({ db ->
                 db.insertTask(task)
                 db.insertTag(tag, setOf(task.id))
@@ -1164,7 +1164,7 @@ class TaskFormViewModelTest {
 
     @Test
     fun `uiState shows tag field when has tags`() = runTest(mainDispatcherRule.testDispatcher) {
-        val tag = Tag(name = loremFaker.lorem.words())
+        val tag = genTag()
         val viewModel = createTaskFormViewModelForNew({ db ->
             db.insertTag(tag)
         })
@@ -1229,7 +1229,7 @@ class TaskFormViewModelTest {
     @Test
     fun `uiState hides tag field when query has tags fails`() =
         runTest(mainDispatcherRule.testDispatcher) {
-            val tag = Tag(name = loremFaker.lorem.words())
+            val tag = genTag()
             val viewModel = createTaskFormViewModelForNew(
                 initDatabase = { db -> db.insertTag(tag) },
                 initTagRepositorySpy = { repository ->
@@ -1269,7 +1269,7 @@ class TaskFormViewModelTest {
     fun `uiState hides tag field when fetch existing tags fails`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val task = genTask()
-            val tag = Tag(name = loremFaker.lorem.words())
+            val tag = genTag()
             val viewModel = createTaskFormViewModelForEdit(
                 initDatabase = { db ->
                     db.insertTask(task)
@@ -1312,7 +1312,13 @@ class TaskFormViewModelTest {
     fun `searchTags fetches tagOptions`() = runTest(mainDispatcherRule.testDispatcher) {
         val query = loremFaker.verbs.base()
         val tags = List(faker.random.nextInt(min = 2, max = 5)) {
-            Tag(id = it + 1L, name = faker.string.unique.regexify("""$query \w+"""))
+            val createdAt = faker.random.randomPastDate().toInstant()
+            Tag(
+                id = it + 1L,
+                name = faker.string.unique.regexify("""$query \w+"""),
+                createdAt = createdAt,
+                updatedAt = createdAt,
+            )
         }
         val viewModel = createTaskFormViewModelForNew({ db ->
             tags.forEach(db::insertTag)
@@ -1374,7 +1380,12 @@ class TaskFormViewModelTest {
     fun `searchTags shows error message when repository throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val query = loremFaker.verbs.base()
-            val tag = Tag(name = faker.string.regexify("""$query \w+"""))
+            val tagCreatedAt = faker.random.randomPastDate().toInstant()
+            val tag = Tag(
+                name = faker.string.regexify("""$query \w+"""),
+                createdAt = tagCreatedAt,
+                updatedAt = tagCreatedAt,
+            )
             val viewModel = createTaskFormViewModelForNew(
                 initDatabase = { db -> db.insertTag(tag) },
                 initTagRepositorySpy = { repository ->
@@ -1415,8 +1426,8 @@ class TaskFormViewModelTest {
     @Test
     fun `saveTask creates task without taskId`() = runTest(mainDispatcherRule.testDispatcher) {
         val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
-        val clock =
-            Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
+        val now = Instant.parse("2024-08-22T08:00:00Z")
+        val clock = Clock.fixed(now, ZoneId.of("America/New_York"))
         val locale = createLocale()
         val db = FakeDatabase()
         val taskRepository = FakeTaskRepository(db, clock)
@@ -1475,10 +1486,11 @@ class TaskFormViewModelTest {
         val taskRecurrence = taskRepository.getTaskRecurrencesByTaskId(task.id).first().single()
         assertThat(task).isEqualToIgnoringGivenProperties(
             Task(
-                createdAt = Instant.parse("2024-08-22T08:00:00Z"),
+                createdAt = now,
                 name = name,
                 deadlineDate = null,
                 deadlineTime = LocalTime.parse("17:00"),
+                updatedAt = now,
             ),
             Task::id,
         )
@@ -1537,7 +1549,8 @@ class TaskFormViewModelTest {
     @Test
     fun `saveTask updates task with taskId`() = runTest(mainDispatcherRule.testDispatcher) {
         val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
-        val clock = createClock()
+        val clock =
+            Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
         val locale = createLocale()
         val task = genTask().copy(
             deadlineDate = LocalDate.parse("2024-08-23"),
@@ -1545,7 +1558,7 @@ class TaskFormViewModelTest {
             startAfterDate = LocalDate.parse("2024-08-22"),
             startAfterTime = LocalTime.parse("21:00"),
         )
-        val tag = Tag(id = 1L, name = loremFaker.lorem.words())
+        val tag = genTag()
         val db = FakeDatabase().apply {
             insertTask(task)
             insertTag(tag)
@@ -1615,6 +1628,7 @@ class TaskFormViewModelTest {
                 startAfterTime = null,
                 scheduledDate = null,
                 scheduledTime = LocalTime.parse("17:00"),
+                updatedAt = Instant.parse("2024-08-22T08:00:00Z"),
             )
         )
         assertThat(tagRepository.getTagsByTaskId(task.id, 2).first()).containsExactly(tag)
@@ -1685,7 +1699,8 @@ class TaskFormViewModelTest {
             val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
             val task = genTask()
             val parentTask = genTask(id = 2L)
-            val clock = createClock()
+            val clock =
+                Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
             val db = FakeDatabase().apply {
                 insertTask(task)
                 insertTask(parentTask)
@@ -1732,7 +1747,7 @@ class TaskFormViewModelTest {
             viewModel.saveTask()
 
             assertThat(taskRepository.tasks).containsExactlyInAnyOrder(
-                task.copy(name = name),
+                task.copy(name = name, updatedAt = Instant.parse("2024-08-22T08:00:00Z")),
                 parentTask,
             )
             assertThat(taskRepository.getParent(task.id).first()).isEqualTo(parentTask)
@@ -1744,7 +1759,8 @@ class TaskFormViewModelTest {
             val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
             val task = genTask()
             val parentTask = genTask(id = 2L)
-            val clock = createClock()
+            val clock =
+                Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
             val db = FakeDatabase().apply {
                 insertTask(task)
                 insertTask(parentTask)
@@ -1793,7 +1809,7 @@ class TaskFormViewModelTest {
             viewModel.saveTask()
 
             assertThat(taskRepository.tasks).containsExactlyInAnyOrder(
-                task.copy(name = name),
+                task.copy(name = name, updatedAt = Instant.parse("2024-08-22T08:00:00Z")),
                 parentTask,
             )
             assertThat(FakeTaskRepository(db).getParent(task.id).first()).isEqualTo(parentTask)
@@ -1804,8 +1820,9 @@ class TaskFormViewModelTest {
         runTest(mainDispatcherRule.testDispatcher) {
             val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
             val task = genTask()
-            val tag = Tag(id = 1L, name = loremFaker.lorem.words())
-            val clock = createClock()
+            val tag = genTag()
+            val clock =
+                Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
             val db = FakeDatabase().apply {
                 insertTask(task)
                 insertTag(tag, setOf(task.id))
@@ -1853,7 +1870,7 @@ class TaskFormViewModelTest {
             viewModel.saveTask()
 
             assertThat(taskRepository.tasks).containsExactlyInAnyOrder(
-                task.copy(name = name)
+                task.copy(name = name, updatedAt = Instant.parse("2024-08-22T08:00:00Z"))
             )
             assertThat(tagRepository.getTagsByTaskId(task.id, 2).first()).containsExactly(tag)
         }
@@ -1863,8 +1880,9 @@ class TaskFormViewModelTest {
         runTest(mainDispatcherRule.testDispatcher) {
             val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
             val task = genTask()
-            val tag = Tag(id = 1L, name = loremFaker.lorem.words())
-            val clock = createClock()
+            val tag = genTag()
+            val clock =
+                Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
             val db = FakeDatabase().apply {
                 insertTask(task)
                 insertTag(tag, setOf(task.id))
@@ -1912,17 +1930,31 @@ class TaskFormViewModelTest {
             viewModel.saveTask()
 
             assertThat(taskRepository.tasks).containsExactlyInAnyOrder(
-                task.copy(name = name)
+                task.copy(name = name, updatedAt = Instant.parse("2024-08-22T08:00:00Z"))
             )
             assertThat(tagRepository.taskTags.single { it.taskId == task.id }).prop(TaskTag::tagId)
                 .isEqualTo(tag.id)
         }
 
-    private fun genTask(id: Long = 1L) = Task(
-        id = id,
-        createdAt = faker.random.randomPastDate().toInstant(),
-        name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-    )
+    private fun genTask(id: Long = 1L): Task {
+        val createdAt = faker.random.randomPastDate().toInstant()
+        return Task(
+            id = id,
+            createdAt = createdAt,
+            name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+            updatedAt = createdAt,
+        )
+    }
+
+    private fun genTag(): Tag {
+        val createdAt = faker.random.randomPastDate().toInstant()
+        return Tag(
+            id = 1L,
+            name = loremFaker.lorem.words(),
+            createdAt = createdAt,
+            updatedAt = createdAt,
+        )
+    }
 
     private fun createSavedStateHandleForNew(): SavedStateHandle {
         mockkStatic("androidx.navigation.SavedStateHandleKt")

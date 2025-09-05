@@ -41,7 +41,7 @@ class CurrentTaskScreenTest {
 
     @Test
     fun displaysCurrentTaskName_withCurrentTask() {
-        val task = genTasks(1).single()
+        val task = genTasks().first()
         val viewModel = createCurrentTaskViewModel({ db ->
             db.insertTask(task)
         })
@@ -89,7 +89,7 @@ class CurrentTaskScreenTest {
 
     @Test
     fun displayErrorMessage_withFailureUi() {
-        val task = genTasks(1).single()
+        val task = genTasks().first()
         val viewModel = createCurrentTaskViewModel(
             initDatabase = { db -> db.insertTask(task) },
             initTaskRepositorySpy = { repository ->
@@ -147,7 +147,7 @@ class CurrentTaskScreenTest {
     fun displaysNextTaskName_whenClickSkip() {
         val clock =
             Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
-        val (task1, task2) = genTasks(2)
+        val (task1, task2) = genTasks().take(2).toList()
         val db = FakeDatabase().apply {
             insertTask(task1)
             insertTask(task2)
@@ -189,7 +189,7 @@ class CurrentTaskScreenTest {
         var snackbarState: SnackbarState? = null
         val clock =
             Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
-        val task = genTasks(1).single()
+        val task = genTasks().first()
         val db = FakeDatabase().apply {
             insertTask(task)
             insertTaskRecurrence(
@@ -231,7 +231,7 @@ class CurrentTaskScreenTest {
 
     @Test
     fun displaysNextTaskName_whenClickMarkDone() {
-        val (task1, task2) = genTasks(2)
+        val (task1, task2) = genTasks().take(2).toList()
         val viewModel = createCurrentTaskViewModel({ db ->
             db.insertTask(task1)
             db.insertTask(task2)
@@ -263,7 +263,7 @@ class CurrentTaskScreenTest {
     @Test
     fun displaysErrorMessage_whenMarkDoneFails() {
         var snackbarState: SnackbarState? = null
-        val task = genTasks(1).single()
+        val task = genTasks().first()
         val viewModel = createCurrentTaskViewModel(
             initDatabase = { db -> db.insertTask(task) },
             initTaskRepositorySpy = { repository ->
@@ -294,19 +294,26 @@ class CurrentTaskScreenTest {
         }
     }
 
-    private fun genTasks(count: Int) = generateSequence(
-        Task(
-            id = 1L,
-            createdAt = faker.random.randomPastDate().toInstant(),
-            name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
-        )
-    ) {
-        Task(
-            id = it.id + 1L,
-            createdAt = faker.random.randomPastDate(min = it.createdAt.plusMillis(1)).toInstant(),
-            name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
-        )
-    }.take(count).toList()
+    private fun genTasks(): Sequence<Task> {
+        val initialCreatedAt = faker.random.randomPastDate().toInstant()
+        return generateSequence(
+            Task(
+                id = 1L,
+                createdAt = initialCreatedAt,
+                name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                updatedAt = initialCreatedAt,
+            )
+        ) {
+            val nextCreatedAt =
+                faker.random.randomPastDate(min = it.createdAt.plusMillis(1)).toInstant()
+            Task(
+                id = it.id + 1L,
+                createdAt = nextCreatedAt,
+                name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                updatedAt = nextCreatedAt,
+            )
+        }
+    }
 
     private fun createClock() =
         Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))

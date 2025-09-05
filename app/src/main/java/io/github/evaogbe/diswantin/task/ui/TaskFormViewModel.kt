@@ -45,6 +45,7 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.time.Clock
 import java.time.DayOfWeek
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 import java.util.Locale
@@ -440,6 +441,7 @@ class TaskFormViewModel @Inject constructor(
                 )
             }
         }
+        val now = Instant.now(clock)
 
         if (isNew) {
             val form = NewTaskForm(
@@ -454,7 +456,7 @@ class TaskFormViewModel @Inject constructor(
                 tagIds = state.tags.map { it.id }.toSet(),
                 recurrences = recurrences,
                 parentTaskId = state.parent?.id,
-                clock = clock,
+                now = now,
             )
             viewModelScope.launch {
                 try {
@@ -513,6 +515,7 @@ class TaskFormViewModel @Inject constructor(
                                 state.parent == null -> PathUpdateType.Remove
                                 else -> PathUpdateType.Replace(state.parent.id)
                             },
+                            now = now,
                             existingTask = existingTask,
                             existingTagIds = existingTagIds,
                             existingRecurrences = existingRecurrences,

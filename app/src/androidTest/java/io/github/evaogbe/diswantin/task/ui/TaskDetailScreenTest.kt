@@ -299,11 +299,15 @@ class TaskDetailScreenTest {
         }
     }
 
-    private fun genTask() = Task(
-        id = 1L,
-        createdAt = faker.random.randomPastDate().toInstant(),
-        name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
-    )
+    private fun genTask(): Task {
+        val createdAt = faker.random.randomPastDate().toInstant()
+        return Task(
+            id = 1L,
+            createdAt = createdAt,
+            name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+            updatedAt = createdAt,
+        )
+    }
 
     private fun createSavedStateHandle() = SavedStateHandle(mapOf("id" to 1L))
 

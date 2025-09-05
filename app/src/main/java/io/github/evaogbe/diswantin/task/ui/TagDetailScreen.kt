@@ -52,6 +52,7 @@ import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.evaogbe.diswantin.ui.theme.ScreenLg
 import io.github.evaogbe.diswantin.ui.theme.SpaceMd
 import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
+import java.time.Instant
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -302,7 +303,11 @@ private fun TagDetailScreenPreview() {
         }) { innerPadding ->
             TagDetailLayout(
                 uiState = TagDetailUiState.Success(
-                    tag = Tag(name = "Morning Routine"),
+                    tag = Tag(
+                        name = "Morning Routine",
+                        createdAt = Instant.now(),
+                        updatedAt = Instant.now(),
+                    ),
                     userMessage = null,
                 ),
                 taskItems = {

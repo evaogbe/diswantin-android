@@ -49,10 +49,12 @@ class TaskSearchScreenTest {
         val query = loremFaker.verbs.base()
         val queryFlow = MutableStateFlow(query)
         val tasks = List(3) {
+            val createdAt = faker.random.randomPastDate().toInstant()
             Task(
                 id = it + 1L,
-                createdAt = faker.random.randomPastDate().toInstant(),
+                createdAt = createdAt,
                 name = "$query ${loremFaker.lorem.unique.words()}",
+                updatedAt = createdAt,
             )
         }
         val viewModel = createTaskSearchViewModel({ db ->
@@ -92,10 +94,12 @@ class TaskSearchScreenTest {
         val query = loremFaker.verbs.base()
         val queryFlow = MutableStateFlow(query)
         val tasks = List(3) {
+            val createdAt = faker.random.randomPastDate().toInstant()
             Task(
                 id = it + 1L,
-                createdAt = faker.random.randomPastDate().toInstant(),
+                createdAt = createdAt,
                 name = "$query ${loremFaker.lorem.unique.words()}",
+                updatedAt = createdAt,
             )
         }
         val viewModel = createTaskSearchViewModel(

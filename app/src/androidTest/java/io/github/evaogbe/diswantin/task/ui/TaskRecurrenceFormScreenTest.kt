@@ -89,11 +89,15 @@ class TaskRecurrenceFormScreenTest {
         composeTestRule.onNodeWithText("months").assertIsDisplayed()
     }
 
-    private fun genTask(id: Long = 1L) = Task(
-        id = id,
-        createdAt = faker.random.randomPastDate().toInstant(),
-        name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
-    )
+    private fun genTask(id: Long = 1L): Task {
+        val createdAt = faker.random.randomPastDate().toInstant()
+        return Task(
+            id = id,
+            createdAt = createdAt,
+            name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+            updatedAt = createdAt,
+        )
+    }
 
     private fun createSavedStateHandleForNew() =
         SavedStateHandle(mapOf("id" to null, "name" to null))

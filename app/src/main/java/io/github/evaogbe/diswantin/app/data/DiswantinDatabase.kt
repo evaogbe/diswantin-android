@@ -34,7 +34,7 @@ import java.time.temporal.WeekFields
 import java.util.Locale
 
 @Database(
-    version = 35,
+    version = 37,
     entities = [
         Task::class,
         TaskFts::class,
@@ -70,6 +70,7 @@ import java.util.Locale
         AutoMigration(from = 31, to = 32, spec = DiswantinDatabase.Migration31to32::class),
         AutoMigration(from = 33, to = 34, spec = DiswantinDatabase.Migration33to34::class),
         AutoMigration(from = 34, to = 35, spec = DiswantinDatabase.Migration34to35::class),
+        AutoMigration(from = 36, to = 37),
     ]
 )
 @TypeConverters(Converters::class)
@@ -376,6 +377,21 @@ abstract class DiswantinDatabase : RoomDatabase() {
             }
         }
 
+        fun getMigration35to36(now: Instant = Instant.now()) = object : Migration(35, 36) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `task` ADD COLUMN `updated_at` INTEGER")
+                db.execSQL("UPDATE `task` SET `updated_at` = `created_at`")
+
+                db.execSQL("ALTER TABLE `tag` ADD COLUMN `created_at` INTEGER")
+                db.execSQL("ALTER TABLE `tag` ADD COLUMN `updated_at` INTEGER")
+                db.execSQL(
+                    """UPDATE `tag`
+                        SET `created_at` = ${now.toEpochMilli()},
+                            `updated_at` = ${now.toEpochMilli()}"""
+                )
+            }
+        }
+
         fun createDatabase(context: Context) = Room.databaseBuilder(
             context.applicationContext,
             DiswantinDatabase::class.java,
@@ -392,6 +408,7 @@ abstract class DiswantinDatabase : RoomDatabase() {
             MIGRATION_26_27,
             MIGRATION_27_28,
             MIGRATION_32_33,
+            getMigration35to36(),
         ).build()
     }
 }

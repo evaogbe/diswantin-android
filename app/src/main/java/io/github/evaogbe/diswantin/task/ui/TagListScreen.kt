@@ -59,6 +59,7 @@ import io.github.evaogbe.diswantin.ui.theme.SpaceLg
 import io.github.evaogbe.diswantin.ui.theme.SpaceXl
 import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
 import kotlinx.coroutines.flow.flowOf
+import java.time.Instant
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -204,9 +205,24 @@ fun EmptyTagListLayout(onAddTag: () -> Unit, modifier: Modifier = Modifier) {
 @Composable
 private fun TagListScreenPreview_Present() {
     val tagItems = listOf(
-        Tag(id = 1L, name = "Morning routine"),
-        Tag(id = 2L, name = "Work"),
-        Tag(id = 3L, name = "Bedtime routine"),
+        Tag(
+            id = 1L,
+            name = "Morning routine",
+            createdAt = Instant.now(),
+            updatedAt = Instant.now(),
+        ),
+        Tag(
+            id = 2L,
+            name = "Work",
+            createdAt = Instant.now(),
+            updatedAt = Instant.now(),
+        ),
+        Tag(
+            id = 3L,
+            name = "Bedtime routine",
+            createdAt = Instant.now(),
+            updatedAt = Instant.now(),
+        ),
     )
 
     DiswantinTheme {
@@ -243,9 +259,24 @@ private fun TagListLayout_Loading() {
     val tagItems = flowOf(
         PagingData.from(
             listOf(
-                Tag(id = 1L, name = "Morning routine"),
-                Tag(id = 2L, name = "Work"),
-                Tag(id = 3L, name = "Bedtime routine"),
+                Tag(
+                    id = 1L,
+                    name = "Morning routine",
+                    createdAt = Instant.now(),
+                    updatedAt = Instant.now(),
+                ),
+                Tag(
+                    id = 2L,
+                    name = "Work",
+                    createdAt = Instant.now(),
+                    updatedAt = Instant.now(),
+                ),
+                Tag(
+                    id = 3L,
+                    name = "Bedtime routine",
+                    createdAt = Instant.now(),
+                    updatedAt = Instant.now(),
+                ),
             ),
             LoadStates(
                 refresh = LoadState.NotLoading(endOfPaginationReached = false),
@@ -268,9 +299,24 @@ private fun TagListLayout_Error() {
     val tagItems = flowOf(
         PagingData.from(
             listOf(
-                Tag(id = 1L, name = "Morning routine"),
-                Tag(id = 2L, name = "Work"),
-                Tag(id = 3L, name = "Bedtime routine"),
+                Tag(
+                    id = 1L,
+                    name = "Morning routine",
+                    createdAt = Instant.now(),
+                    updatedAt = Instant.now(),
+                ),
+                Tag(
+                    id = 2L,
+                    name = "Work",
+                    createdAt = Instant.now(),
+                    updatedAt = Instant.now(),
+                ),
+                Tag(
+                    id = 3L,
+                    name = "Bedtime routine",
+                    createdAt = Instant.now(),
+                    updatedAt = Instant.now(),
+                ),
             ),
             LoadStates(
                 refresh = LoadState.NotLoading(endOfPaginationReached = false),
