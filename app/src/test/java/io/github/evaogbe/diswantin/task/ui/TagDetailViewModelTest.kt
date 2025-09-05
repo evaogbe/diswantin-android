@@ -6,7 +6,6 @@ import androidx.paging.testing.asSnapshot
 import assertk.assertThat
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
-import assertk.assertions.isEqualToIgnoringGivenProperties
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isNotNull
 import assertk.assertions.prop
@@ -36,6 +35,8 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
 import java.time.Clock
+import java.time.Instant
+import java.time.ZoneId
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TagDetailViewModelTest {
@@ -124,7 +125,8 @@ class TagDetailViewModelTest {
     fun `saveTag updates tag`() = runTest(mainDispatcherRule.testDispatcher) {
         val name = loremFaker.lorem.words()
         val tag = genTag()
-        val clock = createClock()
+        val now = Instant.parse("2024-08-23T17:00:00Z")
+        val clock = Clock.fixed(now, ZoneId.of("America/New_York"))
         val db = FakeDatabase().apply {
             insertTag(tag = tag)
         }
@@ -158,12 +160,13 @@ class TagDetailViewModelTest {
         val updatedTag = tagRepository.getById(tag.id).first()
         assertThat(viewModel.uiState.value).isEqualTo(
             TagDetailUiState.Success(
-                tag = tag.copy(name = name),
+                tag = tag.copy(name = name, updatedAt = now),
                 userMessage = null,
             )
         )
-        assertThat(updatedTag).isNotNull()
-            .isEqualToIgnoringGivenProperties(Tag(name = name), Tag::id)
+        assertThat(updatedTag).isNotNull().isEqualTo(
+            Tag(id = tag.id, name = name, createdAt = tag.createdAt, updatedAt = now),
+        )
     }
 
     @Test
@@ -293,21 +296,35 @@ class TagDetailViewModelTest {
     private fun Task.toTaskSummaryUiState() =
         TaskSummaryUiState(id = id, name = name, isDone = false)
 
-    private fun genTag() = Tag(id = 1L, name = loremFaker.lorem.words())
-
-    private fun genTasks() = generateSequence(
-        Task(
+    private fun genTag(): Tag {
+        val createdAt = faker.random.randomPastDate().toInstant()
+        return Tag(
             id = 1L,
-            createdAt = faker.random.randomPastDate().toInstant(),
-            name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+            name = loremFaker.lorem.words(),
+            createdAt = createdAt,
+            updatedAt = createdAt,
         )
-    ) {
-        Task(
-            id = it.id + 1L,
-            createdAt = faker.random.randomPastDate(min = it.createdAt).toInstant(),
-            name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-        )
-    }.take(faker.random.nextInt(bound = 5)).toList()
+    }
+
+    private fun genTasks(): List<Task> {
+        val initialCreatedAt = faker.random.randomPastDate().toInstant()
+        return generateSequence(
+            Task(
+                id = 1L,
+                createdAt = initialCreatedAt,
+                name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                updatedAt = initialCreatedAt,
+            )
+        ) {
+            val nextCreatedAt = faker.random.randomPastDate(min = it.createdAt).toInstant()
+            Task(
+                id = it.id + 1L,
+                createdAt = nextCreatedAt,
+                name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                updatedAt = nextCreatedAt,
+            )
+        }.take(faker.random.nextInt(bound = 5)).toList()
+    }
 
     private fun createSavedStateHandle(): SavedStateHandle {
         mockkStatic("androidx.navigation.SavedStateHandleKt")

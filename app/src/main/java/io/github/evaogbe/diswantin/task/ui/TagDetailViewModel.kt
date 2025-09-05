@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.time.Clock
+import java.time.Instant
 import java.time.LocalTime
 import java.time.ZonedDateTime
 import javax.inject.Inject
@@ -35,7 +36,7 @@ class TagDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val tagRepository: TagRepository,
     taskRepository: TaskRepository,
-    clock: Clock,
+    private val clock: Clock,
 ) : ViewModel() {
     private val tagId = savedStateHandle.toRoute<TagDetailRoute>().id
 
@@ -99,6 +100,7 @@ class TagDetailViewModel @Inject constructor(
                 tagRepository.update(
                     EditTagForm(
                         name = name,
+                        now = Instant.now(clock),
                         existingTag = tag,
                     )
                 )

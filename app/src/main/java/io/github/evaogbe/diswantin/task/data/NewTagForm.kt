@@ -1,9 +1,11 @@
 package io.github.evaogbe.diswantin.task.data
 
-data class NewTagForm(private val name: String) {
+import java.time.Instant
+
+data class NewTagForm(private val name: String, private val now: Instant) {
     init {
         require(name.isNotBlank()) { "Name must be present" }
     }
 
-    val newTag = Tag(name = name.trim())
+    val newTag = Tag(name = name.trim(), createdAt = now, updatedAt = now)
 }

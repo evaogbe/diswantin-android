@@ -161,21 +161,35 @@ class TagDetailScreenTest {
         }
     }
 
-    private fun genTag() = Tag(id = 1L, name = loremFaker.lorem.words())
-
-    private fun genTasks() = generateSequence(
-        Task(
+    private fun genTag(): Tag {
+        val createdAt = faker.random.randomPastDate().toInstant()
+        return Tag(
             id = 1L,
-            createdAt = faker.random.randomPastDate().toInstant(),
-            name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+            name = loremFaker.lorem.words(),
+            createdAt = createdAt,
+            updatedAt = createdAt,
         )
-    ) {
-        Task(
-            id = it.id + 1L,
-            createdAt = faker.random.randomPastDate(min = it.createdAt).toInstant(),
-            name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-        )
-    }.take(3).toList()
+    }
+
+    private fun genTasks(): List<Task> {
+        val initialCreatedAt = faker.random.randomPastDate().toInstant()
+        return generateSequence(
+            Task(
+                id = 1L,
+                createdAt = initialCreatedAt,
+                name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                updatedAt = initialCreatedAt,
+            )
+        ) {
+            val nextCreatedAt = faker.random.randomPastDate(min = it.createdAt).toInstant()
+            Task(
+                id = it.id + 1L,
+                createdAt = nextCreatedAt,
+                name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                updatedAt = nextCreatedAt,
+            )
+        }.take(3).toList()
+    }
 
     private fun createSavedStateHandle() = SavedStateHandle(mapOf("id" to 1L))
 

@@ -23,11 +23,9 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.time.Clock
-import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.ZoneId
 import java.time.ZonedDateTime
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -72,7 +70,7 @@ class LocalTaskRepositoryTest {
                     tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentTaskId = null,
-                    clock = clock,
+                    now = now.toInstant(),
                 )
             )
 
@@ -93,7 +91,7 @@ class LocalTaskRepositoryTest {
                     tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentTaskId = null,
-                    clock = Clock.offset(clock, Duration.ofMillis(-1)),
+                    now = now.toInstant().minusMillis(1),
                 )
             )
 
@@ -114,6 +112,7 @@ class LocalTaskRepositoryTest {
                     tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task2,
                     existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
@@ -137,6 +136,7 @@ class LocalTaskRepositoryTest {
                     tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task1,
                     existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
@@ -160,6 +160,7 @@ class LocalTaskRepositoryTest {
                     tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task1,
                     existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
@@ -183,6 +184,7 @@ class LocalTaskRepositoryTest {
                     tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task2,
                     existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
@@ -206,6 +208,7 @@ class LocalTaskRepositoryTest {
                     tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task1,
                     existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
@@ -229,6 +232,7 @@ class LocalTaskRepositoryTest {
                     tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task2,
                     existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
@@ -259,6 +263,7 @@ class LocalTaskRepositoryTest {
                         ),
                     ),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task2,
                     existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
@@ -283,6 +288,7 @@ class LocalTaskRepositoryTest {
                     tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task1,
                     existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
@@ -306,6 +312,7 @@ class LocalTaskRepositoryTest {
                     tagIds = emptySet(),
                     recurrences = taskRecurrences2,
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task2,
                     existingTagIds = emptySet(),
                     existingRecurrences = taskRecurrences2,
@@ -329,6 +336,7 @@ class LocalTaskRepositoryTest {
                     tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task1,
                     existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
@@ -352,6 +360,7 @@ class LocalTaskRepositoryTest {
                     tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task1,
                     existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
@@ -375,6 +384,7 @@ class LocalTaskRepositoryTest {
                     tagIds = emptySet(),
                     recurrences = taskRecurrences2,
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task2,
                     existingTagIds = emptySet(),
                     existingRecurrences = taskRecurrences2,
@@ -398,6 +408,7 @@ class LocalTaskRepositoryTest {
                     tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task1,
                     existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
@@ -421,6 +432,7 @@ class LocalTaskRepositoryTest {
                     tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task1,
                     existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
@@ -443,6 +455,7 @@ class LocalTaskRepositoryTest {
                     tagIds = emptySet(),
                     recurrences = taskRecurrences2,
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task2,
                     existingTagIds = emptySet(),
                     existingRecurrences = taskRecurrences2,
@@ -466,6 +479,7 @@ class LocalTaskRepositoryTest {
                     tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task1,
                     existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
@@ -488,6 +502,7 @@ class LocalTaskRepositoryTest {
                     tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task1,
                     existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
@@ -518,6 +533,7 @@ class LocalTaskRepositoryTest {
                         ),
                     ),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task1,
                     existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
@@ -542,6 +558,7 @@ class LocalTaskRepositoryTest {
                     tagIds = emptySet(),
                     recurrences = taskRecurrences2,
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task2,
                     existingTagIds = emptySet(),
                     existingRecurrences = taskRecurrences2,
@@ -565,7 +582,7 @@ class LocalTaskRepositoryTest {
                     tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentTaskId = null,
-                    clock = clock,
+                    now = now.toInstant(),
                 )
             )
 
@@ -586,6 +603,7 @@ class LocalTaskRepositoryTest {
                     tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Replace(task2.id),
+                    now = now.toInstant(),
                     existingTask = task3,
                     existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
@@ -616,6 +634,7 @@ class LocalTaskRepositoryTest {
                         ),
                     ),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task2,
                     existingTagIds = emptySet(),
                     existingRecurrences = taskRecurrences2,
@@ -647,6 +666,7 @@ class LocalTaskRepositoryTest {
                         ),
                     ),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task3,
                     existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
@@ -677,6 +697,7 @@ class LocalTaskRepositoryTest {
                         ),
                     ),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task2,
                     existingTagIds = emptySet(),
                     existingRecurrences = taskRecurrences2,
@@ -701,6 +722,7 @@ class LocalTaskRepositoryTest {
                     tagIds = emptySet(),
                     recurrences = taskRecurrences1,
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task1,
                     existingTagIds = emptySet(),
                     existingRecurrences = taskRecurrences1,
@@ -723,6 +745,7 @@ class LocalTaskRepositoryTest {
                     tagIds = emptySet(),
                     recurrences = taskRecurrences2,
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task2,
                     existingTagIds = emptySet(),
                     existingRecurrences = taskRecurrences2,
@@ -745,6 +768,7 @@ class LocalTaskRepositoryTest {
                     tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task3,
                     existingTagIds = emptySet(),
                     existingRecurrences = taskRecurrences3,
@@ -778,7 +802,7 @@ class LocalTaskRepositoryTest {
                     tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentTaskId = null,
-                    clock = clock,
+                    now = now.toInstant(),
                 )
             )
 
@@ -798,6 +822,7 @@ class LocalTaskRepositoryTest {
                     tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task,
                     existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
@@ -819,6 +844,7 @@ class LocalTaskRepositoryTest {
                     tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task,
                     existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
@@ -841,6 +867,7 @@ class LocalTaskRepositoryTest {
                     tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task,
                     existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
@@ -862,6 +889,7 @@ class LocalTaskRepositoryTest {
                     tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task,
                     existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
@@ -884,6 +912,7 @@ class LocalTaskRepositoryTest {
                     tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task,
                     existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
@@ -913,6 +942,7 @@ class LocalTaskRepositoryTest {
                         ),
                     ),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task,
                     existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
@@ -935,6 +965,7 @@ class LocalTaskRepositoryTest {
                     tagIds = emptySet(),
                     recurrences = taskRecurrences,
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task,
                     existingTagIds = emptySet(),
                     existingRecurrences = taskRecurrences,
@@ -964,6 +995,7 @@ class LocalTaskRepositoryTest {
                         ),
                     ),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task,
                     existingTagIds = emptySet(),
                     existingRecurrences = taskRecurrences,
@@ -997,7 +1029,7 @@ class LocalTaskRepositoryTest {
                     tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentTaskId = null,
-                    clock = clock,
+                    now = now.toInstant(),
                 )
             )
 
@@ -1017,6 +1049,7 @@ class LocalTaskRepositoryTest {
                     tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task,
                     existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
@@ -1038,6 +1071,7 @@ class LocalTaskRepositoryTest {
                     tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task,
                     existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
@@ -1060,6 +1094,7 @@ class LocalTaskRepositoryTest {
                     tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task,
                     existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
@@ -1081,6 +1116,7 @@ class LocalTaskRepositoryTest {
                     tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task,
                     existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
@@ -1110,6 +1146,7 @@ class LocalTaskRepositoryTest {
                         ),
                     ),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task,
                     existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
@@ -1139,6 +1176,7 @@ class LocalTaskRepositoryTest {
                         ),
                     ),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task,
                     existingTagIds = emptySet(),
                     existingRecurrences = taskRecurrences,
@@ -1179,7 +1217,7 @@ class LocalTaskRepositoryTest {
                         ),
                     ),
                     parentTaskId = null,
-                    clock = clock,
+                    now = now.toInstant(),
                 )
             )
 
@@ -1203,7 +1241,7 @@ class LocalTaskRepositoryTest {
                     tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentTaskId = task1.id,
-                    clock = clock,
+                    now = now.toInstant(),
                 )
             )
 
@@ -1214,16 +1252,16 @@ class LocalTaskRepositoryTest {
 
     @Test
     fun getCurrentTask_emitsFirstUndoneTask() = runTest {
-        val clock =
-            Clock.fixed(Instant.parse("2024-08-23T17:00:00Z"), ZoneId.of("America/New_York"))
+        val now = ZonedDateTime.parse("2024-08-23T13:00-04:00[America/New_York]")
+        val clock = Clock.fixed(now.toInstant(), now.zone)
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
 
         taskRepository.getCurrentTask(
             CurrentTaskParams(
-                today = LocalDate.parse("2024-08-23"),
-                currentTime = LocalTime.parse("13:00"),
+                today = now.toLocalDate(),
+                currentTime = now.toLocalTime(),
                 startOfToday = Instant.parse("2024-08-24T04:00:00Z"),
-                overdueTime = LocalTime.parse("14:00"),
+                overdueTime = now.toLocalTime().plusHours(1),
             ),
         ).test {
             assertThat(awaitItem()).isNull()
@@ -1241,7 +1279,7 @@ class LocalTaskRepositoryTest {
                     tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentTaskId = null,
-                    clock = clock,
+                    now = now.toInstant(),
                 )
             )
 
@@ -1261,7 +1299,7 @@ class LocalTaskRepositoryTest {
                     tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentTaskId = null,
-                    clock = clock,
+                    now = now.toInstant(),
                 )
             )
 
@@ -1286,7 +1324,7 @@ class LocalTaskRepositoryTest {
                     tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentTaskId = null,
-                    clock = clock,
+                    now = now.toInstant(),
                 )
             )
 
@@ -1306,6 +1344,7 @@ class LocalTaskRepositoryTest {
                     tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Replace(task3.id),
+                    now = now.toInstant(),
                     existingTask = task1,
                     existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
@@ -1335,6 +1374,7 @@ class LocalTaskRepositoryTest {
                         )
                     ),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task1,
                     existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
@@ -1357,6 +1397,7 @@ class LocalTaskRepositoryTest {
                     tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Remove,
+                    now = now.toInstant(),
                     existingTask = task1,
                     existingTagIds = emptySet(),
                     existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task1.id)
@@ -1380,6 +1421,7 @@ class LocalTaskRepositoryTest {
                     tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Replace(task1.id),
+                    now = now.toInstant(),
                     existingTask = task3,
                     existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
@@ -1425,7 +1467,7 @@ class LocalTaskRepositoryTest {
                         ),
                     ),
                     parentTaskId = null,
-                    clock = clock,
+                    now = now.toInstant(),
                 )
             )
 
@@ -1452,6 +1494,7 @@ class LocalTaskRepositoryTest {
                         ),
                     ),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task,
                     existingTagIds = emptySet(),
                     existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
@@ -1481,6 +1524,7 @@ class LocalTaskRepositoryTest {
                         ),
                     ),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task,
                     existingTagIds = emptySet(),
                     existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
@@ -1528,7 +1572,7 @@ class LocalTaskRepositoryTest {
                         ),
                     ),
                     parentTaskId = null,
-                    clock = clock,
+                    now = now.toInstant(),
                 )
             )
 
@@ -1555,6 +1599,7 @@ class LocalTaskRepositoryTest {
                         ),
                     ),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task,
                     existingTagIds = emptySet(),
                     existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
@@ -1584,6 +1629,7 @@ class LocalTaskRepositoryTest {
                         ),
                     ),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task,
                     existingTagIds = emptySet(),
                     existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
@@ -1614,6 +1660,7 @@ class LocalTaskRepositoryTest {
                         ),
                     ),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task,
                     existingTagIds = emptySet(),
                     existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
@@ -1643,6 +1690,7 @@ class LocalTaskRepositoryTest {
                         ),
                     ),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task,
                     existingTagIds = emptySet(),
                     existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
@@ -1685,7 +1733,7 @@ class LocalTaskRepositoryTest {
                         ),
                     ),
                     parentTaskId = null,
-                    clock = clock,
+                    now = now.toInstant(),
                 )
             )
 
@@ -1712,6 +1760,7 @@ class LocalTaskRepositoryTest {
                         ),
                     ),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task,
                     existingTagIds = emptySet(),
                     existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
@@ -1741,6 +1790,7 @@ class LocalTaskRepositoryTest {
                         ),
                     ),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task,
                     existingTagIds = emptySet(),
                     existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
@@ -1782,7 +1832,7 @@ class LocalTaskRepositoryTest {
                         ),
                     ),
                     parentTaskId = null,
-                    clock = clock,
+                    now = now.toInstant(),
                 )
             )
 
@@ -1823,6 +1873,7 @@ class LocalTaskRepositoryTest {
                             ),
                         ),
                         parentUpdateType = PathUpdateType.Keep,
+                        now = now.toInstant(),
                         existingTask = task,
                         existingTagIds = emptySet(),
                         existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
@@ -1865,7 +1916,7 @@ class LocalTaskRepositoryTest {
                         ),
                     ),
                     parentTaskId = null,
-                    clock = clock,
+                    now = now.toInstant(),
                 )
             )
 
@@ -1905,6 +1956,7 @@ class LocalTaskRepositoryTest {
                             ),
                         ),
                         parentUpdateType = PathUpdateType.Keep,
+                        now = now.toInstant(),
                         existingTask = task,
                         existingTagIds = emptySet(),
                         existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
@@ -1947,7 +1999,7 @@ class LocalTaskRepositoryTest {
                         ),
                     ),
                     parentTaskId = null,
-                    clock = clock,
+                    now = now.toInstant(),
                 )
             )
 
@@ -1986,6 +2038,7 @@ class LocalTaskRepositoryTest {
                             ),
                         ),
                         parentUpdateType = PathUpdateType.Keep,
+                        now = now.toInstant(),
                         existingTask = task,
                         existingTagIds = emptySet(),
                         existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
@@ -2028,7 +2081,7 @@ class LocalTaskRepositoryTest {
                         ),
                     ),
                     parentTaskId = null,
-                    clock = clock,
+                    now = now.toInstant(),
                 )
             )
 
@@ -2067,6 +2120,7 @@ class LocalTaskRepositoryTest {
                             ),
                         ),
                         parentUpdateType = PathUpdateType.Keep,
+                        now = now.toInstant(),
                         existingTask = task,
                         existingTagIds = emptySet(),
                         existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
@@ -2109,7 +2163,7 @@ class LocalTaskRepositoryTest {
                         ),
                     ),
                     parentTaskId = null,
-                    clock = clock,
+                    now = now.toInstant(),
                 )
             )
 
@@ -2148,6 +2202,7 @@ class LocalTaskRepositoryTest {
                             ),
                         ),
                         parentUpdateType = PathUpdateType.Keep,
+                        now = now.toInstant(),
                         existingTask = task,
                         existingTagIds = emptySet(),
                         existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
@@ -2190,7 +2245,7 @@ class LocalTaskRepositoryTest {
                         ),
                     ),
                     parentTaskId = null,
-                    clock = clock,
+                    now = now.toInstant(),
                 )
             )
 
@@ -2229,6 +2284,7 @@ class LocalTaskRepositoryTest {
                             ),
                         ),
                         parentUpdateType = PathUpdateType.Keep,
+                        now = now.toInstant(),
                         existingTask = task,
                         existingTagIds = emptySet(),
                         existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
@@ -2271,7 +2327,7 @@ class LocalTaskRepositoryTest {
                         ),
                     ),
                     parentTaskId = null,
-                    clock = clock,
+                    now = now.toInstant(),
                 )
             )
 
@@ -2298,6 +2354,7 @@ class LocalTaskRepositoryTest {
                         ),
                     ),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task,
                     existingTagIds = emptySet(),
                     existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
@@ -2327,6 +2384,7 @@ class LocalTaskRepositoryTest {
                         ),
                     ),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task,
                     existingTagIds = emptySet(),
                     existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
@@ -2357,6 +2415,7 @@ class LocalTaskRepositoryTest {
                         ),
                     ),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task,
                     existingTagIds = emptySet(),
                     existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
@@ -2397,7 +2456,7 @@ class LocalTaskRepositoryTest {
                         ),
                     ),
                     parentTaskId = null,
-                    clock = clock,
+                    now = now.toInstant(),
                 )
             )
 
@@ -2424,6 +2483,7 @@ class LocalTaskRepositoryTest {
                         ),
                     ),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task,
                     existingTagIds = emptySet(),
                     existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
@@ -2453,6 +2513,7 @@ class LocalTaskRepositoryTest {
                         ),
                     ),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task,
                     existingTagIds = emptySet(),
                     existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
@@ -2494,7 +2555,7 @@ class LocalTaskRepositoryTest {
                         ),
                     ),
                     parentTaskId = null,
-                    clock = clock,
+                    now = now.toInstant(),
                 )
             )
 
@@ -2532,7 +2593,7 @@ class LocalTaskRepositoryTest {
                         ),
                     ),
                     parentTaskId = null,
-                    clock = clock,
+                    now = now.toInstant(),
                 )
             )
 
@@ -2559,6 +2620,7 @@ class LocalTaskRepositoryTest {
                         ),
                     ),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task,
                     existingTagIds = emptySet(),
                     existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
@@ -2589,6 +2651,7 @@ class LocalTaskRepositoryTest {
                         ),
                     ),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task,
                     existingTagIds = emptySet(),
                     existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
@@ -2620,6 +2683,7 @@ class LocalTaskRepositoryTest {
                         ),
                     ),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
                     existingTask = task,
                     existingTagIds = emptySet(),
                     existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
@@ -2633,12 +2697,24 @@ class LocalTaskRepositoryTest {
 
     @Test
     fun getTaskSummariesByTagId_emitsTaskSummariesMatchingTag() = runTest {
-        val clock =
-            Clock.fixed(Instant.parse("2024-08-23T17:00:00Z"), ZoneId.of("America/New_York"))
+        val now = ZonedDateTime.parse("2024-08-23T13:00-04:00[America/New_York]")
+        val clock = Clock.fixed(now.toInstant(), now.zone)
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
 
-        val tagId1 = db.tagDao().insert(Tag(name = loremFaker.lorem.unique.words()))
-        val tagId2 = db.tagDao().insert(Tag(name = loremFaker.lorem.unique.words()))
+        val tagId1 = db.tagDao().insert(
+            Tag(
+                name = loremFaker.lorem.unique.words(),
+                createdAt = now.toInstant(),
+                updatedAt = now.toInstant(),
+            )
+        )
+        val tagId2 = db.tagDao().insert(
+            Tag(
+                name = loremFaker.lorem.unique.words(),
+                createdAt = now.toInstant(),
+                updatedAt = now.toInstant(),
+            )
+        )
         val task1 = taskRepository.create(
             NewTaskForm(
                 name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
@@ -2652,7 +2728,7 @@ class LocalTaskRepositoryTest {
                 tagIds = setOf(tagId1),
                 recurrences = emptyList(),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         val task2 = taskRepository.create(
@@ -2668,7 +2744,7 @@ class LocalTaskRepositoryTest {
                 tagIds = setOf(tagId1),
                 recurrences = emptyList(),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         val task3 = taskRepository.create(
@@ -2691,7 +2767,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         val task4 = taskRepository.create(
@@ -2707,7 +2783,7 @@ class LocalTaskRepositoryTest {
                 tagIds = setOf(tagId1),
                 recurrences = emptyList(),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         val task5 = taskRepository.create(
@@ -2723,7 +2799,7 @@ class LocalTaskRepositoryTest {
                 tagIds = setOf(tagId1),
                 recurrences = emptyList(),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         val task6 = taskRepository.create(
@@ -2739,7 +2815,7 @@ class LocalTaskRepositoryTest {
                 tagIds = setOf(tagId1),
                 recurrences = emptyList(),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         val task7 = taskRepository.create(
@@ -2755,7 +2831,7 @@ class LocalTaskRepositoryTest {
                 tagIds = setOf(tagId1),
                 recurrences = emptyList(),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         val task8 = taskRepository.create(
@@ -2771,7 +2847,7 @@ class LocalTaskRepositoryTest {
                 tagIds = setOf(tagId1),
                 recurrences = emptyList(),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         val task9 = taskRepository.create(
@@ -2787,7 +2863,7 @@ class LocalTaskRepositoryTest {
                 tagIds = setOf(tagId1),
                 recurrences = emptyList(),
                 parentTaskId = null,
-                clock = Clock.offset(clock, Duration.ofMillis(1)),
+                now = now.toInstant().plusMillis(1),
             )
         )
 
@@ -2811,7 +2887,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         db.taskDao().insertCompletion(
@@ -2834,7 +2910,7 @@ class LocalTaskRepositoryTest {
                 tagIds = setOf(tagId1),
                 recurrences = emptyList(),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         db.taskDao().insertCompletion(
@@ -2864,7 +2940,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         db.taskDao().insertCompletion(
@@ -2887,7 +2963,7 @@ class LocalTaskRepositoryTest {
                 tagIds = setOf(tagId2),
                 recurrences = emptyList(),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -2903,7 +2979,7 @@ class LocalTaskRepositoryTest {
                 tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
 
@@ -2942,8 +3018,8 @@ class LocalTaskRepositoryTest {
 
     @Test
     fun searchTaskSummaries_emitsTasksMatchingDeadlineDateRange() = runTest {
-        val clock =
-            Clock.fixed(Instant.parse("2024-08-23T17:00:00Z"), ZoneId.of("America/New_York"))
+        val now = ZonedDateTime.parse("2024-08-23T13:00-04:00[America/New_York]")
+        val clock = Clock.fixed(now.toInstant(), now.zone)
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
 
         val task1 = taskRepository.create(
@@ -2959,7 +3035,7 @@ class LocalTaskRepositoryTest {
                 tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         val task2 = taskRepository.create(
@@ -2988,7 +3064,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         val task3 = taskRepository.create(
@@ -3012,7 +3088,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -3028,7 +3104,7 @@ class LocalTaskRepositoryTest {
                 tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -3044,7 +3120,7 @@ class LocalTaskRepositoryTest {
                 tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -3067,7 +3143,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -3090,7 +3166,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -3113,7 +3189,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -3137,7 +3213,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
 
@@ -3159,8 +3235,8 @@ class LocalTaskRepositoryTest {
 
     @Test
     fun searchTaskSummaries_emitsTasksMatchingStartAfterDateRange() = runTest {
-        val clock =
-            Clock.fixed(Instant.parse("2024-08-23T17:00:00Z"), ZoneId.of("America/New_York"))
+        val now = ZonedDateTime.parse("2024-08-23T13:00-04:00[America/New_York]")
+        val clock = Clock.fixed(now.toInstant(), now.zone)
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
 
         val task1 = taskRepository.create(
@@ -3176,7 +3252,7 @@ class LocalTaskRepositoryTest {
                 tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         val task2 = taskRepository.create(
@@ -3205,7 +3281,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         val task3 = taskRepository.create(
@@ -3229,7 +3305,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -3245,7 +3321,7 @@ class LocalTaskRepositoryTest {
                 tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -3261,7 +3337,7 @@ class LocalTaskRepositoryTest {
                 tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -3284,7 +3360,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -3307,7 +3383,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -3330,7 +3406,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -3354,7 +3430,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
 
@@ -3376,8 +3452,8 @@ class LocalTaskRepositoryTest {
 
     @Test
     fun searchTaskSummaries_emitsTasksMatchingScheduledDateRange() = runTest {
-        val clock =
-            Clock.fixed(Instant.parse("2024-08-23T17:00:00Z"), ZoneId.of("America/New_York"))
+        val now = ZonedDateTime.parse("2024-08-23T13:00-04:00[America/New_York]")
+        val clock = Clock.fixed(now.toInstant(), now.zone)
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
 
         val task1 = taskRepository.create(
@@ -3393,7 +3469,7 @@ class LocalTaskRepositoryTest {
                 tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         val task2 = taskRepository.create(
@@ -3422,7 +3498,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         val task3 = taskRepository.create(
@@ -3446,7 +3522,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -3462,7 +3538,7 @@ class LocalTaskRepositoryTest {
                 tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -3478,7 +3554,7 @@ class LocalTaskRepositoryTest {
                 tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -3501,7 +3577,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -3524,7 +3600,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -3547,7 +3623,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -3571,7 +3647,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
 
@@ -3593,8 +3669,8 @@ class LocalTaskRepositoryTest {
 
     @Test
     fun searchTaskSummaries_emitsTasksMatchingDoneDateRange() = runTest {
-        val clock =
-            Clock.fixed(Instant.parse("2024-08-23T17:00:00Z"), ZoneId.of("America/New_York"))
+        val now = ZonedDateTime.parse("2024-08-23T13:00-04:00[America/New_York]")
+        val clock = Clock.fixed(now.toInstant(), now.zone)
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
 
         val task1 = taskRepository.create(
@@ -3610,7 +3686,7 @@ class LocalTaskRepositoryTest {
                 tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         db.taskDao().insertCompletion(
@@ -3640,7 +3716,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         db.taskDao().insertCompletion(
@@ -3669,7 +3745,7 @@ class LocalTaskRepositoryTest {
                 tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         db.taskDao().insertCompletion(
@@ -3699,7 +3775,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         db.taskDao().insertCompletion(
@@ -3722,7 +3798,7 @@ class LocalTaskRepositoryTest {
                 tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -3745,7 +3821,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
 
@@ -3776,8 +3852,8 @@ class LocalTaskRepositoryTest {
 
     @Test
     fun searchTaskSummaries_emitsTasksMatchingRecurringDate() = runTest {
-        val clock =
-            Clock.fixed(Instant.parse("2024-08-23T17:00:00Z"), ZoneId.of("America/New_York"))
+        val now = ZonedDateTime.parse("2024-08-23T13:00-04:00[America/New_York]")
+        val clock = Clock.fixed(now.toInstant(), now.zone)
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
 
         val task1 = taskRepository.create(
@@ -3800,7 +3876,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         val task2 = taskRepository.create(
@@ -3829,7 +3905,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         val task3 = taskRepository.create(
@@ -3852,7 +3928,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         val task4 = taskRepository.create(
@@ -3875,7 +3951,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         val task5 = taskRepository.create(
@@ -3898,7 +3974,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         val task6 = taskRepository.create(
@@ -3922,7 +3998,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
 
@@ -3939,7 +4015,7 @@ class LocalTaskRepositoryTest {
                 tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -3962,7 +4038,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -3985,7 +4061,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -4014,7 +4090,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -4037,7 +4113,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -4060,7 +4136,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -4083,7 +4159,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -4107,16 +4183,14 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
 
         assertThat(
             taskRepository.searchTaskSummaries(
                 TaskSearchCriteria(
-                    recurrenceDate = LocalDate.parse(
-                        "2024-08-23"
-                    )
+                    recurrenceDate = LocalDate.parse("2024-08-23")
                 )
             ).asSnapshot()
         ).containsExactly(
@@ -4132,8 +4206,8 @@ class LocalTaskRepositoryTest {
     @Test
     fun searchTaskSummaries_emitsTasksMatchingNameAndDeadlineDateRange() = runTest {
         val query = loremFaker.verbs.base()
-        val clock =
-            Clock.fixed(Instant.parse("2024-08-23T17:00:00Z"), ZoneId.of("America/New_York"))
+        val now = ZonedDateTime.parse("2024-08-23T13:00-04:00[America/New_York]")
+        val clock = Clock.fixed(now.toInstant(), now.zone)
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
 
         val task1 = taskRepository.create(
@@ -4149,7 +4223,7 @@ class LocalTaskRepositoryTest {
                 tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         val task2 = taskRepository.create(
@@ -4178,7 +4252,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         val task3 = taskRepository.create(
@@ -4202,7 +4276,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -4218,7 +4292,7 @@ class LocalTaskRepositoryTest {
                 tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -4234,7 +4308,7 @@ class LocalTaskRepositoryTest {
                 tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -4250,7 +4324,7 @@ class LocalTaskRepositoryTest {
                 tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -4273,7 +4347,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -4296,7 +4370,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -4319,7 +4393,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -4343,7 +4417,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
 
@@ -4367,8 +4441,8 @@ class LocalTaskRepositoryTest {
     @Test
     fun searchTaskSummaries_emitsTasksMatchingNameAndStartAfterDateRange() = runTest {
         val query = loremFaker.verbs.base()
-        val clock =
-            Clock.fixed(Instant.parse("2024-08-23T17:00:00Z"), ZoneId.of("America/New_York"))
+        val now = ZonedDateTime.parse("2024-08-23T13:00-04:00[America/New_York]")
+        val clock = Clock.fixed(now.toInstant(), now.zone)
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
 
         val task1 = taskRepository.create(
@@ -4384,7 +4458,7 @@ class LocalTaskRepositoryTest {
                 tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         val task2 = taskRepository.create(
@@ -4413,7 +4487,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         val task3 = taskRepository.create(
@@ -4437,7 +4511,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -4453,7 +4527,7 @@ class LocalTaskRepositoryTest {
                 tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -4469,7 +4543,7 @@ class LocalTaskRepositoryTest {
                 tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -4485,7 +4559,7 @@ class LocalTaskRepositoryTest {
                 tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -4508,7 +4582,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -4531,7 +4605,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -4554,7 +4628,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -4578,7 +4652,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
 
@@ -4602,8 +4676,8 @@ class LocalTaskRepositoryTest {
     @Test
     fun searchTaskSummaries_emitsTasksMatchingNameAndScheduledDateRange() = runTest {
         val query = loremFaker.verbs.base()
-        val clock =
-            Clock.fixed(Instant.parse("2024-08-23T17:00:00Z"), ZoneId.of("America/New_York"))
+        val now = ZonedDateTime.parse("2024-08-23T13:00-04:00[America/New_York]")
+        val clock = Clock.fixed(now.toInstant(), now.zone)
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
 
         val task1 = taskRepository.create(
@@ -4619,7 +4693,7 @@ class LocalTaskRepositoryTest {
                 tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         val task2 = taskRepository.create(
@@ -4648,7 +4722,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         val task3 = taskRepository.create(
@@ -4672,7 +4746,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -4688,7 +4762,7 @@ class LocalTaskRepositoryTest {
                 tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -4704,7 +4778,7 @@ class LocalTaskRepositoryTest {
                 tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -4720,7 +4794,7 @@ class LocalTaskRepositoryTest {
                 tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -4743,7 +4817,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -4766,7 +4840,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -4789,7 +4863,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -4813,7 +4887,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
 
@@ -4837,8 +4911,8 @@ class LocalTaskRepositoryTest {
     @Test
     fun searchTaskSummaries_emitsTasksMatchingNameAndDoneDateRange() = runTest {
         val query = loremFaker.verbs.base()
-        val clock =
-            Clock.fixed(Instant.parse("2024-08-23T17:00:00Z"), ZoneId.of("America/New_York"))
+        val now = ZonedDateTime.parse("2024-08-23T13:00-04:00[America/New_York]")
+        val clock = Clock.fixed(now.toInstant(), now.zone)
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
 
         val task1 = taskRepository.create(
@@ -4854,7 +4928,7 @@ class LocalTaskRepositoryTest {
                 tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         db.taskDao().insertCompletion(
@@ -4884,7 +4958,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         db.taskDao().insertCompletion(
@@ -4913,7 +4987,7 @@ class LocalTaskRepositoryTest {
                 tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         db.taskDao().insertCompletion(
@@ -4943,7 +5017,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         db.taskDao().insertCompletion(
@@ -4966,7 +5040,7 @@ class LocalTaskRepositoryTest {
                 tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         db.taskDao().insertCompletion(
@@ -4989,7 +5063,7 @@ class LocalTaskRepositoryTest {
                 tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -5012,7 +5086,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
 
@@ -5045,8 +5119,8 @@ class LocalTaskRepositoryTest {
     @Test
     fun searchTaskSummaries_emitsTasksNameAndMatchingRecurringDate() = runTest {
         val query = loremFaker.verbs.base()
-        val clock =
-            Clock.fixed(Instant.parse("2024-08-23T17:00:00Z"), ZoneId.of("America/New_York"))
+        val now = ZonedDateTime.parse("2024-08-23T13:00-04:00[America/New_York]")
+        val clock = Clock.fixed(now.toInstant(), now.zone)
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
 
         val task1 = taskRepository.create(
@@ -5069,7 +5143,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         val task2 = taskRepository.create(
@@ -5098,7 +5172,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         val task3 = taskRepository.create(
@@ -5121,7 +5195,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         val task4 = taskRepository.create(
@@ -5144,7 +5218,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         val task5 = taskRepository.create(
@@ -5167,7 +5241,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         val task6 = taskRepository.create(
@@ -5191,7 +5265,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
 
@@ -5215,7 +5289,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -5231,7 +5305,7 @@ class LocalTaskRepositoryTest {
                 tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -5254,7 +5328,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -5277,7 +5351,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -5306,7 +5380,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -5329,7 +5403,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -5352,7 +5426,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -5375,7 +5449,7 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         taskRepository.create(
@@ -5399,16 +5473,15 @@ class LocalTaskRepositoryTest {
                     ),
                 ),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
 
         assertThat(
             taskRepository.searchTaskSummaries(
                 TaskSearchCriteria(
-                    name = query, recurrenceDate = LocalDate.parse(
-                        "2024-08-23"
-                    )
+                    name = query,
+                    recurrenceDate = LocalDate.parse("2024-08-23"),
                 )
             ).asSnapshot()
         ).containsExactly(
@@ -5423,8 +5496,8 @@ class LocalTaskRepositoryTest {
 
     @Test
     fun update_connectsTaskPaths() = runTest {
-        val clock =
-            Clock.fixed(Instant.parse("2024-08-23T17:00:00Z"), ZoneId.of("America/New_York"))
+        val now = ZonedDateTime.parse("2024-08-23T13:00-04:00[America/New_York]")
+        val clock = Clock.fixed(now.toInstant(), now.zone)
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
 
         val task1 = taskRepository.create(
@@ -5440,7 +5513,7 @@ class LocalTaskRepositoryTest {
                 tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         val task2 = taskRepository.create(
@@ -5456,7 +5529,7 @@ class LocalTaskRepositoryTest {
                 tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = task1.id,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
         val task3 = taskRepository.create(
@@ -5472,7 +5545,7 @@ class LocalTaskRepositoryTest {
                 tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
 
@@ -5489,6 +5562,7 @@ class LocalTaskRepositoryTest {
                 tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentUpdateType = PathUpdateType.Keep,
+                now = now.toInstant(),
                 existingTask = task2,
                 existingTagIds = emptySet(),
                 existingRecurrences = emptyList(),
@@ -5527,6 +5601,7 @@ class LocalTaskRepositoryTest {
                 tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentUpdateType = PathUpdateType.Replace(updatedTask2.id),
+                now = now.toInstant(),
                 existingTask = task3,
                 existingTagIds = emptySet(),
                 existingRecurrences = emptyList(),
@@ -5565,6 +5640,7 @@ class LocalTaskRepositoryTest {
                 tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentUpdateType = PathUpdateType.Remove,
+                now = now.toInstant(),
                 existingTask = updatedTask2,
                 existingTagIds = emptySet(),
                 existingRecurrences = emptyList(),
@@ -5603,6 +5679,7 @@ class LocalTaskRepositoryTest {
                 tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentUpdateType = PathUpdateType.Replace(task1.id),
+                now = now.toInstant(),
                 existingTask = task3,
                 existingTagIds = emptySet(),
                 existingRecurrences = emptyList(),
@@ -5641,6 +5718,7 @@ class LocalTaskRepositoryTest {
                 tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentUpdateType = PathUpdateType.Replace(task3.id),
+                now = now.toInstant(),
                 existingTask = task1,
                 existingTagIds = emptySet(),
                 existingRecurrences = emptyList(),
@@ -5697,6 +5775,7 @@ class LocalTaskRepositoryTest {
                 tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentUpdateType = PathUpdateType.Replace(updatedTask2.id),
+                now = now.toInstant(),
                 existingTask = task3,
                 existingTagIds = emptySet(),
                 existingRecurrences = emptyList(),
@@ -5735,6 +5814,7 @@ class LocalTaskRepositoryTest {
                 tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentUpdateType = PathUpdateType.Replace(updatedTask2.id),
+                now = now.toInstant(),
                 existingTask = task1,
                 existingTagIds = emptySet(),
                 existingRecurrences = emptyList(),
@@ -5781,8 +5861,8 @@ class LocalTaskRepositoryTest {
 
     @Test
     fun delete_decrementsDepthBetweenParentAndChild() = runTest {
-        val clock =
-            Clock.fixed(Instant.parse("2024-08-23T17:00:00Z"), ZoneId.of("America/New_York"))
+        val now = ZonedDateTime.parse("2024-08-23T13:00-04:00[America/New_York]")
+        val clock = Clock.fixed(now.toInstant(), now.zone)
         val taskRepository = createLocalTaskRepository(clock, testScheduler)
 
         val task1 = taskRepository.create(
@@ -5798,7 +5878,7 @@ class LocalTaskRepositoryTest {
                 tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = null,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
 
@@ -5815,7 +5895,7 @@ class LocalTaskRepositoryTest {
                 tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = task1.id,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
 
@@ -5832,7 +5912,7 @@ class LocalTaskRepositoryTest {
                 tagIds = emptySet(),
                 recurrences = emptyList(),
                 parentTaskId = task2.id,
-                clock = clock,
+                now = now.toInstant(),
             )
         )
 

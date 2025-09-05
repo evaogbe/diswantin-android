@@ -461,4 +461,66 @@ class DiswantinDatabaseTest {
             }
         }
     }
+
+    @Test
+    fun testMigration_35_36() {
+        val tagId = faker.random.nextLong(min = 1, max = Long.MAX_VALUE)
+        val tagName = loremFaker.lorem.words()
+        val taskValues1 = arrayOf<Any?>(
+            1L,
+            Instant.parse("2024-10-09T08:59:38.001Z").toEpochMilli(),
+            "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+        )
+        val taskValues2 = arrayOf<Any?>(
+            2L,
+            Instant.parse("2025-08-23T17:00:00Z").toEpochMilli(),
+            "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+        )
+        val currentEpochMillis = 1757073600000 // 2025-09-05T12:00:00Z
+
+        migrationTestHelper.createDatabase(DiswantinDatabase.DB_NAME, 35).use { db ->
+            db.execSQL(
+                "INSERT INTO `tag` (`id`, `name`) VALUES (?, ?)",
+                arrayOf<Any?>(tagId, tagName),
+            )
+            db.execSQL(
+                "INSERT INTO `task` (`id`, `created_at`, `name`) VALUES (?, ?, ?)",
+                taskValues1,
+            )
+            db.execSQL(
+                "INSERT INTO `task` (`id`, `created_at`, `name`) VALUES (?, ?, ?)",
+                taskValues2,
+            )
+        }
+
+        migrationTestHelper.runMigrationsAndValidate(
+            DiswantinDatabase.DB_NAME,
+            37,
+            true,
+            DiswantinDatabase.getMigration35to36(Instant.ofEpochMilli(currentEpochMillis)),
+        ).use { db ->
+            db.query("SELECT * FROM `tag`").use { stmt ->
+                assertThat(stmt.moveToFirst()).isTrue()
+                assertThat(stmt.getLong(0)).isEqualTo(tagId)
+                assertThat(stmt.getString(1)).isEqualTo(tagName)
+                assertThat(stmt.getLong(2)).isEqualTo(currentEpochMillis)
+                assertThat(stmt.getLong(3)).isEqualTo(currentEpochMillis)
+                assertThat(stmt.moveToNext()).isFalse()
+            }
+            db.query("SELECT `id`, `created_at`, `name`, `updated_at` FROM `task` ORDER BY `id`")
+                .use { stmt ->
+                    assertThat(stmt.moveToFirst()).isTrue()
+                    assertThat(stmt.getLong(0)).isEqualTo(taskValues1[0])
+                    assertThat(stmt.getLong(1)).isEqualTo(taskValues1[1])
+                    assertThat(stmt.getString(2)).isEqualTo(taskValues1[2])
+                    assertThat(stmt.getLong(3)).isEqualTo(taskValues1[1])
+                    assertThat(stmt.moveToNext()).isTrue()
+                    assertThat(stmt.getLong(0)).isEqualTo(taskValues2[0])
+                    assertThat(stmt.getLong(1)).isEqualTo(taskValues2[1])
+                    assertThat(stmt.getString(2)).isEqualTo(taskValues2[2])
+                    assertThat(stmt.getLong(3)).isEqualTo(taskValues2[1])
+                    assertThat(stmt.moveToNext()).isFalse()
+                }
+        }
+    }
 }

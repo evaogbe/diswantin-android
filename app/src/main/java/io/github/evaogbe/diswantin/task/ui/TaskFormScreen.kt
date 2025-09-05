@@ -44,6 +44,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -73,6 +74,7 @@ import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -585,9 +587,12 @@ fun TaskFormLayout(
                 TagFieldState.Open -> {
                     Column {
                         if (uiState.tags.isNotEmpty()) {
-                            Text(stringResource(R.string.tags_label), style = typography.titleMedium)
+                            Text(
+                                stringResource(R.string.tags_label),
+                                style = typography.titleMedium,
+                            )
 
-                            TagList(tags = uiState.tags, onRemoveTag = onRemoveTag)
+                            TaskFormTagList(tags = uiState.tags, onRemoveTag = onRemoveTag)
                         }
 
                         AutocompleteField(
@@ -605,9 +610,12 @@ fun TaskFormLayout(
                 TagFieldState.Closed -> {
                     Column {
                         if (uiState.tags.isNotEmpty()) {
-                            Text(stringResource(R.string.tags_label), style = typography.titleMedium)
+                            Text(
+                                stringResource(R.string.tags_label),
+                                style = typography.titleMedium,
+                            )
 
-                            TagList(tags = uiState.tags, onRemoveTag = onRemoveTag)
+                            TaskFormTagList(tags = uiState.tags, onRemoveTag = onRemoveTag)
                         }
 
                         if (uiState.tags.size < Task.MAX_TAGS) {
@@ -677,9 +685,14 @@ fun TaskFormLayout(
     }
 }
 
+const val TaskFormTagListTestTag = "TaskFormTagListTestTag"
+
 @Composable
-private fun TagList(tags: ImmutableList<Tag>, onRemoveTag: (Tag) -> Unit) {
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(SpaceSm)) {
+fun TaskFormTagList(tags: ImmutableList<Tag>, onRemoveTag: (Tag) -> Unit) {
+    FlowRow(
+        modifier = Modifier.testTag(TaskFormTagListTestTag),
+        horizontalArrangement = Arrangement.spacedBy(SpaceSm),
+    ) {
         tags.forEach { tag ->
             InputChip(
                 selected = false,
@@ -801,10 +814,30 @@ private fun TaskFormScreenPreview_Edit() {
                     scheduledTime = null,
                     tagFieldState = TagFieldState.Closed,
                     tags = persistentListOf(
-                        Tag(id = 1L, name = "goal"),
-                        Tag(id = 2L, name = "hygiene"),
-                        Tag(id = 3L, name = "low effort"),
-                        Tag(id = 4L, name = "morning routine"),
+                        Tag(
+                            id = 1L,
+                            name = "goal",
+                            createdAt = Instant.now(),
+                            updatedAt = Instant.now(),
+                        ),
+                        Tag(
+                            id = 2L,
+                            name = "hygiene",
+                            createdAt = Instant.now(),
+                            updatedAt = Instant.now(),
+                        ),
+                        Tag(
+                            id = 3L,
+                            name = "low effort",
+                            createdAt = Instant.now(),
+                            updatedAt = Instant.now(),
+                        ),
+                        Tag(
+                            id = 4L,
+                            name = "morning routine",
+                            createdAt = Instant.now(),
+                            updatedAt = Instant.now(),
+                        ),
                     ),
                     tagOptions = persistentListOf(),
                     showParentField = true,
@@ -957,7 +990,14 @@ private fun TaskFormLayoutPreview_EditingTag() {
                     scheduledDate = null,
                     scheduledTime = null,
                     tagFieldState = TagFieldState.Open,
-                    tags = persistentListOf(Tag(id = 1L, name = "morning routine")),
+                    tags = persistentListOf(
+                        Tag(
+                            id = 1L,
+                            name = "morning routine",
+                            createdAt = Instant.now(),
+                            updatedAt = Instant.now(),
+                        )
+                    ),
                     tagOptions = persistentListOf(),
                     showParentField = false,
                     parent = null,

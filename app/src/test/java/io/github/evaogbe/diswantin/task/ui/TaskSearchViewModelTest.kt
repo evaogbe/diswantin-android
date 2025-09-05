@@ -37,10 +37,12 @@ class TaskSearchViewModelTest {
             val namePattern =
                 """([^\r\n]* )?${Pattern.quote(query)}[^\r\n]*""".toRegex(RegexOption.IGNORE_CASE)
             val tasks = List(3) {
+                val createdAt = faker.random.randomPastDate().toInstant()
                 Task(
                     id = it + 1L,
-                    createdAt = faker.random.randomPastDate().toInstant(),
+                    createdAt = createdAt,
                     name = faker.string.regexify(namePattern),
+                    updatedAt = createdAt,
                 )
             }
             val viewModel = createTaskSearchViewModel { db ->

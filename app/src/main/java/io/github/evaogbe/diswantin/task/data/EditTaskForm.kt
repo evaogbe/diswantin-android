@@ -1,5 +1,6 @@
 package io.github.evaogbe.diswantin.task.data
 
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -23,6 +24,7 @@ data class EditTaskForm(
     private val tagIds: Set<Long>,
     private val recurrences: Collection<TaskRecurrence>,
     val parentUpdateType: PathUpdateType,
+    private val now: Instant,
     private val existingTask: Task,
     private val existingTagIds: Set<Long>,
     private val existingRecurrences: Collection<TaskRecurrence>,
@@ -98,5 +100,6 @@ data class EditTaskForm(
         startAfterTime = startAfterTime,
         scheduledDate = scheduledDate,
         scheduledTime = scheduledTime,
+        updatedAt = now,
     )
 }

@@ -17,6 +17,9 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneId
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TagListViewModelTest {
@@ -28,8 +31,10 @@ class TagListViewModelTest {
     @Test
     fun `saveTag creates tag`() = runTest(mainDispatcherRule.testDispatcher) {
         val name = loremFaker.lorem.words()
+        val now = Instant.parse("2024-08-23T17:00:00Z")
+        val clock = Clock.fixed(now, ZoneId.of("America/New_York"))
         val tagRepository = FakeTagRepository()
-        val viewModel = TagListViewModel(tagRepository)
+        val viewModel = TagListViewModel(tagRepository, clock)
 
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.userMessage.collect()
@@ -38,7 +43,10 @@ class TagListViewModelTest {
         viewModel.saveTag(name)
 
         val tag = tagRepository.tags.single()
-        assertThat(tag).isEqualToIgnoringGivenProperties(Tag(name = name), Tag::id)
+        assertThat(tag).isEqualToIgnoringGivenProperties(
+            Tag(name = name, createdAt = now, updatedAt = now),
+            Tag::id,
+        )
         assertThat(viewModel.userMessage.value).isNull()
     }
 
@@ -46,10 +54,11 @@ class TagListViewModelTest {
     fun `saveTag shows error message when repository throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val name = loremFaker.lorem.words()
+            val clock = createClock()
             val tagRepository = spyk<FakeTagRepository>()
             coEvery { tagRepository.create(any()) } throws RuntimeException("Test")
 
-            val viewModel = TagListViewModel(tagRepository)
+            val viewModel = TagListViewModel(tagRepository, clock)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.userMessage.collect()
@@ -59,4 +68,7 @@ class TagListViewModelTest {
 
             assertThat(viewModel.userMessage.value).isEqualTo(TagListUserMessage.CreateError)
         }
+
+    private fun createClock() =
+        Clock.fixed(Instant.parse("2024-08-23T17:00:00Z"), ZoneId.of("America/New_York"))
 }

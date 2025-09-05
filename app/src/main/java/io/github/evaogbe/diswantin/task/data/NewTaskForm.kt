@@ -1,6 +1,5 @@
 package io.github.evaogbe.diswantin.task.data
 
-import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
@@ -17,7 +16,7 @@ data class NewTaskForm(
     val tagIds: Set<Long>,
     val recurrences: Collection<TaskRecurrence>,
     val parentTaskId: Long?,
-    private val clock: Clock,
+    private val now: Instant,
 ) {
     init {
         require(name.isNotBlank()) { "Name must be present" }
@@ -69,7 +68,7 @@ data class NewTaskForm(
     }
 
     val newTask = Task(
-        createdAt = Instant.now(clock),
+        createdAt = now,
         name = name.trim(),
         note = note.trim(),
         deadlineDate = deadlineDate,
@@ -78,5 +77,6 @@ data class NewTaskForm(
         startAfterTime = startAfterTime,
         scheduledDate = scheduledDate,
         scheduledTime = scheduledTime,
+        updatedAt = now,
     )
 }

@@ -23,6 +23,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
@@ -76,6 +77,8 @@ fun <T : Any> AutocompleteField(
     }
 }
 
+const val AutocompleteDropdownMenuTestTag = "AutocompleteDropdownMenuTestTag"
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun <T : Any> AutocompleteField(
@@ -116,6 +119,7 @@ fun <T : Any> AutocompleteField(
             ExposedDropdownMenu(
                 expanded = expanded,
                 onDismissRequest = { onExpandedChange(false) },
+                modifier = Modifier.testTag(AutocompleteDropdownMenuTestTag),
             ) {
                 options.forEach { option ->
                     DropdownMenuItem(

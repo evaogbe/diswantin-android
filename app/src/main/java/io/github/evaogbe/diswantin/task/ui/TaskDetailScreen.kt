@@ -63,6 +63,7 @@ import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.coroutines.flow.flowOf
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 import java.util.Locale
@@ -520,10 +521,30 @@ private fun TaskDetailScreenPreview_Detailed() {
                     isDone = true,
                     parent = TaskSummaryUiState(id = 1L, name = "Brush teeth", isDone = false),
                     tags = persistentListOf(
-                        Tag(id = 1L, name = "goal"),
-                        Tag(id = 2L, name = "hygiene"),
-                        Tag(id = 3L, name = "low effort"),
-                        Tag(id = 4L, name = "morning routine"),
+                        Tag(
+                            id = 1L,
+                            name = "goal",
+                            createdAt = Instant.now(),
+                            updatedAt = Instant.now(),
+                        ),
+                        Tag(
+                            id = 2L,
+                            name = "hygiene",
+                            createdAt = Instant.now(),
+                            updatedAt = Instant.now(),
+                        ),
+                        Tag(
+                            id = 3L,
+                            name = "low effort",
+                            createdAt = Instant.now(),
+                            updatedAt = Instant.now(),
+                        ),
+                        Tag(
+                            id = 4L,
+                            name = "morning routine",
+                            createdAt = Instant.now(),
+                            updatedAt = Instant.now(),
+                        ),
                     ),
                     userMessage = null,
                 ),
@@ -566,7 +587,14 @@ private fun TaskDetailLayoutPreview() {
                     ),
                     isDone = false,
                     parent = TaskSummaryUiState(id = 1L, name = "Brush teeth", isDone = true),
-                    tags = persistentListOf(Tag(id = 1L, name = "morning routine")),
+                    tags = persistentListOf(
+                        Tag(
+                            id = 1L,
+                            name = "morning routine",
+                            createdAt = Instant.now(),
+                            updatedAt = Instant.now(),
+                        )
+                    ),
                     userMessage = null,
                 ),
                 childTaskItems = childTaskItems,

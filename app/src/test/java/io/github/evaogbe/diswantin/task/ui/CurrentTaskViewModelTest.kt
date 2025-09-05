@@ -49,7 +49,7 @@ class CurrentTaskViewModelTest {
         runTest(mainDispatcherRule.testDispatcher) {
             val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
             val clock = createClock()
-            val (task1, task2) = genTasks(2)
+            val (task1, task2) = genTasks().take(2).toList()
             val db = FakeDatabase().apply {
                 insertTask(task1)
                 insertTask(task2)
@@ -84,6 +84,7 @@ class CurrentTaskViewModelTest {
                     tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
+                    now = Instant.now(clock),
                     existingTask = task1,
                     existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
@@ -104,7 +105,7 @@ class CurrentTaskViewModelTest {
     @Test
     fun `uiState emits failure when fetch current task fails`() =
         runTest(mainDispatcherRule.testDispatcher) {
-            val task = genTasks(1).single()
+            val task = genTasks().first()
             val viewModel = createCurrentTaskViewModel(
                 initDatabase = { db -> db.insertTask(task) },
                 initTaskRepositorySpy = { repository ->
@@ -125,7 +126,7 @@ class CurrentTaskViewModelTest {
     fun `uiState can skip when recurring task`() = runTest(mainDispatcherRule.testDispatcher) {
         val clock =
             Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
-        val task = genTasks(1).single()
+        val task = genTasks().first()
         val db = FakeDatabase().apply {
             insertTask(task)
             insertTaskRecurrence(
@@ -160,7 +161,7 @@ class CurrentTaskViewModelTest {
         runTest(mainDispatcherRule.testDispatcher) {
             val clock =
                 Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
-            val (task1, task2) = genTasks(2)
+            val (task1, task2) = genTasks().take(2).toList()
             val db = FakeDatabase().apply {
                 insertTask(task1)
                 insertTask(task2)
@@ -208,7 +209,7 @@ class CurrentTaskViewModelTest {
         runTest(mainDispatcherRule.testDispatcher) {
             val clock =
                 Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
-            val task = genTasks(1).single()
+            val task = genTasks().first()
             val db = FakeDatabase().apply {
                 insertTask(task)
                 insertTaskRecurrence(
@@ -248,7 +249,7 @@ class CurrentTaskViewModelTest {
     fun `markCurrentTaskDone sets current task doneAt`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val clock = createClock()
-            val (task1, task2) = genTasks(2)
+            val (task1, task2) = genTasks().take(2).toList()
             val db = FakeDatabase().apply {
                 insertTask(task1)
                 insertTask(task2)
@@ -290,7 +291,7 @@ class CurrentTaskViewModelTest {
     @Test
     fun `markCurrentTaskDone shows error message when repository throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
-            val task = genTasks(1).single()
+            val task = genTasks().first()
             val viewModel = createCurrentTaskViewModel(
                 initDatabase = { db -> db.insertTask(task) },
                 initTaskRepositorySpy = { repository ->
@@ -317,19 +318,26 @@ class CurrentTaskViewModelTest {
             assertThat(viewModel.userMessage.value).isEqualTo(CurrentTaskUserMessage.MarkDoneError)
         }
 
-    private fun genTasks(count: Int) = generateSequence(
-        Task(
-            id = 1L,
-            createdAt = faker.random.randomPastDate().toInstant(),
-            name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-        )
-    ) {
-        Task(
-            id = it.id + 1L,
-            createdAt = faker.random.randomPastDate(min = it.createdAt.plusMillis(1)).toInstant(),
-            name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
-        )
-    }.take(count).toList()
+    private fun genTasks(): Sequence<Task> {
+        val initialCreatedAt = faker.random.randomPastDate().toInstant()
+        return generateSequence(
+            Task(
+                id = 1L,
+                createdAt = initialCreatedAt,
+                name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                updatedAt = initialCreatedAt,
+            )
+        ) {
+            val nextCreatedAt =
+                faker.random.randomPastDate(min = it.createdAt.plusMillis(1)).toInstant()
+            Task(
+                id = it.id + 1L,
+                createdAt = nextCreatedAt,
+                name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                updatedAt = nextCreatedAt,
+            )
+        }
+    }
 
     private fun createClock() =
         Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))

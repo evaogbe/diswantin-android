@@ -10,10 +10,15 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.time.Clock
+import java.time.Instant
 import javax.inject.Inject
 
 @HiltViewModel
-class TagListViewModel @Inject constructor(private val tagRepository: TagRepository) : ViewModel() {
+class TagListViewModel @Inject constructor(
+    private val tagRepository: TagRepository,
+    private val clock: Clock,
+) : ViewModel() {
     val tagPagingData = tagRepository.tagPagingData.cachedIn(viewModelScope)
 
     val userMessage = MutableStateFlow<TagListUserMessage?>(null)
@@ -23,7 +28,7 @@ class TagListViewModel @Inject constructor(private val tagRepository: TagReposit
 
         viewModelScope.launch {
             try {
-                tagRepository.create(NewTagForm(name = name))
+                tagRepository.create(NewTagForm(name = name, now = Instant.now(clock)))
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {

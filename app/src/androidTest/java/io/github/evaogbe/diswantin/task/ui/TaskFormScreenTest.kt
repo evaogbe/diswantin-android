@@ -3,6 +3,8 @@ package io.github.evaogbe.diswantin.task.ui
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasParent
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -30,6 +32,7 @@ import io.github.evaogbe.diswantin.testing.FakeTagRepository
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
 import io.github.evaogbe.diswantin.testing.matchesSnackbar
 import io.github.evaogbe.diswantin.testing.stringResource
+import io.github.evaogbe.diswantin.ui.form.AutocompleteDropdownMenuTestTag
 import io.github.evaogbe.diswantin.ui.loadstate.PendingLayoutTestTag
 import io.github.evaogbe.diswantin.ui.snackbar.SnackbarState
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
@@ -42,7 +45,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flow
 import org.junit.Rule
 import org.junit.Test
-import timber.log.Timber
 import java.time.Clock
 import java.util.Locale
 
@@ -514,9 +516,10 @@ class TaskFormScreenTest {
 
     @Test
     fun displaysTagField_whenHasTags() {
+        val tag = genTags().first()
         val viewModel = createTaskFormViewModelForEdit({ db ->
             db.insertTask(genTask())
-            db.insertTag(Tag(name = loremFaker.lorem.words()))
+            db.insertTag(tag)
         })
 
         composeTestRule.setContent {
@@ -542,10 +545,11 @@ class TaskFormScreenTest {
     @Test
     fun displaysErrorMessage_whenFetchExistingTagFails() {
         var snackbarState: SnackbarState? = null
+        val tag = genTags().first()
         val viewModel = createTaskFormViewModelForEdit(
             initDatabase = { db ->
                 db.insertTask(genTask())
-                db.insertTag(Tag(name = loremFaker.lorem.words()))
+                db.insertTag(tag)
             },
             initTagRepositorySpy = { repository ->
                 every { repository.getTagsByTaskId(any(), any()) } returns flow {
@@ -578,10 +582,7 @@ class TaskFormScreenTest {
 
     @Test
     fun hidesAddTagButton_when10TagsAdded() {
-        val tags = List(10) {
-            Tag(id = it + 1L, name = loremFaker.lorem.unique.words())
-        }
-        Timber.d("tags: $tags")
+        val tags = genTags().take(10).toList()
         val viewModel = createTaskFormViewModelForNew({ db ->
             tags.forEach(db::insertTag)
         })
@@ -609,12 +610,18 @@ class TaskFormScreenTest {
             ).onParent().performTextInput(tag.name.substring(0, 1))
 
             composeTestRule.waitForIdle()
-            composeTestRule.waitUntilExactlyOneExists(hasText(tag.name))
-            composeTestRule.onNodeWithText(tag.name).performClick()
+            composeTestRule.waitUntilExactlyOneExists(
+                hasParent(hasTestTag(AutocompleteDropdownMenuTestTag)) and hasText(tag.name),
+            )
+            composeTestRule.onNode(
+                hasParent(hasTestTag(AutocompleteDropdownMenuTestTag)) and hasText(tag.name)
+            ).performClick()
+
+            composeTestRule.waitUntilExactlyOneExists(
+                hasParent(hasTestTag(TaskFormTagListTestTag)) and hasText(tag.name)
+            )
         }
 
-        composeTestRule.waitForIdle()
-        composeTestRule.waitUntilDoesNotExist(hasText(stringResource(R.string.tag_name_label)))
         composeTestRule.onNodeWithText(
             stringResource(R.string.tag_name_label), useUnmergedTree = true
         ).assertDoesNotExist()
@@ -629,9 +636,9 @@ class TaskFormScreenTest {
     @Test
     fun displaysMatchingTagOptions_whenTagSearchedFor() {
         val query = loremFaker.verbs.base()
-        val tags = List(3) {
-            Tag(id = it + 1L, name = "$query ${loremFaker.lorem.unique.words()}")
-        }
+        val tags = genTags().map {
+            it.copy(name = "$query ${loremFaker.lorem.unique.words()}")
+        }.take(3).toList()
         val viewModel = createTaskFormViewModelForEdit({ db ->
             db.insertTask(genTask())
             tags.forEach(db::insertTag)
@@ -668,7 +675,12 @@ class TaskFormScreenTest {
     fun displaysErrorMessage_whenSearchTagsFails() {
         var snackbarState: SnackbarState? = null
         val query = loremFaker.verbs.base()
-        val tag = Tag(name = faker.string.regexify("""$query \w+"""))
+        val tagCreatedAt = faker.random.randomPastDate().toInstant()
+        val tag = Tag(
+            name = faker.string.regexify("""$query \w+"""),
+            createdAt = tagCreatedAt,
+            updatedAt = tagCreatedAt,
+        )
         val viewModel = createTaskFormViewModelForEdit(
             initDatabase = { db ->
                 db.insertTask(genTask())
@@ -876,11 +888,35 @@ class TaskFormScreenTest {
         }
     }
 
-    private fun genTask(id: Long = 1L) = Task(
-        id = id,
-        createdAt = faker.random.randomPastDate().toInstant(),
-        name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
-    )
+    private fun genTask(id: Long = 1L): Task {
+        val createdAt = faker.random.randomPastDate().toInstant()
+        return Task(
+            id = id,
+            createdAt = createdAt,
+            name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+            updatedAt = createdAt,
+        )
+    }
+
+    private fun genTags(): Sequence<Tag> {
+        val initialCreatedAt = faker.random.randomPastDate().toInstant()
+        return generateSequence(
+            Tag(
+                id = 1L,
+                name = loremFaker.lorem.unique.words(),
+                createdAt = initialCreatedAt,
+                updatedAt = initialCreatedAt
+            )
+        ) {
+            val nextCreatedAt = faker.random.randomPastDate(min = it.createdAt).toInstant()
+            Tag(
+                id = it.id + 1L,
+                name = loremFaker.lorem.unique.words(),
+                createdAt = nextCreatedAt,
+                updatedAt = nextCreatedAt
+            )
+        }
+    }
 
     private fun createSavedStateHandleForNew(): SavedStateHandle =
         SavedStateHandle(mapOf("id" to null, "name" to null))

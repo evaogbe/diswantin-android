@@ -52,10 +52,12 @@ class TaskDetailViewModelTest {
     @Test
     fun `uiState fetches task by id`() = runTest(mainDispatcherRule.testDispatcher) {
         val (task1, task2) = List(2) {
+            val createdAt = faker.random.randomPastDate().toInstant()
             Task(
                 id = it + 1L,
-                createdAt = faker.random.randomPastDate().toInstant(),
-                name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
+                createdAt = createdAt,
+                name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                updatedAt = createdAt,
             )
         }
         val clock = createClock()
@@ -405,11 +407,15 @@ class TaskDetailViewModelTest {
             )
         }
 
-    private fun genTask() = Task(
-        id = 1L,
-        createdAt = faker.random.randomPastDate().toInstant(),
-        name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
-    )
+    private fun genTask(): Task {
+        val createdAt = faker.random.randomPastDate().toInstant()
+        return Task(
+            id = 1L,
+            createdAt = createdAt,
+            name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+            updatedAt = createdAt,
+        )
+    }
 
     private fun createSavedStateHandle(): SavedStateHandle {
         mockkStatic("androidx.navigation.SavedStateHandleKt")
