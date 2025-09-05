@@ -452,6 +452,51 @@ class LocalTaskRepositoryTest {
             assertThat(awaitItem()).isNotNull()
                 .isDataClassEqualTo(task2.toCurrentTask(recurring = true))
 
+            // Overdue recurring before non-recurring with earlier deadline but not due today
+            task1 = taskRepository.update(
+                EditTaskForm(
+                    name = task1.name,
+                    note = task1.note,
+                    deadlineDate = LocalDate.parse("2024-08-24"),
+                    deadlineTime = LocalTime.parse("12:59"),
+                    startAfterDate = task1.startAfterDate,
+                    startAfterTime = task1.startAfterTime,
+                    scheduledDate = task1.scheduledDate,
+                    scheduledTime = task1.scheduledTime,
+                    tagIds = emptySet(),
+                    recurrences = emptyList(),
+                    parentUpdateType = PathUpdateType.Keep,
+                    existingTask = task1,
+                    existingTagIds = emptySet(),
+                    existingRecurrences = emptyList(),
+                )
+            )
+
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task2.toCurrentTask(recurring = true))
+
+            task1 = taskRepository.update(
+                EditTaskForm(
+                    name = task1.name,
+                    note = task1.note,
+                    deadlineDate = null,
+                    deadlineTime = task1.deadlineTime,
+                    startAfterDate = task1.startAfterDate,
+                    startAfterTime = task1.startAfterTime,
+                    scheduledDate = task1.scheduledDate,
+                    scheduledTime = task1.scheduledTime,
+                    tagIds = emptySet(),
+                    recurrences = emptyList(),
+                    parentUpdateType = PathUpdateType.Keep,
+                    existingTask = task1,
+                    existingTagIds = emptySet(),
+                    existingRecurrences = emptyList(),
+                )
+            )
+
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task2.toCurrentTask(recurring = true))
+
             // Scheduled time before deadline time
             task1 = taskRepository.update(
                 EditTaskForm(
