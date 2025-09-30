@@ -25,6 +25,8 @@ fun HighDistressAdviceScreen(modifier: Modifier = Modifier) {
         SelectionContainer {
             StyledList(
                 items = persistentListOf(
+                    StyledListItem(annotatedStringResource(R.string.advice_high_distress_suggestion_compassion)),
+                    StyledListItem(annotatedStringResource(R.string.advice_high_distress_suggestion_imagery)),
                     StyledListItem(
                         annotatedStringResource(R.string.advice_high_distress_suggestion_move),
                         persistentListOf(
@@ -48,8 +50,7 @@ fun HighDistressAdviceScreen(modifier: Modifier = Modifier) {
                             ),
                             StyledListItem(
                                 annotatedStringResource(
-                                    R.string.advice_high_distress_suggestion_move_home,
-                                    html = false
+                                    R.string.advice_high_distress_suggestion_move_home, html = false
                                 )
                             ),
                             StyledListItem(
@@ -73,7 +74,19 @@ fun HighDistressAdviceScreen(modifier: Modifier = Modifier) {
                         ),
                     ),
                     StyledListItem(annotatedStringResource(R.string.advice_high_distress_suggestion_meditate)),
-                    StyledListItem(annotatedStringResource(R.string.advice_high_distress_suggestion_friend)),
+                    StyledListItem(annotatedStringResource(R.string.advice_high_distress_suggestion_positive_attributes)),
+                    StyledListItem(
+                        annotatedStringResource(R.string.advice_high_distress_suggestion_distract),
+                        persistentListOf(
+                            StyledListItem(annotatedStringResource(R.string.advice_high_distress_suggestion_distract_friend)),
+                            StyledListItem(annotatedStringResource(R.string.advice_high_distress_suggestion_distract_gratitude)),
+                            StyledListItem(annotatedStringResource(R.string.advice_high_distress_suggestion_distract_clean)),
+                            StyledListItem(annotatedStringResource(R.string.advice_high_distress_suggestion_distract_shower)),
+                            StyledListItem(annotatedStringResource(R.string.advice_high_distress_suggestion_distract_sing)),
+                            StyledListItem(annotatedStringResource(R.string.advice_high_distress_suggestion_distract_read)),
+                            StyledListItem(annotatedStringResource(R.string.advice_high_distress_suggestion_distract_art)),
+                        )
+                    ),
                     StyledListItem(annotatedStringResource(R.string.advice_high_distress_suggestion_meds)),
                     StyledListItem(annotatedStringResource(R.string.advice_high_distress_suggestion_day_off)),
                 ),
