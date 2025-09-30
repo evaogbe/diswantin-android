@@ -28,7 +28,6 @@ import timber.log.Timber
 import java.time.Clock
 import java.time.LocalTime
 import java.time.ZonedDateTime
-import java.util.Locale
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
 
@@ -38,7 +37,6 @@ class TaskDetailViewModel @Inject constructor(
     private val taskRepository: TaskRepository,
     tagRepository: TagRepository,
     clock: Clock,
-    locale: Locale,
 ) : ViewModel() {
     private val taskId = savedStateHandle.toRoute<TaskDetailRoute>().id
 
@@ -67,23 +65,23 @@ class TaskDetailViewModel @Inject constructor(
                 emit(Result.Failure(e))
             },
         taskRepository.getTaskRecurrencesByTaskId(taskId)
-            .map<List<TaskRecurrence>, Result<TaskRecurrenceUiState?>> {
-                Result.Success(TaskRecurrenceUiState.tryFromEntities(it, locale))
+            .map<List<TaskRecurrence>, Result<List<TaskRecurrence>>> {
+                Result.Success(it)
             }.catch { e ->
                 Timber.e(e, "Failed to fetch task recurrences by task id: %d", taskId)
                 emit(Result.Failure(e))
             },
         userMessage,
-    ) { initialized, taskResult, tagsResult, recurrenceResult, userMessage ->
+    ) { initialized, taskResult, tagsResult, recurrencesResult, userMessage ->
         taskResult.andThen { task ->
             when {
                 task != null -> {
-                    tagsResult.zipWith(recurrenceResult) { tags, recurrence ->
+                    tagsResult.zipWith(recurrencesResult) { tags, recurrences ->
                         val doneBefore = ZonedDateTime.now(clock).with(LocalTime.MIN).toInstant()
                         TaskDetailUiState.success(
                             task = task,
                             tags = tags,
-                            recurrence = recurrence,
+                            recurrences = recurrences,
                             userMessage = userMessage,
                             doneBefore = doneBefore,
                         )

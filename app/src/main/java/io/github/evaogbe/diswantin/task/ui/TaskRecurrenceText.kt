@@ -11,6 +11,7 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.tooling.preview.Preview
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.RecurrenceType
+import io.github.evaogbe.diswantin.ui.preferences.LocalLocale
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toPersistentSet
@@ -18,27 +19,31 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
+import java.time.format.TextStyle
 import java.util.Locale
 
 @Composable
 @ReadOnlyComposable
 fun taskRecurrenceText(recurrence: TaskRecurrenceUiState): String {
     val resources = LocalResources.current
-    return resources.getTaskRecurrenceText(recurrence)
+    val locale = LocalLocale.current
+    return resources.getTaskRecurrenceText(recurrence, locale)
 }
 
-fun Resources.getTaskRecurrenceText(recurrence: TaskRecurrenceUiState): String {
+fun Resources.getTaskRecurrenceText(recurrence: TaskRecurrenceUiState, locale: Locale): String {
     val startText = when (recurrence.type) {
         RecurrenceType.Day -> {
             getQuantityString(R.plurals.recurrence_daily, recurrence.step, recurrence.step)
         }
 
         RecurrenceType.Week -> {
+            val textStyle = if (recurrence.weekdays.size > 1) TextStyle.SHORT else TextStyle.FULL
             getQuantityString(
                 R.plurals.recurrence_weekly,
                 recurrence.step,
                 recurrence.step,
-                recurrence.weekdaysText,
+                recurrence.weekdays.sortedByFirstDayOfWeek(locale)
+                    .joinToString { it.getDisplayName(textStyle, locale) },
             )
         }
 
@@ -57,7 +62,7 @@ fun Resources.getTaskRecurrenceText(recurrence: TaskRecurrenceUiState): String {
                 recurrence.step,
                 recurrence.step,
                 recurrence.startWeek.ordinal,
-                recurrence.startWeekdayText,
+                recurrence.startDate.dayOfWeek.getDisplayName(TextStyle.FULL, locale),
             )
         }
 
@@ -91,7 +96,6 @@ private val Int.ordinal: String
 @Composable
 private fun TaskRecurrenceTextPreview() {
     val now = LocalDate.now()
-    val locale = Locale.getDefault()
     val recurrences = listOf(
         TaskRecurrenceUiState(
             startDate = now,
@@ -99,7 +103,6 @@ private fun TaskRecurrenceTextPreview() {
             type = RecurrenceType.Day,
             step = 1,
             weekdays = persistentSetOf(),
-            locale = locale,
         ),
         TaskRecurrenceUiState(
             startDate = now,
@@ -107,7 +110,6 @@ private fun TaskRecurrenceTextPreview() {
             type = RecurrenceType.Day,
             step = 2,
             weekdays = persistentSetOf(),
-            locale = locale,
         ),
         TaskRecurrenceUiState(
             startDate = now,
@@ -115,7 +117,6 @@ private fun TaskRecurrenceTextPreview() {
             type = RecurrenceType.Day,
             step = 1,
             weekdays = persistentSetOf(),
-            locale = locale,
         ),
         TaskRecurrenceUiState(
             startDate = now,
@@ -123,7 +124,6 @@ private fun TaskRecurrenceTextPreview() {
             type = RecurrenceType.Week,
             step = 1,
             weekdays = persistentSetOf(now.dayOfWeek),
-            locale = locale,
         ),
         TaskRecurrenceUiState(
             startDate = now,
@@ -131,7 +131,6 @@ private fun TaskRecurrenceTextPreview() {
             type = RecurrenceType.Week,
             step = 2,
             weekdays = persistentSetOf(now.dayOfWeek),
-            locale = locale,
         ),
         TaskRecurrenceUiState(
             startDate = now,
@@ -139,7 +138,6 @@ private fun TaskRecurrenceTextPreview() {
             type = RecurrenceType.Week,
             step = 1,
             weekdays = DayOfWeek.entries.toPersistentSet(),
-            locale = locale,
         ),
         TaskRecurrenceUiState(
             startDate = now,
@@ -147,7 +145,6 @@ private fun TaskRecurrenceTextPreview() {
             type = RecurrenceType.DayOfMonth,
             step = 1,
             weekdays = persistentSetOf(),
-            locale = locale,
         ),
         TaskRecurrenceUiState(
             startDate = now,
@@ -155,7 +152,6 @@ private fun TaskRecurrenceTextPreview() {
             type = RecurrenceType.DayOfMonth,
             step = 2,
             weekdays = persistentSetOf(),
-            locale = locale,
         ),
         TaskRecurrenceUiState(
             startDate = now,
@@ -163,7 +159,6 @@ private fun TaskRecurrenceTextPreview() {
             type = RecurrenceType.WeekOfMonth,
             step = 1,
             weekdays = persistentSetOf(),
-            locale = locale,
         ),
         TaskRecurrenceUiState(
             startDate = now,
@@ -171,7 +166,6 @@ private fun TaskRecurrenceTextPreview() {
             type = RecurrenceType.WeekOfMonth,
             step = 2,
             weekdays = persistentSetOf(),
-            locale = locale,
         ),
         TaskRecurrenceUiState(
             startDate = now,
@@ -179,7 +173,6 @@ private fun TaskRecurrenceTextPreview() {
             type = RecurrenceType.Year,
             step = 1,
             weekdays = persistentSetOf(),
-            locale = locale,
         ),
         TaskRecurrenceUiState(
             startDate = now,
@@ -187,14 +180,17 @@ private fun TaskRecurrenceTextPreview() {
             type = RecurrenceType.Year,
             step = 2,
             weekdays = persistentSetOf(),
-            locale = locale,
         ),
     )
 
     DiswantinTheme {
         Column {
             recurrences.forEach {
-                ListItem(headlineContent = { Text(text = taskRecurrenceText(it)) })
+                ListItem(
+                    headlineContent = {
+                        Text(text = taskRecurrenceText(it))
+                    },
+                )
                 HorizontalDivider()
             }
         }

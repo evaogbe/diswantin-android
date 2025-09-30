@@ -3,7 +3,6 @@ package io.github.evaogbe.diswantin.task.ui
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.hasParent
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -30,9 +29,10 @@ import io.github.evaogbe.diswantin.task.data.TaskRepository
 import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTagRepository
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
+import io.github.evaogbe.diswantin.testing.matches
 import io.github.evaogbe.diswantin.testing.matchesSnackbar
 import io.github.evaogbe.diswantin.testing.stringResource
-import io.github.evaogbe.diswantin.ui.form.AutocompleteDropdownMenuTestTag
+import io.github.evaogbe.diswantin.ui.form.AutocompleteMenuItemTestTag
 import io.github.evaogbe.diswantin.ui.loadstate.PendingLayoutTestTag
 import io.github.evaogbe.diswantin.ui.snackbar.SnackbarState
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
@@ -46,7 +46,6 @@ import kotlinx.coroutines.flow.flow
 import org.junit.Rule
 import org.junit.Test
 import java.time.Clock
-import java.util.Locale
 
 @OptIn(ExperimentalTestApi::class)
 class TaskFormScreenTest {
@@ -611,14 +610,14 @@ class TaskFormScreenTest {
 
             composeTestRule.waitForIdle()
             composeTestRule.waitUntilExactlyOneExists(
-                hasParent(hasTestTag(AutocompleteDropdownMenuTestTag)) and hasText(tag.name),
+                hasTestTag(AutocompleteMenuItemTestTag) and hasText(tag.name),
             )
             composeTestRule.onNode(
-                hasParent(hasTestTag(AutocompleteDropdownMenuTestTag)) and hasText(tag.name)
+                hasTestTag(AutocompleteMenuItemTestTag) and hasText(tag.name)
             ).performClick()
 
             composeTestRule.waitUntilExactlyOneExists(
-                hasParent(hasTestTag(TaskFormTagListTestTag)) and hasText(tag.name)
+                hasTestTag(TaskFormTagTestTag) and hasText(tag.name)
             )
         }
 
@@ -714,7 +713,7 @@ class TaskFormScreenTest {
         ).onParent().performTextInput(query)
 
         composeTestRule.waitUntil {
-            snackbarState?.matches(stringResource(R.string.search_tag_options_error)) == true
+            snackbarState.matches(stringResource(R.string.search_tag_options_error))
         }
     }
 
@@ -794,7 +793,7 @@ class TaskFormScreenTest {
         topBarActionState.value = TaskFormTopBarAction.Save
 
         composeTestRule.waitUntil {
-            snackbarState?.matches(stringResource(R.string.task_form_save_error_new)) == true
+            snackbarState.matches(stringResource(R.string.task_form_save_error_new))
         }
     }
 
@@ -884,7 +883,7 @@ class TaskFormScreenTest {
         topBarActionState.value = TaskFormTopBarAction.Save
 
         composeTestRule.waitUntil {
-            snackbarState?.matches(stringResource(R.string.task_form_save_error_edit)) == true
+            snackbarState.matches(stringResource(R.string.task_form_save_error_edit))
         }
     }
 
@@ -926,8 +925,6 @@ class TaskFormScreenTest {
 
     private fun createClock() = Clock.systemDefaultZone()
 
-    private fun createLocale() = Locale.getDefault()
-
     private fun createTaskFormViewModelForNew(
         initDatabase: (FakeDatabase) -> Unit = {},
         initTaskRepositorySpy: ((TaskRepository) -> Unit)? = null,
@@ -950,7 +947,6 @@ class TaskFormScreenTest {
             taskRepository,
             tagRepository,
             clock,
-            createLocale(),
         )
     }
 
@@ -976,7 +972,6 @@ class TaskFormScreenTest {
             taskRepository,
             tagRepository,
             clock,
-            createLocale(),
         )
     }
 }

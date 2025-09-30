@@ -15,6 +15,7 @@ import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTagRepository
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
+import io.github.evaogbe.diswantin.testing.matches
 import io.github.evaogbe.diswantin.testing.stringResource
 import io.github.evaogbe.diswantin.ui.loadstate.PendingLayoutTestTag
 import io.github.evaogbe.diswantin.ui.snackbar.SnackbarState
@@ -157,7 +158,7 @@ class TagDetailScreenTest {
         topBarActionState.value = TagDetailTopBarAction.Delete
 
         composeTestRule.waitUntil {
-            snackbarState?.matches(stringResource(R.string.tag_detail_delete_error)) == true
+            snackbarState.matches(stringResource(R.string.tag_detail_delete_error))
         }
     }
 

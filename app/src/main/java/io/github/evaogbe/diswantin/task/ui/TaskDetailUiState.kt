@@ -3,6 +3,7 @@ package io.github.evaogbe.diswantin.task.ui
 import android.os.Parcelable
 import io.github.evaogbe.diswantin.task.data.Tag
 import io.github.evaogbe.diswantin.task.data.TaskDetail
+import io.github.evaogbe.diswantin.task.data.TaskRecurrence
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.parcelize.Parcelize
@@ -50,7 +51,7 @@ sealed interface TaskDetailUiState {
         fun success(
             task: TaskDetail,
             tags: List<Tag>,
-            recurrence: TaskRecurrenceUiState?,
+            recurrences: List<TaskRecurrence>,
             userMessage: TaskDetailUserMessage?,
             doneBefore: Instant,
         ) = Success(
@@ -60,11 +61,11 @@ sealed interface TaskDetailUiState {
             formattedDeadline = formatDateTime(task.deadlineDate, task.deadlineTime),
             formattedStartAfter = formatDateTime(task.startAfterDate, task.startAfterTime),
             formattedScheduledAt = formatDateTime(task.scheduledDate, task.scheduledTime),
-            recurrence = recurrence,
+            recurrence = TaskRecurrenceUiState.tryFromEntities(recurrences),
             isDone = isTaskDone(
                 doneAt = task.doneAt,
                 doneBefore = doneBefore,
-                recurring = recurrence != null,
+                recurring = recurrences.isNotEmpty(),
             ),
             parent = if (task.parentId != null && task.parentName != null) {
                 TaskSummaryUiState(

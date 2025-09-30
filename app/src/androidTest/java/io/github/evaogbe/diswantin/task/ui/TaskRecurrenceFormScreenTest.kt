@@ -1,5 +1,6 @@
 package io.github.evaogbe.diswantin.task.ui
 
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
@@ -10,6 +11,7 @@ import io.github.evaogbe.diswantin.task.data.TaskRecurrence
 import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTagRepository
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
+import io.github.evaogbe.diswantin.ui.preferences.LocalLocale
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
@@ -41,16 +43,18 @@ class TaskRecurrenceFormScreenTest {
             taskRepository,
             tagRepository,
             clock,
-            createLocale(),
         )
+        viewModel.initialize()
 
         composeTestRule.setContent {
-            DiswantinTheme {
-                TaskRecurrentFormScreen(
-                    topBarAction = null,
-                    topBarActionHandled = {},
-                    taskFormViewModel = viewModel,
-                )
+            CompositionLocalProvider(LocalLocale provides Locale.US) {
+                DiswantinTheme {
+                    TaskRecurrentFormScreen(
+                        topBarAction = null,
+                        topBarActionHandled = {},
+                        taskFormViewModel = viewModel,
+                    )
+                }
             }
         }
 
@@ -73,14 +77,17 @@ class TaskRecurrenceFormScreenTest {
                 )
             )
         }
+        viewModel.initialize()
 
         composeTestRule.setContent {
-            DiswantinTheme {
-                TaskRecurrentFormScreen(
-                    topBarAction = null,
-                    topBarActionHandled = {},
-                    taskFormViewModel = viewModel,
-                )
+            CompositionLocalProvider(LocalLocale provides Locale.US) {
+                DiswantinTheme {
+                    TaskRecurrentFormScreen(
+                        topBarAction = null,
+                        topBarActionHandled = {},
+                        taskFormViewModel = viewModel,
+                    )
+                }
             }
         }
 
@@ -107,8 +114,6 @@ class TaskRecurrenceFormScreenTest {
 
     private fun createClock() = Clock.systemDefaultZone()
 
-    private fun createLocale() = Locale.US
-
     private fun createTaskFormViewModelForEdit(
         initDatabase: (FakeDatabase) -> Unit
     ): TaskFormViewModel {
@@ -121,7 +126,6 @@ class TaskRecurrenceFormScreenTest {
             taskRepository,
             tagRepository,
             clock,
-            createLocale(),
         )
     }
 }

@@ -51,7 +51,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.RecurrenceType
@@ -62,6 +62,7 @@ import io.github.evaogbe.diswantin.ui.dialog.SelectableDatesWithMin
 import io.github.evaogbe.diswantin.ui.form.ClearableLayout
 import io.github.evaogbe.diswantin.ui.form.EditFieldButton
 import io.github.evaogbe.diswantin.ui.form.OutlinedIntegerField
+import io.github.evaogbe.diswantin.ui.preferences.LocalLocale
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.evaogbe.diswantin.ui.theme.ScreenLg
 import io.github.evaogbe.diswantin.ui.theme.SpaceMd
@@ -75,8 +76,6 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.time.format.TextStyle
-import java.time.temporal.WeekFields
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -134,7 +133,6 @@ fun TaskRecurrentFormScreen(
                         type = type ?: RecurrenceType.Day,
                         step = step,
                         weekdays = if (type == RecurrenceType.Week) weekdays else persistentSetOf(),
-                        locale = taskFormViewModel.locale,
                     )
                 )
                 topBarActionHandled()
@@ -197,7 +195,6 @@ fun TaskRecurrentFormScreen(
                 dirty = true
             }
         },
-        locale = taskFormViewModel.locale,
     )
 }
 
@@ -227,9 +224,9 @@ fun TaskRecurrenceFormScreen(
     onStepChange: (Int) -> Unit,
     weekdays: PersistentSet<DayOfWeek>,
     onWeekdaysChange: (PersistentSet<DayOfWeek>) -> Unit,
-    locale: Locale,
     modifier: Modifier = Modifier,
 ) {
+    val locale = LocalLocale.current
     var dialogType by rememberSaveable { mutableStateOf<RecurrenceDialogType?>(null) }
     val typeInput = rememberTextFieldState(
         initialText = pluralStringResource(
@@ -253,8 +250,7 @@ fun TaskRecurrenceFormScreen(
                     type = type,
                     step = 1,
                     weekdays = persistentSetOf(),
-                    locale = locale,
-                )
+                ),
             )
         } else {
             ""
@@ -289,8 +285,8 @@ fun TaskRecurrenceFormScreen(
                         type = type,
                         step = 1,
                         weekdays = persistentSetOf(),
-                        locale = locale,
-                    )
+                    ),
+                    locale = locale,
                 )
             )
         }
@@ -364,8 +360,7 @@ fun TaskRecurrenceFormScreen(
                     Spacer(Modifier.size(SpaceSm))
                     Row(horizontalArrangement = Arrangement.spacedBy(SpaceSm)) {
                         DayOfWeek.entries
-                            .partition { it == WeekFields.of(locale).firstDayOfWeek }
-                            .let { it.first + it.second }
+                            .sortedByFirstDayOfWeek(locale)
                             .forEach { weekday ->
                                 if (weekday in weekdays) {
                                     Button(
@@ -439,8 +434,7 @@ fun TaskRecurrenceFormScreen(
                                                     type = type,
                                                     step = 1,
                                                     weekdays = persistentSetOf(),
-                                                    locale = locale,
-                                                )
+                                                ),
                                             )
                                         )
                                     },
@@ -531,7 +525,6 @@ private fun TaskRecurrenceFormScreenPreview_Daily() {
                 onStepChange = {},
                 weekdays = persistentSetOf(),
                 onWeekdaysChange = {},
-                locale = Locale.getDefault(),
                 modifier = Modifier.padding(innerPadding),
             )
         }
@@ -558,7 +551,6 @@ private fun TaskRecurrenceFormScreenPreview_Weekly() {
                 onStepChange = {},
                 weekdays = persistentSetOf(DayOfWeek.SUNDAY, DayOfWeek.MONDAY),
                 onWeekdaysChange = {},
-                locale = Locale.getDefault(),
                 modifier = Modifier.padding(innerPadding),
             )
         }
@@ -585,7 +577,6 @@ private fun TaskRecurrenceFormScreenPreview_MonthlyOnDay() {
                 onStepChange = {},
                 weekdays = persistentSetOf(),
                 onWeekdaysChange = {},
-                locale = Locale.getDefault(),
                 modifier = Modifier.padding(innerPadding),
             )
         }
@@ -615,7 +606,6 @@ private fun TaskRecurrenceFormScreenPreview_MonthlyOnWeek() {
                 onStepChange = {},
                 weekdays = persistentSetOf(),
                 onWeekdaysChange = {},
-                locale = Locale.getDefault(),
                 modifier = Modifier.padding(innerPadding),
             )
         }

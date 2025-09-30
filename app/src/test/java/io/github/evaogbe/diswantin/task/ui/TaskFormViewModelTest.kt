@@ -5,9 +5,11 @@ import androidx.navigation.toRoute
 import assertk.assertThat
 import assertk.assertions.containsExactly
 import assertk.assertions.containsExactlyInAnyOrder
+import assertk.assertions.isDataClassEqualTo
 import assertk.assertions.isEqualTo
 import assertk.assertions.isEqualToIgnoringGivenProperties
 import assertk.assertions.isFalse
+import assertk.assertions.isNotNull
 import assertk.assertions.isTrue
 import assertk.assertions.prop
 import io.github.evaogbe.diswantin.task.data.RecurrenceType
@@ -45,7 +47,6 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
-import java.util.Locale
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TaskFormViewModelTest {
@@ -99,7 +100,6 @@ class TaskFormViewModelTest {
         val parentTask = genTask(id = 2L)
         val tag = genTag()
         val clock = createClock()
-        val locale = createLocale()
         val db = FakeDatabase().apply {
             insertTask(task)
             insertTask(parentTask)
@@ -122,8 +122,8 @@ class TaskFormViewModelTest {
             taskRepository,
             tagRepository,
             clock,
-            locale,
         )
+        viewModel.initialize()
 
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect()
@@ -140,7 +140,6 @@ class TaskFormViewModelTest {
                     type = RecurrenceType.Day,
                     step = 1,
                     weekdays = persistentSetOf(),
-                    locale = locale,
                 ),
                 deadlineDate = LocalDate.parse("2024-08-23"),
                 deadlineTime = LocalTime.parse("18:00"),
@@ -157,6 +156,15 @@ class TaskFormViewModelTest {
                 userMessage = null,
             )
         )
+        assertThat(viewModel.recurrenceUiState.value).isNotNull().isDataClassEqualTo(
+            TaskRecurrenceUiState(
+                startDate = LocalDate.parse("2024-08-22"),
+                endDate = LocalDate.parse("2025-08-22"),
+                type = RecurrenceType.Day,
+                step = 1,
+                weekdays = persistentSetOf(),
+            )
+        )
     }
 
     @Test
@@ -167,7 +175,7 @@ class TaskFormViewModelTest {
             val viewModel = createTaskFormViewModelForEdit(
                 initDatabase = { db -> db.insertTask(task) },
                 initTaskRepositorySpy = { repository ->
-                    every { repository.getById(any()) } returns flow { throw exception }
+                    every { repository.getTaskById(any()) } returns flow { throw exception }
                 },
             )
 
@@ -514,14 +522,12 @@ class TaskFormViewModelTest {
     fun `uiState emits changed when new form and recurrence changed`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val clock = createClock()
-            val locale = createLocale()
             val recurrence = TaskRecurrenceUiState(
                 startDate = faker.random.randomPastDate().toLocalDate(),
                 endDate = null,
                 type = RecurrenceType.Day,
                 step = 1,
-                weekdays = persistentSetOf(),
-                locale = locale
+                weekdays = persistentSetOf()
             )
             val db = FakeDatabase()
             val taskRepository = FakeTaskRepository(db, clock)
@@ -531,8 +537,8 @@ class TaskFormViewModelTest {
                 taskRepository,
                 tagRepository,
                 clock,
-                locale,
             )
+            viewModel.initialize()
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -1093,7 +1099,7 @@ class TaskFormViewModelTest {
             val viewModel = createTaskFormViewModelForNew(
                 initDatabase = { db -> db.insertTask(genTask()) },
                 initTaskRepositorySpy = { repository ->
-                    every { repository.getCount() } returns flow { throw RuntimeException("Test") }
+                    every { repository.getTaskCount() } returns flow { throw RuntimeException("Test") }
                 },
             )
 
@@ -1233,9 +1239,7 @@ class TaskFormViewModelTest {
             val viewModel = createTaskFormViewModelForNew(
                 initDatabase = { db -> db.insertTag(tag) },
                 initTagRepositorySpy = { repository ->
-                    every { repository.hasTagsStream } returns flow {
-                        throw RuntimeException("Test")
-                    }
+                    coEvery { repository.hasTags() } throws RuntimeException("Test")
                 },
             )
 
@@ -1428,7 +1432,6 @@ class TaskFormViewModelTest {
         val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
         val now = Instant.parse("2024-08-22T08:00:00Z")
         val clock = Clock.fixed(now, ZoneId.of("America/New_York"))
-        val locale = createLocale()
         val db = FakeDatabase()
         val taskRepository = FakeTaskRepository(db, clock)
         val tagRepository = FakeTagRepository(db)
@@ -1437,8 +1440,8 @@ class TaskFormViewModelTest {
             taskRepository,
             tagRepository,
             clock,
-            locale,
         )
+        viewModel.initialize()
 
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect()
@@ -1475,7 +1478,6 @@ class TaskFormViewModelTest {
                 type = RecurrenceType.Day,
                 step = 1,
                 weekdays = persistentSetOf(),
-                locale = locale,
             ),
         )
         viewModel.saveTask()
@@ -1551,7 +1553,6 @@ class TaskFormViewModelTest {
         val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
         val clock =
             Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
-        val locale = createLocale()
         val task = genTask().copy(
             deadlineDate = LocalDate.parse("2024-08-23"),
             deadlineTime = LocalTime.parse("22:00"),
@@ -1570,8 +1571,8 @@ class TaskFormViewModelTest {
             taskRepository,
             tagRepository,
             clock,
-            locale,
         )
+        viewModel.initialize()
 
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect()
@@ -1612,7 +1613,6 @@ class TaskFormViewModelTest {
                 type = RecurrenceType.Week,
                 step = 2,
                 weekdays = persistentSetOf(DayOfWeek.MONDAY, DayOfWeek.THURSDAY),
-                locale = locale,
             ),
         )
         viewModel.addTag(tag)
@@ -1707,7 +1707,7 @@ class TaskFormViewModelTest {
                 insertChain(parentId = parentTask.id, childId = task.id)
             }
             val taskRepository = spyk(FakeTaskRepository(db, clock))
-            every { taskRepository.getCount() } returns flow { throw RuntimeException("Test") }
+            every { taskRepository.getTaskCount() } returns flow { throw RuntimeException("Test") }
 
             val tagRepository = FakeTagRepository(db)
             val viewModel = TaskFormViewModel(
@@ -1715,8 +1715,8 @@ class TaskFormViewModelTest {
                 taskRepository,
                 tagRepository,
                 clock,
-                createLocale(),
             )
+            viewModel.initialize()
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -1777,8 +1777,8 @@ class TaskFormViewModelTest {
                 taskRepository,
                 tagRepository,
                 clock,
-                createLocale(),
             )
+            viewModel.initialize()
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -1829,17 +1829,15 @@ class TaskFormViewModelTest {
             }
             val taskRepository = FakeTaskRepository(db, clock)
             val tagRepository = spyk(FakeTagRepository(db))
-            every { tagRepository.hasTagsStream } returns flow {
-                throw RuntimeException("Test")
-            }
+            coEvery { tagRepository.hasTags() } throws RuntimeException("Test")
 
             val viewModel = TaskFormViewModel(
                 createSavedStateHandleForEdit(),
                 taskRepository,
                 tagRepository,
                 clock,
-                createLocale(),
             )
+            viewModel.initialize()
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -1898,8 +1896,8 @@ class TaskFormViewModelTest {
                 taskRepository,
                 tagRepository,
                 clock,
-                createLocale(),
             )
+            viewModel.initialize()
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -1977,8 +1975,6 @@ class TaskFormViewModelTest {
     private fun createClock() =
         Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
 
-    private fun createLocale(): Locale = Locale.US
-
     private fun createTaskFormViewModelForNew(
         initDatabase: (FakeDatabase) -> Unit = {},
         initTaskRepositorySpy: ((TaskRepository) -> Unit)? = null,
@@ -1996,13 +1992,14 @@ class TaskFormViewModelTest {
         } else {
             spyk(FakeTagRepository(db)).also(initTagRepositorySpy)
         }
-        return TaskFormViewModel(
+        val viewModel = TaskFormViewModel(
             createSavedStateHandleForNew(),
             taskRepository,
             tagRepository,
             clock,
-            createLocale(),
         )
+        viewModel.initialize()
+        return viewModel
     }
 
     private fun createTaskFormViewModelForEdit(
@@ -2022,12 +2019,13 @@ class TaskFormViewModelTest {
         } else {
             spyk(FakeTagRepository(db)).also(initTagRepositorySpy)
         }
-        return TaskFormViewModel(
+        val viewModel = TaskFormViewModel(
             createSavedStateHandleForEdit(),
             taskRepository,
             tagRepository,
             clock,
-            createLocale(),
         )
+        viewModel.initialize()
+        return viewModel
     }
 }

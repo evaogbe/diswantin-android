@@ -34,7 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -546,7 +546,11 @@ fun DiswantinTopBar(
         is TopBarState.AdviceInner -> {
             InnerAdviceTopBar(
                 onBackClick = navController::popBackStack,
-                onRestart = { navController.navigate(route = AdviceRoute.BodySensation) },
+                onRestart = {
+                    navController.navigate(route = AdviceRoute.BodySensation) {
+                        popUpTo(navController.graph.findStartDestination().id)
+                    }
+                },
             )
         }
 

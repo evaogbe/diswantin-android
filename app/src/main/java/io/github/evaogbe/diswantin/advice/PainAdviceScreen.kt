@@ -11,13 +11,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.evaogbe.diswantin.ui.theme.ScreenLg
@@ -48,9 +45,7 @@ fun PainAdviceScreen(onContinueClick: () -> Unit, modifier: Modifier = Modifier)
                     )
                 )
             }
-            TextButton(onClick = onContinueClick, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.continue_button), textAlign = TextAlign.Center)
-            }
+            AdviceButton(onClick = onContinueClick, text = stringResource(R.string.continue_button))
         }
     }
 }

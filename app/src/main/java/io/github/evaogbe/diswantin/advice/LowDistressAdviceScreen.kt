@@ -14,7 +14,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,9 +53,10 @@ fun LowDistressAdviceScreen(onCheckTheFactsClick: () -> Unit, modifier: Modifier
                 )
             }
             Spacer(Modifier.size(SpaceMd))
-            TextButton(onClick = onCheckTheFactsClick) {
-                Text(stringResource(R.string.advice_low_distress_details_button))
-            }
+            AdviceButton(
+                onClick = onCheckTheFactsClick,
+                text = stringResource(R.string.advice_low_distress_details_button),
+            )
         }
     }
 }

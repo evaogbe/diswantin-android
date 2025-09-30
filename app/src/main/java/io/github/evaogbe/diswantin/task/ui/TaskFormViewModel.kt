@@ -1,6 +1,7 @@
 package io.github.evaogbe.diswantin.task.ui
 
 import android.os.Bundle
+import androidx.annotation.MainThread
 import androidx.core.os.BundleCompat
 import androidx.core.os.bundleOf
 import androidx.lifecycle.SavedStateHandle
@@ -31,14 +32,13 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.WhileSubscribed
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -48,17 +48,15 @@ import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
-import java.util.Locale
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
 
 @HiltViewModel
 class TaskFormViewModel @Inject constructor(
-    savedStateHandle: SavedStateHandle,
+    private val savedStateHandle: SavedStateHandle,
     private val taskRepository: TaskRepository,
-    tagRepository: TagRepository,
+    private val tagRepository: TagRepository,
     private val clock: Clock,
-    val locale: Locale,
 ) : ViewModel() {
     private val route = savedStateHandle.toRoute<TaskFormRoute.Main>()
 
@@ -75,7 +73,9 @@ class TaskFormViewModel @Inject constructor(
 
     private val note = MutableStateFlow("")
 
-    val recurrenceUiState = MutableStateFlow<TaskRecurrenceUiState?>(null)
+    private val _recurrenceUiState = MutableStateFlow<TaskRecurrenceUiState?>(null)
+
+    val recurrenceUiState = _recurrenceUiState.asStateFlow()
 
     private val deadlineDate =
         savedStateHandle.getMutableStateFlow<LocalDate?>(DEADLINE_DATE_KEY, null)
@@ -109,17 +109,19 @@ class TaskFormViewModel @Inject constructor(
     private val userMessage = MutableStateFlow<TaskFormUserMessage?>(null)
 
     private val taskCountStream =
-        taskRepository.getCount().map<Long, Result<Long>> { Result.Success(it) }.catch { e ->
-            Timber.e(e, "Failed to fetch task count")
-            userMessage.value = TaskFormUserMessage.FetchParentTaskError
-            emit(Result.Failure(e))
-        }
+        taskRepository.getTaskCount().map<Long, Result<Long>> { Result.Success(it) }
+            .catch { e ->
+                Timber.e(e, "Failed to fetch task count")
+                userMessage.value = TaskFormUserMessage.FetchParentTaskError
+                emit(Result.Failure(e))
+            }
 
     private val existingTaskStream = taskId?.let { id ->
-        taskRepository.getById(id).map<Task, Result<Task>> { Result.Success(it) }.catch { e ->
-            Timber.e(e, "Failed to fetch task by id: %d", id)
-            emit(Result.Failure(e))
-        }
+        taskRepository.getTaskById(id).map<Task, Result<Task>> { Result.Success(it) }
+            .catch { e ->
+                Timber.e(e, "Failed to fetch task by id: %d", id)
+                emit(Result.Failure(e))
+            }
     } ?: flowOf(Result.Success(null))
 
     private val existingRecurrencesStream = taskId?.let { id ->
@@ -158,7 +160,7 @@ class TaskFormViewModel @Inject constructor(
         initialNote,
         name,
         note,
-        recurrenceUiState,
+        _recurrenceUiState,
         deadlineDate,
         deadlineTime,
         startAfterDate,
@@ -225,7 +227,7 @@ class TaskFormViewModel @Inject constructor(
                     val existingTags =
                         existingTagsResult.getOrNull()?.toPersistentList() ?: persistentListOf()
                     val existingRecurrenceUiState =
-                        TaskRecurrenceUiState.tryFromEntities(existingRecurrences, locale)
+                        TaskRecurrenceUiState.tryFromEntities(existingRecurrences)
                     TaskFormUiState.Success(
                         initialName = initialName,
                         initialNote = initialNote,
@@ -275,10 +277,10 @@ class TaskFormViewModel @Inject constructor(
     init {
         val recurrencesBundle = savedStateHandle.get<Bundle>(RECURRENCES_KEY)
         if (recurrencesBundle != null) {
-            recurrenceUiState.value = recurrencesBundle.restoreTaskRecurrenceUiState()
+            _recurrenceUiState.value = recurrencesBundle.restoreTaskRecurrenceUiState()
         }
         savedStateHandle.setSavedStateProvider(RECURRENCES_KEY) {
-            recurrenceUiState.value?.bundle ?: Bundle()
+            _recurrenceUiState.value?.bundle ?: Bundle()
         }
 
         val tagsBundle = savedStateHandle.get<Bundle>(TAGS_KEY)
@@ -288,16 +290,29 @@ class TaskFormViewModel @Inject constructor(
         savedStateHandle.setSavedStateProvider(TAGS_KEY) {
             bundleOf(TAGS_KEY to tags.value.toTypedArray())
         }
+    }
 
-        tagRepository.hasTagsStream.onEach { hasTags ->
+    private var initializeCalled = false
+
+    @MainThread
+    fun initialize() {
+        if (initializeCalled) return
+        initializeCalled = true
+
+        viewModelScope.launch {
+            val hasTags = try {
+                tagRepository.hasTags()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to query has tags")
+                userMessage.value = TaskFormUserMessage.FetchTagsError
+                false
+            }
             if (!hasTags) {
                 tagFieldState.value = TagFieldState.Hidden
             }
-        }.catch { e ->
-            Timber.e(e, "Failed to query has tags")
-            userMessage.value = TaskFormUserMessage.FetchTagsError
-            tagFieldState.value = TagFieldState.Hidden
-        }.launchIn(viewModelScope)
+        }
 
         if (!isNew && savedStateHandle.get<Boolean>(INITIALIZED_KEY) != true) {
             viewModelScope.launch {
@@ -312,8 +327,8 @@ class TaskFormViewModel @Inject constructor(
                 startAfterTime.value = existingTask.startAfterTime
                 scheduledDate.value = existingTask.scheduledDate
                 scheduledTime.value = existingTask.scheduledTime
-                recurrenceUiState.value = existingRecurrencesStream.first().getOrNull()?.let {
-                    TaskRecurrenceUiState.tryFromEntities(it, locale)
+                _recurrenceUiState.value = existingRecurrencesStream.first().getOrNull()?.let {
+                    TaskRecurrenceUiState.tryFromEntities(it)
                 }
                 parent.value = existingParentStream.first().getOrNull()
                 tags.value =
@@ -377,7 +392,7 @@ class TaskFormViewModel @Inject constructor(
     }
 
     fun updateRecurrence(value: TaskRecurrenceUiState?) {
-        recurrenceUiState.value =
+        _recurrenceUiState.value =
             if (value?.type == RecurrenceType.Week && value.weekdays.isEmpty()) {
                 value.copy(weekdays = persistentSetOf(value.startDate.dayOfWeek))
             } else {
@@ -408,7 +423,7 @@ class TaskFormViewModel @Inject constructor(
         val nonRecurringHasScheduledTime =
             state.scheduledDate == null && state.scheduledTime != null && state.recurrence == null
         val scheduledDate = if (nonRecurringHasScheduledTime) {
-            LocalDate.now()
+            LocalDate.now(clock)
         } else {
             state.scheduledDate
         }
@@ -473,14 +488,14 @@ class TaskFormViewModel @Inject constructor(
             viewModelScope.launch {
                 try {
                     val existingTask = checkNotNull(existingTaskStream.first().getOrNull())
-                    val existingTags = existingTagsStream.first()
+                    val existingTagsResult = existingTagsStream.first()
                     val existingRecurrences =
                         existingRecurrencesStream.first().getOrDefault(emptyList())
-                    val existingParent = existingParentStream.first()
+                    val existingParentResult = existingParentStream.first()
                     val hasTags = tagFieldState.value != TagFieldState.Hidden
-                    val taskCount = taskCountStream.first()
+                    val taskCountResult = taskCountStream.first()
                     val existingTagIds = if (hasTags) {
-                        existingTags.fold(
+                        existingTagsResult.fold(
                             onSuccess = { tags ->
                                 tags.map { it.id }.toSet()
                             },
@@ -506,8 +521,8 @@ class TaskFormViewModel @Inject constructor(
                             },
                             recurrences = recurrences,
                             parentUpdateType = when {
-                                taskCount.isFailure -> PathUpdateType.Keep
-                                existingParent.fold(
+                                taskCountResult.isFailure -> PathUpdateType.Keep
+                                existingParentResult.fold(
                                     onSuccess = { it?.id == state.parent?.id },
                                     onFailure = { true },
                                 ) -> PathUpdateType.Keep
@@ -562,7 +577,6 @@ class TaskFormViewModel @Inject constructor(
                 type = type,
                 step = step,
                 weekdays = weekdays,
-                locale = locale,
             )
         } else {
             null
@@ -570,8 +584,8 @@ class TaskFormViewModel @Inject constructor(
     }
 
     private fun Bundle.restoreTags(): PersistentList<Tag> {
-        return BundleCompat.getParcelableArray(this, TAGS_KEY, Tag::class.java)
-            .orEmpty().map { it as Tag }.toTypedArray().toPersistentList()
+        return BundleCompat.getParcelableArray(this, TAGS_KEY, Tag::class.java).orEmpty()
+            .map { it as Tag }.toTypedArray().toPersistentList()
     }
 
     override fun onCleared() {

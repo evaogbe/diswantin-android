@@ -8,9 +8,6 @@ class SnackbarState private constructor(
     fun withAction(label: String, onAction: () -> Unit) =
         SnackbarState(message, label, onAction)
 
-    fun matches(message: String, actionLabel: String? = null) =
-        this.message == message && this.actionLabel == actionLabel
-
     companion object {
         fun create(message: String) = SnackbarState(message, actionLabel = null, onAction = {})
     }

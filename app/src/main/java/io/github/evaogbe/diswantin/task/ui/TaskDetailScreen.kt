@@ -40,7 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.PagingData
@@ -66,7 +66,6 @@ import kotlinx.coroutines.flow.flowOf
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -583,7 +582,6 @@ private fun TaskDetailLayoutPreview() {
                         type = RecurrenceType.Day,
                         step = 1,
                         weekdays = persistentSetOf(),
-                        locale = Locale.getDefault(),
                     ),
                     isDone = false,
                     parent = TaskSummaryUiState(id = 1L, name = "Brush teeth", isDone = true),

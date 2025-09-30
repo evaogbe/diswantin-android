@@ -14,12 +14,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.evaogbe.diswantin.ui.theme.ScreenLg
@@ -50,33 +48,25 @@ fun BodySensationAdviceScreen(
                 )
             }
             Spacer(Modifier.size(SpaceLg))
-            TextButton(onClick = onHungryClick, modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    stringResource(R.string.advice_body_sensation_hungry_button),
-                    textAlign = TextAlign.Center,
-                )
-            }
+            AdviceButton(
+                onClick = onHungryClick,
+                text = stringResource(R.string.advice_body_sensation_hungry_button),
+            )
             Spacer(Modifier.size(SpaceMd))
-            TextButton(onClick = onTiredClick, modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    stringResource(R.string.advice_body_sensation_tired_button),
-                    textAlign = TextAlign.Center,
-                )
-            }
+            AdviceButton(
+                onClick = onTiredClick,
+                text = stringResource(R.string.advice_body_sensation_tired_button),
+            )
             Spacer(Modifier.size(SpaceMd))
-            TextButton(onClick = onPainClick, modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    stringResource(R.string.advice_body_sensation_pain_button),
-                    textAlign = TextAlign.Center,
-                )
-            }
+            AdviceButton(
+                onClick = onPainClick,
+                text = stringResource(R.string.advice_body_sensation_pain_button),
+            )
             Spacer(Modifier.size(SpaceMd))
-            TextButton(onClick = onOtherClick, modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    stringResource(R.string.advice_body_sensation_other_button),
-                    textAlign = TextAlign.Center,
-                )
-            }
+            AdviceButton(
+                onClick = onOtherClick,
+                text = stringResource(R.string.advice_body_sensation_other_button),
+            )
         }
     }
 }

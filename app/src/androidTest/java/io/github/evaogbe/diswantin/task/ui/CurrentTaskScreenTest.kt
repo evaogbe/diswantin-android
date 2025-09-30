@@ -14,6 +14,7 @@ import io.github.evaogbe.diswantin.task.data.TaskRecurrence
 import io.github.evaogbe.diswantin.task.data.TaskRepository
 import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
+import io.github.evaogbe.diswantin.testing.matches
 import io.github.evaogbe.diswantin.testing.matchesSnackbar
 import io.github.evaogbe.diswantin.testing.stringResource
 import io.github.evaogbe.diswantin.ui.snackbar.SnackbarState
@@ -290,7 +291,7 @@ class CurrentTaskScreenTest {
             .performClick()
 
         composeTestRule.waitUntil {
-            snackbarState?.matches(stringResource(R.string.current_task_mark_done_error)) == true
+            snackbarState.matches(stringResource(R.string.current_task_mark_done_error))
         }
     }
 

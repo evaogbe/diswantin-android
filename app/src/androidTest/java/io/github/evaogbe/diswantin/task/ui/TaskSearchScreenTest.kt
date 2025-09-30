@@ -21,6 +21,7 @@ import io.github.evaogbe.diswantin.task.data.TaskSearchCriteria
 import io.github.evaogbe.diswantin.task.data.TaskSummary
 import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
+import io.github.evaogbe.diswantin.testing.matches
 import io.github.evaogbe.diswantin.testing.stringResource
 import io.github.evaogbe.diswantin.ui.loadstate.PendingLayoutTestTag
 import io.github.evaogbe.diswantin.ui.snackbar.SnackbarState
@@ -161,10 +162,10 @@ class TaskSearchScreenTest {
         composeTestRule.onNodeWithText(tasks[1].name).assertDoesNotExist()
 
         composeTestRule.waitUntil {
-            snackbarState?.matches(
+            snackbarState.matches(
                 message = stringResource(R.string.task_search_error),
                 actionLabel = stringResource(R.string.retry_button),
-            ) == true
+            )
         }
     }
 

@@ -102,7 +102,7 @@ class TagDetailViewModelTest {
                     db.insertTag(tag = tag, taskIds = tasks.map { it.id }.toSet())
                 },
                 initTagRepositorySpy = { repository ->
-                    every { repository.getById(any()) } returns flow {
+                    every { repository.getTagById(any()) } returns flow {
                         throw exception
                     }
                 },
@@ -157,7 +157,7 @@ class TagDetailViewModelTest {
         viewModel.saveTag(name)
         advanceUntilIdle()
 
-        val updatedTag = tagRepository.getById(tag.id).first()
+        val updatedTag = tagRepository.getTagById(tag.id).first()
         assertThat(viewModel.uiState.value).isEqualTo(
             TagDetailUiState.Success(
                 tag = tag.copy(name = name, updatedAt = now),

@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.Flow
 interface TaskRepository {
     fun getCurrentTask(params: CurrentTaskParams): Flow<CurrentTask?>
 
-    fun getById(id: Long): Flow<Task>
+    fun getTaskById(id: Long): Flow<Task>
 
     fun getTaskDetailById(id: Long): Flow<TaskDetail?>
 
@@ -20,7 +20,7 @@ interface TaskRepository {
 
     fun getTaskRecurrencesByTaskId(taskId: Long): Flow<List<TaskRecurrence>>
 
-    fun getCount(): Flow<Long>
+    fun getTaskCount(): Flow<Long>
 
     suspend fun create(form: NewTaskForm): Task
 
