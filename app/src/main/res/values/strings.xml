@@ -33,8 +33,17 @@
     <string name="advice_tipp_step2">Do an intense exercise</string>
     <string name="advice_tipp_step3">Breath deeply and slowly</string>
     <string name="advice_tipp_step4">Tense and relax your muscles</string>
+    <string name="advice_high_distress_suggestion_compassion"><![CDATA[Practice <b>self-compassion</b>]]></string>
     <string name="advice_high_distress_suggestion_day_off"><![CDATA[Plan a <b>day off</b>]]></string>
-    <string name="advice_high_distress_suggestion_friend"><![CDATA[Call/text/video chat/visit a <b>friend</b>. Try to brighten their day or ask them if you can vent]]></string>
+    <string name="advice_high_distress_suggestion_distract"><![CDATA[Briefly <b>distract</b> yourself from the distressing emotions]]></string>
+    <string name="advice_high_distress_suggestion_distract_art"><![CDATA[Express yourself creatively through <b>art</b>]]></string>
+    <string name="advice_high_distress_suggestion_distract_clean"><![CDATA[<b>Clean</b> a room in your home]]></string>
+    <string name="advice_high_distress_suggestion_distract_friend"><![CDATA[Call/text/video chat/visit a <b>friend</b>. Try to brighten their day or ask them if you can vent]]></string>
+    <string name="advice_high_distress_suggestion_distract_gratitude"><![CDATA[Make a list of things you are <b>grateful</b> for]]></string>
+    <string name="advice_high_distress_suggestion_distract_read"><![CDATA[<b>Read</b> a book]]></string>
+    <string name="advice_high_distress_suggestion_distract_shower"><![CDATA[Take a hot <b>shower</b>]]></string>
+    <string name="advice_high_distress_suggestion_distract_sing"><![CDATA[<b>Sing</b> your favorite songs]]></string>
+    <string name="advice_high_distress_suggestion_imagery"><![CDATA[<b>Imagine</b> a relaxing scene]]></string>
     <string name="advice_high_distress_suggestion_meds"><![CDATA[Talk to your doctor about a <b>medication</b> adjustment]]></string>
     <string name="advice_high_distress_suggestion_meditate"><![CDATA[<b>Meditate</b> for 1 minute. Focus on your surroundings, breathing, urges, body sensations, feelings, worries, or thoughts]]></string>
     <string name="advice_high_distress_suggestion_move"><![CDATA[<b>Move</b> your body]]></string>
@@ -45,6 +54,7 @@
     <string name="advice_high_distress_suggestion_move_library">go to the library</string>
     <string name="advice_high_distress_suggestion_move_stretch">stretch</string>
     <string name="advice_high_distress_suggestion_move_wiggle">wiggle</string>
+    <string name="advice_high_distress_suggestion_positive_attributes"><![CDATA[Name 3 of your <b>positive attributes</b>]]></string>
     <string name="advice_hungry_suggestion_snack"><![CDATA[Grab a <b>snack</b>]]></string>
     <string name="advice_low_distress_details_button">Details</string>
     <string name="advice_low_distress_suggestion_body_double"><![CDATA[<b>Body double</b>. Invite a friend to sit with you while you do the task]]></string>

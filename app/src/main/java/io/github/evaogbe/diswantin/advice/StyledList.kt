@@ -5,9 +5,11 @@ import android.text.style.StyleSpan
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.toggleable
@@ -29,6 +31,7 @@ import androidx.compose.ui.semantics.CollectionInfo
 import androidx.compose.ui.semantics.CollectionItemInfo
 import androidx.compose.ui.semantics.collectionInfo
 import androidx.compose.ui.semantics.collectionItemInfo
+import androidx.compose.ui.semantics.hideFromAccessibility
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.AnnotatedString
@@ -49,24 +52,23 @@ import kotlinx.collections.immutable.persistentListOf
 
 @Composable
 @ReadOnlyComposable
-fun annotatedStringResource(@StringRes id: Int, html: Boolean = true) =
-    if (html) {
-        val text = HtmlCompat.fromHtml(stringResource(id), HtmlCompat.FROM_HTML_MODE_COMPACT)
-        buildAnnotatedString {
-            append(text.toString())
-            text.getSpans(0, text.length, Any::class.java).forEach { span ->
-                if (span is StyleSpan && span.style == Typeface.BOLD) {
-                    addStyle(
-                        SpanStyle(fontWeight = FontWeight.Bold),
-                        text.getSpanStart(span),
-                        text.getSpanEnd(span)
-                    )
-                }
+fun annotatedStringResource(@StringRes id: Int, html: Boolean = true) = if (html) {
+    val text = HtmlCompat.fromHtml(stringResource(id), HtmlCompat.FROM_HTML_MODE_COMPACT)
+    buildAnnotatedString {
+        append(text.toString())
+        text.getSpans(0, text.length, Any::class.java).forEach { span ->
+            if (span is StyleSpan && span.style == Typeface.BOLD) {
+                addStyle(
+                    SpanStyle(fontWeight = FontWeight.Bold),
+                    text.getSpanStart(span),
+                    text.getSpanEnd(span)
+                )
             }
         }
-    } else {
-        AnnotatedString(stringResource(id))
     }
+} else {
+    AnnotatedString(stringResource(id))
+}
 
 enum class StyledListType {
     Bulleted, Numbered
@@ -86,9 +88,11 @@ fun StyledList(
     val resources = LocalResources.current
 
     Column(
-        modifier = modifier.semantics {
-            collectionInfo = CollectionInfo(rowCount = items.size, columnCount = 1)
-        },
+        modifier = modifier
+            .semantics {
+                collectionInfo = CollectionInfo(rowCount = items.size, columnCount = 1)
+            }
+            .fillMaxWidth(),
     ) {
         items.forEachIndexed { index, item ->
             var expanded by remember { mutableStateOf(false) }
@@ -116,28 +120,35 @@ fun StyledList(
                             }
                         }
                     }
-                    .toggleable(value = expanded, onValueChange = { expanded = !expanded }),
+                    .toggleable(value = expanded, onValueChange = { expanded = !expanded })
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                when (type) {
-                    StyledListType.Bulleted -> {
-                        Text(
-                            text = "\u2022",
-                            modifier = Modifier.padding(start = SpaceMd, end = SpaceXs),
-                        )
+                Row(modifier = Modifier.weight(1f)) {
+                    when (type) {
+                        StyledListType.Bulleted -> {
+                            Text(
+                                text = "\u2022",
+                                modifier = Modifier
+                                    .semantics { hideFromAccessibility() }
+                                    .padding(start = SpaceMd, end = SpaceXs),
+                            )
+                        }
+
+                        StyledListType.Numbered -> {
+                            Text(
+                                text = "${index + 1}.",
+                                modifier = Modifier
+                                    .semantics { hideFromAccessibility() }
+                                    .padding(start = SpaceMd, end = SpaceXs),
+                            )
+                        }
                     }
 
-                    StyledListType.Numbered -> {
-                        Text(
-                            text = "${index + 1}.",
-                            modifier = Modifier.padding(start = SpaceMd, end = SpaceXs),
-                        )
-                    }
+                    Text(item.text)
                 }
 
-                Text(item.text)
-
                 if (item.children.isNotEmpty()) {
-                    Spacer(Modifier.weight(1f))
                     Icon(
                         painterResource(R.drawable.baseline_arrow_drop_down_24),
                         contentDescription = null,
@@ -173,7 +184,7 @@ private fun StyledListPreview_Bulleted() {
                         persistentListOf(
                             StyledListItem(AnnotatedString("wiggle")),
                             StyledListItem(AnnotatedString("stretch")),
-                        )
+                        ),
                     ),
                     StyledListItem(AnnotatedString("Body double")),
                     StyledListItem(AnnotatedString("Do just the first 2 minutes")),
