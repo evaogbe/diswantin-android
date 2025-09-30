@@ -1,10 +1,9 @@
 package io.github.evaogbe.diswantin.advice
 
-import io.github.evaogbe.diswantin.ui.navigation.BottomBarRoute
 import kotlinx.serialization.Serializable
 
 @Serializable
-object AdviceRoute : BottomBarRoute {
+object AdviceRoute {
     @Serializable
     object BodySensation
 

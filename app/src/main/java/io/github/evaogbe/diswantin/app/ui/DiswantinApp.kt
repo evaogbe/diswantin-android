@@ -1,5 +1,8 @@
 package io.github.evaogbe.diswantin.app.ui
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -158,7 +161,7 @@ fun DiswantinApp() {
                                 saveState = true
                             }
                             launchSingleTop = true
-                            restoreState = it.restoreState
+                            restoreState = true
                         }
                     },
                 )
@@ -172,7 +175,9 @@ fun DiswantinApp() {
                 currentDestination?.hasRoute<CurrentTaskRoute>() == true -> {
                     DiswantinFab(
                         onClick = {
-                            navController.navigate(route = TaskFormRoute.Main.new(name = null))
+                            navController.navigate(route = TaskFormRoute.Main.new(name = null)) {
+                                launchSingleTop = true
+                            }
                         },
                     )
                 }
@@ -180,7 +185,9 @@ fun DiswantinApp() {
                 currentDestination?.hierarchy.orEmpty().any { it.hasRoute<AdviceRoute>() } -> {
                     DiswantinFab(
                         onClick = {
-                            navController.navigate(route = TaskFormRoute.Main.new(name = null))
+                            navController.navigate(route = TaskFormRoute.Main.new(name = null)) {
+                                launchSingleTop = true
+                            }
                         },
                     )
                 }
@@ -516,6 +523,7 @@ fun DiswantinApp() {
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun DiswantinTopBar(
     topBarState: TopBarState,
@@ -523,111 +531,160 @@ fun DiswantinTopBar(
     query: TextFieldState,
     navController: NavController,
 ) {
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentDestination = navBackStackEntry?.destination
-
-    when (topBarState) {
-        is TopBarState.CurrentTask -> {
-            CurrentTaskTopBar(
-                uiState = topBarState.uiState,
-                onRefresh = {
-                    setTopBarState(topBarState.copy(action = CurrentTaskTopBarAction.Refresh))
-                },
-                onSkip = {
-                    setTopBarState(topBarState.copy(action = CurrentTaskTopBarAction.Skip))
-                },
-            )
-        }
-
-        is TopBarState.AdviceStart -> {
-            StartAdviceTopBar()
-        }
-
-        is TopBarState.AdviceInner -> {
-            InnerAdviceTopBar(
-                onBackClick = navController::popBackStack,
-                onRestart = {
-                    navController.navigate(route = AdviceRoute.BodySensation) {
-                        popUpTo(navController.graph.findStartDestination().id)
-                    }
-                },
-            )
-        }
-
-        is TopBarState.TagList -> {
-            TagListTopBar()
-        }
-
-        is TopBarState.TaskDetail -> {
-            TaskDetailTopBar(
-                uiState = topBarState.uiState,
-                onBackClick = navController::popBackStack,
-                onEditTask = {
-                    navController.navigate(route = TaskFormRoute.Main.edit(id = it))
-                },
-                onDeleteTask = {
-                    setTopBarState(topBarState.copy(action = TaskDetailTopBarAction.Delete))
-                },
-                onMarkTaskDone = {
-                    setTopBarState(topBarState.copy(action = TaskDetailTopBarAction.MarkDone))
-                },
-                onUnmarkTaskDone = {
-                    setTopBarState(topBarState.copy(action = TaskDetailTopBarAction.UnmarkDone))
-                },
-            )
-        }
-
-        is TopBarState.TaskForm -> {
-            TaskFormTopBar(
-                uiState = topBarState.uiState,
-                onClose = {
-                    setTopBarState(topBarState.copy(action = TaskFormTopBarAction.Close))
-                },
-                onSave = {
-                    setTopBarState(topBarState.copy(action = TaskFormTopBarAction.Save))
-                },
-            )
-        }
-
-        is TopBarState.TaskRecurrenceForm -> {
-            TaskRecurrenceFormTopBar(
-                onClose = navController::popBackStack,
-                onConfirm = {
-                    setTopBarState(
-                        topBarState.copy(
-                            action = TaskRecurrenceFormTopBarAction.Confirm
-                        )
+    SharedTransitionLayout {
+        AnimatedContent(targetState = topBarState) { targetTopBarState ->
+            when (targetTopBarState) {
+                is TopBarState.CurrentTask -> {
+                    CurrentTaskTopBar(
+                        uiState = targetTopBarState.uiState,
+                        onSearchTask = {
+                            navController.navigate(route = TaskSearchRoute) {
+                                launchSingleTop = true
+                            }
+                        },
+                        onRefresh = {
+                            setTopBarState(
+                                targetTopBarState.copy(action = CurrentTaskTopBarAction.Refresh)
+                            )
+                        },
+                        onSkip = {
+                            setTopBarState(
+                                targetTopBarState.copy(action = CurrentTaskTopBarAction.Skip)
+                            )
+                        },
+                        sharedTransitionScope = this@SharedTransitionLayout,
+                        animatedVisibilityScope = this@AnimatedContent,
                     )
-                    navController.popBackStack()
-                },
-            )
-        }
+                }
 
-        is TopBarState.TagDetail -> {
-            TagDetailTopBar(
-                uiState = topBarState.uiState,
-                onBackClick = navController::popBackStack,
-                onEditTag = {
-                    setTopBarState(topBarState.copy(action = TagDetailTopBarAction.Edit))
-                },
-                onDeleteTag = {
-                    setTopBarState(topBarState.copy(action = TagDetailTopBarAction.Delete))
-                },
-            )
-        }
+                is TopBarState.AdviceStart -> {
+                    StartAdviceTopBar(
+                        onSearchTask = {
+                            navController.navigate(route = TaskSearchRoute) {
+                                launchSingleTop = true
+                            }
+                        },
+                        sharedTransitionScope = this@SharedTransitionLayout,
+                        animatedVisibilityScope = this@AnimatedContent,
+                    )
+                }
 
-        is TopBarState.TaskSearch -> {
-            val isNested = currentDestination?.hasRoute<TaskFormRoute.TaskSearch>() != false
+                is TopBarState.AdviceInner -> {
+                    InnerAdviceTopBar(
+                        onSearchTask = {
+                            navController.navigate(route = TaskSearchRoute) {
+                                launchSingleTop = true
+                            }
+                        },
+                        onBackClick = navController::popBackStack,
+                        onRestart = {
+                            navController.navigate(route = AdviceRoute.BodySensation) {
+                                popUpTo(navController.graph.findStartDestination().id)
+                            }
+                        },
+                        sharedTransitionScope = this@SharedTransitionLayout,
+                        animatedVisibilityScope = this@AnimatedContent,
+                    )
+                }
 
-            TaskSearchTopBar(
-                query = query,
-                onBackClick = if (isNested) {
-                    { navController.popBackStack() }
-                } else null,
-                onSearch = {
-                    setTopBarState(topBarState.copy(action = TaskSearchTopBarAction.Search))
-                },
-            )
+                is TopBarState.TagList -> {
+                    TagListTopBar(
+                        onSearchTask = {
+                            navController.navigate(route = TaskSearchRoute) {
+                                launchSingleTop = true
+                            }
+                        },
+                        sharedTransitionScope = this@SharedTransitionLayout,
+                        animatedVisibilityScope = this@AnimatedContent,
+                    )
+                }
+
+                is TopBarState.TaskDetail -> {
+                    TaskDetailTopBar(
+                        uiState = targetTopBarState.uiState,
+                        onBackClick = navController::popBackStack,
+                        onEditTask = {
+                            navController.navigate(route = TaskFormRoute.Main.edit(id = it))
+                        },
+                        onDeleteTask = {
+                            setTopBarState(
+                                targetTopBarState.copy(action = TaskDetailTopBarAction.Delete)
+                            )
+                        },
+                        onMarkTaskDone = {
+                            setTopBarState(
+                                targetTopBarState.copy(action = TaskDetailTopBarAction.MarkDone)
+                            )
+                        },
+                        onUnmarkTaskDone = {
+                            setTopBarState(
+                                targetTopBarState.copy(action = TaskDetailTopBarAction.UnmarkDone)
+                            )
+                        },
+                    )
+                }
+
+                is TopBarState.TaskForm -> {
+                    TaskFormTopBar(
+                        uiState = targetTopBarState.uiState,
+                        onClose = {
+                            setTopBarState(
+                                targetTopBarState.copy(action = TaskFormTopBarAction.Close)
+                            )
+                        },
+                        onSave = {
+                            setTopBarState(
+                                targetTopBarState.copy(action = TaskFormTopBarAction.Save)
+                            )
+                        },
+                    )
+                }
+
+                is TopBarState.TaskRecurrenceForm -> {
+                    TaskRecurrenceFormTopBar(
+                        onClose = navController::popBackStack,
+                        onConfirm = {
+                            setTopBarState(
+                                targetTopBarState.copy(
+                                    action = TaskRecurrenceFormTopBarAction.Confirm
+                                )
+                            )
+                            navController.popBackStack()
+                        },
+                    )
+                }
+
+                is TopBarState.TagDetail -> {
+                    TagDetailTopBar(
+                        uiState = targetTopBarState.uiState,
+                        onBackClick = navController::popBackStack,
+                        onEditTag = {
+                            setTopBarState(
+                                targetTopBarState.copy(action = TagDetailTopBarAction.Edit)
+                            )
+                        },
+                        onDeleteTag = {
+                            setTopBarState(
+                                targetTopBarState.copy(action = TagDetailTopBarAction.Delete)
+                            )
+                        },
+                    )
+                }
+
+                is TopBarState.TaskSearch -> {
+                    TaskSearchTopBar(
+                        query = query,
+                        onBackClick = navController::popBackStack,
+                        onSearch = {
+                            setTopBarState(
+                                targetTopBarState.copy(action = TaskSearchTopBarAction.Search)
+                            )
+                        },
+                        sharedTransitionScope = this@SharedTransitionLayout,
+                        animatedVisibilityScope = this@AnimatedContent,
+                    )
+                }
+            }
         }
     }
 }

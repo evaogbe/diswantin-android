@@ -1,5 +1,8 @@
 package io.github.evaogbe.diswantin.advice
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -100,11 +103,26 @@ fun HighDistressAdviceScreen(modifier: Modifier = Modifier) {
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @DevicePreviews
 @Composable
 private fun HighDistressAdviceScreenPreview() {
     DiswantinTheme {
-        Scaffold(topBar = { InnerAdviceTopBar(onBackClick = {}, onRestart = {}) }) { innerPadding ->
+        Scaffold(
+            topBar = {
+                SharedTransitionLayout {
+                    AnimatedVisibility(visible = true) {
+                        InnerAdviceTopBar(
+                            onSearchTask = {},
+                            onBackClick = {},
+                            onRestart = {},
+                            sharedTransitionScope = this@SharedTransitionLayout,
+                            animatedVisibilityScope = this@AnimatedVisibility,
+                        )
+                    }
+                }
+            },
+        ) { innerPadding ->
             HighDistressAdviceScreen(modifier = Modifier.padding(innerPadding))
         }
     }

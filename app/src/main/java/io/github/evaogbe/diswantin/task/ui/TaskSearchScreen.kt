@@ -1,5 +1,10 @@
 package io.github.evaogbe.diswantin.task.ui
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -99,47 +104,55 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import kotlin.time.Duration.Companion.milliseconds
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun TaskSearchTopBar(
     query: TextFieldState,
-    onBackClick: (() -> Unit)?,
+    onBackClick: () -> Unit,
     onSearch: () -> Unit,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     modifier: Modifier = Modifier,
 ) {
     TopAppBar(
         title = {
             val focusRequester = remember { FocusRequester() }
 
-            TextField(
-                state = query,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .focusRequester(focusRequester),
-                placeholder = { Text(stringResource(R.string.task_search_title)) },
-                trailingIcon = if (query.text.isNotEmpty()) {
-                    {
-                        IconButton(onClick = { query.clearText() }) {
-                            Icon(
-                                painterResource(R.drawable.baseline_close_24),
-                                contentDescription = stringResource(R.string.clear_button)
-                            )
+            with(sharedTransitionScope) {
+                TextField(
+                    state = query,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .sharedBounds(
+                            rememberSharedContentState(key = TopBarSearchKey),
+                            animatedVisibilityScope = animatedVisibilityScope,
+                        )
+                        .focusRequester(focusRequester),
+                    placeholder = { Text(stringResource(R.string.task_search_title)) },
+                    trailingIcon = if (query.text.isNotEmpty()) {
+                        {
+                            IconButton(onClick = { query.clearText() }) {
+                                Icon(
+                                    painterResource(R.drawable.baseline_close_24),
+                                    contentDescription = stringResource(R.string.clear_button)
+                                )
+                            }
                         }
-                    }
-                } else {
-                    null
-                },
-                keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
-                onKeyboardAction = { performDefaultAction ->
-                    onSearch()
-                    performDefaultAction()
-                },
-                lineLimits = TextFieldLineLimits.SingleLine,
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
+                    } else {
+                        null
+                    },
+                    keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
+                    onKeyboardAction = { performDefaultAction ->
+                        onSearch()
+                        performDefaultAction()
+                    },
+                    lineLimits = TextFieldLineLimits.SingleLine,
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                    )
                 )
-            )
+            }
 
             LaunchedEffect(Unit) {
                 focusRequester.requestFocus()
@@ -147,13 +160,11 @@ fun TaskSearchTopBar(
         },
         modifier = modifier,
         navigationIcon = {
-            if (onBackClick != null) {
-                IconButton(onClick = onBackClick) {
-                    Icon(
-                        painterResource(R.drawable.baseline_arrow_back_24),
-                        contentDescription = stringResource(R.string.back_button),
-                    )
-                }
+            IconButton(onClick = onBackClick) {
+                Icon(
+                    painterResource(R.drawable.baseline_arrow_back_24),
+                    contentDescription = stringResource(R.string.back_button),
+                )
             }
         },
     )
@@ -752,6 +763,7 @@ fun InitialTaskSearchLayout(modifier: Modifier = Modifier) {
     )
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @DevicePreviews
 @Composable
 private fun TaskSearchScreenPreview_Present() {
@@ -773,11 +785,17 @@ private fun TaskSearchScreenPreview_Present() {
     DiswantinTheme {
         Scaffold(
             topBar = {
-                TaskSearchTopBar(
-                    query = TextFieldState(initialText = "Bru"),
-                    onBackClick = {},
-                    onSearch = {},
-                )
+                SharedTransitionLayout {
+                    AnimatedVisibility(visible = true) {
+                        TaskSearchTopBar(
+                            query = TextFieldState(initialText = "Bru"),
+                            onBackClick = {},
+                            onSearch = {},
+                            sharedTransitionScope = this@SharedTransitionLayout,
+                            animatedVisibilityScope = this@AnimatedVisibility,
+                        )
+                    }
+                }
             },
         ) { innerPadding ->
             TaskSearchScreen(
@@ -819,6 +837,7 @@ private fun TaskSearchScreenPreview_EmptyWithoutAddTask() {
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @DevicePreviews
 @Composable
 private fun TaskSearchScreenPreview_Initial() {
@@ -827,11 +846,17 @@ private fun TaskSearchScreenPreview_Initial() {
     DiswantinTheme {
         Scaffold(
             topBar = {
-                TaskSearchTopBar(
-                    query = TextFieldState(),
-                    onBackClick = {},
-                    onSearch = {},
-                )
+                SharedTransitionLayout {
+                    AnimatedVisibility(visible = true) {
+                        TaskSearchTopBar(
+                            query = TextFieldState(),
+                            onBackClick = {},
+                            onSearch = {},
+                            sharedTransitionScope = this@SharedTransitionLayout,
+                            animatedVisibilityScope = this@AnimatedVisibility,
+                        )
+                    }
+                }
             },
         ) { innerPadding ->
             TaskSearchScreen(

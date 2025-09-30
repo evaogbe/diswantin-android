@@ -13,8 +13,8 @@ import androidx.compose.ui.tooling.preview.Wallpapers.YELLOW_DOMINATED_EXAMPLE
     AnnotationTarget.ANNOTATION_CLASS,
     AnnotationTarget.FUNCTION
 )
-@Preview(name = "00 - Light")
-@Preview(name = "01 - Dark", uiMode = UI_MODE_NIGHT_YES or UI_MODE_TYPE_NORMAL)
+@Preview(name = "00 - Light", apiLevel = 30)
+@Preview(name = "01 - Dark", apiLevel = 30, uiMode = UI_MODE_NIGHT_YES or UI_MODE_TYPE_NORMAL)
 @Preview(name = "02 - Red", wallpaper = RED_DOMINATED_EXAMPLE, apiLevel = 31)
 @Preview(name = "03 - Blue", wallpaper = BLUE_DOMINATED_EXAMPLE, apiLevel = 31)
 @Preview(name = "04 - Green", wallpaper = GREEN_DOMINATED_EXAMPLE, apiLevel = 31)
