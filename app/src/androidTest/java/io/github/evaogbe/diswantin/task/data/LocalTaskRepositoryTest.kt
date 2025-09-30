@@ -255,8 +255,8 @@ class LocalTaskRepositoryTest {
                     recurrences = listOf(
                         TaskRecurrence(
                             taskId = task2.id,
-                            startDate = LocalDate.parse("2024-08-16"),
-                            type = RecurrenceType.Week,
+                            startDate = LocalDate.parse("2024-08-23"),
+                            type = RecurrenceType.Day,
                             step = 1,
                         ),
                     ),
@@ -525,8 +525,8 @@ class LocalTaskRepositoryTest {
                     recurrences = listOf(
                         TaskRecurrence(
                             taskId = task1.id,
-                            startDate = LocalDate.parse("2024-07-23"),
-                            type = RecurrenceType.DayOfMonth,
+                            startDate = LocalDate.parse("2024-08-23"),
+                            type = RecurrenceType.Day,
                             step = 1,
                         ),
                     ),
@@ -537,7 +537,7 @@ class LocalTaskRepositoryTest {
                     existingRecurrences = emptyList(),
                 )
             )
-            val taskRecurrences1 = taskRepository.getTaskRecurrencesByTaskId(task1.id).first()
+            var taskRecurrences1 = taskRepository.getTaskRecurrencesByTaskId(task1.id).first()
 
             assertThat(awaitItem()).isNotNull()
                 .isDataClassEqualTo(task1.toCurrentTask(recurring = true))
@@ -562,6 +562,76 @@ class LocalTaskRepositoryTest {
                     existingRecurrences = taskRecurrences2,
                 )
             )
+
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task2.toCurrentTask(recurring = true))
+
+            // Recurrence step descending
+            task1 = taskRepository.update(
+                EditTaskForm(
+                    name = task1.name,
+                    note = task1.note,
+                    deadlineDate = task1.deadlineDate,
+                    deadlineTime = task1.deadlineTime,
+                    startAfterDate = task1.startAfterDate,
+                    startAfterTime = task1.startAfterTime,
+                    scheduledDate = task1.scheduledDate,
+                    scheduledTime = LocalTime.parse("12:59"),
+                    tagIds = emptySet(),
+                    recurrences = listOf(
+                        TaskRecurrence(
+                            taskId = task1.id,
+                            startDate = LocalDate.parse("2024-08-23"),
+                            type = RecurrenceType.Day,
+                            step = 2,
+                        ),
+                    ),
+                    parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
+                    existingTask = task1,
+                    existingTagIds = emptySet(),
+                    existingRecurrences = taskRecurrences1,
+                )
+            )
+            taskRecurrences1 = taskRepository.getTaskRecurrencesByTaskId(task1.id).first()
+
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task1.toCurrentTask(recurring = true))
+
+            // Recurrence type descending
+            task2 = taskRepository.update(
+                EditTaskForm(
+                    name = task2.name,
+                    note = task2.note,
+                    deadlineDate = task2.deadlineDate,
+                    deadlineTime = task2.deadlineTime,
+                    startAfterDate = task2.startAfterDate,
+                    startAfterTime = task2.startAfterTime,
+                    scheduledDate = task2.scheduledDate,
+                    scheduledTime = task2.scheduledTime,
+                    tagIds = emptySet(),
+                    recurrences = listOf(
+                        TaskRecurrence(
+                            taskId = task2.id,
+                            startDate = LocalDate.parse("2024-08-23"),
+                            type = RecurrenceType.Week,
+                            step = 1,
+                        ),
+                        TaskRecurrence(
+                            taskId = task2.id,
+                            startDate = LocalDate.parse("2024-08-24"),
+                            type = RecurrenceType.Week,
+                            step = 1,
+                        ),
+                    ),
+                    parentUpdateType = PathUpdateType.Keep,
+                    now = now.toInstant(),
+                    existingTask = task2,
+                    existingTagIds = emptySet(),
+                    existingRecurrences = taskRecurrences2,
+                )
+            )
+            taskRecurrences2 = taskRepository.getTaskRecurrencesByTaskId(task2.id).first()
 
             assertThat(awaitItem()).isNotNull()
                 .isDataClassEqualTo(task2.toCurrentTask(recurring = true))
@@ -710,8 +780,8 @@ class LocalTaskRepositoryTest {
                     recurrences = listOf(
                         TaskRecurrence(
                             taskId = task2.id,
-                            startDate = LocalDate.parse("2024-08-22"),
-                            type = RecurrenceType.Day,
+                            startDate = LocalDate.parse("2024-08-16"),
+                            type = RecurrenceType.Week,
                             step = 1,
                         ),
                     ),

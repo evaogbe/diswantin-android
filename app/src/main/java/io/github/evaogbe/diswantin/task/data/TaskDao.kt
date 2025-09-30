@@ -177,7 +177,7 @@ interface TaskDao {
             JOIN task_info t ON t.id = p.descendant
             GROUP BY p.ancestor
         ) po ON po.ancestor = t.id
-        LEFT JOIN (SELECT DISTINCT task_id FROM task_recurrence) r ON r.task_id = t.id
+        LEFT JOIN (SELECT DISTINCT task_id, type, step FROM task_recurrence) r ON r.task_id = t.id
         WHERE (
             t.scheduled_date IS NULL
             OR t.scheduled_date < :today
@@ -200,7 +200,8 @@ interface TaskDao {
             t.start_after_time IS NOT NULL,
             pd.deadline IS NULL,
             pd.deadline,
-            r.task_id IS NULL,
+            r.type DESC,
+            r.step DESC,
             t.start_after_date,
             t.start_after_time,
             t.created_at,
