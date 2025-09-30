@@ -103,7 +103,7 @@ class LocalTaskRepositoryTest {
                     note = task2.note,
                     deadlineDate = task2.deadlineDate,
                     deadlineTime = task2.deadlineTime,
-                    startAfterDate = LocalDate.parse("2024-08-22"),
+                    startAfterDate = LocalDate.parse("2024-08-21"),
                     startAfterTime = task2.startAfterTime,
                     scheduledDate = task2.scheduledDate,
                     scheduledTime = task2.scheduledTime,
@@ -127,7 +127,7 @@ class LocalTaskRepositoryTest {
                     note = task1.note,
                     deadlineDate = task1.deadlineDate,
                     deadlineTime = task1.deadlineTime,
-                    startAfterDate = LocalDate.parse("2024-08-23"),
+                    startAfterDate = LocalDate.parse("2024-08-22"),
                     startAfterTime = task1.startAfterTime,
                     scheduledDate = task1.scheduledDate,
                     scheduledTime = task1.scheduledTime,
@@ -149,7 +149,7 @@ class LocalTaskRepositoryTest {
                 EditTaskForm(
                     name = task1.name,
                     note = task1.note,
-                    deadlineDate = LocalDate.parse("2024-08-23"),
+                    deadlineDate = LocalDate.parse("2024-08-22"),
                     deadlineTime = task1.deadlineTime,
                     startAfterDate = task1.startAfterDate,
                     startAfterTime = task1.startAfterTime,
@@ -173,7 +173,7 @@ class LocalTaskRepositoryTest {
                 EditTaskForm(
                     name = task2.name,
                     note = task2.note,
-                    deadlineDate = LocalDate.parse("2024-08-22"),
+                    deadlineDate = LocalDate.parse("2024-08-21"),
                     deadlineTime = task2.deadlineTime,
                     startAfterDate = task2.startAfterDate,
                     startAfterTime = task2.startAfterTime,
@@ -201,7 +201,7 @@ class LocalTaskRepositoryTest {
                     deadlineTime = task1.deadlineTime,
                     startAfterDate = null,
                     startAfterTime = task1.startAfterTime,
-                    scheduledDate = LocalDate.parse("2024-08-23"),
+                    scheduledDate = LocalDate.parse("2024-08-22"),
                     scheduledTime = task1.scheduledTime,
                     tagIds = emptySet(),
                     recurrences = emptyList(),
@@ -225,7 +225,7 @@ class LocalTaskRepositoryTest {
                     deadlineTime = task2.deadlineTime,
                     startAfterDate = null,
                     startAfterTime = task2.startAfterTime,
-                    scheduledDate = LocalDate.parse("2024-08-22"),
+                    scheduledDate = LocalDate.parse("2024-08-21"),
                     scheduledTime = task2.scheduledTime,
                     tagIds = emptySet(),
                     recurrences = emptyList(),
@@ -350,7 +350,7 @@ class LocalTaskRepositoryTest {
                     name = task1.name,
                     note = task1.note,
                     deadlineDate = LocalDate.parse("2024-08-23"),
-                    deadlineTime = LocalTime.parse("23:59"),
+                    deadlineTime = LocalTime.parse("23:58"),
                     startAfterDate = task1.startAfterDate,
                     startAfterTime = task1.startAfterTime,
                     scheduledDate = task1.scheduledDate,
@@ -374,7 +374,7 @@ class LocalTaskRepositoryTest {
                     name = task2.name,
                     note = task2.note,
                     deadlineDate = task2.deadlineDate,
-                    deadlineTime = LocalTime.parse("23:58"),
+                    deadlineTime = LocalTime.parse("23:57"),
                     startAfterDate = task2.startAfterDate,
                     startAfterTime = task2.startAfterTime,
                     scheduledDate = task2.scheduledDate,
@@ -605,6 +605,27 @@ class LocalTaskRepositoryTest {
                     existingTask = task3,
                     existingTagIds = emptySet(),
                     existingRecurrences = emptyList(),
+                )
+            )
+
+            assertThat(awaitItem()).isNotNull()
+                .isDataClassEqualTo(task2.toCurrentTask(recurring = true))
+
+            // Scheduled at dependent on earliest scheduled task in chain
+            taskRepository.create(
+                NewTaskForm(
+                    name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}",
+                    note = "",
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
+                    tagIds = emptySet(),
+                    recurrences = emptyList(),
+                    parentTaskId = task3.id,
+                    now = now.toInstant(),
                 )
             )
 
@@ -6013,6 +6034,5 @@ class LocalTaskRepositoryTest {
     private fun Task.toCurrentTask(recurring: Boolean) =
         CurrentTask(id = id, name = name, note = note, recurring = recurring)
 
-    private fun createLocalTaskRepository(clock: Clock) =
-        LocalTaskRepository(db.taskDao(), clock)
+    private fun createLocalTaskRepository(clock: Clock) = LocalTaskRepository(db.taskDao(), clock)
 }
