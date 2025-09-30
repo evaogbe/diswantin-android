@@ -1,5 +1,6 @@
 package io.github.evaogbe.diswantin.task.ui
 
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasText
@@ -17,8 +18,10 @@ import io.github.evaogbe.diswantin.task.data.TaskRepository
 import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTagRepository
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
+import io.github.evaogbe.diswantin.testing.matches
 import io.github.evaogbe.diswantin.testing.stringResource
 import io.github.evaogbe.diswantin.ui.loadstate.PendingLayoutTestTag
+import io.github.evaogbe.diswantin.ui.preferences.LocalLocale
 import io.github.evaogbe.diswantin.ui.snackbar.SnackbarState
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.serpro69.kfaker.Faker
@@ -63,21 +66,22 @@ class TaskDetailScreenTest {
             taskRepository,
             tagRepository,
             clock,
-            Locale.US,
         )
 
         composeTestRule.setContent {
-            DiswantinTheme {
-                TaskDetailScreen(
-                    onPopBackStack = {},
-                    setTopBarState = {},
-                    topBarAction = null,
-                    topBarActionHandled = {},
-                    showSnackbar = {},
-                    onNavigateToTask = {},
-                    onNavigateToTag = {},
-                    taskDetailViewModel = viewModel,
-                )
+            CompositionLocalProvider(LocalLocale provides Locale.US) {
+                DiswantinTheme {
+                    TaskDetailScreen(
+                        onPopBackStack = {},
+                        setTopBarState = {},
+                        topBarAction = null,
+                        topBarActionHandled = {},
+                        showSnackbar = {},
+                        onNavigateToTask = {},
+                        onNavigateToTag = {},
+                        taskDetailViewModel = viewModel,
+                    )
+                }
             }
         }
 
@@ -190,7 +194,7 @@ class TaskDetailScreenTest {
         topBarActionState.value = TaskDetailTopBarAction.MarkDone
 
         composeTestRule.waitUntil {
-            snackbarState?.matches(stringResource(R.string.task_detail_mark_done_error)) == true
+            snackbarState.matches(stringResource(R.string.task_detail_mark_done_error))
         }
     }
 
@@ -227,7 +231,7 @@ class TaskDetailScreenTest {
         topBarActionState.value = TaskDetailTopBarAction.UnmarkDone
 
         composeTestRule.waitUntil {
-            snackbarState?.matches(stringResource(R.string.task_detail_unmark_done_error)) == true
+            snackbarState.matches(stringResource(R.string.task_detail_unmark_done_error))
         }
     }
 
@@ -295,7 +299,7 @@ class TaskDetailScreenTest {
         topBarActionState.value = TaskDetailTopBarAction.Delete
 
         composeTestRule.waitUntil {
-            snackbarState?.matches(stringResource(R.string.task_detail_delete_error)) == true
+            snackbarState.matches(stringResource(R.string.task_detail_delete_error))
         }
     }
 
@@ -314,8 +318,6 @@ class TaskDetailScreenTest {
     private fun createClock() =
         Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
 
-    private fun createLocale() = Locale.US
-
     private fun createTaskDetailViewModel(
         initDatabase: (FakeDatabase) -> Unit,
         initTaskRepositorySpy: ((TaskRepository) -> Unit)? = null,
@@ -333,7 +335,6 @@ class TaskDetailScreenTest {
             taskRepository,
             tagRepository,
             clock,
-            createLocale(),
         )
     }
 }

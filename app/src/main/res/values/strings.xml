@@ -5,7 +5,7 @@
     <string name="add_deadline_date_button">Add deadline date</string>
     <string name="add_deadline_time_button">Add deadline time</string>
     <string name="add_end_date_button">Add end date</string>
-    <string name="add_parent_task_button">Add previous to-do</string>
+    <string name="add_parent_task_button">Add preceding to-do</string>
     <string name="add_recurrence_button">Does not repeat</string>
     <string name="add_scheduled_at_button">Schedule</string>
     <string name="add_scheduled_time_button">Add scheduled time</string>
@@ -92,7 +92,7 @@
     <string name="name_label">Name</string>
     <string name="note_label">Note</string>
     <string name="ok_button">OK</string>
-    <string name="parent_task_label">Previous to-do</string>
+    <string name="parent_task_label">Preceding to-do</string>
     <string name="recurrence_chip_label_unselected">Repeats on</string>
     <string name="recurrence_chip_label_selected">Repeats: %1$s</string>
     <string name="recurrence_end">until %1$s</string>

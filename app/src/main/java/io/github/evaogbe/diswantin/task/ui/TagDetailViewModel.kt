@@ -49,7 +49,7 @@ class TagDetailViewModel @Inject constructor(
         pagingData.map { TaskSummaryUiState.fromTaskSummary(it, doneBefore) }
     }.cachedIn(viewModelScope)
 
-    private val tagStream = tagRepository.getById(tagId).onEach {
+    private val tagStream = tagRepository.getTagById(tagId).onEach {
         if (it != null) {
             initialized.value = true
         }

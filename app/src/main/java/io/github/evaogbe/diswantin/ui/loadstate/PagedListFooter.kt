@@ -33,7 +33,8 @@ import io.github.evaogbe.diswantin.ui.theme.SpaceSm
 import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
 
 fun <T : Any> LazyListScope.pagedListFooter(
-    pagingItems: LazyPagingItems<T>, errorMessage: @Composable () -> Unit
+    pagingItems: LazyPagingItems<T>,
+    errorMessage: @Composable () -> Unit,
 ) {
     when (pagingItems.loadState.append) {
         is LoadState.Loading -> {

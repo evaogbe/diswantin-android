@@ -14,12 +14,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.evaogbe.diswantin.ui.theme.ScreenLg
@@ -49,26 +47,20 @@ fun DistressLevelAdviceScreen(
                 )
             }
             Spacer(Modifier.size(SpaceLg))
-            TextButton(onClick = onLowClick, modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    stringResource(R.string.advice_distress_low_button),
-                    textAlign = TextAlign.Center,
-                )
-            }
+            AdviceButton(
+                onClick = onLowClick,
+                text = stringResource(R.string.advice_distress_low_button),
+            )
             Spacer(Modifier.size(SpaceMd))
-            TextButton(onClick = onHighClick, modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    stringResource(R.string.advice_distress_high_button),
-                    textAlign = TextAlign.Center,
-                )
-            }
+            AdviceButton(
+                onClick = onHighClick,
+                text = stringResource(R.string.advice_distress_high_button),
+            )
             Spacer(Modifier.size(SpaceMd))
-            TextButton(onClick = onExtremeClick, modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    stringResource(R.string.advice_distress_extreme_button),
-                    textAlign = TextAlign.Center,
-                )
-            }
+            AdviceButton(
+                onClick = onExtremeClick,
+                text = stringResource(R.string.advice_distress_extreme_button),
+            )
         }
     }
 }

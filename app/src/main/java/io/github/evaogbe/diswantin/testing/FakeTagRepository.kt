@@ -29,9 +29,9 @@ class FakeTagRepository(private val db: FakeDatabase = FakeDatabase()) :
         )
     }
 
-    override val hasTagsStream = db.tagTable.map { it.isNotEmpty() }
+    override suspend fun hasTags() = db.tagTable.value.isNotEmpty()
 
-    override fun getById(id: Long) = db.tagTable.map { it[id] }
+    override fun getTagById(id: Long) = db.tagTable.map { it[id] }
 
     override fun getTagsByTaskId(taskId: Long, size: Int) =
         combine(db.tagTable, db.taskTagTable) { tags, taskTags ->

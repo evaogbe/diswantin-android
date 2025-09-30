@@ -38,7 +38,6 @@ import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
-import java.util.Locale
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TaskDetailViewModelTest {
@@ -61,7 +60,6 @@ class TaskDetailViewModelTest {
             )
         }
         val clock = createClock()
-        val locale = createLocale()
         val db = FakeDatabase().apply {
             insertTask(task1)
             insertTask(task2)
@@ -83,7 +81,6 @@ class TaskDetailViewModelTest {
             taskRepository,
             tagRepository,
             clock,
-            locale,
         )
 
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
@@ -107,7 +104,6 @@ class TaskDetailViewModelTest {
                     type = RecurrenceType.Day,
                     step = 1,
                     weekdays = persistentSetOf(),
-                    locale = locale,
                 ),
                 isDone = false,
                 parent = null,
@@ -203,7 +199,6 @@ class TaskDetailViewModelTest {
             taskRepository,
             tagRepository,
             clock,
-            createLocale(),
         )
 
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
@@ -315,7 +310,6 @@ class TaskDetailViewModelTest {
                 taskRepository,
                 tagRepository,
                 clock,
-                createLocale(),
             )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
@@ -427,8 +421,6 @@ class TaskDetailViewModelTest {
     private fun createClock() =
         Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
 
-    private fun createLocale(): Locale = Locale.US
-
     private fun createTaskDetailViewModel(
         initDatabase: (FakeDatabase) -> Unit,
         initTaskRepositorySpy: ((TaskRepository) -> Unit)? = null,
@@ -451,7 +443,6 @@ class TaskDetailViewModelTest {
             taskRepository,
             tagRepository,
             clock,
-            createLocale(),
         )
     }
 }

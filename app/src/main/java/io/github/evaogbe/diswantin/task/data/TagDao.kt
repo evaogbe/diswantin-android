@@ -14,7 +14,7 @@ interface TagDao {
     fun getTagPagingSource(): PagingSource<Int, Tag>
 
     @Query("SELECT * FROM tag WHERE id = :id LIMIT 1")
-    fun getById(id: Long): Flow<Tag?>
+    fun getTagById(id: Long): Flow<Tag?>
 
     @Query(
         """SELECT t.*
@@ -37,7 +37,7 @@ interface TagDao {
     fun search(query: String, size: Int): Flow<List<Tag>>
 
     @Query("SELECT EXISTS(SELECT * FROM tag)")
-    fun hasTags(): Flow<Boolean>
+    suspend fun hasTags(): Boolean
 
     @Insert
     suspend fun insert(tag: Tag): Long

@@ -49,7 +49,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.RecurrenceType
@@ -79,7 +79,6 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -152,6 +151,10 @@ fun TaskFormScreen(
     var showDialog by rememberSaveable { mutableStateOf(false) }
     val resources = LocalResources.current
     val currentResources by rememberUpdatedState(resources)
+
+    LaunchedEffect(Unit) {
+        taskFormViewModel.initialize()
+    }
 
     LaunchedEffect(name.text, isNew, isSuccess, setTopBarState) {
         setTopBarState(
@@ -685,19 +688,17 @@ fun TaskFormLayout(
     }
 }
 
-const val TaskFormTagListTestTag = "TaskFormTagListTestTag"
+const val TaskFormTagTestTag = "TaskFormTagTestTag"
 
 @Composable
 fun TaskFormTagList(tags: ImmutableList<Tag>, onRemoveTag: (Tag) -> Unit) {
-    FlowRow(
-        modifier = Modifier.testTag(TaskFormTagListTestTag),
-        horizontalArrangement = Arrangement.spacedBy(SpaceSm),
-    ) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(SpaceSm)) {
         tags.forEach { tag ->
             InputChip(
                 selected = false,
                 onClick = { onRemoveTag(tag) },
                 label = { Text(text = tag.name) },
+                modifier = Modifier.testTag(TaskFormTagTestTag),
                 trailingIcon = {
                     Icon(
                         painterResource(R.drawable.baseline_close_24),
@@ -804,7 +805,6 @@ private fun TaskFormScreenPreview_Edit() {
                         type = RecurrenceType.WeekOfMonth,
                         step = 2,
                         weekdays = persistentSetOf(),
-                        locale = Locale.getDefault(),
                     ),
                     deadlineDate = null,
                     deadlineTime = currentTime.plusHours(1),

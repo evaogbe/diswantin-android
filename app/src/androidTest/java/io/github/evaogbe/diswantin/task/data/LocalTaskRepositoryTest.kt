@@ -15,8 +15,6 @@ import io.github.evaogbe.diswantin.app.data.DiswantinDatabase
 import io.github.serpro69.kfaker.lorem.LoremFaker
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.test.TestCoroutineScheduler
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
@@ -52,7 +50,7 @@ class LocalTaskRepositoryTest {
     fun getCurrentTask_emitsTasksInOrder() = runTest {
         val now = ZonedDateTime.parse("2024-08-23T13:00-04:00[America/New_York]")
         val clock = Clock.fixed(now.toInstant(), now.zone)
-        val taskRepository = createLocalTaskRepository(clock, testScheduler)
+        val taskRepository = createLocalTaskRepository(clock)
 
         taskRepository.getCurrentTask(CurrentTaskParams.create(now)).test {
             assertThat(awaitItem()).isNull()
@@ -784,7 +782,7 @@ class LocalTaskRepositoryTest {
     fun getCurrentTask_doesNotEmitTask_whenBeforeScheduled() = runTest {
         val now = ZonedDateTime.parse("2024-08-23T13:00-04:00[America/New_York]")
         val clock = Clock.fixed(now.toInstant(), now.zone)
-        val taskRepository = createLocalTaskRepository(clock, testScheduler)
+        val taskRepository = createLocalTaskRepository(clock)
 
         taskRepository.getCurrentTask(CurrentTaskParams.create(now)).test {
             assertThat(awaitItem()).isNull()
@@ -1011,7 +1009,7 @@ class LocalTaskRepositoryTest {
     fun getCurrentTask_doesNotEmitTask_whenBeforeStartAfter() = runTest {
         val now = ZonedDateTime.parse("2024-08-23T13:00-04:00[America/New_York]")
         val clock = Clock.fixed(now.toInstant(), now.zone)
-        val taskRepository = createLocalTaskRepository(clock, testScheduler)
+        val taskRepository = createLocalTaskRepository(clock)
 
         taskRepository.getCurrentTask(CurrentTaskParams.create(now)).test {
             assertThat(awaitItem()).isNull()
@@ -1192,7 +1190,7 @@ class LocalTaskRepositoryTest {
     fun getCurrentTask_doesNotEmitTask_whenSkipped() = runTest {
         val now = ZonedDateTime.parse("2024-08-23T13:00-04:00[America/New_York]")
         val clock = Clock.fixed(now.toInstant(), now.zone)
-        val taskRepository = createLocalTaskRepository(clock, testScheduler)
+        val taskRepository = createLocalTaskRepository(clock)
 
         taskRepository.getCurrentTask(CurrentTaskParams.create(now)).test {
             assertThat(awaitItem()).isNull()
@@ -1254,7 +1252,7 @@ class LocalTaskRepositoryTest {
     fun getCurrentTask_emitsFirstUndoneTask() = runTest {
         val now = ZonedDateTime.parse("2024-08-23T13:00-04:00[America/New_York]")
         val clock = Clock.fixed(now.toInstant(), now.zone)
-        val taskRepository = createLocalTaskRepository(clock, testScheduler)
+        val taskRepository = createLocalTaskRepository(clock)
 
         taskRepository.getCurrentTask(
             CurrentTaskParams(
@@ -1442,7 +1440,7 @@ class LocalTaskRepositoryTest {
     fun getCurrentTask_emitsTaskRecurringOnDay() = runTest {
         val now = ZonedDateTime.parse("2024-08-23T13:00-04:00[America/New_York]")
         val clock = Clock.fixed(now.toInstant(), now.zone)
-        val taskRepository = createLocalTaskRepository(clock, testScheduler)
+        val taskRepository = createLocalTaskRepository(clock)
 
         taskRepository.getCurrentTask(CurrentTaskParams.create(now)).test {
             assertThat(awaitItem()).isNull()
@@ -1541,7 +1539,7 @@ class LocalTaskRepositoryTest {
     fun getCurrentTask_emitsTaskRecurringOnWeek() = runTest {
         val now = ZonedDateTime.parse("2024-08-23T13:00-04:00[America/New_York]")
         val clock = Clock.fixed(now.toInstant(), now.zone)
-        val taskRepository = createLocalTaskRepository(clock, testScheduler)
+        val taskRepository = createLocalTaskRepository(clock)
 
         taskRepository.getCurrentTask(CurrentTaskParams.create(now)).test {
             assertThat(awaitItem()).isNull()
@@ -1708,7 +1706,7 @@ class LocalTaskRepositoryTest {
     fun getCurrentTask_emitsTaskRecurringOnDayOfMonth() = runTest {
         val now = ZonedDateTime.parse("2024-08-23T13:00-04:00[America/New_York]")
         val clock = Clock.fixed(now.toInstant(), now.zone)
-        val taskRepository = createLocalTaskRepository(clock, testScheduler)
+        val taskRepository = createLocalTaskRepository(clock)
 
         taskRepository.getCurrentTask(CurrentTaskParams.create(now)).test {
             assertThat(awaitItem()).isNull()
@@ -1807,7 +1805,7 @@ class LocalTaskRepositoryTest {
     fun getCurrentTask_emitsTaskRecurringOnDayOfMonth_whenNonLeapYear() = runTest {
         val now = ZonedDateTime.parse("2023-02-28T00:00-05:00[America/New_York]")
         val clock = Clock.fixed(now.toInstant(), now.zone)
-        val taskRepository = createLocalTaskRepository(clock, testScheduler)
+        val taskRepository = createLocalTaskRepository(clock)
 
         taskRepository.getCurrentTask(CurrentTaskParams.create(now)).test {
             assertThat(awaitItem()).isNull()
@@ -1891,7 +1889,7 @@ class LocalTaskRepositoryTest {
     fun getCurrentTask_emitsTaskRecurringOnDayOfMonth_whenLeapYear() = runTest {
         val now = ZonedDateTime.parse("2024-02-29T00:00-05:00[America/New_York]")
         val clock = Clock.fixed(now.toInstant(), now.zone)
-        val taskRepository = createLocalTaskRepository(clock, testScheduler)
+        val taskRepository = createLocalTaskRepository(clock)
 
         taskRepository.getCurrentTask(CurrentTaskParams.create(now)).test {
             assertThat(awaitItem()).isNull()
@@ -1974,7 +1972,7 @@ class LocalTaskRepositoryTest {
     fun getCurrentTask_emitsTaskRecurringOnDayOfMonth_when30Apr() = runTest {
         val now = ZonedDateTime.parse("2024-04-30T00:00-04:00[America/New_York]")
         val clock = Clock.fixed(now.toInstant(), now.zone)
-        val taskRepository = createLocalTaskRepository(clock, testScheduler)
+        val taskRepository = createLocalTaskRepository(clock)
 
         taskRepository.getCurrentTask(CurrentTaskParams.create(now)).test {
             assertThat(awaitItem()).isNull()
@@ -2056,7 +2054,7 @@ class LocalTaskRepositoryTest {
     fun getCurrentTask_emitsTaskRecurringOnDayOfMonth_when30Jun() = runTest {
         val now = ZonedDateTime.parse("2024-06-30T00:00-04:00[America/New_York]")
         val clock = Clock.fixed(now.toInstant(), now.zone)
-        val taskRepository = createLocalTaskRepository(clock, testScheduler)
+        val taskRepository = createLocalTaskRepository(clock)
 
         taskRepository.getCurrentTask(CurrentTaskParams.create(now)).test {
             assertThat(awaitItem()).isNull()
@@ -2138,7 +2136,7 @@ class LocalTaskRepositoryTest {
     fun getCurrentTask_emitsTaskRecurringOnDayOfMonth_when30Sep() = runTest {
         val now = ZonedDateTime.parse("2024-09-30T00:00-04:00[America/New_York]")
         val clock = Clock.fixed(now.toInstant(), now.zone)
-        val taskRepository = createLocalTaskRepository(clock, testScheduler)
+        val taskRepository = createLocalTaskRepository(clock)
 
         taskRepository.getCurrentTask(CurrentTaskParams.create(now)).test {
             assertThat(awaitItem()).isNull()
@@ -2220,7 +2218,7 @@ class LocalTaskRepositoryTest {
     fun getCurrentTask_emitsTaskRecurringOnDayOfMonth_when30Nov() = runTest {
         val now = ZonedDateTime.parse("2024-11-30T00:00-05:00[America/New_York]")
         val clock = Clock.fixed(now.toInstant(), now.zone)
-        val taskRepository = createLocalTaskRepository(clock, testScheduler)
+        val taskRepository = createLocalTaskRepository(clock)
 
         taskRepository.getCurrentTask(CurrentTaskParams.create(now)).test {
             assertThat(awaitItem()).isNull()
@@ -2302,7 +2300,7 @@ class LocalTaskRepositoryTest {
     fun getCurrentTask_emitsTaskRecurringOnWeekOfMonth() = runTest {
         val now = ZonedDateTime.parse("2024-08-23T13:00-04:00[America/New_York]")
         val clock = Clock.fixed(now.toInstant(), now.zone)
-        val taskRepository = createLocalTaskRepository(clock, testScheduler)
+        val taskRepository = createLocalTaskRepository(clock)
 
         taskRepository.getCurrentTask(CurrentTaskParams.create(now)).test {
             assertThat(awaitItem()).isNull()
@@ -2431,7 +2429,7 @@ class LocalTaskRepositoryTest {
     fun getCurrentTask_emitsTaskRecurringOnYear() = runTest {
         val now = ZonedDateTime.parse("2024-08-23T13:00-04:00[America/New_York]")
         val clock = Clock.fixed(now.toInstant(), now.zone)
-        val taskRepository = createLocalTaskRepository(clock, testScheduler)
+        val taskRepository = createLocalTaskRepository(clock)
 
         taskRepository.getCurrentTask(CurrentTaskParams.create(now)).test {
             assertThat(awaitItem()).isNull()
@@ -2530,7 +2528,7 @@ class LocalTaskRepositoryTest {
     fun getCurrentTask_emitsTaskRecurringOnYear_whenNotLeapYear() = runTest {
         val now = ZonedDateTime.parse("2023-02-28T00:00-05:00[America/New_York]")
         val clock = Clock.fixed(now.toInstant(), now.zone)
-        val taskRepository = createLocalTaskRepository(clock, testScheduler)
+        val taskRepository = createLocalTaskRepository(clock)
 
         taskRepository.getCurrentTask(CurrentTaskParams.create(now)).test {
             assertThat(awaitItem()).isNull()
@@ -2568,7 +2566,7 @@ class LocalTaskRepositoryTest {
     fun getCurrentTask_emitsTaskRecurringBetweenStartAndEndDates() = runTest {
         val now = ZonedDateTime.parse("2024-08-23T13:00-04:00[America/New_York]")
         val clock = Clock.fixed(now.toInstant(), now.zone)
-        val taskRepository = createLocalTaskRepository(clock, testScheduler)
+        val taskRepository = createLocalTaskRepository(clock)
 
         taskRepository.getCurrentTask(CurrentTaskParams.create(now)).test {
             assertThat(awaitItem()).isNull()
@@ -2699,7 +2697,7 @@ class LocalTaskRepositoryTest {
     fun getTaskSummariesByTagId_emitsTaskSummariesMatchingTag() = runTest {
         val now = ZonedDateTime.parse("2024-08-23T13:00-04:00[America/New_York]")
         val clock = Clock.fixed(now.toInstant(), now.zone)
-        val taskRepository = createLocalTaskRepository(clock, testScheduler)
+        val taskRepository = createLocalTaskRepository(clock)
 
         val tagId1 = db.tagDao().insert(
             Tag(
@@ -3020,7 +3018,7 @@ class LocalTaskRepositoryTest {
     fun searchTaskSummaries_emitsTasksMatchingDeadlineDateRange() = runTest {
         val now = ZonedDateTime.parse("2024-08-23T13:00-04:00[America/New_York]")
         val clock = Clock.fixed(now.toInstant(), now.zone)
-        val taskRepository = createLocalTaskRepository(clock, testScheduler)
+        val taskRepository = createLocalTaskRepository(clock)
 
         val task1 = taskRepository.create(
             NewTaskForm(
@@ -3237,7 +3235,7 @@ class LocalTaskRepositoryTest {
     fun searchTaskSummaries_emitsTasksMatchingStartAfterDateRange() = runTest {
         val now = ZonedDateTime.parse("2024-08-23T13:00-04:00[America/New_York]")
         val clock = Clock.fixed(now.toInstant(), now.zone)
-        val taskRepository = createLocalTaskRepository(clock, testScheduler)
+        val taskRepository = createLocalTaskRepository(clock)
 
         val task1 = taskRepository.create(
             NewTaskForm(
@@ -3454,7 +3452,7 @@ class LocalTaskRepositoryTest {
     fun searchTaskSummaries_emitsTasksMatchingScheduledDateRange() = runTest {
         val now = ZonedDateTime.parse("2024-08-23T13:00-04:00[America/New_York]")
         val clock = Clock.fixed(now.toInstant(), now.zone)
-        val taskRepository = createLocalTaskRepository(clock, testScheduler)
+        val taskRepository = createLocalTaskRepository(clock)
 
         val task1 = taskRepository.create(
             NewTaskForm(
@@ -3671,7 +3669,7 @@ class LocalTaskRepositoryTest {
     fun searchTaskSummaries_emitsTasksMatchingDoneDateRange() = runTest {
         val now = ZonedDateTime.parse("2024-08-23T13:00-04:00[America/New_York]")
         val clock = Clock.fixed(now.toInstant(), now.zone)
-        val taskRepository = createLocalTaskRepository(clock, testScheduler)
+        val taskRepository = createLocalTaskRepository(clock)
 
         val task1 = taskRepository.create(
             NewTaskForm(
@@ -3854,7 +3852,7 @@ class LocalTaskRepositoryTest {
     fun searchTaskSummaries_emitsTasksMatchingRecurringDate() = runTest {
         val now = ZonedDateTime.parse("2024-08-23T13:00-04:00[America/New_York]")
         val clock = Clock.fixed(now.toInstant(), now.zone)
-        val taskRepository = createLocalTaskRepository(clock, testScheduler)
+        val taskRepository = createLocalTaskRepository(clock)
 
         val task1 = taskRepository.create(
             NewTaskForm(
@@ -4208,7 +4206,7 @@ class LocalTaskRepositoryTest {
         val query = loremFaker.verbs.base()
         val now = ZonedDateTime.parse("2024-08-23T13:00-04:00[America/New_York]")
         val clock = Clock.fixed(now.toInstant(), now.zone)
-        val taskRepository = createLocalTaskRepository(clock, testScheduler)
+        val taskRepository = createLocalTaskRepository(clock)
 
         val task1 = taskRepository.create(
             NewTaskForm(
@@ -4443,7 +4441,7 @@ class LocalTaskRepositoryTest {
         val query = loremFaker.verbs.base()
         val now = ZonedDateTime.parse("2024-08-23T13:00-04:00[America/New_York]")
         val clock = Clock.fixed(now.toInstant(), now.zone)
-        val taskRepository = createLocalTaskRepository(clock, testScheduler)
+        val taskRepository = createLocalTaskRepository(clock)
 
         val task1 = taskRepository.create(
             NewTaskForm(
@@ -4678,7 +4676,7 @@ class LocalTaskRepositoryTest {
         val query = loremFaker.verbs.base()
         val now = ZonedDateTime.parse("2024-08-23T13:00-04:00[America/New_York]")
         val clock = Clock.fixed(now.toInstant(), now.zone)
-        val taskRepository = createLocalTaskRepository(clock, testScheduler)
+        val taskRepository = createLocalTaskRepository(clock)
 
         val task1 = taskRepository.create(
             NewTaskForm(
@@ -4913,7 +4911,7 @@ class LocalTaskRepositoryTest {
         val query = loremFaker.verbs.base()
         val now = ZonedDateTime.parse("2024-08-23T13:00-04:00[America/New_York]")
         val clock = Clock.fixed(now.toInstant(), now.zone)
-        val taskRepository = createLocalTaskRepository(clock, testScheduler)
+        val taskRepository = createLocalTaskRepository(clock)
 
         val task1 = taskRepository.create(
             NewTaskForm(
@@ -5121,7 +5119,7 @@ class LocalTaskRepositoryTest {
         val query = loremFaker.verbs.base()
         val now = ZonedDateTime.parse("2024-08-23T13:00-04:00[America/New_York]")
         val clock = Clock.fixed(now.toInstant(), now.zone)
-        val taskRepository = createLocalTaskRepository(clock, testScheduler)
+        val taskRepository = createLocalTaskRepository(clock)
 
         val task1 = taskRepository.create(
             NewTaskForm(
@@ -5498,7 +5496,7 @@ class LocalTaskRepositoryTest {
     fun update_connectsTaskPaths() = runTest {
         val now = ZonedDateTime.parse("2024-08-23T13:00-04:00[America/New_York]")
         val clock = Clock.fixed(now.toInstant(), now.zone)
-        val taskRepository = createLocalTaskRepository(clock, testScheduler)
+        val taskRepository = createLocalTaskRepository(clock)
 
         val task1 = taskRepository.create(
             NewTaskForm(
@@ -5863,7 +5861,7 @@ class LocalTaskRepositoryTest {
     fun delete_decrementsDepthBetweenParentAndChild() = runTest {
         val now = ZonedDateTime.parse("2024-08-23T13:00-04:00[America/New_York]")
         val clock = Clock.fixed(now.toInstant(), now.zone)
-        val taskRepository = createLocalTaskRepository(clock, testScheduler)
+        val taskRepository = createLocalTaskRepository(clock)
 
         val task1 = taskRepository.create(
             NewTaskForm(
@@ -6015,12 +6013,6 @@ class LocalTaskRepositoryTest {
     private fun Task.toCurrentTask(recurring: Boolean) =
         CurrentTask(id = id, name = name, note = note, recurring = recurring)
 
-    private fun createLocalTaskRepository(
-        clock: Clock,
-        testScheduler: TestCoroutineScheduler? = null,
-    ) = LocalTaskRepository(
-        db.taskDao(),
-        UnconfinedTestDispatcher(testScheduler),
-        clock,
-    )
+    private fun createLocalTaskRepository(clock: Clock) =
+        LocalTaskRepository(db.taskDao(), clock)
 }

@@ -9,7 +9,7 @@ import java.util.Locale
 
 @Module
 @InstallIn(SingletonComponent::class)
-object TimeModule {
+object PreferencesModule {
     @Provides
     fun provideClock(): Clock = Clock.systemDefaultZone()
 

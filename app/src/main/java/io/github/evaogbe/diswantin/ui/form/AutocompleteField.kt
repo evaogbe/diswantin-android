@@ -77,7 +77,7 @@ fun <T : Any> AutocompleteField(
     }
 }
 
-const val AutocompleteDropdownMenuTestTag = "AutocompleteDropdownMenuTestTag"
+const val AutocompleteMenuItemTestTag = "AutocompleteMenuItemTestTag"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -119,7 +119,6 @@ fun <T : Any> AutocompleteField(
             ExposedDropdownMenu(
                 expanded = expanded,
                 onDismissRequest = { onExpandedChange(false) },
-                modifier = Modifier.testTag(AutocompleteDropdownMenuTestTag),
             ) {
                 options.forEach { option ->
                     DropdownMenuItem(
@@ -128,6 +127,7 @@ fun <T : Any> AutocompleteField(
                             onSelectOption(option)
                             onExpandedChange(false)
                         },
+                        modifier = Modifier.testTag(AutocompleteMenuItemTestTag),
                     )
                 }
             }

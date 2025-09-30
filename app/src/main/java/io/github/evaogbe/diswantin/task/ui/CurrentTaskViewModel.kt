@@ -82,14 +82,20 @@ class CurrentTaskViewModel @Inject constructor(
         val taskId = (uiState.value as? CurrentTaskUiState.Present)?.id ?: return
 
         viewModelScope.launch {
+            var skipped = false
+
             try {
                 taskRepository.skip(taskId)
-                currentTaskParams.value = CurrentTaskParams.create(ZonedDateTime.now(clock))
+                skipped = true
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
                 Timber.e(e, "Failed to skip task: %s", taskId)
                 _userMessage.value = CurrentTaskUserMessage.SkipError
+            }
+
+            if (skipped) {
+                refresh()
             }
         }
     }
@@ -111,7 +117,7 @@ class CurrentTaskViewModel @Inject constructor(
             }
 
             if (markedDone) {
-                currentTaskParams.value = CurrentTaskParams.create(ZonedDateTime.now(clock))
+                refresh()
             }
         }
     }

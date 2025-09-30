@@ -5,12 +5,8 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.filter
 import androidx.paging.map
-import io.github.evaogbe.diswantin.data.IoDispatcher
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.withContext
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalTime
@@ -19,7 +15,6 @@ import javax.inject.Inject
 
 class LocalTaskRepository @Inject constructor(
     private val taskDao: TaskDao,
-    @param:IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     private val clock: Clock,
 ) : TaskRepository {
     override fun getCurrentTask(params: CurrentTaskParams) = taskDao.getCurrentTask(
@@ -27,17 +22,17 @@ class LocalTaskRepository @Inject constructor(
         currentTime = params.currentTime,
         startOfToday = params.startOfToday,
         overdueTime = params.overdueTime,
-    ).flowOn(ioDispatcher)
+    )
 
-    override fun getById(id: Long) = taskDao.getById(id).flowOn(ioDispatcher)
+    override fun getTaskById(id: Long) = taskDao.getTaskById(id)
 
-    override fun getTaskDetailById(id: Long) = taskDao.getTaskDetailById(id).flowOn(ioDispatcher)
+    override fun getTaskDetailById(id: Long) = taskDao.getTaskDetailById(id)
 
     override fun getTaskSummariesByTagId(tagId: Long): Flow<PagingData<TaskSummary>> {
         val startOfToday = ZonedDateTime.now(clock).with(LocalTime.MIN).toInstant()
         return Pager(PagingConfig(pageSize = 40)) {
             taskDao.getTaskSummariesByTagId(tagId, startOfToday)
-        }.flow.flowOn(ioDispatcher)
+        }.flow
     }
 
     override fun searchTaskSummaries(criteria: TaskSearchCriteria) =
@@ -88,53 +83,43 @@ class LocalTaskRepository @Inject constructor(
                     }
                 } != false)
             }.map { it.task }
-        }.flowOn(ioDispatcher)
+        }
 
     private fun escapeSql(str: String) = str.replace("'", "''").replace("\"", "\"\"")
 
-    override fun getParent(id: Long) = taskDao.getParent(id).flowOn(ioDispatcher)
+    override fun getParent(id: Long) = taskDao.getParent(id)
 
     override fun getChildren(id: Long) = Pager(PagingConfig(pageSize = 40)) {
         taskDao.getChildren(id)
-    }.flow.flowOn(ioDispatcher)
+    }.flow
 
     override fun getTaskRecurrencesByTaskId(taskId: Long) =
-        taskDao.getTaskRecurrencesByTaskId(taskId).flowOn(ioDispatcher)
+        taskDao.getTaskRecurrencesByTaskId(taskId)
 
-    override fun getCount() = taskDao.getCount().flowOn(ioDispatcher)
+    override fun getTaskCount() = taskDao.getTaskCount()
 
     override suspend fun create(form: NewTaskForm): Task {
-        return withContext(ioDispatcher) {
-            form.newTask.copy(id = taskDao.insert(form))
-        }
+        return form.newTask.copy(id = taskDao.insert(form))
     }
 
-    override suspend fun update(form: EditTaskForm) = withContext(ioDispatcher) {
+    override suspend fun update(form: EditTaskForm): Task {
         taskDao.update(form)
-        form.updatedTask
+        return form.updatedTask
     }
 
     override suspend fun delete(id: Long) {
-        withContext(ioDispatcher) {
-            taskDao.deleteWithPath(id)
-        }
+        taskDao.deleteWithPath(id)
     }
 
     override suspend fun markDone(id: Long) {
-        withContext(ioDispatcher) {
-            taskDao.insertCompletion(TaskCompletion(taskId = id, doneAt = Instant.now(clock)))
-        }
+        taskDao.insertCompletion(TaskCompletion(taskId = id, doneAt = Instant.now(clock)))
     }
 
     override suspend fun unmarkDone(id: Long) {
-        withContext(ioDispatcher) {
-            taskDao.deleteLatestTaskCompletionByTaskId(id)
-        }
+        taskDao.deleteLatestTaskCompletionByTaskId(id)
     }
 
     override suspend fun skip(id: Long) {
-        withContext(ioDispatcher) {
-            taskDao.insertSkip(TaskSkip(taskId = id, skippedAt = Instant.now(clock)))
-        }
+        taskDao.insertSkip(TaskSkip(taskId = id, skippedAt = Instant.now(clock)))
     }
 }

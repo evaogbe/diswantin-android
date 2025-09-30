@@ -17,6 +17,7 @@ import io.github.evaogbe.diswantin.task.data.Tag
 import io.github.evaogbe.diswantin.task.data.TagRepository
 import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTagRepository
+import io.github.evaogbe.diswantin.testing.matches
 import io.github.evaogbe.diswantin.testing.stringResource
 import io.github.evaogbe.diswantin.ui.snackbar.SnackbarState
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
@@ -178,7 +179,7 @@ class TagListScreenTest {
 
         composeTestRule.waitForIdle()
         composeTestRule.waitUntil {
-            snackbarState?.matches(stringResource(R.string.tag_form_save_error_new)) == true
+            snackbarState.matches(stringResource(R.string.tag_form_save_error_new))
         }
     }
 

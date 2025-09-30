@@ -175,7 +175,7 @@ class FakeTaskRepository(
         else -> null
     }
 
-    override fun getById(id: Long) = db.taskTable.map { checkNotNull(it[id]) }
+    override fun getTaskById(id: Long) = db.taskTable.map { checkNotNull(it[id]) }
 
     override fun getTaskDetailById(id: Long): Flow<TaskDetail?> = combine(
         db.taskTable,
@@ -298,11 +298,12 @@ class FakeTaskRepository(
         )
     }
 
-    override fun getParent(id: Long) = combine(db.taskTable, db.taskPathTable) { tasks, taskPaths ->
-        taskPaths.values.firstOrNull { it.descendant == id && it.depth == 1 }?.let {
-            tasks[it.ancestor]
+    override fun getParent(id: Long) =
+        combine(db.taskTable, db.taskPathTable) { tasks, taskPaths ->
+            taskPaths.values.firstOrNull { it.descendant == id && it.depth == 1 }?.let {
+                tasks[it.ancestor]
+            }
         }
-    }
 
     override fun getChildren(id: Long) = combine(
         db.taskTable,
@@ -344,7 +345,7 @@ class FakeTaskRepository(
             taskRecurrences.values.filter { it.taskId == taskId }.sortedBy { it.startDate }
         }
 
-    override fun getCount() = db.taskTable.map { it.size.toLong() }
+    override fun getTaskCount() = db.taskTable.map { it.size.toLong() }
 
     override suspend fun create(form: NewTaskForm): Task {
         val task = db.insertTask(form.newTask)

@@ -6,9 +6,9 @@ import kotlinx.coroutines.flow.Flow
 interface TagRepository {
     val tagPagingData: Flow<PagingData<Tag>>
 
-    val hasTagsStream: Flow<Boolean>
+    suspend fun hasTags(): Boolean
 
-    fun getById(id: Long): Flow<Tag?>
+    fun getTagById(id: Long): Flow<Tag?>
 
     fun getTagsByTaskId(taskId: Long, size: Int): Flow<List<Tag>>
 

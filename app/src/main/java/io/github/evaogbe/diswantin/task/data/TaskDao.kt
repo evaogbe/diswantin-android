@@ -315,7 +315,7 @@ interface TaskDao {
     ): Flow<CurrentTask?>
 
     @Query("SELECT * FROM task WHERE id = :id LIMIT 1")
-    fun getById(id: Long): Flow<Task>
+    fun getTaskById(id: Long): Flow<Task>
 
     @Query(
         """SELECT
@@ -760,7 +760,7 @@ interface TaskDao {
     fun getTaskRecurrencesByTaskId(taskId: Long): Flow<List<TaskRecurrence>>
 
     @Query("SELECT COUNT(*) FROM task")
-    fun getCount(): Flow<Long>
+    fun getTaskCount(): Flow<Long>
 
     @Insert
     suspend fun insert(task: Task): Long
