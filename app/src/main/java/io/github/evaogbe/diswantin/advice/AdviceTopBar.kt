@@ -1,5 +1,8 @@
 package io.github.evaogbe.diswantin.advice
 
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -9,22 +12,46 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import io.github.evaogbe.diswantin.R
+import io.github.evaogbe.diswantin.task.ui.TaskSearchTopBarButton
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
-fun StartAdviceTopBar(modifier: Modifier = Modifier) {
-    TopAppBar(title = {}, modifier = modifier)
+fun StartAdviceTopBar(
+    onSearchTask: () -> Unit,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    modifier: Modifier = Modifier,
+    ) {
+    TopAppBar(
+        title = {
+            TaskSearchTopBarButton(
+                onClick = onSearchTask,
+                sharedTransitionScope = sharedTransitionScope,
+                animatedVisibilityScope = animatedVisibilityScope,
+            )
+        },
+        modifier = modifier,
+    )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun InnerAdviceTopBar(
+    onSearchTask: () -> Unit,
     onBackClick: () -> Unit,
     onRestart: () -> Unit,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     modifier: Modifier = Modifier,
 ) {
     TopAppBar(
-        title = {},
+        title = {
+            TaskSearchTopBarButton(
+                onClick = onSearchTask,
+                sharedTransitionScope = sharedTransitionScope,
+                animatedVisibilityScope = animatedVisibilityScope,
+            )
+        },
         modifier = modifier,
         navigationIcon = {
             IconButton(onClick = onBackClick) {
@@ -41,6 +68,6 @@ fun InnerAdviceTopBar(
                     contentDescription = stringResource(R.string.restart_button),
                 )
             }
-        }
+        },
     )
 }

@@ -1,5 +1,10 @@
 package io.github.evaogbe.diswantin.task.ui
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -74,18 +79,27 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.hours
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun CurrentTaskTopBar(
     uiState: CurrentTaskTopBarState,
+    onSearchTask: () -> Unit,
     onRefresh: () -> Unit,
     onSkip: () -> Unit,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     modifier: Modifier = Modifier,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
 
     TopAppBar(
-        title = {},
+        title = {
+            TaskSearchTopBarButton(
+                onClick = onSearchTask,
+                sharedTransitionScope = sharedTransitionScope,
+                animatedVisibilityScope = animatedVisibilityScope,
+            )
+        },
         modifier = modifier,
         actions = {
             IconButton(onClick = { menuExpanded = !menuExpanded }) {
@@ -405,17 +419,25 @@ fun EmptyCurrentTaskLayout(
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @DevicePreviews
 @Composable
 private fun CurrentTaskScreenPreview_Present() {
     DiswantinTheme {
         Scaffold(
             topBar = {
-                CurrentTaskTopBar(
-                    uiState = CurrentTaskTopBarState(canSkip = true),
-                    onRefresh = {},
-                    onSkip = {},
-                )
+                SharedTransitionLayout {
+                    AnimatedVisibility(visible = true) {
+                        CurrentTaskTopBar(
+                            uiState = CurrentTaskTopBarState(canSkip = true),
+                            onSearchTask = {},
+                            onRefresh = {},
+                            onSkip = {},
+                            sharedTransitionScope = this@SharedTransitionLayout,
+                            animatedVisibilityScope = this@AnimatedVisibility,
+                        )
+                    }
+                }
             },
         ) { innerPadding ->
             CurrentTaskLayout(
@@ -435,17 +457,25 @@ private fun CurrentTaskScreenPreview_Present() {
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @DevicePreviews
 @Composable
 private fun CurrentTaskScreenPreview_withNote() {
     DiswantinTheme {
         Scaffold(
             topBar = {
-                CurrentTaskTopBar(
-                    uiState = CurrentTaskTopBarState(canSkip = false),
-                    onRefresh = {},
-                    onSkip = {},
-                )
+                SharedTransitionLayout {
+                    AnimatedVisibility(visible = true) {
+                        CurrentTaskTopBar(
+                            uiState = CurrentTaskTopBarState(canSkip = false),
+                            onSearchTask = {},
+                            onRefresh = {},
+                            onSkip = {},
+                            sharedTransitionScope = this@SharedTransitionLayout,
+                            animatedVisibilityScope = this@AnimatedVisibility,
+                        )
+                    }
+                }
             },
         ) { innerPadding ->
             CurrentTaskLayout(
@@ -465,17 +495,25 @@ private fun CurrentTaskScreenPreview_withNote() {
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @DevicePreviews
 @Composable
 private fun CurrentTaskScreenPreview_Empty() {
     DiswantinTheme {
         Scaffold(
             topBar = {
-                CurrentTaskTopBar(
-                    uiState = CurrentTaskTopBarState(canSkip = false),
-                    onRefresh = {},
-                    onSkip = {},
-                )
+                SharedTransitionLayout {
+                    AnimatedVisibility(visible = true) {
+                        CurrentTaskTopBar(
+                            uiState = CurrentTaskTopBarState(canSkip = false),
+                            onSearchTask = {},
+                            onRefresh = {},
+                            onSkip = {},
+                            sharedTransitionScope = this@SharedTransitionLayout,
+                            animatedVisibilityScope = this@AnimatedVisibility,
+                        )
+                    }
+                }
             },
         ) { innerPadding ->
             EmptyCurrentTaskLayout(

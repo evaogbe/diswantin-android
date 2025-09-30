@@ -1,13 +1,12 @@
 package io.github.evaogbe.diswantin.task.ui
 
-import io.github.evaogbe.diswantin.ui.navigation.BottomBarRoute
 import kotlinx.serialization.Serializable
 
 @Serializable
-object CurrentTaskRoute : BottomBarRoute
+object CurrentTaskRoute
 
 @Serializable
-object TagListRoute : BottomBarRoute
+object TagListRoute
 
 @Serializable
 data class TaskDetailRoute(val id: Long)
@@ -36,4 +35,4 @@ object TaskFormRoute {
 data class TagDetailRoute(val id: Long)
 
 @Serializable
-object TaskSearchRoute : BottomBarRoute
+object TaskSearchRoute

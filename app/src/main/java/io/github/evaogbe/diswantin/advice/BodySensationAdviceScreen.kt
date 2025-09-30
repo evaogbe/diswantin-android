@@ -1,5 +1,8 @@
 package io.github.evaogbe.diswantin.advice
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -71,11 +74,24 @@ fun BodySensationAdviceScreen(
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @DevicePreviews
 @Composable
 private fun BodySensationAdviceScreenPreview() {
     DiswantinTheme {
-        Scaffold(topBar = { StartAdviceTopBar() }) { innerPadding ->
+        Scaffold(
+            topBar = {
+                SharedTransitionLayout {
+                    AnimatedVisibility(visible = true) {
+                        StartAdviceTopBar(
+                            onSearchTask = {},
+                            sharedTransitionScope = this@SharedTransitionLayout,
+                            animatedVisibilityScope = this@AnimatedVisibility,
+                        )
+                    }
+                }
+            },
+        ) { innerPadding ->
             BodySensationAdviceScreen(
                 onHungryClick = {},
                 onTiredClick = {},

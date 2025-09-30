@@ -1,5 +1,10 @@
 package io.github.evaogbe.diswantin.task.ui
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -61,10 +66,24 @@ import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
 import kotlinx.coroutines.flow.flowOf
 import java.time.Instant
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
-fun TagListTopBar(modifier: Modifier = Modifier) {
-    TopAppBar(title = {}, modifier = modifier)
+fun TagListTopBar(
+    onSearchTask: () -> Unit,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    modifier: Modifier = Modifier,
+) {
+    TopAppBar(
+        title = {
+            TaskSearchTopBarButton(
+                onClick = onSearchTask,
+                sharedTransitionScope = sharedTransitionScope,
+                animatedVisibilityScope = animatedVisibilityScope,
+            )
+        },
+        modifier = modifier,
+    )
 }
 
 @Composable
@@ -201,6 +220,7 @@ fun EmptyTagListLayout(onAddTag: () -> Unit, modifier: Modifier = Modifier) {
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @DevicePreviews
 @Composable
 private fun TagListScreenPreview_Present() {
@@ -226,7 +246,19 @@ private fun TagListScreenPreview_Present() {
     )
 
     DiswantinTheme {
-        Scaffold(topBar = { TagListTopBar() }) { innerPadding ->
+        Scaffold(
+            topBar = {
+                SharedTransitionLayout {
+                    AnimatedVisibility(visible = true) {
+                        TagListTopBar(
+                            onSearchTask = {},
+                            sharedTransitionScope = this@SharedTransitionLayout,
+                            animatedVisibilityScope = this@AnimatedVisibility,
+                        )
+                    }
+                }
+            },
+        ) { innerPadding ->
             TagListLayout(
                 tagItems = {
                     items(tagItems, key = Tag::id) { tag ->
@@ -240,11 +272,24 @@ private fun TagListScreenPreview_Present() {
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @DevicePreviews
 @Composable
 private fun TagListScreenPreview_Empty() {
     DiswantinTheme {
-        Scaffold(topBar = { TagListTopBar() }) { innerPadding ->
+        Scaffold(
+            topBar = {
+                SharedTransitionLayout {
+                    AnimatedVisibility(visible = true) {
+                        TagListTopBar(
+                            onSearchTask = {},
+                            sharedTransitionScope = this@SharedTransitionLayout,
+                            animatedVisibilityScope = this@AnimatedVisibility,
+                        )
+                    }
+                }
+            },
+        ) { innerPadding ->
             EmptyTagListLayout(
                 onAddTag = {},
                 modifier = Modifier.padding(innerPadding),
