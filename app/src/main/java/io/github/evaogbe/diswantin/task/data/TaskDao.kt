@@ -16,13 +16,8 @@ import java.time.LocalTime
 @Dao
 interface TaskDao {
     @Query(
-        """SELECT t.id, t.name, t.note, r.task_id IS NOT NULL AS recurring
-        FROM task t
-        JOIN task_path p ON p.ancestor = t.id
-        JOIN (
-            SELECT p.descendant, MAX(p.depth) AS depth
-            FROM task_path p
-            WHERE p.ancestor IN (
+        """WITH available_task
+            AS (
                 SELECT t.id
                 FROM task t
                 LEFT JOIN (
@@ -117,127 +112,72 @@ interface TaskDao {
                             )
                         ELSE 1
                         END
+            ),
+        available_path
+            AS (
+                SELECT p.*
+                FROM task_path p
+                JOIN available_task aa ON aa.id = p.ancestor
+                JOIN available_task ad ON ad.id = p.descendant
+            ),
+        task_info
+            AS (
+                SELECT
+                    t.id,
+                    CASE
+                    WHEN t.scheduled_date IS NOT NULL OR t.scheduled_time IS NOT NULL
+                        THEN COALESCE(t.scheduled_date, :today) || 'T' || COALESCE(t.scheduled_time, '00:00')
+                    ELSE NULL
+                    END
+                    AS scheduled_at,
+                    CASE
+                    WHEN t.deadline_date IS NOT NULL OR t.deadline_time IS NOT NULL OR r.task_id IS NOT NULL
+                        THEN COALESCE(t.deadline_date, :today) || 'T' || COALESCE(t.deadline_time, '23:59')
+                    ELSE NULL
+                    END
+                    AS deadline,
+                    (t.scheduled_date IS NOT NULL AND t.scheduled_date < :today)
+                        OR (
+                            t.scheduled_time IS NOT NULL
+                            AND t.scheduled_time <= :overdueTime
+                            AND (r.task_id IS NOT NULL OR t.scheduled_date = :today)
+                        )
+                        OR (t.deadline_date IS NOT NULL AND t.deadline_date < :today)
+                        OR (
+                            t.deadline_time IS NOT NULL
+                            AND t.deadline_time <= :overdueTime
+                            AND (r.task_id IS NOT NULL OR t.deadline_date = :today)
+                        ) AS overdue
+                FROM task t
+                LEFT JOIN (SELECT DISTINCT task_id FROM task_recurrence) r ON r.task_id = t.id
             )
-                AND p.descendant IN (
-                    SELECT t.id
-                    FROM task t
-                    LEFT JOIN (
-                        SELECT task_id, MAX(done_at) AS done_at
-                        FROM task_completion
-                        GROUP BY task_id
-                    ) c ON c.task_id = t.id
-                    LEFT JOIN task_recurrence r ON r.task_id = t.id
-                    LEFT JOIN (
-                        SELECT task_id, MAX(skipped_at) AS skipped_at
-                        FROM task_skip
-                        GROUP BY task_id
-                    ) s ON s.task_id = t.id
-                    WHERE (
-                        c.done_at IS NULL
-                        OR (r.task_id IS NOT NULL AND c.done_at < :startOfToday)
-                    )
-                        AND (
-                            t.scheduled_date IS NULL
-                            OR t.scheduled_date < :today
-                            OR (
-                                t.scheduled_date = :today
-                                AND (t.scheduled_time IS NULL OR t.scheduled_time <= :currentTime)
-                            )
-                        )
-                        AND (
-                            r.task_id IS NULL
-                                OR t.scheduled_time IS NULL
-                                OR t.scheduled_time <= :currentTime
-                        )
-                        AND (t.start_after_date IS NULL OR t.start_after_date <= :today)
-                        AND (t.start_after_time IS NULL OR t.start_after_time <= :currentTime)
-                        AND (s.skipped_at IS NULL OR s.skipped_at < :startOfToday)
-                        AND (r.start_date IS NULL OR r.start_date <= :today)
-                        AND (r.end_date IS NULL OR r.end_date >= :today)
-                        AND CASE r.type
-                            WHEN 0 THEN (julianday(:today) - julianday(r.start_date)) % r.step = 0
-                            WHEN 1 THEN (julianday(:today) - julianday(r.start_date)) % (r.step * 7) = 0
-                            WHEN 2 THEN (
-                                    12
-                                    + CAST(strftime('%m', :today) as INT)
-                                    - CAST(strftime('%m', r.start_date) as INT)
-                                ) % r.step = 0
-                                AND (
-                                    strftime('%d', r.start_date) = strftime('%d', :today)
-                                    OR (
-                                        strftime('%m-%d', r.start_date)
-                                            IN (
-                                                '01-31', '03-31', '05-31', '07-31', '08-31',
-                                                '10-31', '12-31'
-                                            )
-                                        AND strftime('%m-%d', :today)
-                                            IN ('04-30', '06-30', '09-30', '11-30')
-                                    )
-                                    OR (
-                                        strftime('%m-%d', r.start_date)
-                                            IN (
-                                                '01-31', '02-29', '03-31', '04-30', '05-31',
-                                                '06-30', '07-31', '08-31', '09-30', '10-31',
-                                                '11-30', '12-31'
-                                            )
-                                        AND (
-                                            strftime('%m-%d', :today) = '02-29'
-                                            OR (
-                                                strftime('%m-%d', :today) = '02-28'
-                                                AND (
-                                                    CAST(strftime('%Y', :today) as INT) & 3 != 0
-                                                    OR (
-                                                        CAST(strftime('%Y', :today) as INT) % 25 = 0
-                                                        AND CAST(strftime('%Y', :today) as INT) & 15
-                                                            != 0
-                                                    )
-                                                )
-                                            )
-                                        )
-                                    )
-                                )
-                            WHEN 3 THEN (
-                                    12
-                                    + CAST(strftime('%m', :today) as INT)
-                                    - CAST(strftime('%m', r.start_date) as INT)
-                                ) % r.step = 0
-                                AND CAST((CAST(strftime('%d', :today) as REAL) / 7) as INT)
-                                    + (
-                                        (CAST(strftime('%d', :today) as REAL) / 7)
-                                        > CAST((CAST(strftime('%d', :today) as REAL) / 7) as INT)
-                                    )
-                                    = CAST((CAST(strftime('%d', r.start_date) as REAL) / 7) as INT)
-                                        + (
-                                            (CAST(strftime('%d', r.start_date) as REAL) / 7)
-                                            > CAST((CAST(strftime('%d', r.start_date) as REAL) / 7) as INT)
-                                        )
-                                AND strftime('%w', r.start_date) = strftime('%w', :today)
-                            WHEN 4 THEN (
-                                    CAST(strftime('%Y', :today) as INT)
-                                    - CAST(strftime('%Y', r.start_date) as INT)
-                                ) % r.step = 0
-                                AND (
-                                    strftime('%m-%d', r.start_date) = strftime('%m-%d', :today)
-                                    OR (
-                                        strftime('%m-%d', r.start_date) = '02-29'
-                                        AND strftime('%m-%d', :today) = '02-28'
-                                        AND (
-                                            CAST(strftime('%Y', :today) as INT) & 3 != 0
-                                            OR (
-                                                CAST(strftime('%Y', :today) as INT) % 25 = 0
-                                                AND CAST(strftime('%Y', :today) as INT) & 15 != 0
-                                            )
-                                        )
-                                    )
-                                )
-                            ELSE 1
-                            END
-                )
+        SELECT t.id, t.name, t.note, r.task_id IS NOT NULL AS recurring
+        FROM task t
+        JOIN task_path p ON p.ancestor = t.id
+        JOIN (
+            SELECT p.descendant, MAX(p.depth) AS depth
+            FROM available_path p
             GROUP BY p.descendant
         ) leaf ON leaf.descendant = p.descendant AND leaf.depth = p.depth
-        JOIN task td ON p.descendant = td.id
+        JOIN (
+            SELECT p.ancestor, MIN(t.scheduled_at) AS scheduled_at
+            FROM available_path p
+            JOIN task_info t ON t.id = p.descendant
+            GROUP BY p.ancestor
+        ) ps ON ps.ancestor = t.id
+        JOIN (
+            SELECT p.ancestor, MIN(t.deadline) AS deadline
+            FROM available_path p
+            JOIN task_info t ON t.id = p.descendant
+            GROUP BY p.ancestor
+        ) pd ON pd.ancestor = t.id
+        JOIN (
+            SELECT p.ancestor, MAX(t.overdue) AS overdue
+            FROM available_path p
+            JOIN task_info t ON t.id = p.descendant
+            GROUP BY p.ancestor
+        ) po ON po.ancestor = t.id
         LEFT JOIN (SELECT DISTINCT task_id FROM task_recurrence) r ON r.task_id = t.id
-        LEFT JOIN (SELECT DISTINCT task_id FROM task_recurrence) rd ON rd.task_id = td.id
         WHERE (
             t.scheduled_date IS NULL
             OR t.scheduled_date < :today
@@ -254,53 +194,13 @@ interface TaskDao {
             AND (t.start_after_date IS NULL OR t.start_after_date <= :today)
             AND (t.start_after_time IS NULL OR t.start_after_time <= :currentTime)
         ORDER BY
-            CASE
-            WHEN t.scheduled_date IS NOT NULL THEN t.scheduled_date
-            WHEN r.task_id IS NOT NULL AND t.scheduled_time IS NOT NULL THEN :today
-            ELSE '999999999-12-31'
-            END,
-            t.scheduled_date IS NULL AND t.scheduled_time IS NULL,
-            CASE
-                WHEN t.scheduled_time IS NOT NULL THEN t.scheduled_time
-                WHEN t.scheduled_date IS NOT NULL THEN '00:00'
-                ELSE '23:59'
-            END,
-            CASE
-            WHEN td.scheduled_date IS NOT NULL THEN td.scheduled_date
-            WHEN rd.task_id IS NOT NULL AND td.scheduled_time IS NOT NULL THEN :today
-            ELSE '999999999-12-31'
-            END,
-            td.scheduled_date IS NULL AND td.scheduled_time IS NULL,
-            CASE
-                WHEN td.scheduled_time IS NOT NULL THEN td.scheduled_time
-                WHEN td.scheduled_date IS NOT NULL THEN '00:00'
-                ELSE '23:59'
-            END,
-            t.deadline_date IS NULL OR t.deadline_date >= :today,
-            t.deadline_time IS NULL
-                OR t.deadline_time > :overdueTime
-                OR (r.task_id IS NULL AND (t.deadline_date IS NULL OR t.deadline_date > :today)),
-            td.deadline_date IS NULL OR td.deadline_date >= :today,
-            td.deadline_time IS NULL
-                OR td.deadline_time > :overdueTime
-                OR (rd.task_id IS NULL AND (td.deadline_date IS NULL OR td.deadline_date > :today)),
+            po.overdue DESC,
+            ps.scheduled_at IS NULL,
+            ps.scheduled_at,
             t.start_after_time IS NOT NULL,
-            CASE
-            WHEN t.deadline_date IS NOT NULL THEN t.deadline_date
-            WHEN r.task_id IS NOT NULL THEN :today
-            ELSE '999999999-12-31'
-            END,
-            t.deadline_time IS NULL,
-            t.deadline_time,
+            pd.deadline IS NULL,
+            pd.deadline,
             r.task_id IS NULL,
-            CASE
-            WHEN td.deadline_date IS NOT NULL THEN td.deadline_date
-            WHEN rd.task_id IS NOT NULL THEN :today
-            ELSE '999999999-12-31'
-            END,
-            td.deadline_time IS NULL,
-            td.deadline_time,
-            rd.task_id IS NULL,
             t.start_after_date,
             t.start_after_time,
             t.created_at,
