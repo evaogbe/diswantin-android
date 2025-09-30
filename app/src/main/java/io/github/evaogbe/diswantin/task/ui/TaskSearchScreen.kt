@@ -711,6 +711,18 @@ private fun FilterRowLayout(
             },
         )
         FilterChip(
+            selected = recurrenceDate != null,
+            onClick = onRecurrenceChipClick,
+            label = {
+                Text(text = recurrenceDate?.let {
+                    stringResource(
+                        R.string.recurrence_chip_label_selected,
+                        it.format(dateFormatter),
+                    )
+                } ?: stringResource(R.string.recurrence_chip_label_unselected))
+            },
+        )
+        FilterChip(
             selected = doneDateRange != null,
             onClick = onDoneChipClick,
             label = {
@@ -723,18 +735,6 @@ private fun FilterRowLayout(
                         )
                     } ?: stringResource(R.string.done_chip_label_unselected),
                 )
-            },
-        )
-        FilterChip(
-            selected = recurrenceDate != null,
-            onClick = onRecurrenceChipClick,
-            label = {
-                Text(text = recurrenceDate?.let {
-                    stringResource(
-                        R.string.recurrence_chip_label_selected,
-                        it.format(dateFormatter),
-                    )
-                } ?: stringResource(R.string.recurrence_chip_label_unselected))
             },
         )
     }
