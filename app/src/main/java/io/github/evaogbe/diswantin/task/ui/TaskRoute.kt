@@ -9,6 +9,9 @@ object CurrentTaskRoute
 object TagListRoute
 
 @Serializable
+object DueTodayRoute
+
+@Serializable
 data class TaskDetailRoute(val id: Long)
 
 @Serializable

@@ -30,6 +30,9 @@ sealed interface TopBarState : Parcelable {
     data object TagList : TopBarState
 
     @Parcelize
+    data object DueToday : TopBarState
+
+    @Parcelize
     data class TaskDetail(val uiState: TaskDetailTopBarState, val action: TaskDetailTopBarAction?) :
         TopBarState
 

@@ -3,17 +3,17 @@ package io.github.evaogbe.diswantin.advice
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -24,7 +24,6 @@ import androidx.compose.ui.res.stringResource
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.evaogbe.diswantin.ui.theme.ScreenLg
-import io.github.evaogbe.diswantin.ui.theme.SpaceLg
 import io.github.evaogbe.diswantin.ui.theme.SpaceMd
 import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
 import kotlinx.collections.immutable.persistentListOf
@@ -38,6 +37,7 @@ fun LowDistressAdviceScreen(onCheckTheFactsClick: () -> Unit, modifier: Modifier
                 .padding(SpaceMd)
                 .widthIn(max = ScreenLg)
                 .fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(SpaceMd),
         ) {
             SelectionContainer {
                 StyledList(
@@ -48,14 +48,13 @@ fun LowDistressAdviceScreen(onCheckTheFactsClick: () -> Unit, modifier: Modifier
                     )
                 )
             }
-            Spacer(Modifier.size(SpaceLg))
+            HorizontalDivider()
             SelectionContainer {
                 Text(
                     stringResource(R.string.advice_low_distress_wise_mind),
                     style = typography.titleMedium,
                 )
             }
-            Spacer(Modifier.size(SpaceMd))
             AdviceButton(
                 onClick = onCheckTheFactsClick,
                 text = stringResource(R.string.advice_low_distress_details_button),

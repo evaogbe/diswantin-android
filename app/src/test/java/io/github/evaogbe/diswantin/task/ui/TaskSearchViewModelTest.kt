@@ -35,13 +35,13 @@ class TaskSearchViewModelTest {
             val blankQuery = faker.string.regexify(""" *""")
             val query = faker.string.regexify("""\S+""")
             val namePattern =
-                """([^\r\n]* )?${Pattern.quote(query)}[^\r\n]*""".toRegex(RegexOption.IGNORE_CASE)
+                """[^\r\n]*\b${Pattern.quote(query)}[^\r\n]*""".toRegex(RegexOption.IGNORE_CASE)
             val tasks = List(3) {
                 val createdAt = faker.random.randomPastDate().toInstant()
                 Task(
                     id = it + 1L,
                     createdAt = createdAt,
-                    name = faker.string.regexify(namePattern),
+                    name = "${it + 1}. ${faker.string.regexify(namePattern)}",
                     updatedAt = createdAt,
                 )
             }

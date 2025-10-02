@@ -87,6 +87,9 @@
     <string name="current_task_skip_error">Something went wrong skipping the to-do</string>
     <string name="current_task_title">To do now</string>
     <string name="current_task_view_details_button">Details</string>
+    <string name="due_tasks_fetch_error">Something went wrong loading the to-dos</string>
+    <string name="due_tasks_empty">No to-dos due</string>
+    <string name="due_today_title">Due today</string>
     <string name="edit_button">Edit</string>
     <string name="end_date_label">End date</string>
     <string name="delete_button">Delete</string>

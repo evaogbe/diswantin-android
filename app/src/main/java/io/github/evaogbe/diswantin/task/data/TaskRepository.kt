@@ -2,6 +2,8 @@ package io.github.evaogbe.diswantin.task.data
 
 import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
+import java.time.LocalDate
+import java.time.ZoneId
 
 interface TaskRepository {
     fun getCurrentTask(params: CurrentTaskParams): Flow<CurrentTask?>
@@ -17,6 +19,8 @@ interface TaskRepository {
     fun getParent(id: Long): Flow<Task?>
 
     fun getChildren(id: Long): Flow<PagingData<TaskSummary>>
+
+    fun getTasksDueAt(dueAt: LocalDate, zone: ZoneId): Flow<PagingData<DueTaskWithRecurrences>>
 
     fun getTaskRecurrencesByTaskId(taskId: Long): Flow<List<TaskRecurrence>>
 
