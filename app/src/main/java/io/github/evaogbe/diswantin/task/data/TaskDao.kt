@@ -339,8 +339,8 @@ interface TaskDao {
                 OR :doneEnd IS NULL
                 OR EXISTS (
                     SELECT *
-                    FROM task_completion c2
-                    WHERE c2.task_id = t.id AND c2.done_at BETWEEN :doneStart AND :doneEnd
+                    FROM task_completion c
+                    WHERE c.task_id = t.id AND c.done_at >= :doneStart AND c.done_at < :doneEnd
                 )
             )
             AND (
@@ -520,8 +520,8 @@ interface TaskDao {
                 OR :doneEnd IS NULL
                 OR EXISTS (
                     SELECT *
-                    FROM task_completion c2
-                    WHERE c2.task_id = t.id AND c2.done_at BETWEEN :doneStart AND :doneEnd
+                    FROM task_completion c
+                    WHERE c.task_id = t.id AND c.done_at >= :doneStart AND c.done_at < :doneEnd
                 )
             )
             AND (

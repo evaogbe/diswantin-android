@@ -28,15 +28,13 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
-import java.time.OffsetDateTime
 import java.time.ZoneId
-import java.time.ZonedDateTime
 
 private data class TaskChainInfo(
     val root: Task,
     val recurrence: TaskRecurrence?,
-    val scheduledAt: ZonedDateTime,
-    val deadline: ZonedDateTime,
+    val scheduledAt: LocalDateTime,
+    val deadline: LocalDateTime,
     val overdue: Boolean,
 )
 
@@ -83,18 +81,18 @@ class FakeTaskRepository(
                 }
             }
             val scheduledAt = chain.minOf { (task) ->
-                dateTimePartsToZonedDateTime(
-                    task.scheduledDate,
-                    task.scheduledTime,
-                    LocalTime.MIN,
-                ) ?: OffsetDateTime.MAX.toZonedDateTime()
+                if (task.scheduledDate == null && task.scheduledTime == null) {
+                    LocalDateTime.MAX
+                } else {
+                    (task.scheduledDate ?: params.today).atTime(task.scheduledTime ?: LocalTime.MIN)
+                }
             }
             val deadline = chain.minOf { (task, recurring) ->
-                dateTimePartsToZonedDateTime(
-                    task.deadlineDate ?: if (recurring) params.today else null,
-                    task.deadlineTime,
-                    LocalTime.MAX,
-                ) ?: OffsetDateTime.MAX.toZonedDateTime()
+                if (task.deadlineDate == null && task.deadlineTime == null && !recurring) {
+                    LocalDateTime.MAX
+                } else {
+                    (task.deadlineDate ?: params.today).atTime(task.deadlineTime ?: LocalTime.MAX)
+                }
             }
             val anyOverdue = chain.any { (task, recurring) ->
                 isOverdue(task, recurring, params.today, params.overdueTime)
@@ -106,13 +104,10 @@ class FakeTaskRepository(
                 compareByDescending(TaskChainInfo::overdue).thenBy(TaskChainInfo::scheduledAt)
                     .thenBy { it.root.startAfterTime != null }.thenBy(TaskChainInfo::deadline)
                     .thenByDescending(nullsLast()) { it.recurrence?.type }
-                    .thenByDescending(nullsLast()) { it.recurrence?.step }.thenBy(nullsFirst()) {
-                        dateTimePartsToZonedDateTime(
-                            it.root.startAfterDate,
-                            it.root.startAfterTime,
-                            LocalTime.MIN,
-                        )
-                    }.thenBy { it.root.createdAt }.thenBy { it.root.id }).firstNotNullOfOrNull {
+                    .thenByDescending(nullsLast()) { it.recurrence?.step }
+                    .thenBy(nullsFirst()) { it.root.startAfterDate }
+                    .thenBy(nullsFirst()) { it.root.startAfterTime }.thenBy { it.root.createdAt }
+                    .thenBy { it.root.id }).firstNotNullOfOrNull {
                 CurrentTask(
                     id = it.root.id,
                     name = it.root.name,
@@ -138,16 +133,6 @@ class FakeTaskRepository(
         if (task.startAfterDate?.let { it > now.toLocalDate() } == true) return true
         if (task.startAfterTime?.let { it > now.toLocalTime() } == true) return true
         return false
-    }
-
-    private fun dateTimePartsToZonedDateTime(
-        date: LocalDate?,
-        time: LocalTime?,
-        defaultTime: LocalTime,
-    ) = when {
-        date != null -> date.atTime(time ?: defaultTime).atZone(clock.zone)
-        time != null -> ZonedDateTime.now(clock).with(time)
-        else -> null
     }
 
     private fun isOverdue(
@@ -282,9 +267,9 @@ class FakeTaskRepository(
                     }
                 } != false && criteria.doneDateRange?.let { (start, end) ->
                     val doneStart = start.atStartOfDay(clock.zone).toInstant()
-                    val doneEnd = end.atStartOfDay(clock.zone).toInstant()
+                    val doneEnd = end.plusDays(1).atStartOfDay(clock.zone).toInstant()
                     taskCompletions.values.any {
-                        it.taskId == task.id && it.doneAt in (doneStart..doneEnd)
+                        it.taskId == task.id && it.doneAt in (doneStart..<doneEnd)
                     }
                 } != false && criteria.recurrenceDate?.let {
                     doesRecurOnDate(recurrences, it)

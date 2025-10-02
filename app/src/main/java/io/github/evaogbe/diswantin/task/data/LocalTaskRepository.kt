@@ -10,9 +10,7 @@ import kotlinx.coroutines.flow.map
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
-import java.time.LocalTime
 import java.time.ZoneId
-import java.time.ZonedDateTime
 import javax.inject.Inject
 
 class LocalTaskRepository @Inject constructor(
@@ -31,7 +29,7 @@ class LocalTaskRepository @Inject constructor(
     override fun getTaskDetailById(id: Long) = taskDao.getTaskDetailById(id)
 
     override fun getTaskSummariesByTagId(tagId: Long): Flow<PagingData<TaskSummary>> {
-        val startOfToday = ZonedDateTime.now(clock).with(LocalTime.MIN).toInstant()
+        val startOfToday = LocalDate.now(clock).atStartOfDay(clock.zone).toInstant()
         return Pager(PagingConfig(pageSize = 40)) {
             taskDao.getTaskSummariesByTagId(tagId, startOfToday)
         }.flow
@@ -49,8 +47,8 @@ class LocalTaskRepository @Inject constructor(
                     scheduledEndDate = criteria.scheduledDateRange?.second,
                     doneStart = criteria.doneDateRange?.first?.atStartOfDay(clock.zone)
                         ?.toInstant(),
-                    doneEnd = criteria.doneDateRange?.second?.atStartOfDay(clock.zone)
-                        ?.with(LocalTime.MAX)?.toInstant(),
+                    doneEnd = criteria.doneDateRange?.second?.plusDays(1)?.atStartOfDay(clock.zone)
+                        ?.toInstant(),
                     recurrenceDate = criteria.recurrenceDate,
                 )
             } else {
@@ -64,8 +62,8 @@ class LocalTaskRepository @Inject constructor(
                     scheduledEndDate = criteria.scheduledDateRange?.second,
                     doneStart = criteria.doneDateRange?.first?.atStartOfDay(clock.zone)
                         ?.toInstant(),
-                    doneEnd = criteria.doneDateRange?.second?.atStartOfDay(clock.zone)
-                        ?.with(LocalTime.MAX)?.toInstant(),
+                    doneEnd = criteria.doneDateRange?.second?.plusDays(1)?.atStartOfDay(clock.zone)
+                        ?.toInstant(),
                     recurrenceDate = criteria.recurrenceDate,
                 )
             }

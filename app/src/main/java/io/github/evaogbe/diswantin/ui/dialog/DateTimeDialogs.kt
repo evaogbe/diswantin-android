@@ -36,7 +36,7 @@ import java.time.ZoneOffset
 
 class SelectableDatesWithMax(private val maxDate: LocalDate) : SelectableDates {
     override fun isSelectableDate(utcTimeMillis: Long) =
-        utcTimeMillis <= maxDate.atTime(LocalTime.MAX).toInstant(ZoneOffset.UTC).toEpochMilli()
+        utcTimeMillis < maxDate.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
 
     override fun isSelectableYear(year: Int) = year <= maxDate.year
 }
