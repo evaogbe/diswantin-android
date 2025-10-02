@@ -9,7 +9,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.time.Clock
 import java.time.Instant
+import java.time.LocalDate
 import java.time.LocalTime
+import java.time.ZoneId
 import java.time.ZonedDateTime
 import javax.inject.Inject
 
@@ -86,6 +88,15 @@ class LocalTaskRepository @Inject constructor(
         }
 
     private fun escapeSql(str: String) = str.replace("'", "''").replace("\"", "\"\"")
+
+    override fun getTasksDueAt(dueAt: LocalDate, zone: ZoneId) =
+        Pager(PagingConfig(pageSize = 40)) {
+            taskDao.getTasksDueAt(
+                dueAt,
+                dueAt.atStartOfDay(zone).toInstant(),
+                dueAt.plusDays(1).atStartOfDay(zone).toInstant(),
+            )
+        }.flow
 
     override fun getParent(id: Long) = taskDao.getParent(id)
 

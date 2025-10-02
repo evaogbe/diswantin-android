@@ -351,7 +351,6 @@ fun TaskFormLayout(
                 .widthIn(max = ScreenLg)
                 .verticalScroll(rememberScrollState())
                 .padding(SpaceMd),
-            verticalArrangement = Arrangement.spacedBy(SpaceMd),
         ) {
             OutlinedTextField(
                 state = name,
@@ -361,6 +360,7 @@ fun TaskFormLayout(
                     capitalization = KeyboardCapitalization.Sentences,
                 ),
             )
+            Spacer(Modifier.size(SpaceMd))
 
             OutlinedTextField(
                 state = note,
@@ -371,6 +371,7 @@ fun TaskFormLayout(
                 ),
                 lineLimits = TextFieldLineLimits.MultiLine(2),
             )
+            Spacer(Modifier.size(SpaceMd))
 
             if (uiState.recurrence == null) {
                 TextButtonWithIcon(
@@ -379,67 +380,64 @@ fun TaskFormLayout(
                     text = stringResource(R.string.add_recurrence_button),
                 )
             } else {
-                Column {
+                Text(
+                    stringResource(R.string.recurrence_label),
+                    style = typography.bodyLarge,
+                )
+                Spacer(Modifier.size(SpaceSm))
+                ClearableLayout(
+                    onClear = onClearRecurrence,
+                    iconContentDescription = stringResource(R.string.remove_button),
+                ) {
+                    EditFieldButton(
+                        onClick = onEditRecurrence,
+                        text = taskRecurrenceText(uiState.recurrence),
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
+                }
+            }
+            Spacer(Modifier.size(SpaceMd))
+
+            if (!uiState.isScheduled) {
+                if (uiState.deadlineDate != null) {
                     Text(
-                        text = stringResource(R.string.recurrence_label),
+                        stringResource(R.string.deadline_date_label),
                         style = typography.bodyLarge,
                     )
                     Spacer(Modifier.size(SpaceSm))
                     ClearableLayout(
-                        onClear = onClearRecurrence,
+                        onClear = { onDeadlineDateChange(null) },
                         iconContentDescription = stringResource(R.string.remove_button),
                     ) {
                         EditFieldButton(
-                            onClick = onEditRecurrence,
-                            text = taskRecurrenceText(uiState.recurrence),
-                            modifier = Modifier.weight(1f, fill = false),
+                            onClick = { dialogType = FieldDialogType.DeadlineDate },
+                            text = uiState.deadlineDate.format(dateFormatter),
                         )
                     }
-                }
-            }
-
-            if (!uiState.isScheduled) {
-                if (uiState.deadlineDate != null) {
-                    Column {
-                        Text(
-                            text = stringResource(R.string.deadline_date_label),
-                            style = typography.bodyLarge,
-                        )
-                        Spacer(Modifier.size(SpaceSm))
-                        ClearableLayout(
-                            onClear = { onDeadlineDateChange(null) },
-                            iconContentDescription = stringResource(R.string.remove_button),
-                        ) {
-                            EditFieldButton(
-                                onClick = { dialogType = FieldDialogType.DeadlineDate },
-                                text = uiState.deadlineDate.format(dateFormatter),
-                            )
-                        }
-                    }
+                    Spacer(Modifier.size(SpaceMd))
                 } else if (uiState.recurrence == null) {
                     TextButtonWithIcon(
                         onClick = { dialogType = FieldDialogType.DeadlineDate },
                         painter = painterResource(R.drawable.baseline_schedule_24),
                         text = stringResource(R.string.add_deadline_date_button),
                     )
+                    Spacer(Modifier.size(SpaceMd))
                 }
 
                 if (uiState.deadlineTime != null) {
-                    Column {
-                        Text(
-                            text = stringResource(R.string.deadline_time_label),
-                            style = typography.bodyLarge,
+                    Text(
+                        stringResource(R.string.deadline_time_label),
+                        style = typography.bodyLarge,
+                    )
+                    Spacer(Modifier.size(SpaceSm))
+                    ClearableLayout(
+                        onClear = { onDeadlineTimeChange(null) },
+                        iconContentDescription = stringResource(R.string.remove_button),
+                    ) {
+                        EditFieldButton(
+                            onClick = { dialogType = FieldDialogType.DeadlineTime },
+                            text = uiState.deadlineTime.format(timeFormatter),
                         )
-                        Spacer(Modifier.size(SpaceSm))
-                        ClearableLayout(
-                            onClear = { onDeadlineTimeChange(null) },
-                            iconContentDescription = stringResource(R.string.remove_button),
-                        ) {
-                            EditFieldButton(
-                                onClick = { dialogType = FieldDialogType.DeadlineTime },
-                                text = uiState.deadlineTime.format(timeFormatter),
-                            )
-                        }
                     }
                 } else {
                     TextButtonWithIcon(
@@ -448,48 +446,47 @@ fun TaskFormLayout(
                         text = stringResource(R.string.add_deadline_time_button),
                     )
                 }
+                Spacer(Modifier.size(SpaceMd))
 
                 if (uiState.startAfterDate != null) {
-                    Column {
-                        Text(
-                            text = stringResource(R.string.start_after_date_label),
-                            style = typography.bodyLarge,
+                    Text(
+                        stringResource(R.string.start_after_date_label),
+                        style = typography.bodyLarge,
+                    )
+                    Spacer(Modifier.size(SpaceSm))
+                    ClearableLayout(
+                        onClear = { onStartAfterDateChange(null) },
+                        iconContentDescription = stringResource(R.string.remove_button),
+                    ) {
+                        EditFieldButton(
+                            onClick = { dialogType = FieldDialogType.StartAfterDate },
+                            text = uiState.startAfterDate.format(dateFormatter),
                         )
-                        Spacer(Modifier.size(SpaceSm))
-                        ClearableLayout(
-                            onClear = { onStartAfterDateChange(null) },
-                            iconContentDescription = stringResource(R.string.remove_button),
-                        ) {
-                            EditFieldButton(
-                                onClick = { dialogType = FieldDialogType.StartAfterDate },
-                                text = uiState.startAfterDate.format(dateFormatter),
-                            )
-                        }
                     }
+                    Spacer(Modifier.size(SpaceMd))
                 } else if (uiState.recurrence == null) {
                     TextButtonWithIcon(
                         onClick = { dialogType = FieldDialogType.StartAfterDate },
                         painter = painterResource(R.drawable.baseline_schedule_24),
                         text = stringResource(R.string.add_start_after_date_button),
                     )
+                    Spacer(Modifier.size(SpaceMd))
                 }
 
                 if (uiState.startAfterTime != null) {
-                    Column {
-                        Text(
-                            text = stringResource(R.string.start_after_time_label),
-                            style = typography.bodyLarge,
+                    Text(
+                        stringResource(R.string.start_after_time_label),
+                        style = typography.bodyLarge,
+                    )
+                    Spacer(Modifier.size(SpaceSm))
+                    ClearableLayout(
+                        onClear = { onStartAfterTimeChange(null) },
+                        iconContentDescription = stringResource(R.string.remove_button),
+                    ) {
+                        EditFieldButton(
+                            onClick = { dialogType = FieldDialogType.StartAfterTime },
+                            text = uiState.startAfterTime.format(timeFormatter),
                         )
-                        Spacer(Modifier.size(SpaceSm))
-                        ClearableLayout(
-                            onClear = { onStartAfterTimeChange(null) },
-                            iconContentDescription = stringResource(R.string.remove_button),
-                        ) {
-                            EditFieldButton(
-                                onClick = { dialogType = FieldDialogType.StartAfterTime },
-                                text = uiState.startAfterTime.format(timeFormatter),
-                            )
-                        }
                     }
                 } else {
                     TextButtonWithIcon(
@@ -498,6 +495,7 @@ fun TaskFormLayout(
                         text = stringResource(R.string.add_start_after_time_button),
                     )
                 }
+                Spacer(Modifier.size(SpaceMd))
 
                 if (uiState.canSchedule) {
                     TextButtonWithIcon(
@@ -511,25 +509,25 @@ fun TaskFormLayout(
                         painter = painterResource(R.drawable.baseline_schedule_24),
                         text = stringResource(R.string.add_scheduled_at_button),
                     )
+                    Spacer(Modifier.size(SpaceMd))
                 }
             } else {
                 if (uiState.scheduledDate != null) {
-                    Column {
-                        Text(
-                            text = stringResource(R.string.scheduled_date_label),
-                            style = typography.bodyLarge,
+                    Text(
+                        stringResource(R.string.scheduled_date_label),
+                        style = typography.bodyLarge,
+                    )
+                    Spacer(Modifier.size(SpaceSm))
+                    ClearableLayout(
+                        onClear = { onScheduledDateChange(null) },
+                        iconContentDescription = stringResource(R.string.remove_button),
+                    ) {
+                        EditFieldButton(
+                            onClick = { dialogType = FieldDialogType.ScheduledDate },
+                            text = uiState.scheduledDate.format(dateFormatter),
                         )
-                        Spacer(Modifier.size(SpaceSm))
-                        ClearableLayout(
-                            onClear = { onScheduledDateChange(null) },
-                            iconContentDescription = stringResource(R.string.remove_button),
-                        ) {
-                            EditFieldButton(
-                                onClick = { dialogType = FieldDialogType.ScheduledDate },
-                                text = uiState.scheduledDate.format(dateFormatter),
-                            )
-                        }
                     }
+                    Spacer(Modifier.size(SpaceMd))
                 }
 
                 if (uiState.scheduledTime == null) {
@@ -539,23 +537,22 @@ fun TaskFormLayout(
                         text = stringResource(R.string.add_scheduled_time_button),
                     )
                 } else {
-                    Column {
-                        Text(
-                            text = stringResource(R.string.scheduled_time_label),
-                            style = typography.bodyLarge,
+                    Text(
+                        stringResource(R.string.scheduled_time_label),
+                        style = typography.bodyLarge,
+                    )
+                    Spacer(Modifier.size(SpaceSm))
+                    ClearableLayout(
+                        onClear = { onScheduledTimeChange(null) },
+                        iconContentDescription = stringResource(R.string.remove_button),
+                    ) {
+                        EditFieldButton(
+                            onClick = { dialogType = FieldDialogType.ScheduledTime },
+                            text = uiState.scheduledTime.format(timeFormatter),
                         )
-                        Spacer(Modifier.size(SpaceSm))
-                        ClearableLayout(
-                            onClear = { onScheduledTimeChange(null) },
-                            iconContentDescription = stringResource(R.string.remove_button),
-                        ) {
-                            EditFieldButton(
-                                onClick = { dialogType = FieldDialogType.ScheduledTime },
-                                text = uiState.scheduledTime.format(timeFormatter),
-                            )
-                        }
                     }
                 }
+                Spacer(Modifier.size(SpaceMd))
             }
 
             if (uiState.showParentField) {
@@ -566,68 +563,64 @@ fun TaskFormLayout(
                         text = stringResource(R.string.add_parent_task_button),
                     )
                 } else {
-                    Column {
-                        Text(
-                            text = stringResource(R.string.parent_task_label),
-                            style = typography.bodyLarge,
+                    Text(
+                        stringResource(R.string.parent_task_label),
+                        style = typography.bodyLarge,
+                    )
+                    Spacer(Modifier.size(SpaceSm))
+                    ClearableLayout(
+                        onClear = { onParentTaskChange(null) },
+                        iconContentDescription = stringResource(R.string.remove_button),
+                    ) {
+                        EditFieldButton(
+                            onClick = { onEditParent(uiState.parent.name) },
+                            text = uiState.parent.name,
+                            modifier = Modifier.weight(1f, fill = false),
                         )
-                        Spacer(Modifier.size(SpaceSm))
-                        ClearableLayout(
-                            onClear = { onParentTaskChange(null) },
-                            iconContentDescription = stringResource(R.string.remove_button),
-                        ) {
-                            EditFieldButton(
-                                onClick = { onEditParent(uiState.parent.name) },
-                                text = uiState.parent.name,
-                                modifier = Modifier.weight(1f, fill = false),
-                            )
-                        }
                     }
                 }
             }
 
             when (uiState.tagFieldState) {
                 TagFieldState.Open -> {
-                    Column {
-                        if (uiState.tags.isNotEmpty()) {
-                            Text(
-                                stringResource(R.string.tags_label),
-                                style = typography.titleMedium,
-                            )
-
-                            TaskFormTagList(tags = uiState.tags, onRemoveTag = onRemoveTag)
-                        }
-
-                        AutocompleteField(
-                            query = tagQuery,
-                            label = { Text(stringResource(R.string.tag_name_label)) },
-                            onSearch = onTagSearch,
-                            options = uiState.tagOptions,
-                            formatOption = Tag::name,
-                            onSelectOption = onAddTag,
-                            autoFocus = true,
+                    Spacer(Modifier.size(SpaceMd))
+                    if (uiState.tags.isNotEmpty()) {
+                        Text(
+                            stringResource(R.string.tags_label),
+                            style = typography.titleMedium,
                         )
+
+                        TaskFormTagList(tags = uiState.tags, onRemoveTag = onRemoveTag)
                     }
+
+                    AutocompleteField(
+                        query = tagQuery,
+                        label = { Text(stringResource(R.string.tag_name_label)) },
+                        onSearch = onTagSearch,
+                        options = uiState.tagOptions,
+                        formatOption = Tag::name,
+                        onSelectOption = onAddTag,
+                        autoFocus = true,
+                    )
                 }
 
                 TagFieldState.Closed -> {
-                    Column {
-                        if (uiState.tags.isNotEmpty()) {
-                            Text(
-                                stringResource(R.string.tags_label),
-                                style = typography.titleMedium,
-                            )
+                    Spacer(Modifier.size(SpaceMd))
+                    if (uiState.tags.isNotEmpty()) {
+                        Text(
+                            stringResource(R.string.tags_label),
+                            style = typography.titleMedium,
+                        )
 
-                            TaskFormTagList(tags = uiState.tags, onRemoveTag = onRemoveTag)
-                        }
+                        TaskFormTagList(tags = uiState.tags, onRemoveTag = onRemoveTag)
+                    }
 
-                        if (uiState.tags.size < Task.MAX_TAGS) {
-                            TextButtonWithIcon(
-                                onClick = startEditTag,
-                                painter = painterResource(R.drawable.baseline_add_24),
-                                text = stringResource(R.string.add_tag_button),
-                            )
-                        }
+                    if (uiState.tags.size < Task.MAX_TAGS) {
+                        TextButtonWithIcon(
+                            onClick = startEditTag,
+                            painter = painterResource(R.drawable.baseline_add_24),
+                            text = stringResource(R.string.add_tag_button),
+                        )
                     }
                 }
 

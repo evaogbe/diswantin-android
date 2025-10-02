@@ -8,7 +8,6 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -93,14 +92,14 @@ fun StyledList(
                 collectionInfo = CollectionInfo(rowCount = items.size, columnCount = 1)
             }
             .fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(SpaceSm),
     ) {
         items.forEachIndexed { index, item ->
             var expanded by remember { mutableStateOf(false) }
-            val arrowRotation by animateFloatAsState(if (expanded) 180f else 0f)
-
-            if (index > 0) {
-                Spacer(Modifier.size(SpaceSm))
-            }
+            val arrowRotation by animateFloatAsState(
+                if (expanded) 180f else 0f,
+                label = "arrow rotation",
+            )
 
             Row(
                 modifier = Modifier

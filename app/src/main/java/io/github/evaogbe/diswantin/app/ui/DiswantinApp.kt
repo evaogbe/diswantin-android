@@ -66,6 +66,9 @@ import io.github.evaogbe.diswantin.task.ui.CurrentTaskScreen
 import io.github.evaogbe.diswantin.task.ui.CurrentTaskTopBar
 import io.github.evaogbe.diswantin.task.ui.CurrentTaskTopBarAction
 import io.github.evaogbe.diswantin.task.ui.CurrentTaskTopBarState
+import io.github.evaogbe.diswantin.task.ui.DueTodayRoute
+import io.github.evaogbe.diswantin.task.ui.DueTodayScreen
+import io.github.evaogbe.diswantin.task.ui.DueTodayTopBar
 import io.github.evaogbe.diswantin.task.ui.ParentTask
 import io.github.evaogbe.diswantin.task.ui.TagDetailRoute
 import io.github.evaogbe.diswantin.task.ui.TagDetailScreen
@@ -145,17 +148,10 @@ fun DiswantinApp() {
             )
         },
         bottomBar = {
-            if (currentDestination?.hierarchy.orEmpty().any { dest ->
-                    BottomBarDestination.entries.any { dest.hasRoute(it.route::class) }
-                }) {
+            if (BottomBarDestination.entries.any { it.matches(currentDestination) }) {
                 DiswantinBottomBar(
-                    isCurrentRoute = { dest ->
-                        currentDestination?.hierarchy.orEmpty().any {
-                            it.hasRoute(dest.route::class)
-                        }
-                    },
+                    isCurrentRoute = { it.matches(currentDestination) },
                     navigate = {
-                        query.clearText()
                         navController.navigate(it.route) {
                             popUpTo(navController.graph.findStartDestination().id) {
                                 saveState = true
@@ -171,29 +167,25 @@ fun DiswantinApp() {
             SnackbarHost(hostState = snackbarHostState, modifier = Modifier.imePadding())
         },
         floatingActionButton = {
+            val navigateToNewTaskForm = {
+                navController.navigate(route = TaskFormRoute.Main.new(name = null))
+            }
+
             when {
                 currentDestination?.hasRoute<CurrentTaskRoute>() == true -> {
-                    DiswantinFab(
-                        onClick = {
-                            navController.navigate(route = TaskFormRoute.Main.new(name = null)) {
-                                launchSingleTop = true
-                            }
-                        },
-                    )
+                    DiswantinFab(onClick = navigateToNewTaskForm)
                 }
 
                 currentDestination?.hierarchy.orEmpty().any { it.hasRoute<AdviceRoute>() } -> {
-                    DiswantinFab(
-                        onClick = {
-                            navController.navigate(route = TaskFormRoute.Main.new(name = null)) {
-                                launchSingleTop = true
-                            }
-                        },
-                    )
+                    DiswantinFab(onClick = navigateToNewTaskForm)
                 }
 
                 currentDestination?.hasRoute<TagListRoute>() == true -> {
                     DiswantinFab(onClick = { fabClicked = true })
+                }
+
+                currentDestination?.hasRoute<DueTodayRoute>() == true -> {
+                    DiswantinFab(onClick = navigateToNewTaskForm)
                 }
             }
         },
@@ -216,7 +208,7 @@ fun DiswantinApp() {
                     },
                     showSnackbar = showSnackbar,
                     onNavigateToAdvice = {
-                        navController.navigate(route = AdviceRoute) {
+                        navController.navigate(route = AdviceRoute.BodySensation) {
                             popUpTo(navController.graph.findStartDestination().id) {
                                 saveState = true
                             }
@@ -246,6 +238,17 @@ fun DiswantinApp() {
                     showSnackbar = showSnackbar,
                     fabClicked = fabClicked,
                     fabClickHandled = { fabClicked = false },
+                )
+            }
+            composable<DueTodayRoute> {
+                LaunchedEffect(Unit) {
+                    if (topBarState !is TopBarState.DueToday) {
+                        topBarState = TopBarState.DueToday
+                    }
+                }
+
+                DueTodayScreen(
+                    onSelectTask = { navController.navigate(route = TaskDetailRoute(id = it)) },
                 )
             }
             composable<TaskDetailRoute> {
@@ -531,17 +534,22 @@ fun DiswantinTopBar(
     query: TextFieldState,
     navController: NavController,
 ) {
+    val navigateToTaskSearchFromTopLevel = {
+        query.clearText()
+        navController.navigate(route = TaskSearchRoute)
+    }
+
     SharedTransitionLayout {
-        AnimatedContent(targetState = topBarState) { targetTopBarState ->
+        AnimatedContent(
+            targetState = topBarState,
+            contentKey = { it::class },
+            label = "top bar",
+        ) { targetTopBarState ->
             when (targetTopBarState) {
                 is TopBarState.CurrentTask -> {
                     CurrentTaskTopBar(
                         uiState = targetTopBarState.uiState,
-                        onSearchTask = {
-                            navController.navigate(route = TaskSearchRoute) {
-                                launchSingleTop = true
-                            }
-                        },
+                        onSearchTask = navigateToTaskSearchFromTopLevel,
                         onRefresh = {
                             setTopBarState(
                                 targetTopBarState.copy(action = CurrentTaskTopBarAction.Refresh)
@@ -559,11 +567,7 @@ fun DiswantinTopBar(
 
                 is TopBarState.AdviceStart -> {
                     StartAdviceTopBar(
-                        onSearchTask = {
-                            navController.navigate(route = TaskSearchRoute) {
-                                launchSingleTop = true
-                            }
-                        },
+                        onSearchTask = navigateToTaskSearchFromTopLevel,
                         sharedTransitionScope = this@SharedTransitionLayout,
                         animatedVisibilityScope = this@AnimatedContent,
                     )
@@ -571,15 +575,12 @@ fun DiswantinTopBar(
 
                 is TopBarState.AdviceInner -> {
                     InnerAdviceTopBar(
-                        onSearchTask = {
-                            navController.navigate(route = TaskSearchRoute) {
-                                launchSingleTop = true
-                            }
-                        },
+                        onSearchTask = navigateToTaskSearchFromTopLevel,
                         onBackClick = navController::popBackStack,
                         onRestart = {
                             navController.navigate(route = AdviceRoute.BodySensation) {
                                 popUpTo(navController.graph.findStartDestination().id)
+                                launchSingleTop = true
                             }
                         },
                         sharedTransitionScope = this@SharedTransitionLayout,
@@ -589,11 +590,15 @@ fun DiswantinTopBar(
 
                 is TopBarState.TagList -> {
                     TagListTopBar(
-                        onSearchTask = {
-                            navController.navigate(route = TaskSearchRoute) {
-                                launchSingleTop = true
-                            }
-                        },
+                        onSearchTask = navigateToTaskSearchFromTopLevel,
+                        sharedTransitionScope = this@SharedTransitionLayout,
+                        animatedVisibilityScope = this@AnimatedContent,
+                    )
+                }
+
+                is TopBarState.DueToday -> {
+                    DueTodayTopBar(
+                        onSearchTask = navigateToTaskSearchFromTopLevel,
                         sharedTransitionScope = this@SharedTransitionLayout,
                         animatedVisibilityScope = this@AnimatedContent,
                     )
@@ -702,7 +707,7 @@ fun DiswantinBottomBar(
                 onClick = { navigate(destination) },
                 icon = {
                     Icon(
-                        painter = painterResource(destination.iconId),
+                        painterResource(destination.iconId),
                         contentDescription = null,
                     )
                 },

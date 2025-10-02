@@ -459,7 +459,7 @@ fun TaskRecurrenceFormScreen(
                     text = stringResource(R.string.add_end_date_button),
                 )
             } else {
-                Text(text = stringResource(R.string.end_date_label), style = typography.bodyLarge)
+                Text(stringResource(R.string.end_date_label), style = typography.bodyLarge)
                 Spacer(Modifier.size(SpaceSm))
                 ClearableLayout(
                     onClear = { onEndDateChange(null) },

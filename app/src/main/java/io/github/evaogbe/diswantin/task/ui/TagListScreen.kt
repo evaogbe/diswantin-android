@@ -17,6 +17,8 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -61,6 +63,7 @@ import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.evaogbe.diswantin.ui.theme.IconSizeXl
 import io.github.evaogbe.diswantin.ui.theme.ScreenLg
 import io.github.evaogbe.diswantin.ui.theme.SpaceLg
+import io.github.evaogbe.diswantin.ui.theme.SpaceMd
 import io.github.evaogbe.diswantin.ui.theme.SpaceXl
 import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
 import kotlinx.coroutines.flow.flowOf
@@ -158,10 +161,7 @@ fun TagListLayout(
         tagItems = {
             items(tagItems.itemCount, key = tagItems.itemKey(Tag::id)) { index ->
                 val tag = tagItems[index]!!
-                ListItem(
-                    headlineContent = { Text(text = tag.name) },
-                    modifier = Modifier.clickable { onSelectTag(tag) },
-                )
+                TagItem(tag = tag, onSelectTag = onSelectTag)
                 HorizontalDivider()
             }
 
@@ -193,9 +193,21 @@ fun TagListLayout(
 }
 
 @Composable
+private fun TagItem(tag: Tag, onSelectTag: (Tag) -> Unit) {
+    ListItem(
+        headlineContent = { Text(text = tag.name) },
+        modifier = Modifier.clickable { onSelectTag(tag) },
+    )
+}
+
+@Composable
 fun EmptyTagListLayout(onAddTag: () -> Unit, modifier: Modifier = Modifier) {
     Surface(modifier = modifier.fillMaxSize(), color = colorScheme.surfaceVariant) {
         Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(SpaceMd)
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -262,7 +274,7 @@ private fun TagListScreenPreview_Present() {
             TagListLayout(
                 tagItems = {
                     items(tagItems, key = Tag::id) { tag ->
-                        ListItem(headlineContent = { Text(text = tag.name) })
+                        TagItem(tag = tag, onSelectTag = {})
                         HorizontalDivider()
                     }
                 },

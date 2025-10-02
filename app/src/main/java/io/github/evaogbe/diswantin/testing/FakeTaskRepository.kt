@@ -5,12 +5,15 @@ import androidx.paging.LoadStates
 import androidx.paging.PagingData
 import io.github.evaogbe.diswantin.task.data.CurrentTask
 import io.github.evaogbe.diswantin.task.data.CurrentTaskParams
+import io.github.evaogbe.diswantin.task.data.DueTask
+import io.github.evaogbe.diswantin.task.data.DueTaskWithRecurrences
 import io.github.evaogbe.diswantin.task.data.EditTaskForm
 import io.github.evaogbe.diswantin.task.data.NewTaskForm
 import io.github.evaogbe.diswantin.task.data.PathUpdateType
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskCompletion
 import io.github.evaogbe.diswantin.task.data.TaskDetail
+import io.github.evaogbe.diswantin.task.data.TaskRecurrence
 import io.github.evaogbe.diswantin.task.data.TaskRepository
 import io.github.evaogbe.diswantin.task.data.TaskSearchCriteria
 import io.github.evaogbe.diswantin.task.data.TaskSkip
@@ -25,7 +28,17 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.OffsetDateTime
+import java.time.ZoneId
 import java.time.ZonedDateTime
+
+private data class TaskChainInfo(
+    val root: Task,
+    val recurrence: TaskRecurrence?,
+    val scheduledAt: ZonedDateTime,
+    val deadline: ZonedDateTime,
+    val overdue: Boolean,
+)
 
 class FakeTaskRepository(
     private val db: FakeDatabase = FakeDatabase(),
@@ -41,110 +54,72 @@ class FakeTaskRepository(
         db.taskRecurrenceTable,
         db.taskSkipTable,
     ) { tasks, taskPaths, taskCompletions, taskRecurrences, taskSkips ->
-        val availableAncestorIds = tasks.values.filter { task ->
-            val recurrences = taskRecurrences.values.filter {
-                it.taskId == task.id
-            }
-            val doneAt =
-                taskCompletions.values.filter { it.taskId == task.id }.maxOfOrNull { it.doneAt }
-            val isDone = doneAt != null && (recurrences.isEmpty() || doneAt >= params.startOfToday)
-            val doesRecurToday = recurrences.isEmpty() || doesRecurOnDate(recurrences, params.today)
-            !isDone && doesRecurToday
-        }.map { it.id }.toSet()
-        val availableDescendantIds = tasks.values.filter { task ->
-            val recurrences = taskRecurrences.values.filter {
-                it.taskId == task.id
-            }
+        val availableTaskIds = tasks.values.filter { task ->
+            val recurrences = taskRecurrences.values.filter { it.taskId == task.id }
             val doneAt =
                 taskCompletions.values.filter { it.taskId == task.id }.maxOfOrNull { it.doneAt }
             val isDone = doneAt != null && (recurrences.isEmpty() || doneAt >= params.startOfToday)
             val isSkipped =
                 taskSkips.values.filter { it.taskId == task.id }.maxOfOrNull { it.skippedAt }
                     ?.let { it >= params.startOfToday } == true
-            val doesRecurToday = recurrences.isEmpty() || doesRecurOnDate(recurrences, params.today)
-            val isScheduledFuture = isScheduledAtFuture(task, params.now)
-            val doesStartFuture = doesStartAfterFuture(task, params.now)
-            !isDone && !isSkipped && doesRecurToday && !isScheduledFuture && !doesStartFuture
+            val occursToday = recurrences.isEmpty() || doesRecurOnDate(recurrences, params.today)
+            !isDone && !isSkipped && occursToday
         }.map { it.id }.toSet()
-        taskPaths.values.asSequence().filter { path ->
-            path.ancestor in availableAncestorIds && path.descendant in availableDescendantIds
-        }.groupBy { it.descendant }.mapNotNull { (_, paths) ->
-            val leaf = paths.maxBy { it.depth }
-            val ancestor = tasks[leaf.ancestor]
-            val descendant = tasks[leaf.descendant]
-            if (ancestor == null || descendant == null) {
-                null
-            } else {
-                ancestor to descendant
-            }
-        }.filter { (task) ->
-            val isSkipped =
-                taskSkips.values.filter { it.taskId == task.id }.maxOfOrNull { it.skippedAt }
-                    ?.let { it >= params.startOfToday } == true
-            val isScheduledFuture = isScheduledAtFuture(task, params.now)
-            val doesStartFuture = doesStartAfterFuture(task, params.now)
-            !isSkipped && !isScheduledFuture && !doesStartFuture
-        }.sortedWith(
-            compareBy<Pair<Task, Task>, ZonedDateTime?>(nullsLast()) { (task) ->
-                dateTimePartsToZonedDateTime(
-                    task.scheduledDate,
-                    task.scheduledTime,
-                    LocalTime.MIN,
-                )
-            }.thenComparing({ (_, task) ->
-                dateTimePartsToZonedDateTime(
-                    task.scheduledDate,
-                    task.scheduledTime,
-                    LocalTime.MIN,
-                )
-            }, nullsLast()).thenComparing { (task) ->
-                task.deadlineDate?.let { it >= params.today } != false
-            }.thenComparing { (task) ->
-                task.deadlineTime?.let { it > params.overdueTime } != false
-            }.thenComparing { (_, task) ->
-                task.deadlineDate?.let { it >= params.today } != false
-            }.thenComparing { (_, task) ->
-                task.deadlineTime?.let { it > params.overdueTime } != false
-            }.thenComparing { (task) -> task.startAfterTime != null }.thenComparing({ (task) ->
-                dateTimePartsToZonedDateTime(
-                    task.deadlineDate,
-                    task.deadlineTime,
-                    LocalTime.MAX,
-                ) ?: if (taskRecurrences.values.any { it.taskId == task.id }) {
-                    params.today.atTime(LocalTime.MAX).atZone(clock.zone)
-                } else {
-                    null
-                }
-            }, nullsLast()).thenComparing({ (_, task) ->
-                dateTimePartsToZonedDateTime(
-                    task.deadlineDate,
-                    task.deadlineTime,
-                    LocalTime.MAX,
-                ) ?: if (taskRecurrences.values.any { it.taskId == task.id }) {
-                    params.today.atTime(LocalTime.MAX).atZone(clock.zone)
-                } else {
-                    null
-                }
-            }, nullsLast()).thenComparing { (task) ->
-                !taskRecurrences.values.any { it.taskId == task.id }
-            }.thenComparing { (_, task) ->
-                !taskRecurrences.values.any { it.taskId == task.id }
-            }.thenComparing({ (task) ->
-                dateTimePartsToZonedDateTime(
-                    task.startAfterDate,
-                    task.startAfterTime,
-                    LocalTime.MIN,
-                )
-            }, nullsFirst()).thenComparing { (task) -> task.createdAt }
-                .thenComparing { (task) -> task.id },
-        ).firstNotNullOfOrNull { (task) ->
-            CurrentTask(
-                id = task.id,
-                name = task.name,
-                note = task.note,
-                recurring = taskRecurrences.values.any { it.taskId == task.id },
-            )
+        val availablePaths = taskPaths.values.filter { path ->
+            path.ancestor in availableTaskIds && path.descendant in availableTaskIds
         }
+        availablePaths.groupBy { it.descendant }.values.asSequence().mapNotNull { paths ->
+            val leaf = paths.maxBy { it.depth }
+            tasks[leaf.ancestor]
+        }.filter { task ->
+            val isScheduledFuture = isScheduledAtFuture(task, params.now)
+            val doesStartFuture = doesStartAfterFuture(task, params.now)
+            !isScheduledFuture && !doesStartFuture
+        }.map { rootTask ->
+            val chain = availablePaths.filter { it.ancestor == rootTask.id }.mapNotNull { path ->
+                tasks[path.descendant]?.let { descendant ->
+                    val recurring = taskRecurrences.values.any { it.taskId == descendant.id }
+                    descendant to recurring
+                }
+            }
+            val scheduledAt = chain.minOf { (task) ->
+                dateTimePartsToZonedDateTime(
+                    task.scheduledDate,
+                    task.scheduledTime,
+                    LocalTime.MIN,
+                ) ?: OffsetDateTime.MAX.toZonedDateTime()
+            }
+            val deadline = chain.minOf { (task, recurring) ->
+                dateTimePartsToZonedDateTime(
+                    task.deadlineDate ?: if (recurring) params.today else null,
+                    task.deadlineTime,
+                    LocalTime.MAX,
+                ) ?: OffsetDateTime.MAX.toZonedDateTime()
+            }
+            val anyOverdue = chain.any { (task, recurring) ->
+                isOverdue(task, recurring, params.today, params.overdueTime)
+            }
+            val recurrence = taskRecurrences.values.firstOrNull { it.taskId == rootTask.id }
+            TaskChainInfo(rootTask, recurrence, scheduledAt, deadline, anyOverdue)
+        }
+            .sortedWith(
+                compareByDescending(TaskChainInfo::overdue).thenBy(TaskChainInfo::scheduledAt)
+                    .thenBy { it.root.startAfterTime != null }.thenBy(TaskChainInfo::deadline)
+                    .thenByDescending(nullsLast()) { it.recurrence?.type }
+                    .thenByDescending(nullsLast()) { it.recurrence?.step }.thenBy(nullsFirst()) {
+                        dateTimePartsToZonedDateTime(
+                            it.root.startAfterDate,
+                            it.root.startAfterTime,
+                            LocalTime.MIN,
+                        )
+                    }.thenBy { it.root.createdAt }.thenBy { it.root.id }).firstNotNullOfOrNull {
+                CurrentTask(
+                    id = it.root.id,
+                    name = it.root.name,
+                    note = it.root.note,
+                    recurring = it.recurrence != null,
+                )
+            }
     }
 
     private fun isScheduledAtFuture(task: Task, now: LocalDateTime): Boolean {
@@ -173,6 +148,33 @@ class FakeTaskRepository(
         date != null -> date.atTime(time ?: defaultTime).atZone(clock.zone)
         time != null -> ZonedDateTime.now(clock).with(time)
         else -> null
+    }
+
+    private fun isOverdue(
+        task: Task,
+        recurring: Boolean,
+        today: LocalDate,
+        overdueTime: LocalTime,
+    ): Boolean {
+        if (task.scheduledDate?.let { it < today } == true) {
+            return true
+        }
+
+        if (task.scheduledTime?.let { it <= overdueTime } == true) {
+            if (recurring) return true
+            if (task.scheduledDate?.let { it == today } == true) return true
+        }
+
+        if (task.deadlineDate?.let { it < today } == true) {
+            return true
+        }
+
+        if (task.deadlineTime?.let { it <= overdueTime } == true) {
+            if (recurring) return true
+            if (task.deadlineDate?.let { it == today } == true) return true
+        }
+
+        return false
     }
 
     override fun getTaskById(id: Long) = db.taskTable.map { checkNotNull(it[id]) }
@@ -218,14 +220,14 @@ class FakeTaskRepository(
                 .mapNotNull { tasks[it.taskId] }.sortedWith(
                     compareBy<Task> { task ->
                         taskCompletions.values.any { it.taskId == task.id }
-                    }.thenComparing(Task::scheduledDate, nullsLast())
-                        .thenComparing(Task::scheduledTime, nullsLast()).thenComparing { task ->
-                            !taskRecurrences.values.any { it.taskId == task.id }
-                        }.thenComparing(Task::deadlineDate, nullsLast())
-                        .thenComparing(Task::deadlineTime, nullsLast())
-                        .thenComparing(Task::startAfterDate, nullsFirst())
-                        .thenComparing(Task::startAfterTime, nullsFirst())
-                        .thenComparing(Task::createdAt).thenComparing(Task::id),
+                    }.thenBy(nullsLast(), Task::scheduledDate)
+                        .thenBy(nullsLast(), Task::scheduledTime).thenByDescending { task ->
+                            taskRecurrences.values.any { it.taskId == task.id }
+                        }.thenBy(nullsLast(), Task::deadlineDate)
+                        .thenBy(nullsLast(), Task::deadlineTime)
+                        .thenBy(nullsFirst(), Task::startAfterDate)
+                        .thenBy(nullsFirst(), Task::startAfterTime).thenBy(Task::createdAt)
+                        .thenBy(Task::id),
                 ).map { task ->
                     TaskSummary(
                         id = task.id,
@@ -278,18 +280,35 @@ class FakeTaskRepository(
                             if (it < end) it.plusDays(1) else null
                         }.any { doesRecurOnDate(recurrences, it) }
                     }
+                } != false && criteria.doneDateRange?.let { (start, end) ->
+                    val doneStart = start.atStartOfDay(clock.zone).toInstant()
+                    val doneEnd = end.atStartOfDay(clock.zone).toInstant()
+                    taskCompletions.values.any {
+                        it.taskId == task.id && it.doneAt in (doneStart..doneEnd)
+                    }
                 } != false && criteria.recurrenceDate?.let {
                     doesRecurOnDate(recurrences, it)
                 } != false
-            }.map { (task, recurrences) ->
-                TaskSummary(
-                    id = task.id,
-                    name = task.name,
-                    recurring = recurrences.isNotEmpty(),
-                    doneAt = taskCompletions.values.filter { it.taskId == task.id }
-                        .maxOfOrNull { it.doneAt },
-                )
-            }.toList(),
+            }.sortedWith(compareBy<Pair<Task, List<TaskRecurrence>>> { (_, recurrences) ->
+                recurrences.isNotEmpty()
+            }.thenBy(nullsLast()) { (task) -> task.scheduledDate }
+                .thenBy(nullsLast()) { (task) -> task.scheduledTime }
+                .thenBy(nullsLast()) { (task) -> task.deadlineDate }
+                .thenBy(nullsLast()) { (task) -> task.deadlineTime }
+                .thenBy(nullsFirst()) { (task) -> task.startAfterDate }
+                .thenBy(nullsFirst()) { (task) -> task.startAfterTime }
+                .thenByDescending(nullsFirst()) { (task) ->
+                    taskCompletions.values.filter { it.taskId == task.id }.maxOfOrNull { it.doneAt }
+                }.thenBy { (task) -> task.name }.thenBy { (task) -> task.id })
+                .map { (task, recurrences) ->
+                    TaskSummary(
+                        id = task.id,
+                        name = task.name,
+                        recurring = recurrences.isNotEmpty(),
+                        doneAt = taskCompletions.values.filter { it.taskId == task.id }
+                            .maxOfOrNull { it.doneAt },
+                    )
+                }.toList(),
             LoadStates(
                 refresh = LoadState.NotLoading(endOfPaginationReached = true),
                 prepend = LoadState.NotLoading(endOfPaginationReached = true),
@@ -298,12 +317,58 @@ class FakeTaskRepository(
         )
     }
 
-    override fun getParent(id: Long) =
-        combine(db.taskTable, db.taskPathTable) { tasks, taskPaths ->
-            taskPaths.values.firstOrNull { it.descendant == id && it.depth == 1 }?.let {
-                tasks[it.ancestor]
-            }
+    override fun getTasksDueAt(dueAt: LocalDate, zone: ZoneId) = combine(
+        db.taskTable, db.taskRecurrenceTable, db.taskCompletionTable
+    ) { tasks, taskRecurrences, taskCompletions ->
+        PagingData.from(
+            tasks.values.asSequence().map { task ->
+                task to taskRecurrences.values.filter { it.taskId == task.id }
+            }.filter { (task, recurrences) ->
+                val isScheduled = task.scheduledDate == dueAt
+                val hasDeadline = task.deadlineDate == dueAt
+                val recurring = doesRecurOnDate(recurrences, dueAt)
+                val isDone = if (recurring) {
+                    val doneAfter = dueAt.atStartOfDay(zone).toInstant()
+                    val doneBefore = dueAt.plusDays(1).atStartOfDay(zone).toInstant()
+                    taskCompletions.values.any {
+                        it.taskId == task.id && it.doneAt in (doneAfter..<doneBefore)
+                    }
+                } else {
+                    taskCompletions.values.any { it.taskId == task.id }
+                }
+                !isDone && (isScheduled || hasDeadline || recurring)
+            }.sortedWith(compareBy<Pair<Task, List<TaskRecurrence>>> { (_, recurrences) ->
+                recurrences.isNotEmpty()
+            }.thenByDescending(nullsFirst()) { (_, recurrences) ->
+                recurrences.firstOrNull()?.type
+            }.thenByDescending(nullsFirst()) { (_, recurrences) ->
+                recurrences.firstOrNull()?.step
+            }.thenBy(nullsLast()) { (task) -> task.scheduledDate }
+                .thenBy(nullsLast()) { (task) -> task.scheduledTime }
+                .thenBy(nullsLast()) { (task) -> task.deadlineDate }
+                .thenBy(nullsLast()) { (task) -> task.deadlineTime }
+                .thenBy(nullsFirst()) { (task) -> task.startAfterDate }
+                .thenBy(nullsFirst()) { (task) -> task.startAfterTime }
+                .thenBy { (task) -> task.createdAt }.thenBy { (task) -> task.id })
+                .map { (task, recurrences) ->
+                    DueTaskWithRecurrences(
+                        task = DueTask(id = task.id, name = task.name),
+                        recurrences = recurrences,
+                    )
+                }.toList(),
+            LoadStates(
+                refresh = LoadState.NotLoading(endOfPaginationReached = true),
+                prepend = LoadState.NotLoading(endOfPaginationReached = true),
+                append = LoadState.NotLoading(endOfPaginationReached = true),
+            ),
+        )
+    }
+
+    override fun getParent(id: Long) = combine(db.taskTable, db.taskPathTable) { tasks, taskPaths ->
+        taskPaths.values.firstOrNull { it.descendant == id && it.depth == 1 }?.let {
+            tasks[it.ancestor]
         }
+    }
 
     override fun getChildren(id: Long) = combine(
         db.taskTable,
@@ -314,15 +379,15 @@ class FakeTaskRepository(
         PagingData.from(
             taskPaths.values.asSequence().filter { it.ancestor == id && it.depth == 1 }
                 .mapNotNull { tasks[it.descendant] }.sortedWith(
-                    compareBy(nullsLast(), Task::scheduledDate).thenComparing(
-                        Task::scheduledTime, nullsLast()
-                    ).thenComparing { task ->
-                        !taskRecurrences.values.any { it.taskId == task.id }
-                    }.thenComparing(Task::deadlineDate, nullsLast())
-                        .thenComparing(Task::deadlineTime, nullsLast())
-                        .thenComparing(Task::startAfterDate, nullsFirst())
-                        .thenComparing(Task::startAfterTime, nullsFirst())
-                        .thenComparing(Task::createdAt).thenComparing(Task::id)
+                    compareBy(nullsLast(), Task::scheduledDate).thenBy(
+                        nullsLast(), Task::scheduledTime
+                    ).thenByDescending { task ->
+                        taskRecurrences.values.any { it.taskId == task.id }
+                    }.thenBy(nullsLast(), Task::deadlineDate)
+                        .thenBy(nullsLast(), Task::deadlineTime)
+                        .thenBy(nullsFirst(), Task::startAfterDate)
+                        .thenBy(nullsFirst(), Task::startAfterTime).thenBy(Task::createdAt)
+                        .thenBy(Task::id)
                 ).map { task ->
                     TaskSummary(
                         id = task.id,
@@ -342,7 +407,8 @@ class FakeTaskRepository(
 
     override fun getTaskRecurrencesByTaskId(taskId: Long) =
         db.taskRecurrenceTable.map { taskRecurrences ->
-            taskRecurrences.values.filter { it.taskId == taskId }.sortedBy { it.startDate }
+            taskRecurrences.values.filter { it.taskId == taskId }
+                .sortedBy(TaskRecurrence::startDate)
         }
 
     override fun getTaskCount() = db.taskTable.map { it.size.toLong() }
