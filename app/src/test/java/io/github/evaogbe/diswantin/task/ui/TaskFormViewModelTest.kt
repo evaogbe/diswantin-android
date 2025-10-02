@@ -99,31 +99,23 @@ class TaskFormViewModelTest {
         )
         val parentTask = genTask(id = 2L)
         val tag = genTag()
-        val clock = createClock()
-        val db = FakeDatabase().apply {
-            insertTask(task)
-            insertTask(parentTask)
-            insertTaskRecurrence(
-                TaskRecurrence(
-                    taskId = task.id,
-                    startDate = LocalDate.parse("2024-08-22"),
-                    endDate = LocalDate.parse("2025-08-22"),
-                    type = RecurrenceType.Day,
-                    step = 1,
+        val viewModel = createTaskFormViewModelForEdit(
+            initDatabase = { db ->
+                db.insertTask(task)
+                db.insertTask(parentTask)
+                db.insertTaskRecurrence(
+                    TaskRecurrence(
+                        taskId = task.id,
+                        startDate = LocalDate.parse("2024-08-22"),
+                        endDate = LocalDate.parse("2025-08-22"),
+                        type = RecurrenceType.Day,
+                        step = 1,
+                    )
                 )
-            )
-            insertChain(parentTask.id, task.id)
-            insertTag(tag, setOf(task.id))
-        }
-        val taskRepository = FakeTaskRepository(db, clock)
-        val tagRepository = FakeTagRepository(db)
-        val viewModel = TaskFormViewModel(
-            createSavedStateHandleForEdit(),
-            taskRepository,
-            tagRepository,
-            clock,
+                db.insertChain(parentTask.id, task.id)
+                db.insertTag(tag, setOf(task.id))
+            },
         )
-        viewModel.initialize()
 
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect()
@@ -521,7 +513,6 @@ class TaskFormViewModelTest {
     @Test
     fun `uiState emits changed when new form and recurrence changed`() =
         runTest(mainDispatcherRule.testDispatcher) {
-            val clock = createClock()
             val recurrence = TaskRecurrenceUiState(
                 startDate = faker.random.randomPastDate().toLocalDate(),
                 endDate = null,
@@ -529,16 +520,7 @@ class TaskFormViewModelTest {
                 step = 1,
                 weekdays = persistentSetOf()
             )
-            val db = FakeDatabase()
-            val taskRepository = FakeTaskRepository(db, clock)
-            val tagRepository = FakeTagRepository(db)
-            val viewModel = TaskFormViewModel(
-                createSavedStateHandleForNew(),
-                taskRepository,
-                tagRepository,
-                clock,
-            )
-            viewModel.initialize()
+            val viewModel = createTaskFormViewModelForNew()
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -1433,7 +1415,7 @@ class TaskFormViewModelTest {
         val now = Instant.parse("2024-08-22T08:00:00Z")
         val clock = Clock.fixed(now, ZoneId.of("America/New_York"))
         val db = FakeDatabase()
-        val taskRepository = FakeTaskRepository(db, clock)
+        val taskRepository = FakeTaskRepository(db)
         val tagRepository = FakeTagRepository(db)
         val viewModel = TaskFormViewModel(
             createSavedStateHandleForNew(),
@@ -1564,7 +1546,7 @@ class TaskFormViewModelTest {
             insertTask(task)
             insertTag(tag)
         }
-        val taskRepository = FakeTaskRepository(db, clock)
+        val taskRepository = FakeTaskRepository(db)
         val tagRepository = FakeTagRepository(db)
         val viewModel = TaskFormViewModel(
             createSavedStateHandleForEdit(),
@@ -1706,7 +1688,7 @@ class TaskFormViewModelTest {
                 insertTask(parentTask)
                 insertChain(parentId = parentTask.id, childId = task.id)
             }
-            val taskRepository = spyk(FakeTaskRepository(db, clock))
+            val taskRepository = spyk(FakeTaskRepository(db))
             every { taskRepository.getTaskCount() } returns flow { throw RuntimeException("Test") }
 
             val tagRepository = FakeTagRepository(db)
@@ -1766,7 +1748,7 @@ class TaskFormViewModelTest {
                 insertTask(parentTask)
                 insertChain(parentId = parentTask.id, childId = task.id)
             }
-            val taskRepository = spyk(FakeTaskRepository(db, clock))
+            val taskRepository = spyk(FakeTaskRepository(db))
             every { taskRepository.getParent(any()) } returns flow {
                 throw RuntimeException("Test")
             }
@@ -1827,7 +1809,7 @@ class TaskFormViewModelTest {
                 insertTask(task)
                 insertTag(tag, setOf(task.id))
             }
-            val taskRepository = FakeTaskRepository(db, clock)
+            val taskRepository = FakeTaskRepository(db)
             val tagRepository = spyk(FakeTagRepository(db))
             coEvery { tagRepository.hasTags() } throws RuntimeException("Test")
 
@@ -1885,7 +1867,7 @@ class TaskFormViewModelTest {
                 insertTask(task)
                 insertTag(tag, setOf(task.id))
             }
-            val taskRepository = FakeTaskRepository(db, clock)
+            val taskRepository = FakeTaskRepository(db)
             val tagRepository = spyk(FakeTagRepository(db))
             every { tagRepository.getTagsByTaskId(any(), any()) } returns flow {
                 throw RuntimeException("Test")
@@ -1983,9 +1965,9 @@ class TaskFormViewModelTest {
         val clock = createClock()
         val db = FakeDatabase().also(initDatabase)
         val taskRepository = if (initTaskRepositorySpy == null) {
-            FakeTaskRepository(db, clock)
+            FakeTaskRepository(db)
         } else {
-            spyk(FakeTaskRepository(db, clock)).also(initTaskRepositorySpy)
+            spyk(FakeTaskRepository(db)).also(initTaskRepositorySpy)
         }
         val tagRepository = if (initTagRepositorySpy == null) {
             FakeTagRepository(db)
@@ -2010,9 +1992,9 @@ class TaskFormViewModelTest {
         val clock = createClock()
         val db = FakeDatabase().also(initDatabase)
         val taskRepository = if (initTaskRepositorySpy == null) {
-            FakeTaskRepository(db, clock)
+            FakeTaskRepository(db)
         } else {
-            spyk(FakeTaskRepository(db, clock)).also(initTaskRepositorySpy)
+            spyk(FakeTaskRepository(db)).also(initTaskRepositorySpy)
         }
         val tagRepository = if (initTagRepositorySpy == null) {
             FakeTagRepository(db)

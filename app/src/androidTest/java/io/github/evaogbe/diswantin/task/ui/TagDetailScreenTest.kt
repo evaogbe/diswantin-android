@@ -129,7 +129,7 @@ class TagDetailScreenTest {
             tasks.forEach(::insertTask)
             insertTag(tag = tag, taskIds = tasks.map { it.id }.toSet())
         }
-        val taskRepository = FakeTaskRepository(db, clock)
+        val taskRepository = FakeTaskRepository(db)
         val tagRepository = spyk(FakeTagRepository(db))
         coEvery { tagRepository.delete(any()) } throws RuntimeException("Test")
 
@@ -202,7 +202,7 @@ class TagDetailScreenTest {
         return TagDetailViewModel(
             createSavedStateHandle(),
             FakeTagRepository(db),
-            FakeTaskRepository(db, clock),
+            FakeTaskRepository(db),
             clock,
         )
     }

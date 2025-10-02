@@ -308,9 +308,9 @@ class TaskSearchScreenTest {
         val clock = createClock()
         val db = FakeDatabase().also(initDatabase)
         val taskRepository = if (initTaskRepositorySpy == null) {
-            FakeTaskRepository(db, clock)
+            FakeTaskRepository(db)
         } else {
-            spyk(FakeTaskRepository(db, clock)).also(initTaskRepositorySpy)
+            spyk(FakeTaskRepository(db)).also(initTaskRepositorySpy)
         }
         return TaskSearchViewModel(SavedStateHandle(), taskRepository, clock)
     }

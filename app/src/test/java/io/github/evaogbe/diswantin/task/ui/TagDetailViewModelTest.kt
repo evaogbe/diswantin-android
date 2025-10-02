@@ -130,7 +130,7 @@ class TagDetailViewModelTest {
         val db = FakeDatabase().apply {
             insertTag(tag = tag)
         }
-        val taskRepository = FakeTaskRepository(db, clock)
+        val taskRepository = FakeTaskRepository(db)
         val tagRepository = FakeTagRepository(db)
         val viewModel = TagDetailViewModel(
             createSavedStateHandle(),
@@ -216,7 +216,7 @@ class TagDetailViewModelTest {
             tasks.forEach(::insertTask)
             insertTag(tag = tag, taskIds = tasks.map { it.id }.toSet())
         }
-        val taskRepository = FakeTaskRepository(db, clock)
+        val taskRepository = FakeTaskRepository(db)
         val tagRepository = FakeTagRepository(db)
         val viewModel = TagDetailViewModel(
             createSavedStateHandle(),
@@ -348,7 +348,7 @@ class TagDetailViewModelTest {
         } else {
             spyk(FakeTagRepository(db)).also(initTagRepositorySpy)
         }
-        val taskRepository = FakeTaskRepository(db, clock)
+        val taskRepository = FakeTaskRepository(db)
         return TagDetailViewModel(
             createSavedStateHandle(),
             tagRepository,

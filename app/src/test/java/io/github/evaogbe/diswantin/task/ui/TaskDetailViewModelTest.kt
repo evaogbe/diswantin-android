@@ -11,6 +11,7 @@ import assertk.assertions.prop
 import io.github.evaogbe.diswantin.task.data.RecurrenceType
 import io.github.evaogbe.diswantin.task.data.TagRepository
 import io.github.evaogbe.diswantin.task.data.Task
+import io.github.evaogbe.diswantin.task.data.TaskCompletion
 import io.github.evaogbe.diswantin.task.data.TaskRecurrence
 import io.github.evaogbe.diswantin.task.data.TaskRepository
 import io.github.evaogbe.diswantin.testing.FakeDatabase
@@ -38,6 +39,7 @@ import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.ZonedDateTime
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TaskDetailViewModelTest {
@@ -59,28 +61,21 @@ class TaskDetailViewModelTest {
                 updatedAt = createdAt,
             )
         }
-        val clock = createClock()
-        val db = FakeDatabase().apply {
-            insertTask(task1)
-            insertTask(task2)
-            insertTaskRecurrence(
-                TaskRecurrence(
-                    taskId = task1.id,
-                    startDate = LocalDate.parse("2024-08-22"),
-                    endDate = LocalDate.parse("2025-08-22"),
-                    type = RecurrenceType.Day,
-                    step = 1,
-                ),
-            )
-            insertChain(parentId = task1.id, childId = task2.id)
-        }
-        val taskRepository = FakeTaskRepository(db, clock)
-        val tagRepository = FakeTagRepository(db)
-        val viewModel = TaskDetailViewModel(
-            createSavedStateHandle(),
-            taskRepository,
-            tagRepository,
-            clock,
+        val viewModel = createTaskDetailViewModel(
+            initDatabase = { db ->
+                db.insertTask(task1)
+                db.insertTask(task2)
+                db.insertTaskRecurrence(
+                    TaskRecurrence(
+                        taskId = task1.id,
+                        startDate = LocalDate.parse("2024-08-22"),
+                        endDate = LocalDate.parse("2025-08-22"),
+                        type = RecurrenceType.Day,
+                        step = 1,
+                    ),
+                )
+                db.insertChain(parentId = task1.id, childId = task2.id)
+            }
         )
 
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
@@ -192,7 +187,7 @@ class TaskDetailViewModelTest {
         val db = FakeDatabase().apply {
             insertTask(task)
         }
-        val taskRepository = FakeTaskRepository(db, clock)
+        val taskRepository = FakeTaskRepository(db)
         val tagRepository = FakeTagRepository(db)
         val viewModel = TaskDetailViewModel(
             createSavedStateHandle(),
@@ -295,13 +290,13 @@ class TaskDetailViewModelTest {
     fun `unmarkTaskDone shows error message when repository throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val task = genTask()
-            val clock =
-                Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
+            val now = ZonedDateTime.parse("2024-08-22T08:00-04:00[America/New_York]")
+            val clock = Clock.fixed(now.toInstant(), now.zone)
             val db = FakeDatabase().apply {
                 insertTask(task)
             }
-            val taskRepository = spyk(FakeTaskRepository(db, clock))
-            taskRepository.markDone(task.id)
+            val taskRepository = spyk(FakeTaskRepository(db))
+            taskRepository.markDone(TaskCompletion(taskId = task.id, doneAt = now.toInstant()))
             coEvery { taskRepository.unmarkDone(any()) } throws RuntimeException("Test")
 
             val tagRepository = FakeTagRepository(db)
@@ -429,9 +424,9 @@ class TaskDetailViewModelTest {
         val clock = createClock()
         val db = FakeDatabase().also(initDatabase)
         val taskRepository = if (initTaskRepositorySpy == null) {
-            FakeTaskRepository(db, clock)
+            FakeTaskRepository(db)
         } else {
-            spyk(FakeTaskRepository(db, clock)).also(initTaskRepositorySpy)
+            spyk(FakeTaskRepository(db)).also(initTaskRepositorySpy)
         }
         val tagRepository = if (initTagRepositorySpy == null) {
             FakeTagRepository(db)

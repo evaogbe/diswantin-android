@@ -36,7 +36,7 @@ class TaskRecurrenceFormScreenTest {
         val clock =
             Clock.fixed(Instant.parse("2024-08-23T17:00:00Z"), ZoneId.of("America/New_York"))
         val db = FakeDatabase()
-        val taskRepository = FakeTaskRepository(db, clock)
+        val taskRepository = FakeTaskRepository(db)
         val tagRepository = FakeTagRepository(db)
         val viewModel = TaskFormViewModel(
             createSavedStateHandleForNew(),
@@ -119,7 +119,7 @@ class TaskRecurrenceFormScreenTest {
     ): TaskFormViewModel {
         val clock = createClock()
         val db = FakeDatabase().also(initDatabase)
-        val taskRepository = FakeTaskRepository(db, clock)
+        val taskRepository = FakeTaskRepository(db)
         val tagRepository = FakeTagRepository(db)
         return TaskFormViewModel(
             createSavedStateHandleForEdit(),

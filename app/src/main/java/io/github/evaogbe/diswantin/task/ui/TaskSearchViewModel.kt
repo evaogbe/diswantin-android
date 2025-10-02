@@ -17,8 +17,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import java.time.Clock
 import java.time.LocalDate
-import java.time.LocalTime
-import java.time.ZonedDateTime
 import java.util.regex.Pattern
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
@@ -27,13 +25,13 @@ import kotlin.time.Duration.Companion.seconds
 class TaskSearchViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     taskRepository: TaskRepository,
-    clock: Clock,
+    private val clock: Clock,
 ) : ViewModel() {
     private val criteria = savedStateHandle.getMutableStateFlow(CRITERIA_KEY, TaskSearchCriteria())
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val searchResultPagingData = criteria.filterNot { it.isEmpty }.flatMapLatest { criteria ->
-        val doneBefore = ZonedDateTime.now(clock).with(LocalTime.MIN).toInstant()
+        val doneBefore = LocalDate.now(clock).atStartOfDay(clock.zone).toInstant()
         taskRepository.searchTaskSummaries(criteria).map { searchResults ->
             searchResults.map {
                 TaskSummaryUiState.fromTaskSummary(it, doneBefore)
@@ -62,7 +60,11 @@ class TaskSearchViewModel @Inject constructor(
             deadlineDateRange = deadlineDateRange,
             startAfterDateRange = startAfterDateRange,
             scheduledDateRange = scheduledDateRange,
-            doneDateRange = doneDateRange,
+            doneRange = doneDateRange?.let { (startDate, endDate) ->
+                val start = startDate.atStartOfDay(clock.zone).toInstant()
+                val end = endDate.plusDays(1).atStartOfDay(clock.zone).toInstant()
+                start to end
+            },
             recurrenceDate = recurrenceDate,
         )
     }

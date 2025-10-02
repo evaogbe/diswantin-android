@@ -2,21 +2,15 @@ package io.github.evaogbe.diswantin.task.data
 
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
-import androidx.paging.PagingData
 import androidx.paging.filter
 import androidx.paging.map
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import javax.inject.Inject
 
-class LocalTaskRepository @Inject constructor(
-    private val taskDao: TaskDao,
-    private val clock: Clock,
-) : TaskRepository {
+class LocalTaskRepository @Inject constructor(private val taskDao: TaskDao) : TaskRepository {
     override fun getCurrentTask(params: CurrentTaskParams) = taskDao.getCurrentTask(
         today = params.today,
         currentTime = params.currentTime,
@@ -28,12 +22,10 @@ class LocalTaskRepository @Inject constructor(
 
     override fun getTaskDetailById(id: Long) = taskDao.getTaskDetailById(id)
 
-    override fun getTaskSummariesByTagId(tagId: Long): Flow<PagingData<TaskSummary>> {
-        val startOfToday = LocalDate.now(clock).atStartOfDay(clock.zone).toInstant()
-        return Pager(PagingConfig(pageSize = 40)) {
+    override fun getTaskSummariesByTagId(tagId: Long, startOfToday: Instant) =
+        Pager(PagingConfig(pageSize = 40)) {
             taskDao.getTaskSummariesByTagId(tagId, startOfToday)
         }.flow
-    }
 
     override fun searchTaskSummaries(criteria: TaskSearchCriteria) =
         Pager(PagingConfig(pageSize = 50)) {
@@ -45,10 +37,8 @@ class LocalTaskRepository @Inject constructor(
                     startAfterEndDate = criteria.startAfterDateRange?.second,
                     scheduledStartDate = criteria.scheduledDateRange?.first,
                     scheduledEndDate = criteria.scheduledDateRange?.second,
-                    doneStart = criteria.doneDateRange?.first?.atStartOfDay(clock.zone)
-                        ?.toInstant(),
-                    doneEnd = criteria.doneDateRange?.second?.plusDays(1)?.atStartOfDay(clock.zone)
-                        ?.toInstant(),
+                    doneStart = criteria.doneRange?.first,
+                    doneEnd = criteria.doneRange?.second,
                     recurrenceDate = criteria.recurrenceDate,
                 )
             } else {
@@ -60,10 +50,8 @@ class LocalTaskRepository @Inject constructor(
                     startAfterEndDate = criteria.startAfterDateRange?.second,
                     scheduledStartDate = criteria.scheduledDateRange?.first,
                     scheduledEndDate = criteria.scheduledDateRange?.second,
-                    doneStart = criteria.doneDateRange?.first?.atStartOfDay(clock.zone)
-                        ?.toInstant(),
-                    doneEnd = criteria.doneDateRange?.second?.plusDays(1)?.atStartOfDay(clock.zone)
-                        ?.toInstant(),
+                    doneStart = criteria.doneRange?.first,
+                    doneEnd = criteria.doneRange?.second,
                     recurrenceDate = criteria.recurrenceDate,
                 )
             }
@@ -120,15 +108,15 @@ class LocalTaskRepository @Inject constructor(
         taskDao.deleteWithPath(id)
     }
 
-    override suspend fun markDone(id: Long) {
-        taskDao.insertCompletion(TaskCompletion(taskId = id, doneAt = Instant.now(clock)))
+    override suspend fun markDone(data: TaskCompletion) {
+        taskDao.insertCompletion(data)
     }
 
     override suspend fun unmarkDone(id: Long) {
         taskDao.deleteLatestTaskCompletionByTaskId(id)
     }
 
-    override suspend fun skip(id: Long) {
-        taskDao.insertSkip(TaskSkip(taskId = id, skippedAt = Instant.now(clock)))
+    override suspend fun skip(data: TaskSkip) {
+        taskDao.insertSkip(data)
     }
 }
