@@ -18,7 +18,7 @@ data class CurrentTaskParams(
         fun create(now: ZonedDateTime): CurrentTaskParams {
             val today = now.toLocalDate()
             val currentTime = now.toLocalTime()
-            val startOfToday = now.with(LocalTime.MIN).toInstant()
+            val startOfToday = now.toLocalDate().atStartOfDay(now.zone).toInstant()
             val overdueTime = currentTime.plusHours(1)
             return CurrentTaskParams(
                 today = today,
