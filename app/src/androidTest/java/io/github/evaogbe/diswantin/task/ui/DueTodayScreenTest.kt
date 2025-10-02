@@ -49,7 +49,7 @@ class DueTodayScreenTest {
         val db = FakeDatabase().apply {
             tasks.forEach(::insertTask)
         }
-        val taskRepository = FakeTaskRepository(db, clock)
+        val taskRepository = FakeTaskRepository(db)
         val viewModel = DueTodayViewModel(taskRepository, clock)
 
         composeTestRule.setContent {
@@ -67,7 +67,7 @@ class DueTodayScreenTest {
     fun displaysEmptyMessage_withoutTasks() {
         val clock = Clock.systemDefaultZone()
         val db = FakeDatabase()
-        val taskRepository = FakeTaskRepository(db, clock)
+        val taskRepository = FakeTaskRepository(db)
         val viewModel = DueTodayViewModel(taskRepository, clock)
 
         composeTestRule.setContent {
@@ -83,7 +83,7 @@ class DueTodayScreenTest {
     fun displaysErrorMessage_withFailureUi() {
         val clock = Clock.systemDefaultZone()
         val db = FakeDatabase()
-        val taskRepository = spyk(FakeTaskRepository(db, clock))
+        val taskRepository = spyk(FakeTaskRepository(db))
         every { taskRepository.getTasksDueAt(any(), any()) } returns flowOf(
             PagingData.from(
                 emptyList(),

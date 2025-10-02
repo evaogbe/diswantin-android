@@ -26,8 +26,7 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.time.Clock
 import java.time.Instant
-import java.time.LocalTime
-import java.time.ZonedDateTime
+import java.time.LocalDate
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
 
@@ -44,10 +43,15 @@ class TagDetailViewModel @Inject constructor(
 
     private val userMessage = MutableStateFlow<TagDetailUserMessage?>(null)
 
-    val taskSummaryPagingData = taskRepository.getTaskSummariesByTagId(tagId).map { pagingData ->
-        val doneBefore = ZonedDateTime.now(clock).with(LocalTime.MIN).toInstant()
-        pagingData.map { TaskSummaryUiState.fromTaskSummary(it, doneBefore) }
-    }.cachedIn(viewModelScope)
+    private val startOfToday
+        get() = LocalDate.now(clock).atStartOfDay(clock.zone).toInstant()
+
+    val taskSummaryPagingData =
+        taskRepository.getTaskSummariesByTagId(tagId, startOfToday).map { pagingData ->
+            pagingData.map {
+                TaskSummaryUiState.fromTaskSummary(it, startOfToday)
+            }
+        }.cachedIn(viewModelScope)
 
     private val tagStream = tagRepository.getTagById(tagId).onEach {
         if (it != null) {

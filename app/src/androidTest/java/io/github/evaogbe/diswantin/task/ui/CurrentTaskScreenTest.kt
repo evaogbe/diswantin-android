@@ -161,7 +161,7 @@ class CurrentTaskScreenTest {
                 )
             )
         }
-        val taskRepository = FakeTaskRepository(db, clock)
+        val taskRepository = FakeTaskRepository(db)
         val viewModel = CurrentTaskViewModel(taskRepository, clock)
 
         composeTestRule.setContent {
@@ -202,7 +202,7 @@ class CurrentTaskScreenTest {
                 )
             )
         }
-        val taskRepository = spyk(FakeTaskRepository(db, clock))
+        val taskRepository = spyk(FakeTaskRepository(db))
         coEvery { taskRepository.skip(any()) } throws RuntimeException("Test")
 
         val viewModel = CurrentTaskViewModel(taskRepository, clock)
@@ -326,9 +326,9 @@ class CurrentTaskScreenTest {
         val clock = createClock()
         val db = FakeDatabase().also(initDatabase)
         val taskRepository = if (initTaskRepositorySpy == null) {
-            FakeTaskRepository(db, clock)
+            FakeTaskRepository(db)
         } else {
-            spyk(FakeTaskRepository(db, clock)).also(initTaskRepositorySpy)
+            spyk(FakeTaskRepository(db)).also(initTaskRepositorySpy)
         }
         return CurrentTaskViewModel(taskRepository, clock)
     }

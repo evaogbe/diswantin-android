@@ -59,7 +59,7 @@ class TaskDetailScreenTest {
         val db = FakeDatabase().apply {
             insertTask(task)
         }
-        val taskRepository = FakeTaskRepository(db, clock)
+        val taskRepository = FakeTaskRepository(db)
         val tagRepository = FakeTagRepository(db)
         val viewModel = TaskDetailViewModel(
             createSavedStateHandle(),
@@ -325,9 +325,9 @@ class TaskDetailScreenTest {
         val clock = createClock()
         val db = FakeDatabase().also(initDatabase)
         val taskRepository = if (initTaskRepositorySpy == null) {
-            FakeTaskRepository(db, clock)
+            FakeTaskRepository(db)
         } else {
-            spyk(FakeTaskRepository(db, clock)).also(initTaskRepositorySpy)
+            spyk(FakeTaskRepository(db)).also(initTaskRepositorySpy)
         }
         val tagRepository = FakeTagRepository(db)
         return TaskDetailViewModel(

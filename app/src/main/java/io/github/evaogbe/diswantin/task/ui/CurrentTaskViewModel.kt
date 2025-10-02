@@ -6,7 +6,9 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.evaogbe.diswantin.data.Result
 import io.github.evaogbe.diswantin.task.data.CurrentTask
 import io.github.evaogbe.diswantin.task.data.CurrentTaskParams
+import io.github.evaogbe.diswantin.task.data.TaskCompletion
 import io.github.evaogbe.diswantin.task.data.TaskRepository
+import io.github.evaogbe.diswantin.task.data.TaskSkip
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,6 +24,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.time.Clock
+import java.time.Instant
 import java.time.ZonedDateTime
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
@@ -32,7 +35,7 @@ class CurrentTaskViewModel @Inject constructor(
     private val clock: Clock,
 ) : ViewModel() {
     private val currentTaskParams =
-        MutableStateFlow(CurrentTaskParams.create(ZonedDateTime.now(clock)))
+        MutableStateFlow(CurrentTaskParams(ZonedDateTime.now(clock)))
 
     private val isRefreshing = MutableStateFlow(false)
 
@@ -75,7 +78,7 @@ class CurrentTaskViewModel @Inject constructor(
     )
 
     fun refresh() {
-        currentTaskParams.value = CurrentTaskParams.create(ZonedDateTime.now(clock))
+        currentTaskParams.value = CurrentTaskParams(ZonedDateTime.now(clock))
     }
 
     fun skipCurrentTask() {
@@ -85,7 +88,7 @@ class CurrentTaskViewModel @Inject constructor(
             var skipped = false
 
             try {
-                taskRepository.skip(taskId)
+                taskRepository.skip(TaskSkip(taskId = taskId, skippedAt = Instant.now(clock)))
                 skipped = true
             } catch (e: CancellationException) {
                 throw e
@@ -107,7 +110,12 @@ class CurrentTaskViewModel @Inject constructor(
             var markedDone = false
 
             try {
-                taskRepository.markDone(taskId)
+                taskRepository.markDone(
+                    TaskCompletion(
+                        taskId = taskId,
+                        doneAt = Instant.now(clock)
+                    )
+                )
                 markedDone = true
             } catch (e: CancellationException) {
                 throw e

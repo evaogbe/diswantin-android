@@ -54,7 +54,7 @@ class CurrentTaskViewModelTest {
                 insertTask(task1)
                 insertTask(task2)
             }
-            val taskRepository = FakeTaskRepository(db, clock)
+            val taskRepository = FakeTaskRepository(db)
             val viewModel = CurrentTaskViewModel(taskRepository, clock)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
@@ -124,22 +124,24 @@ class CurrentTaskViewModelTest {
 
     @Test
     fun `uiState can skip when recurring task`() = runTest(mainDispatcherRule.testDispatcher) {
-        val clock =
-            Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
         val task = genTasks().first()
-        val db = FakeDatabase().apply {
-            insertTask(task)
-            insertTaskRecurrence(
-                TaskRecurrence(
-                    taskId = task.id,
-                    startDate = LocalDate.parse("2024-08-22"),
-                    type = RecurrenceType.Day,
-                    step = 1,
+        val viewModel = createCurrentTaskViewModel(
+            initDatabase = { db ->
+                db.insertTask(task)
+                db.insertTaskRecurrence(
+                    TaskRecurrence(
+                        taskId = task.id,
+                        startDate = LocalDate.parse("2024-08-22"),
+                        type = RecurrenceType.Day,
+                        step = 1,
+                    )
                 )
-            )
-        }
-        val taskRepository = FakeTaskRepository(db, clock)
-        val viewModel = CurrentTaskViewModel(taskRepository, clock)
+            },
+            clock = Clock.fixed(
+                Instant.parse("2024-08-22T08:00:00Z"),
+                ZoneId.of("America/New_York")
+            ),
+        )
 
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect()
@@ -159,23 +161,25 @@ class CurrentTaskViewModelTest {
     @Test
     fun `skipCurrentTask replaces current task with next task`() =
         runTest(mainDispatcherRule.testDispatcher) {
-            val clock =
-                Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
             val (task1, task2) = genTasks().take(2).toList()
-            val db = FakeDatabase().apply {
-                insertTask(task1)
-                insertTask(task2)
-                insertTaskRecurrence(
-                    TaskRecurrence(
-                        taskId = task1.id,
-                        startDate = LocalDate.parse("2024-08-22"),
-                        type = RecurrenceType.Day,
-                        step = 1,
+            val viewModel = createCurrentTaskViewModel(
+                initDatabase = { db ->
+                    db.insertTask(task1)
+                    db.insertTask(task2)
+                    db.insertTaskRecurrence(
+                        TaskRecurrence(
+                            taskId = task1.id,
+                            startDate = LocalDate.parse("2024-08-22"),
+                            type = RecurrenceType.Day,
+                            step = 1,
+                        )
                     )
-                )
-            }
-            val taskRepository = FakeTaskRepository(db, clock)
-            val viewModel = CurrentTaskViewModel(taskRepository, clock)
+                },
+                clock = Clock.fixed(
+                    Instant.parse("2024-08-22T08:00:00Z"),
+                    ZoneId.of("America/New_York")
+                ),
+            )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -207,24 +211,27 @@ class CurrentTaskViewModelTest {
     @Test
     fun `skipCurrentTask shows error message when repository throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
-            val clock =
-                Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
             val task = genTasks().first()
-            val db = FakeDatabase().apply {
-                insertTask(task)
-                insertTaskRecurrence(
-                    TaskRecurrence(
-                        taskId = task.id,
-                        startDate = LocalDate.parse("2024-08-22"),
-                        type = RecurrenceType.Day,
-                        step = 1,
+            val viewModel = createCurrentTaskViewModel(
+                initDatabase = { db ->
+                    db.insertTask(task)
+                    db.insertTaskRecurrence(
+                        TaskRecurrence(
+                            taskId = task.id,
+                            startDate = LocalDate.parse("2024-08-22"),
+                            type = RecurrenceType.Day,
+                            step = 1,
+                        )
                     )
-                )
-            }
-            val taskRepository = spyk(FakeTaskRepository(db, clock))
-            coEvery { taskRepository.skip(any()) } throws RuntimeException("Test")
-
-            val viewModel = CurrentTaskViewModel(taskRepository, clock)
+                },
+                initTaskRepositorySpy = { repository ->
+                    coEvery { repository.skip(any()) } throws RuntimeException("Test")
+                },
+                clock = Clock.fixed(
+                    Instant.parse("2024-08-22T08:00:00Z"),
+                    ZoneId.of("America/New_York")
+                ),
+            )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
@@ -254,7 +261,7 @@ class CurrentTaskViewModelTest {
                 insertTask(task1)
                 insertTask(task2)
             }
-            val taskRepository = FakeTaskRepository(db, clock)
+            val taskRepository = FakeTaskRepository(db)
             val viewModel = CurrentTaskViewModel(taskRepository, clock)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
@@ -344,12 +351,15 @@ class CurrentTaskViewModelTest {
 
     private fun createCurrentTaskViewModel(
         initDatabase: (FakeDatabase) -> Unit,
-        initTaskRepositorySpy: (TaskRepository) -> Unit,
+        initTaskRepositorySpy: ((TaskRepository) -> Unit)? = null,
+        clock: Clock = createClock(),
     ): CurrentTaskViewModel {
-        val clock = createClock()
         val db = FakeDatabase().also(initDatabase)
-        val taskRepository = spyk(FakeTaskRepository(db, clock))
-        initTaskRepositorySpy(taskRepository)
+        val taskRepository = if (initTaskRepositorySpy == null) {
+            FakeTaskRepository(db)
+        } else {
+            spyk(FakeTaskRepository(db)).also(initTaskRepositorySpy)
+        }
         return CurrentTaskViewModel(taskRepository, clock)
     }
 }

@@ -23,12 +23,12 @@ import io.github.evaogbe.diswantin.task.data.doesRecurOnDate
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
-import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
+import java.time.ZonedDateTime
 
 private data class TaskChainInfo(
     val root: Task,
@@ -38,10 +38,7 @@ private data class TaskChainInfo(
     val overdue: Boolean,
 )
 
-class FakeTaskRepository(
-    private val db: FakeDatabase = FakeDatabase(),
-    private val clock: Clock = Clock.systemDefaultZone(),
-) : TaskRepository {
+class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRepository {
     val tasks
         get() = db.taskTable.value.values
 
@@ -117,7 +114,7 @@ class FakeTaskRepository(
             }
     }
 
-    private fun isScheduledAtFuture(task: Task, now: LocalDateTime): Boolean {
+    private fun isScheduledAtFuture(task: Task, now: ZonedDateTime): Boolean {
         val today = now.toLocalDate()
         val currentTime = now.toLocalTime()
 
@@ -129,7 +126,7 @@ class FakeTaskRepository(
         return task.scheduledTime?.let { it > currentTime } == true
     }
 
-    private fun doesStartAfterFuture(task: Task, now: LocalDateTime): Boolean {
+    private fun doesStartAfterFuture(task: Task, now: ZonedDateTime): Boolean {
         if (task.startAfterDate?.let { it > now.toLocalDate() } == true) return true
         if (task.startAfterTime?.let { it > now.toLocalTime() } == true) return true
         return false
@@ -194,7 +191,7 @@ class FakeTaskRepository(
         }
     }
 
-    override fun getTaskSummariesByTagId(tagId: Long) = combine(
+    override fun getTaskSummariesByTagId(tagId: Long, startOfToday: Instant) = combine(
         db.taskTable,
         db.taskCompletionTable,
         db.taskRecurrenceTable,
@@ -203,8 +200,12 @@ class FakeTaskRepository(
         PagingData.from(
             taskTags.values.asSequence().filter { it.tagId == tagId }
                 .mapNotNull { tasks[it.taskId] }.sortedWith(
-                    compareBy<Task> { task ->
-                        taskCompletions.values.any { it.taskId == task.id }
+                    compareBy<Task, Instant?>(nullsFirst()) { task ->
+                        taskCompletions.values.filter { it.taskId == task.id }
+                            .maxOfOrNull { it.doneAt }?.takeIf { doneAt ->
+                                val recurring = taskRecurrences.values.any { it.taskId == task.id }
+                                !recurring || doneAt >= startOfToday
+                            }
                     }.thenBy(nullsLast(), Task::scheduledDate)
                         .thenBy(nullsLast(), Task::scheduledTime).thenByDescending { task ->
                             taskRecurrences.values.any { it.taskId == task.id }
@@ -265,11 +266,9 @@ class FakeTaskRepository(
                             if (it < end) it.plusDays(1) else null
                         }.any { doesRecurOnDate(recurrences, it) }
                     }
-                } != false && criteria.doneDateRange?.let { (start, end) ->
-                    val doneStart = start.atStartOfDay(clock.zone).toInstant()
-                    val doneEnd = end.plusDays(1).atStartOfDay(clock.zone).toInstant()
+                } != false && criteria.doneRange?.let { (start, end) ->
                     taskCompletions.values.any {
-                        it.taskId == task.id && it.doneAt in (doneStart..<doneEnd)
+                        it.taskId == task.id && it.doneAt in (start..<end)
                     }
                 } != false && criteria.recurrenceDate?.let {
                     doesRecurOnDate(recurrences, it)
@@ -440,15 +439,15 @@ class FakeTaskRepository(
         db.deleteTask(id)
     }
 
-    override suspend fun markDone(id: Long) {
-        db.insertTaskCompletion(TaskCompletion(taskId = id, doneAt = Instant.now(clock)))
+    override suspend fun markDone(data: TaskCompletion) {
+        db.insertTaskCompletion(data)
     }
 
     override suspend fun unmarkDone(id: Long) {
         db.deleteLatestTaskCompletionByTaskId(id)
     }
 
-    override suspend fun skip(id: Long) {
-        db.insertTaskSkip(TaskSkip(taskId = id, skippedAt = Instant.now(clock)))
+    override suspend fun skip(data: TaskSkip) {
+        db.insertTaskSkip(data)
     }
 }

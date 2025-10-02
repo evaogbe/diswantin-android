@@ -43,7 +43,7 @@ class SelectableDatesWithMax(private val maxDate: LocalDate) : SelectableDates {
 
 class SelectableDatesWithMin(private val minDate: LocalDate) : SelectableDates {
     override fun isSelectableDate(utcTimeMillis: Long) =
-        utcTimeMillis >= minDate.atTime(LocalTime.MIN).toInstant(ZoneOffset.UTC).toEpochMilli()
+        utcTimeMillis >= minDate.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
 
     override fun isSelectableYear(year: Int) = year >= minDate.year
 }

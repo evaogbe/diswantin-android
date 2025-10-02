@@ -11,6 +11,7 @@ import io.github.evaogbe.diswantin.data.Result
 import io.github.evaogbe.diswantin.task.data.Tag
 import io.github.evaogbe.diswantin.task.data.TagRepository
 import io.github.evaogbe.diswantin.task.data.Task
+import io.github.evaogbe.diswantin.task.data.TaskCompletion
 import io.github.evaogbe.diswantin.task.data.TaskDetail
 import io.github.evaogbe.diswantin.task.data.TaskRecurrence
 import io.github.evaogbe.diswantin.task.data.TaskRepository
@@ -26,8 +27,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.time.Clock
-import java.time.LocalTime
-import java.time.ZonedDateTime
+import java.time.Instant
+import java.time.LocalDate
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
 
@@ -36,7 +37,7 @@ class TaskDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val taskRepository: TaskRepository,
     tagRepository: TagRepository,
-    clock: Clock,
+    private val clock: Clock,
 ) : ViewModel() {
     private val taskId = savedStateHandle.toRoute<TaskDetailRoute>().id
 
@@ -45,7 +46,7 @@ class TaskDetailViewModel @Inject constructor(
     private val userMessage = MutableStateFlow<TaskDetailUserMessage?>(null)
 
     val childTaskPagingData = taskRepository.getChildren(taskId).map { pagingData ->
-        val doneBefore = ZonedDateTime.now(clock).with(LocalTime.MIN).toInstant()
+        val doneBefore = LocalDate.now(clock).atStartOfDay(clock.zone).toInstant()
         pagingData.map { TaskSummaryUiState.fromTaskSummary(it, doneBefore) }
     }.cachedIn(viewModelScope)
 
@@ -77,7 +78,7 @@ class TaskDetailViewModel @Inject constructor(
             when {
                 task != null -> {
                     tagsResult.zipWith(recurrencesResult) { tags, recurrences ->
-                        val doneBefore = ZonedDateTime.now(clock).with(LocalTime.MIN).toInstant()
+                        val doneBefore = LocalDate.now(clock).atStartOfDay(clock.zone).toInstant()
                         TaskDetailUiState.success(
                             task = task,
                             tags = tags,
@@ -101,7 +102,12 @@ class TaskDetailViewModel @Inject constructor(
     fun markTaskDone() {
         viewModelScope.launch {
             try {
-                taskRepository.markDone(taskId)
+                taskRepository.markDone(
+                    TaskCompletion(
+                        taskId = taskId,
+                        doneAt = Instant.now(clock)
+                    )
+                )
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {

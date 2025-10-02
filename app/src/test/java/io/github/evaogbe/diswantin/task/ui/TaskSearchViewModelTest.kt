@@ -101,7 +101,7 @@ class TaskSearchViewModelTest {
     ): TaskSearchViewModel {
         val clock = Clock.systemDefaultZone()
         val db = FakeDatabase().also(initDatabase)
-        val taskRepository = FakeTaskRepository(db, clock)
+        val taskRepository = FakeTaskRepository(db)
         return TaskSearchViewModel(SavedStateHandle(), taskRepository, clock)
     }
 }

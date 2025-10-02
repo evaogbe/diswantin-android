@@ -2,6 +2,7 @@ package io.github.evaogbe.diswantin.task.data
 
 import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
+import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 
@@ -12,7 +13,7 @@ interface TaskRepository {
 
     fun getTaskDetailById(id: Long): Flow<TaskDetail?>
 
-    fun getTaskSummariesByTagId(tagId: Long): Flow<PagingData<TaskSummary>>
+    fun getTaskSummariesByTagId(tagId: Long, startOfToday: Instant): Flow<PagingData<TaskSummary>>
 
     fun searchTaskSummaries(criteria: TaskSearchCriteria): Flow<PagingData<TaskSummary>>
 
@@ -32,9 +33,9 @@ interface TaskRepository {
 
     suspend fun delete(id: Long)
 
-    suspend fun markDone(id: Long)
+    suspend fun markDone(data: TaskCompletion)
 
     suspend fun unmarkDone(id: Long)
 
-    suspend fun skip(id: Long)
+    suspend fun skip(data: TaskSkip)
 }
