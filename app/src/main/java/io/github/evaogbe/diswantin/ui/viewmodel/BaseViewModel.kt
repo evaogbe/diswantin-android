@@ -7,7 +7,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.stateIn
 import java.time.Clock
-import java.time.ZonedDateTime
 import kotlin.time.Duration.Companion.seconds
 
 abstract class BaseViewModel(protected val clockMonitor: ClockMonitor) : ViewModel() {
@@ -16,6 +15,4 @@ abstract class BaseViewModel(protected val clockMonitor: ClockMonitor) : ViewMod
         started = SharingStarted.WhileSubscribed(5.seconds),
         initialValue = Clock.systemDefaultZone(),
     )
-
-    protected fun now(): ZonedDateTime = ZonedDateTime.now(clock.value)
 }

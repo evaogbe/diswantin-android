@@ -95,7 +95,7 @@ fun rememberDiswantinAppState(
     navController: NavHostController = rememberNavController(),
     snackbarHostState: SnackbarHostState = SnackbarHostState(),
     query: TextFieldState = TextFieldState(),
-) = remember(clockMonitor, coroutineScope, navController, snackbarHostState) {
+) = remember(clockMonitor, coroutineScope, navController, snackbarHostState, query) {
     DiswantinAppState(
         navController = navController,
         snackbarHostState = snackbarHostState,

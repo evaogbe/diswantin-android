@@ -47,6 +47,7 @@ import timber.log.Timber
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.ZonedDateTime
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
 
@@ -417,11 +418,11 @@ class TaskFormViewModel @Inject constructor(
     fun saveTask() {
         val state = (uiState.value as? TaskFormUiState.Success) ?: return
         if (name.value.isBlank()) return
-        val currentDateTime = now()
+        val now = ZonedDateTime.now(clock.value)
         val nonRecurringHasScheduledTime =
             state.scheduledDate == null && state.scheduledTime != null && state.recurrence == null
         val scheduledDate = if (nonRecurringHasScheduledTime) {
-            currentDateTime.toLocalDate()
+            now.toLocalDate()
         } else {
             state.scheduledDate
         }
@@ -468,7 +469,7 @@ class TaskFormViewModel @Inject constructor(
                 tagIds = state.tags.map { it.id }.toSet(),
                 recurrences = recurrences,
                 parentTaskId = state.parent?.id,
-                now = currentDateTime.toInstant(),
+                now = now.toInstant(),
             )
             viewModelScope.launch {
                 try {
@@ -524,7 +525,7 @@ class TaskFormViewModel @Inject constructor(
                                 state.parent == null -> PathUpdateType.Remove
                                 else -> PathUpdateType.Replace(state.parent.id)
                             },
-                            now = currentDateTime.toInstant(),
+                            now = now.toInstant(),
                             existingId = taskId,
                             existingTagIds = existingTagIds,
                         )

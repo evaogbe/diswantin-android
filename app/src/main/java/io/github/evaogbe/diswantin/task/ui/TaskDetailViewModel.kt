@@ -27,6 +27,8 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.time.Instant
+import java.time.LocalDate
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
 
@@ -44,7 +46,7 @@ class TaskDetailViewModel @Inject constructor(
     private val userMessage = MutableStateFlow<TaskDetailUserMessage?>(null)
 
     val childTaskPagingData = taskRepository.getChildren(taskId).map { pagingData ->
-        val doneBefore = now().toLocalDate().atStartOfDay(clock.value.zone).toInstant()
+        val doneBefore = LocalDate.now(clock.value).atStartOfDay(clock.value.zone).toInstant()
         pagingData.map { TaskSummaryUiState.fromTaskSummary(it, doneBefore) }
     }.cachedIn(viewModelScope)
 
@@ -77,7 +79,7 @@ class TaskDetailViewModel @Inject constructor(
                 task != null -> {
                     tagsResult.zipWith(recurrencesResult) { tags, recurrences ->
                         val doneBefore =
-                            now().toLocalDate().atStartOfDay(clock.value.zone).toInstant()
+                            LocalDate.now(clock.value).atStartOfDay(clock.value.zone).toInstant()
                         TaskDetailUiState.success(
                             task = task,
                             tags = tags,
@@ -101,7 +103,12 @@ class TaskDetailViewModel @Inject constructor(
     fun markTaskDone() {
         viewModelScope.launch {
             try {
-                taskRepository.markDone(TaskCompletion(taskId = taskId, doneAt = now().toInstant()))
+                taskRepository.markDone(
+                    TaskCompletion(
+                        taskId = taskId,
+                        doneAt = Instant.now(clock.value),
+                    )
+                )
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {

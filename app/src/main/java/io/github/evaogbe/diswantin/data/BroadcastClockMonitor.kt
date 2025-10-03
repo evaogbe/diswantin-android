@@ -94,7 +94,7 @@ class BroadcastClockMonitor @Inject constructor(
 
     override val clock = combine(timeZone, currentTimeMillis) { zone, _ ->
         Clock.system(zone)
-    }
+    }.distinctUntilChanged()
 
     companion object {
         private val dateTimeActions = setOf(Intent.ACTION_DATE_CHANGED, Intent.ACTION_TIME_CHANGED)

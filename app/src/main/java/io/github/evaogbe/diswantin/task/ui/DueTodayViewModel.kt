@@ -19,7 +19,7 @@ class DueTodayViewModel @Inject constructor(
     clockMonitor: ClockMonitor,
 ) : BaseViewModel(clockMonitor) {
     @OptIn(ExperimentalCoroutinesApi::class)
-    val taskPagingData = clockMonitor.clock.flatMapLatest { clock ->
+    val taskPagingData = clock.flatMapLatest { clock ->
         taskRepository.getTasksDueAt(LocalDate.now(clock), clock.zone).map { pagingData ->
             pagingData.map {
                 DueTaskUiState(

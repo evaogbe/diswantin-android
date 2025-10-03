@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.time.Instant
 import java.time.LocalDate
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
@@ -44,7 +45,7 @@ class TagDetailViewModel @Inject constructor(
     private val userMessage = MutableStateFlow<TagDetailUserMessage?>(null)
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val taskSummaryPagingData = clockMonitor.clock.flatMapLatest { clock ->
+    val taskSummaryPagingData = clock.flatMapLatest { clock ->
         val startOfToday = LocalDate.now(clock).atStartOfDay(clock.zone).toInstant()
         taskRepository.getTaskSummariesByTagId(tagId, startOfToday).map { pagingData ->
             pagingData.map {
@@ -103,7 +104,7 @@ class TagDetailViewModel @Inject constructor(
                 tagRepository.update(
                     EditTagForm(
                         name = name,
-                        now = now().toInstant(),
+                        now = Instant.now(clock.value),
                         existingId = tagId,
                     )
                 )

@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.time.Instant
 import java.time.ZonedDateTime
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
@@ -35,7 +36,7 @@ class CurrentTaskViewModel @Inject constructor(
 ) : BaseViewModel(clockMonitor) {
     private val refreshCount = MutableStateFlow(0)
 
-    private val currentTaskParams = combine(clockMonitor.clock, refreshCount) { clock, _ ->
+    private val currentTaskParams = combine(clock, refreshCount) { clock, _ ->
         CurrentTaskParams(ZonedDateTime.now(clock))
     }
 
@@ -90,7 +91,7 @@ class CurrentTaskViewModel @Inject constructor(
             var skipped = false
 
             try {
-                taskRepository.skip(TaskSkip(taskId = taskId, skippedAt = now().toInstant()))
+                taskRepository.skip(TaskSkip(taskId = taskId, skippedAt = Instant.now(clock.value)))
                 skipped = true
             } catch (e: CancellationException) {
                 throw e
@@ -112,7 +113,12 @@ class CurrentTaskViewModel @Inject constructor(
             var markedDone = false
 
             try {
-                taskRepository.markDone(TaskCompletion(taskId = taskId, doneAt = now().toInstant()))
+                taskRepository.markDone(
+                    TaskCompletion(
+                        taskId = taskId,
+                        doneAt = Instant.now(clock.value),
+                    )
+                )
                 markedDone = true
             } catch (e: CancellationException) {
                 throw e

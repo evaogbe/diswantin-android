@@ -11,6 +11,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.time.Instant
 import javax.inject.Inject
 
 @HiltViewModel
@@ -27,7 +28,7 @@ class TagListViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
-                tagRepository.create(NewTagForm(name = name, now = now().toInstant()))
+                tagRepository.create(NewTagForm(name = name, now = Instant.now(clock.value)))
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
