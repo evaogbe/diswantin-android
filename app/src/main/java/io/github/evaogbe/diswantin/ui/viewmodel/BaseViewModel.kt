@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.stateIn
 import java.time.Clock
 import kotlin.time.Duration.Companion.seconds
 
-abstract class BaseViewModel(protected val clockMonitor: ClockMonitor) : ViewModel() {
+abstract class BaseViewModel(clockMonitor: ClockMonitor) : ViewModel() {
     internal val clock = clockMonitor.clock.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5.seconds),

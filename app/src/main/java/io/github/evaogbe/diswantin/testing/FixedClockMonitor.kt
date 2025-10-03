@@ -5,6 +5,6 @@ import kotlinx.coroutines.flow.flowOf
 import java.time.Clock
 import java.time.ZonedDateTime
 
-class FixedClockMonitor(fixedDateTime: ZonedDateTime = ZonedDateTime.now()) : ClockMonitor {
-    override val clock = flowOf(Clock.fixed(fixedDateTime.toInstant(), fixedDateTime.zone))
+class FixedClockMonitor(val dateTime: ZonedDateTime = ZonedDateTime.now()) : ClockMonitor {
+    override val clock = flowOf(Clock.fixed(dateTime.toInstant(), dateTime.zone))
 }

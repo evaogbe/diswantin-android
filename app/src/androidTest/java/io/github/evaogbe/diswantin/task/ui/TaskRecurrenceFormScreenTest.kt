@@ -32,9 +32,9 @@ class TaskRecurrenceFormScreenTest {
 
     @Test
     fun displaysDefaultRecurrence_whenNew() {
-        val now = ZonedDateTime.parse("2024-08-23T13:00-04:00[America/New_York]")
-        val clock = Clock.fixed(now.toInstant(), now.zone)
-        val clockMonitor = FixedClockMonitor(now)
+        val clockMonitor =
+            FixedClockMonitor(ZonedDateTime.parse("2024-08-23T13:00-04:00[America/New_York]"))
+        val clock = Clock.fixed(clockMonitor.dateTime.toInstant(), clockMonitor.dateTime.zone)
         val db = FakeDatabase()
         val taskRepository = FakeTaskRepository(db)
         val tagRepository = FakeTagRepository(db)
