@@ -5,11 +5,11 @@ import java.time.Instant
 data class EditTagForm(
     private val name: String,
     private val now: Instant,
-    private val existingTag: Tag,
+    val existingId: Long,
 ) {
     init {
         require(name.isNotBlank()) { "Name must be present" }
     }
 
-    val updatedTag = existingTag.copy(name = name.trim(), updatedAt = now)
+    fun getUpdatedTag(tag: Tag) = tag.copy(name = name.trim(), updatedAt = now)
 }

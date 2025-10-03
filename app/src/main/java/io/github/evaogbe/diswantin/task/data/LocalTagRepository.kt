@@ -11,7 +11,7 @@ class LocalTagRepository @Inject constructor(private val tagDao: TagDao) : TagRe
 
     override suspend fun hasTags() = tagDao.hasTags()
 
-    override fun getTagById(id: Long) = tagDao.getTagById(id)
+    override fun getTagById(id: Long) = tagDao.maybeTagById(id)
 
     override fun getTagsByTaskId(taskId: Long, size: Int) = tagDao.getTagsByTaskId(taskId, size)
 
@@ -24,7 +24,8 @@ class LocalTagRepository @Inject constructor(private val tagDao: TagDao) : TagRe
     }
 
     override suspend fun update(form: EditTagForm) {
-        tagDao.update(form.updatedTag)
+        val tag = tagDao.getTagById(form.existingId)
+        tagDao.update(form.getUpdatedTag(tag))
     }
 
     override suspend fun delete(tag: Tag) {

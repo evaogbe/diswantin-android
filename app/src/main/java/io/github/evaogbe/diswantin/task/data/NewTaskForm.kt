@@ -20,30 +20,30 @@ data class NewTaskForm(
 ) {
     init {
         require(name.isNotBlank()) { "Name must be present" }
-        require(
-            (deadlineDate == null && deadlineTime == null) ||
-                    (scheduledDate == null && scheduledTime == null)
-        ) {
+
+        val hasDeadline = deadlineDate != null || deadlineTime != null
+        val hasStartAfter = startAfterDate != null || startAfterTime != null
+        val hasScheduledAt = scheduledDate != null || scheduledTime != null
+        require(!hasDeadline || !hasScheduledAt) {
             """Must not have both deadline fields and scheduled fields, but got 
                 |deadlineDate: $deadlineDate, 
                 |deadlineTime: $deadlineTime, 
                 |scheduledDate: $scheduledDate, and
                 |scheduledTime: $scheduledTime""".trimMargin()
         }
-        require(
-            (startAfterDate == null && startAfterTime == null) ||
-                    (scheduledDate == null && scheduledTime == null)
-        ) {
+        require(!hasStartAfter || !hasScheduledAt) {
             """Must not have both start after fields and scheduled fields, but got 
                 |startAfterDate: $startAfterDate, 
                 |startAfterTime: $startAfterTime, 
                 |scheduledDate: $scheduledDate, and
                 |scheduledTime: $scheduledTime""".trimMargin()
         }
+
         require(scheduledTime == null || scheduledDate != null || recurrences.isNotEmpty()) {
             """Must have scheduledDate if scheduledTime is set for non-recurring tasks, but got
                 |scheduledTime: $scheduledTime""".trimMargin()
         }
+
         require(recurrences.isEmpty() || deadlineDate == null) {
             """Must not set deadline date for recurring tasks, but got 
                 |deadlineDate: $deadlineDate, 
@@ -59,6 +59,7 @@ data class NewTaskForm(
                 |scheduledDate: $scheduledDate, 
                 |recurrences: $recurrences""".trimMargin()
         }
+
         val invalidRecurrences = recurrences.filter { recurrence ->
             recurrence.endDate?.let { it < recurrence.startDate } == true
         }

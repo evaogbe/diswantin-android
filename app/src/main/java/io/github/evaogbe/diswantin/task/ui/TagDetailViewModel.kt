@@ -18,7 +18,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
@@ -100,12 +99,11 @@ class TagDetailViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
-                val tag = checkNotNull(tagStream.first().getOrNull())
                 tagRepository.update(
                     EditTagForm(
                         name = name,
                         now = Instant.now(clock),
-                        existingTag = tag,
+                        existingId = tagId,
                     )
                 )
             } catch (e: CancellationException) {

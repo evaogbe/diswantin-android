@@ -14,7 +14,10 @@ interface TagDao {
     fun getTagPagingSource(): PagingSource<Int, Tag>
 
     @Query("SELECT * FROM tag WHERE id = :id LIMIT 1")
-    fun getTagById(id: Long): Flow<Tag?>
+    fun maybeTagById(id: Long): Flow<Tag?>
+
+    @Query("SELECT * FROM tag WHERE id = :id LIMIT 1")
+    suspend fun getTagById(id: Long): Tag
 
     @Query(
         """SELECT t.*

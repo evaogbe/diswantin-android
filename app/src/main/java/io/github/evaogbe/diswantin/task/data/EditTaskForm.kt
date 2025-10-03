@@ -12,6 +12,8 @@ sealed interface PathUpdateType {
     data class Replace(val id: Long) : PathUpdateType
 }
 
+data class CollectionChange<T>(val new: Collection<T>, val old: Collection<T>)
+
 data class EditTaskForm(
     private val name: String,
     private val note: String,
@@ -25,44 +27,38 @@ data class EditTaskForm(
     private val recurrences: Collection<TaskRecurrence>,
     val parentUpdateType: PathUpdateType,
     private val now: Instant,
-    private val existingTask: Task,
+    val existingId: Long,
     private val existingTagIds: Set<Long>,
-    private val existingRecurrences: Collection<TaskRecurrence>,
 ) {
-    val recurrencesToRemove: Collection<TaskRecurrence>
-
-    val recurrencesToAdd: Collection<TaskRecurrence>
-
-    val tagIdsToRemove = existingTagIds - tagIds
-
-    val tagIdsToAdd = tagIds - existingTagIds
+    val tagIdChanges =
+        CollectionChange(new = tagIds - existingTagIds, old = existingTagIds - tagIds)
 
     init {
         require(name.isNotBlank()) { "Name must be present" }
-        require(
-            (deadlineDate == null && deadlineTime == null) ||
-                    (scheduledDate == null && scheduledTime == null)
-        ) {
+
+        val hasDeadline = deadlineDate != null || deadlineTime != null
+        val hasStartAfter = startAfterDate != null || startAfterTime != null
+        val hasScheduledAt = scheduledDate != null || scheduledTime != null
+        require(!hasDeadline || !hasScheduledAt) {
             """Must not have both deadline fields and scheduled fields, but got 
                 |deadlineDate: $deadlineDate, 
                 |deadlineTime: $deadlineTime, 
                 |scheduledDate: $scheduledDate, and
                 |scheduledTime: $scheduledTime""".trimMargin()
         }
-        require(
-            (startAfterDate == null && startAfterTime == null) ||
-                    (scheduledDate == null && scheduledTime == null)
-        ) {
+        require(!hasStartAfter || !hasScheduledAt) {
             """Must not have both start after fields and scheduled fields, but got 
                 |startAfterDate: $startAfterDate, 
                 |startAfterTime: $startAfterTime, 
                 |scheduledDate: $scheduledDate, and
                 |scheduledTime: $scheduledTime""".trimMargin()
         }
+
         require(scheduledTime == null || scheduledDate != null || recurrences.isNotEmpty()) {
             """Must have scheduledDate if scheduledTime is set for non-recurring tasks, but got
                 |scheduledTime: $scheduledTime""".trimMargin()
         }
+
         require(recurrences.isEmpty() || deadlineDate == null) {
             """Must not set deadline date for recurring tasks, but got 
                 |deadlineDate: $deadlineDate, 
@@ -78,20 +74,16 @@ data class EditTaskForm(
                 |scheduledDate: $scheduledDate, 
                 |recurrences: $recurrences""".trimMargin()
         }
+
         val invalidRecurrences = recurrences.filter { recurrence ->
             recurrence.endDate?.let { it < recurrence.startDate } == true
         }
         require(invalidRecurrences.isEmpty()) {
             "Must not have recurrence end date before start date, but got $invalidRecurrences"
         }
-
-        val newRecurrenceSet = recurrences.toSet()
-        val oldRecurrenceSet = existingRecurrences.map { it.copy(id = 0L) }.toSet()
-        recurrencesToRemove = existingRecurrences.filterNot { it.copy(id = 0L) in newRecurrenceSet }
-        recurrencesToAdd = recurrences.filterNot { it in oldRecurrenceSet }
     }
 
-    val updatedTask = existingTask.copy(
+    fun getUpdatedTask(task: Task) = task.copy(
         name = name.trim(),
         note = note.trim(),
         deadlineDate = deadlineDate,
@@ -102,4 +94,15 @@ data class EditTaskForm(
         scheduledTime = scheduledTime,
         updatedAt = now,
     )
+
+    fun getRecurrenceChanges(
+        existingRecurrences: Collection<TaskRecurrence>,
+    ): CollectionChange<TaskRecurrence> {
+        val newRecurrenceSet = recurrences.toSet()
+        val oldRecurrenceSet = existingRecurrences.map { it.copy(id = 0L) }.toSet()
+        return CollectionChange(
+            new = recurrences.filterNot { it in oldRecurrenceSet },
+            old = existingRecurrences.filterNot { it.copy(id = 0L) in newRecurrenceSet },
+        )
+    }
 }
