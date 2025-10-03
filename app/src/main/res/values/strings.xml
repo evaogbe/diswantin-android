@@ -146,8 +146,8 @@
         <item quantity="other">years</item>
     </plurals>
     <plurals name="recurrence_yearly">
-        <item quantity="one">Yearly</item>
-        <item quantity="other">Every %1$d years</item>
+        <item quantity="one">Yearly on %2$s</item>
+        <item quantity="other">Every %1$d years on %2$s</item>
     </plurals>
     <string name="refresh_button">Refresh</string>
     <string name="remove_button">Remove</string>

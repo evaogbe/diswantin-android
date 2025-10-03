@@ -11,17 +11,16 @@ import io.github.evaogbe.diswantin.task.data.TaskRecurrence
 import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTagRepository
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
-import io.github.evaogbe.diswantin.ui.preferences.LocalLocale
+import io.github.evaogbe.diswantin.testing.FixedClockMonitor
+import io.github.evaogbe.diswantin.ui.preferences.LocalClock
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
 import org.junit.Rule
 import org.junit.Test
 import java.time.Clock
-import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneId
-import java.util.Locale
+import java.time.ZonedDateTime
 
 class TaskRecurrenceFormScreenTest {
     @get:Rule
@@ -33,8 +32,9 @@ class TaskRecurrenceFormScreenTest {
 
     @Test
     fun displaysDefaultRecurrence_whenNew() {
-        val clock =
-            Clock.fixed(Instant.parse("2024-08-23T17:00:00Z"), ZoneId.of("America/New_York"))
+        val now = ZonedDateTime.parse("2024-08-23T13:00-04:00[America/New_York]")
+        val clock = Clock.fixed(now.toInstant(), now.zone)
+        val clockMonitor = FixedClockMonitor(now)
         val db = FakeDatabase()
         val taskRepository = FakeTaskRepository(db)
         val tagRepository = FakeTagRepository(db)
@@ -42,12 +42,11 @@ class TaskRecurrenceFormScreenTest {
             createSavedStateHandleForNew(),
             taskRepository,
             tagRepository,
-            clock,
-        )
-        viewModel.initialize()
+            clockMonitor,
+        ).apply { initialize() }
 
         composeTestRule.setContent {
-            CompositionLocalProvider(LocalLocale provides Locale.US) {
+            CompositionLocalProvider(LocalClock provides clock) {
                 DiswantinTheme {
                     TaskRecurrentFormScreen(
                         topBarAction = null,
@@ -77,17 +76,14 @@ class TaskRecurrenceFormScreenTest {
                 )
             )
         }
-        viewModel.initialize()
 
         composeTestRule.setContent {
-            CompositionLocalProvider(LocalLocale provides Locale.US) {
-                DiswantinTheme {
-                    TaskRecurrentFormScreen(
-                        topBarAction = null,
-                        topBarActionHandled = {},
-                        taskFormViewModel = viewModel,
-                    )
-                }
+            DiswantinTheme {
+                TaskRecurrentFormScreen(
+                    topBarAction = null,
+                    topBarActionHandled = {},
+                    taskFormViewModel = viewModel,
+                )
             }
         }
 
@@ -112,12 +108,12 @@ class TaskRecurrenceFormScreenTest {
     private fun createSavedStateHandleForEdit() =
         SavedStateHandle(mapOf("id" to 1L, "name" to null))
 
-    private fun createClock() = Clock.systemDefaultZone()
+    private fun createClockMonitor() = FixedClockMonitor()
 
     private fun createTaskFormViewModelForEdit(
         initDatabase: (FakeDatabase) -> Unit
     ): TaskFormViewModel {
-        val clock = createClock()
+        val clockMonitor = createClockMonitor()
         val db = FakeDatabase().also(initDatabase)
         val taskRepository = FakeTaskRepository(db)
         val tagRepository = FakeTagRepository(db)
@@ -125,7 +121,7 @@ class TaskRecurrenceFormScreenTest {
             createSavedStateHandleForEdit(),
             taskRepository,
             tagRepository,
-            clock,
-        )
+            clockMonitor,
+        ).apply { initialize() }
     }
 }

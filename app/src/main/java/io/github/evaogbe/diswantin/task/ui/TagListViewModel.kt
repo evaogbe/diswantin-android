@@ -1,24 +1,23 @@
 package io.github.evaogbe.diswantin.task.ui
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.cachedIn
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.github.evaogbe.diswantin.data.ClockMonitor
 import io.github.evaogbe.diswantin.task.data.NewTagForm
 import io.github.evaogbe.diswantin.task.data.TagRepository
+import io.github.evaogbe.diswantin.ui.viewmodel.BaseViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import java.time.Clock
-import java.time.Instant
 import javax.inject.Inject
 
 @HiltViewModel
 class TagListViewModel @Inject constructor(
     private val tagRepository: TagRepository,
-    private val clock: Clock,
-) : ViewModel() {
+    clockMonitor: ClockMonitor,
+) : BaseViewModel(clockMonitor) {
     val tagPagingData = tagRepository.tagPagingData.cachedIn(viewModelScope)
 
     val userMessage = MutableStateFlow<TagListUserMessage?>(null)
@@ -28,7 +27,7 @@ class TagListViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
-                tagRepository.create(NewTagForm(name = name, now = Instant.now(clock)))
+                tagRepository.create(NewTagForm(name = name, now = now().toInstant()))
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {

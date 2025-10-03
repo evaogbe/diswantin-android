@@ -6,6 +6,7 @@ import assertk.assertions.isInstanceOf
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
 import assertk.assertions.prop
+import io.github.evaogbe.diswantin.data.ClockMonitor
 import io.github.evaogbe.diswantin.task.data.EditTaskForm
 import io.github.evaogbe.diswantin.task.data.PathUpdateType
 import io.github.evaogbe.diswantin.task.data.RecurrenceType
@@ -15,6 +16,7 @@ import io.github.evaogbe.diswantin.task.data.TaskRecurrence
 import io.github.evaogbe.diswantin.task.data.TaskRepository
 import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
+import io.github.evaogbe.diswantin.testing.FixedClockMonitor
 import io.github.evaogbe.diswantin.testing.MainDispatcherRule
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
@@ -30,10 +32,8 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
-import java.time.Clock
-import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneId
+import java.time.ZonedDateTime
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CurrentTaskViewModelTest {
@@ -48,15 +48,19 @@ class CurrentTaskViewModelTest {
     fun `uiState fetches current task from repository`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
-            val clock = createClock()
+            val now = ZonedDateTime.parse("2024-08-22T04:00-04:00[America/New_York]")
+            val clockMonitor = FixedClockMonitor(now)
             val (task1, task2) = genTasks().take(2).toList()
             val db = FakeDatabase().apply {
                 insertTask(task1)
                 insertTask(task2)
             }
             val taskRepository = FakeTaskRepository(db)
-            val viewModel = CurrentTaskViewModel(taskRepository, clock)
+            val viewModel = CurrentTaskViewModel(taskRepository, clockMonitor)
 
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.clock.collect()
+            }
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
             }
@@ -84,7 +88,7 @@ class CurrentTaskViewModelTest {
                     tagIds = emptySet(),
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
-                    now = Instant.now(clock),
+                    now = now.toInstant(),
                     existingId = task1.id,
                     existingTagIds = emptySet(),
                 )
@@ -115,6 +119,9 @@ class CurrentTaskViewModelTest {
             )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.clock.collect()
+            }
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
             }
 
@@ -136,12 +143,14 @@ class CurrentTaskViewModelTest {
                     )
                 )
             },
-            clock = Clock.fixed(
-                Instant.parse("2024-08-22T08:00:00Z"),
-                ZoneId.of("America/New_York")
+            clockMonitor = FixedClockMonitor(
+                ZonedDateTime.parse("2024-08-22T04:00-04:00[America/New_York]")
             ),
         )
 
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.clock.collect()
+        }
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect()
         }
@@ -174,14 +183,19 @@ class CurrentTaskViewModelTest {
                         )
                     )
                 },
-                clock = Clock.fixed(
-                    Instant.parse("2024-08-22T08:00:00Z"),
-                    ZoneId.of("America/New_York")
+                clockMonitor = FixedClockMonitor(
+                    ZonedDateTime.parse("2024-08-22T04:00-04:00[America/New_York]")
                 ),
             )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.clock.collect()
+            }
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
+            }
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.userMessage.collect()
             }
 
             assertThat(viewModel.uiState.value).isEqualTo(
@@ -226,14 +240,18 @@ class CurrentTaskViewModelTest {
                 initTaskRepositorySpy = { repository ->
                     coEvery { repository.skip(any()) } throws RuntimeException("Test")
                 },
-                clock = Clock.fixed(
-                    Instant.parse("2024-08-22T08:00:00Z"),
-                    ZoneId.of("America/New_York")
+                clockMonitor = FixedClockMonitor(
+                    ZonedDateTime.parse("2024-08-22T04:00-04:00[America/New_York]")
                 ),
             )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.clock.collect()
+            }
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
+            }
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.userMessage.collect()
             }
 
@@ -254,17 +272,22 @@ class CurrentTaskViewModelTest {
     @Test
     fun `markCurrentTaskDone sets current task doneAt`() =
         runTest(mainDispatcherRule.testDispatcher) {
-            val clock = createClock()
+            val clockMonitor = createClockMonitor()
             val (task1, task2) = genTasks().take(2).toList()
             val db = FakeDatabase().apply {
                 insertTask(task1)
                 insertTask(task2)
             }
             val taskRepository = FakeTaskRepository(db)
-            val viewModel = CurrentTaskViewModel(taskRepository, clock)
+            val viewModel = CurrentTaskViewModel(taskRepository, clockMonitor)
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.clock.collect()
+            }
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
+            }
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.userMessage.collect()
             }
 
@@ -306,7 +329,12 @@ class CurrentTaskViewModelTest {
             )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.clock.collect()
+            }
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
+            }
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.userMessage.collect()
             }
 
@@ -345,13 +373,13 @@ class CurrentTaskViewModelTest {
         }
     }
 
-    private fun createClock() =
-        Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
+    private fun createClockMonitor() =
+        FixedClockMonitor(ZonedDateTime.parse("2024-08-22T04:00-04:00[America/New_York]"))
 
     private fun createCurrentTaskViewModel(
         initDatabase: (FakeDatabase) -> Unit,
         initTaskRepositorySpy: ((TaskRepository) -> Unit)? = null,
-        clock: Clock = createClock(),
+        clockMonitor: ClockMonitor = createClockMonitor(),
     ): CurrentTaskViewModel {
         val db = FakeDatabase().also(initDatabase)
         val taskRepository = if (initTaskRepositorySpy == null) {
@@ -359,6 +387,6 @@ class CurrentTaskViewModelTest {
         } else {
             spyk(FakeTaskRepository(db)).also(initTaskRepositorySpy)
         }
-        return CurrentTaskViewModel(taskRepository, clock)
+        return CurrentTaskViewModel(taskRepository, clockMonitor)
     }
 }

@@ -21,6 +21,7 @@ import io.github.evaogbe.diswantin.task.data.TaskSearchCriteria
 import io.github.evaogbe.diswantin.task.data.TaskSummary
 import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
+import io.github.evaogbe.diswantin.testing.FixedClockMonitor
 import io.github.evaogbe.diswantin.testing.matches
 import io.github.evaogbe.diswantin.testing.stringResource
 import io.github.evaogbe.diswantin.ui.loadstate.PendingLayoutTestTag
@@ -34,7 +35,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import org.junit.Rule
 import org.junit.Test
-import java.time.Clock
 
 @OptIn(ExperimentalTestApi::class)
 class TaskSearchScreenTest {
@@ -299,19 +299,19 @@ class TaskSearchScreenTest {
     private fun Task.toTaskSummary() =
         TaskSummary(id = id, name = name, recurring = false, doneAt = null)
 
-    private fun createClock() = Clock.systemDefaultZone()
+    private fun createClockMonitor() = FixedClockMonitor()
 
     private fun createTaskSearchViewModel(
         initDatabase: (FakeDatabase) -> Unit = {},
         initTaskRepositorySpy: ((TaskRepository) -> Unit)? = null,
     ): TaskSearchViewModel {
-        val clock = createClock()
+        val clockMonitor = createClockMonitor()
         val db = FakeDatabase().also(initDatabase)
         val taskRepository = if (initTaskRepositorySpy == null) {
             FakeTaskRepository(db)
         } else {
             spyk(FakeTaskRepository(db)).also(initTaskRepositorySpy)
         }
-        return TaskSearchViewModel(SavedStateHandle(), taskRepository, clock)
+        return TaskSearchViewModel(SavedStateHandle(), taskRepository, clockMonitor)
     }
 }

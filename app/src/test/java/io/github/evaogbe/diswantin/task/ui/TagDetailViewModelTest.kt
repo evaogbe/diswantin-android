@@ -15,6 +15,7 @@ import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTagRepository
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
+import io.github.evaogbe.diswantin.testing.FixedClockMonitor
 import io.github.evaogbe.diswantin.testing.MainDispatcherRule
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
@@ -34,9 +35,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
-import java.time.Clock
-import java.time.Instant
-import java.time.ZoneId
+import java.time.ZonedDateTime
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TagDetailViewModelTest {
@@ -56,6 +55,9 @@ class TagDetailViewModelTest {
             db.insertTag(tag = tag, taskIds = tasks.map { it.id }.toSet())
         })
 
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.clock.collect()
+        }
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect()
         }
@@ -78,6 +80,9 @@ class TagDetailViewModelTest {
     fun `uiState emits failure when tag not found`() = runTest(mainDispatcherRule.testDispatcher) {
         val viewModel = createTagDetailViewModel({})
 
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.clock.collect()
+        }
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect()
         }
@@ -109,6 +114,9 @@ class TagDetailViewModelTest {
             )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.clock.collect()
+            }
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
             }
 
@@ -125,8 +133,8 @@ class TagDetailViewModelTest {
     fun `saveTag updates tag`() = runTest(mainDispatcherRule.testDispatcher) {
         val name = loremFaker.lorem.words()
         val tag = genTag()
-        val now = Instant.parse("2024-08-23T17:00:00Z")
-        val clock = Clock.fixed(now, ZoneId.of("America/New_York"))
+        val now = ZonedDateTime.parse("2024-08-23T13:00-04:00[America/New_York]")
+        val clockMonitor = FixedClockMonitor(now)
         val db = FakeDatabase().apply {
             insertTag(tag = tag)
         }
@@ -136,9 +144,12 @@ class TagDetailViewModelTest {
             createSavedStateHandle(),
             tagRepository,
             taskRepository,
-            clock,
+            clockMonitor,
         )
 
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.clock.collect()
+        }
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect()
         }
@@ -160,12 +171,12 @@ class TagDetailViewModelTest {
         val updatedTag = tagRepository.getTagById(tag.id).first()
         assertThat(viewModel.uiState.value).isEqualTo(
             TagDetailUiState.Success(
-                tag = tag.copy(name = name, updatedAt = now),
+                tag = tag.copy(name = name, updatedAt = now.toInstant()),
                 userMessage = null,
             )
         )
         assertThat(updatedTag).isNotNull().isEqualTo(
-            Tag(id = tag.id, name = name, createdAt = tag.createdAt, updatedAt = now),
+            Tag(id = tag.id, name = name, createdAt = tag.createdAt, updatedAt = now.toInstant()),
         )
     }
 
@@ -181,6 +192,9 @@ class TagDetailViewModelTest {
                 },
             )
 
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.clock.collect()
+            }
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
             }
@@ -211,7 +225,7 @@ class TagDetailViewModelTest {
     fun `deleteTag sets uiState to deleted`() = runTest(mainDispatcherRule.testDispatcher) {
         val tag = genTag()
         val tasks = genTasks()
-        val clock = createClock()
+        val clockMonitor = createClockMonitor()
         val db = FakeDatabase().apply {
             tasks.forEach(::insertTask)
             insertTag(tag = tag, taskIds = tasks.map { it.id }.toSet())
@@ -222,7 +236,7 @@ class TagDetailViewModelTest {
             createSavedStateHandle(),
             tagRepository,
             taskRepository,
-            clock,
+            clockMonitor,
         )
 
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
@@ -335,13 +349,13 @@ class TagDetailViewModelTest {
         return savedStateHandle
     }
 
-    private fun createClock() = Clock.systemDefaultZone()
+    private fun createClockMonitor() = FixedClockMonitor()
 
     private fun createTagDetailViewModel(
         initDatabase: (FakeDatabase) -> Unit,
         initTagRepositorySpy: ((TagRepository) -> Unit)? = null,
     ): TagDetailViewModel {
-        val clock = createClock()
+        val clockMonitor = createClockMonitor()
         val db = FakeDatabase().also(initDatabase)
         val tagRepository = if (initTagRepositorySpy == null) {
             FakeTagRepository(db)
@@ -353,7 +367,7 @@ class TagDetailViewModelTest {
             createSavedStateHandle(),
             tagRepository,
             taskRepository,
-            clock,
+            clockMonitor,
         )
     }
 }

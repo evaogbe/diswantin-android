@@ -668,7 +668,9 @@ private fun FilterRowLayout(
     recurrenceDate: LocalDate?,
     onRecurrenceChipClick: () -> Unit
 ) {
-    val dateFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT)
+    val resources = LocalResources.current
+    val locale = resources.configuration.locales[0]
+    val dateFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT).withLocale(locale)
 
     Row(
         modifier = Modifier

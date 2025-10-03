@@ -29,6 +29,7 @@ import io.github.evaogbe.diswantin.task.data.TaskRepository
 import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTagRepository
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
+import io.github.evaogbe.diswantin.testing.FixedClockMonitor
 import io.github.evaogbe.diswantin.testing.matches
 import io.github.evaogbe.diswantin.testing.matchesSnackbar
 import io.github.evaogbe.diswantin.testing.stringResource
@@ -45,7 +46,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flow
 import org.junit.Rule
 import org.junit.Test
-import java.time.Clock
 
 @OptIn(ExperimentalTestApi::class)
 class TaskFormScreenTest {
@@ -923,14 +923,14 @@ class TaskFormScreenTest {
     private fun createSavedStateHandleForEdit() =
         SavedStateHandle(mapOf("id" to 1L, "name" to null))
 
-    private fun createClock() = Clock.systemDefaultZone()
+    private fun createClockMonitor() = FixedClockMonitor()
 
     private fun createTaskFormViewModelForNew(
         initDatabase: (FakeDatabase) -> Unit = {},
         initTaskRepositorySpy: ((TaskRepository) -> Unit)? = null,
         initTagRepositorySpy: ((TagRepository) -> Unit)? = null,
     ): TaskFormViewModel {
-        val clock = createClock()
+        val clockMonitor = createClockMonitor()
         val db = FakeDatabase().also(initDatabase)
         val taskRepository = if (initTaskRepositorySpy == null) {
             FakeTaskRepository(db)
@@ -946,7 +946,7 @@ class TaskFormScreenTest {
             createSavedStateHandleForNew(),
             taskRepository,
             tagRepository,
-            clock,
+            clockMonitor,
         )
     }
 
@@ -955,7 +955,7 @@ class TaskFormScreenTest {
         initTaskRepositorySpy: ((TaskRepository) -> Unit)? = null,
         initTagRepositorySpy: ((TagRepository) -> Unit)? = null,
     ): TaskFormViewModel {
-        val clock = createClock()
+        val clockMonitor = createClockMonitor()
         val db = FakeDatabase().also(initDatabase)
         val taskRepository = if (initTaskRepositorySpy == null) {
             FakeTaskRepository(db)
@@ -971,7 +971,7 @@ class TaskFormScreenTest {
             createSavedStateHandleForEdit(),
             taskRepository,
             tagRepository,
-            clock,
+            clockMonitor,
         )
     }
 }

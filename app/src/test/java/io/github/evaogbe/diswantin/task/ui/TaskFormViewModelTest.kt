@@ -22,6 +22,7 @@ import io.github.evaogbe.diswantin.task.data.TaskTag
 import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTagRepository
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
+import io.github.evaogbe.diswantin.testing.FixedClockMonitor
 import io.github.evaogbe.diswantin.testing.MainDispatcherRule
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
@@ -41,12 +42,11 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
-import java.time.Clock
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.ZoneId
+import java.time.ZonedDateTime
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TaskFormViewModelTest {
@@ -1412,8 +1412,8 @@ class TaskFormViewModelTest {
     @Test
     fun `saveTask creates task without taskId`() = runTest(mainDispatcherRule.testDispatcher) {
         val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
-        val now = Instant.parse("2024-08-22T08:00:00Z")
-        val clock = Clock.fixed(now, ZoneId.of("America/New_York"))
+        val now = ZonedDateTime.parse("2024-08-22T04:00-04:00[America/New_York]")
+        val clockMonitor = FixedClockMonitor(now)
         val db = FakeDatabase()
         val taskRepository = FakeTaskRepository(db)
         val tagRepository = FakeTagRepository(db)
@@ -1421,10 +1421,12 @@ class TaskFormViewModelTest {
             createSavedStateHandleForNew(),
             taskRepository,
             tagRepository,
-            clock,
-        )
-        viewModel.initialize()
+            clockMonitor,
+        ).apply { initialize() }
 
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.clock.collect()
+        }
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect()
         }
@@ -1470,11 +1472,11 @@ class TaskFormViewModelTest {
         val taskRecurrence = taskRepository.getTaskRecurrencesByTaskId(task.id).first().single()
         assertThat(task).isEqualToIgnoringGivenProperties(
             Task(
-                createdAt = now,
+                createdAt = now.toInstant(),
                 name = name,
                 deadlineDate = null,
                 deadlineTime = LocalTime.parse("17:00"),
-                updatedAt = now,
+                updatedAt = now.toInstant(),
             ),
             Task::id,
         )
@@ -1501,6 +1503,9 @@ class TaskFormViewModelTest {
                 },
             )
 
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.clock.collect()
+            }
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
             }
@@ -1533,8 +1538,8 @@ class TaskFormViewModelTest {
     @Test
     fun `saveTask updates task with taskId`() = runTest(mainDispatcherRule.testDispatcher) {
         val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
-        val clock =
-            Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
+        val clockMonitor =
+            FixedClockMonitor(ZonedDateTime.parse("2024-08-22T04:00-04:00[America/New_York]"))
         val task = genTask().copy(
             deadlineDate = LocalDate.parse("2024-08-23"),
             deadlineTime = LocalTime.parse("22:00"),
@@ -1552,10 +1557,12 @@ class TaskFormViewModelTest {
             createSavedStateHandleForEdit(),
             taskRepository,
             tagRepository,
-            clock,
-        )
-        viewModel.initialize()
+            clockMonitor,
+        ).apply { initialize() }
 
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.clock.collect()
+        }
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect()
         }
@@ -1647,6 +1654,9 @@ class TaskFormViewModelTest {
             )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.clock.collect()
+            }
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
             }
 
@@ -1681,8 +1691,8 @@ class TaskFormViewModelTest {
             val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
             val task = genTask()
             val parentTask = genTask(id = 2L)
-            val clock =
-                Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
+            val clockMonitor =
+                FixedClockMonitor(ZonedDateTime.parse("2024-08-22T04:00-04:00[America/New_York]"))
             val db = FakeDatabase().apply {
                 insertTask(task)
                 insertTask(parentTask)
@@ -1696,10 +1706,12 @@ class TaskFormViewModelTest {
                 createSavedStateHandleForEdit(),
                 taskRepository,
                 tagRepository,
-                clock,
-            )
-            viewModel.initialize()
+                clockMonitor,
+            ).apply { initialize() }
 
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.clock.collect()
+            }
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
             }
@@ -1741,8 +1753,8 @@ class TaskFormViewModelTest {
             val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
             val task = genTask()
             val parentTask = genTask(id = 2L)
-            val clock =
-                Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
+            val clockMonitor =
+                FixedClockMonitor(ZonedDateTime.parse("2024-08-22T04:00-04:00[America/New_York]"))
             val db = FakeDatabase().apply {
                 insertTask(task)
                 insertTask(parentTask)
@@ -1758,10 +1770,12 @@ class TaskFormViewModelTest {
                 createSavedStateHandleForEdit(),
                 taskRepository,
                 tagRepository,
-                clock,
-            )
-            viewModel.initialize()
+                clockMonitor,
+            ).apply { initialize() }
 
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.clock.collect()
+            }
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
             }
@@ -1803,8 +1817,8 @@ class TaskFormViewModelTest {
             val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
             val task = genTask()
             val tag = genTag()
-            val clock =
-                Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
+            val clockMonitor =
+                FixedClockMonitor(ZonedDateTime.parse("2024-08-22T04:00-04:00[America/New_York]"))
             val db = FakeDatabase().apply {
                 insertTask(task)
                 insertTag(tag, setOf(task.id))
@@ -1817,10 +1831,12 @@ class TaskFormViewModelTest {
                 createSavedStateHandleForEdit(),
                 taskRepository,
                 tagRepository,
-                clock,
-            )
-            viewModel.initialize()
+                clockMonitor,
+            ).apply { initialize() }
 
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.clock.collect()
+            }
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
             }
@@ -1861,8 +1877,8 @@ class TaskFormViewModelTest {
             val name = "${loremFaker.verbs.base()} ${loremFaker.lorem.words()}"
             val task = genTask()
             val tag = genTag()
-            val clock =
-                Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
+            val clockMonitor =
+                FixedClockMonitor(ZonedDateTime.parse("2024-08-22T04:00-04:00[America/New_York]"))
             val db = FakeDatabase().apply {
                 insertTask(task)
                 insertTag(tag, setOf(task.id))
@@ -1877,10 +1893,12 @@ class TaskFormViewModelTest {
                 createSavedStateHandleForEdit(),
                 taskRepository,
                 tagRepository,
-                clock,
-            )
-            viewModel.initialize()
+                clockMonitor,
+            ).apply { initialize() }
 
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.clock.collect()
+            }
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
             }
@@ -1954,15 +1972,15 @@ class TaskFormViewModelTest {
         return savedStateHandle
     }
 
-    private fun createClock() =
-        Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
+    private fun createClockMonitor() =
+        FixedClockMonitor(ZonedDateTime.parse("2024-08-22T04:00-04:00[America/New_York]"))
 
     private fun createTaskFormViewModelForNew(
         initDatabase: (FakeDatabase) -> Unit = {},
         initTaskRepositorySpy: ((TaskRepository) -> Unit)? = null,
         initTagRepositorySpy: ((TagRepository) -> Unit)? = null,
     ): TaskFormViewModel {
-        val clock = createClock()
+        val clockMonitor = createClockMonitor()
         val db = FakeDatabase().also(initDatabase)
         val taskRepository = if (initTaskRepositorySpy == null) {
             FakeTaskRepository(db)
@@ -1974,14 +1992,12 @@ class TaskFormViewModelTest {
         } else {
             spyk(FakeTagRepository(db)).also(initTagRepositorySpy)
         }
-        val viewModel = TaskFormViewModel(
+        return TaskFormViewModel(
             createSavedStateHandleForNew(),
             taskRepository,
             tagRepository,
-            clock,
-        )
-        viewModel.initialize()
-        return viewModel
+            clockMonitor,
+        ).apply { initialize() }
     }
 
     private fun createTaskFormViewModelForEdit(
@@ -1989,7 +2005,7 @@ class TaskFormViewModelTest {
         initTaskRepositorySpy: ((TaskRepository) -> Unit)? = null,
         initTagRepositorySpy: ((TagRepository) -> Unit)? = null,
     ): TaskFormViewModel {
-        val clock = createClock()
+        val clockMonitor = createClockMonitor()
         val db = FakeDatabase().also(initDatabase)
         val taskRepository = if (initTaskRepositorySpy == null) {
             FakeTaskRepository(db)
@@ -2001,13 +2017,11 @@ class TaskFormViewModelTest {
         } else {
             spyk(FakeTagRepository(db)).also(initTagRepositorySpy)
         }
-        val viewModel = TaskFormViewModel(
+        return TaskFormViewModel(
             createSavedStateHandleForEdit(),
             taskRepository,
             tagRepository,
-            clock,
-        )
-        viewModel.initialize()
-        return viewModel
+            clockMonitor,
+        ).apply { initialize() }
     }
 }

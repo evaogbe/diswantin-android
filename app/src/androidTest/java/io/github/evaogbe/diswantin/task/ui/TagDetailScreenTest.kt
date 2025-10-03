@@ -15,6 +15,7 @@ import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTagRepository
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
+import io.github.evaogbe.diswantin.testing.FixedClockMonitor
 import io.github.evaogbe.diswantin.testing.matches
 import io.github.evaogbe.diswantin.testing.stringResource
 import io.github.evaogbe.diswantin.ui.loadstate.PendingLayoutTestTag
@@ -27,7 +28,6 @@ import io.mockk.spyk
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Rule
 import org.junit.Test
-import java.time.Clock
 
 class TagDetailScreenTest {
     @get:Rule
@@ -124,7 +124,7 @@ class TagDetailScreenTest {
         val topBarActionState = MutableStateFlow<TagDetailTopBarAction?>(null)
         val tag = genTag()
         val tasks = genTasks()
-        val clock = createClock()
+        val clockMonitor = createClockMonitor()
         val db = FakeDatabase().apply {
             tasks.forEach(::insertTask)
             insertTag(tag = tag, taskIds = tasks.map { it.id }.toSet())
@@ -137,7 +137,7 @@ class TagDetailScreenTest {
             createSavedStateHandle(),
             tagRepository,
             taskRepository,
-            clock,
+            clockMonitor,
         )
 
         composeTestRule.setContent {
@@ -194,16 +194,16 @@ class TagDetailScreenTest {
 
     private fun createSavedStateHandle() = SavedStateHandle(mapOf("id" to 1L))
 
-    private fun createClock() = Clock.systemDefaultZone()
+    private fun createClockMonitor() = FixedClockMonitor()
 
     private fun createTagDetailViewModel(initDatabase: (FakeDatabase) -> Unit): TagDetailViewModel {
-        val clock = createClock()
+        val clockMonitor = createClockMonitor()
         val db = FakeDatabase().also(initDatabase)
         return TagDetailViewModel(
             createSavedStateHandle(),
             FakeTagRepository(db),
             FakeTaskRepository(db),
-            clock,
+            clockMonitor,
         )
     }
 }

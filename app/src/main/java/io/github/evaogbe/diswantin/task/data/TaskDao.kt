@@ -32,7 +32,7 @@ interface TaskDao {
                     GROUP BY task_id
                 ) s ON s.task_id = t.id
                 WHERE (c.done_at IS NULL OR (r.task_id IS NOT NULL AND c.done_at < :startOfToday))
-                    AND (s.skipped_at IS NULL OR s.skipped_at < :startOfToday)
+                    AND (r.task_id IS NULL OR s.skipped_at IS NULL OR s.skipped_at < :startOfToday)
                     AND (r.start_date IS NULL OR r.start_date <= :today)
                     AND (r.end_date IS NULL OR r.end_date >= :today)
                     AND CASE r.type

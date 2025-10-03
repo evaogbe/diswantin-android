@@ -1,14 +1,15 @@
 package io.github.evaogbe.diswantin.task.ui
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.github.evaogbe.diswantin.data.ClockMonitor
 import io.github.evaogbe.diswantin.data.Result
 import io.github.evaogbe.diswantin.task.data.CurrentTask
 import io.github.evaogbe.diswantin.task.data.CurrentTaskParams
 import io.github.evaogbe.diswantin.task.data.TaskCompletion
 import io.github.evaogbe.diswantin.task.data.TaskRepository
 import io.github.evaogbe.diswantin.task.data.TaskSkip
+import io.github.evaogbe.diswantin.ui.viewmodel.BaseViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,8 +24,6 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import java.time.Clock
-import java.time.Instant
 import java.time.ZonedDateTime
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
@@ -32,10 +31,13 @@ import kotlin.time.Duration.Companion.seconds
 @HiltViewModel
 class CurrentTaskViewModel @Inject constructor(
     private val taskRepository: TaskRepository,
-    private val clock: Clock,
-) : ViewModel() {
-    private val currentTaskParams =
-        MutableStateFlow(CurrentTaskParams(ZonedDateTime.now(clock)))
+    clockMonitor: ClockMonitor,
+) : BaseViewModel(clockMonitor) {
+    private val refreshCount = MutableStateFlow(0)
+
+    private val currentTaskParams = combine(clockMonitor.clock, refreshCount) { clock, _ ->
+        CurrentTaskParams(ZonedDateTime.now(clock))
+    }
 
     private val isRefreshing = MutableStateFlow(false)
 
@@ -78,7 +80,7 @@ class CurrentTaskViewModel @Inject constructor(
     )
 
     fun refresh() {
-        currentTaskParams.value = CurrentTaskParams(ZonedDateTime.now(clock))
+        ++refreshCount.value
     }
 
     fun skipCurrentTask() {
@@ -88,7 +90,7 @@ class CurrentTaskViewModel @Inject constructor(
             var skipped = false
 
             try {
-                taskRepository.skip(TaskSkip(taskId = taskId, skippedAt = Instant.now(clock)))
+                taskRepository.skip(TaskSkip(taskId = taskId, skippedAt = now().toInstant()))
                 skipped = true
             } catch (e: CancellationException) {
                 throw e
@@ -110,12 +112,7 @@ class CurrentTaskViewModel @Inject constructor(
             var markedDone = false
 
             try {
-                taskRepository.markDone(
-                    TaskCompletion(
-                        taskId = taskId,
-                        doneAt = Instant.now(clock)
-                    )
-                )
+                taskRepository.markDone(TaskCompletion(taskId = taskId, doneAt = now().toInstant()))
                 markedDone = true
             } catch (e: CancellationException) {
                 throw e

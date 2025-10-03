@@ -1,0 +1,21 @@
+package io.github.evaogbe.diswantin.ui.viewmodel
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import io.github.evaogbe.diswantin.data.ClockMonitor
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.WhileSubscribed
+import kotlinx.coroutines.flow.stateIn
+import java.time.Clock
+import java.time.ZonedDateTime
+import kotlin.time.Duration.Companion.seconds
+
+abstract class BaseViewModel(protected val clockMonitor: ClockMonitor) : ViewModel() {
+    internal val clock = clockMonitor.clock.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5.seconds),
+        initialValue = Clock.systemDefaultZone(),
+    )
+
+    protected fun now(): ZonedDateTime = ZonedDateTime.now(clock.value)
+}
