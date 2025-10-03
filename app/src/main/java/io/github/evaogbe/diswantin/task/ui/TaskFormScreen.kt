@@ -342,8 +342,10 @@ fun TaskFormLayout(
     modifier: Modifier = Modifier,
 ) {
     var dialogType by rememberSaveable { mutableStateOf<FieldDialogType?>(null) }
-    val dateFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
-    val timeFormatter = DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
+    val resources = LocalResources.current
+    val locale = resources.configuration.locales[0]
+    val dateFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale)
+    val timeFormatter = DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale)
 
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         Column(
@@ -495,9 +497,9 @@ fun TaskFormLayout(
                         text = stringResource(R.string.add_start_after_time_button),
                     )
                 }
-                Spacer(Modifier.size(SpaceMd))
 
                 if (uiState.canSchedule) {
+                    Spacer(Modifier.size(SpaceMd))
                     TextButtonWithIcon(
                         onClick = {
                             dialogType = if (uiState.recurrence == null) {
@@ -509,7 +511,6 @@ fun TaskFormLayout(
                         painter = painterResource(R.drawable.baseline_schedule_24),
                         text = stringResource(R.string.add_scheduled_at_button),
                     )
-                    Spacer(Modifier.size(SpaceMd))
                 }
             } else {
                 if (uiState.scheduledDate != null) {
@@ -552,10 +553,10 @@ fun TaskFormLayout(
                         )
                     }
                 }
-                Spacer(Modifier.size(SpaceMd))
             }
 
             if (uiState.showParentField) {
+                Spacer(Modifier.size(SpaceMd))
                 if (uiState.parent == null) {
                     TextButtonWithIcon(
                         onClick = { onEditParent("") },

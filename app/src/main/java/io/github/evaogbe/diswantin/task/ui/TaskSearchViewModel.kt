@@ -1,13 +1,14 @@
 package io.github.evaogbe.diswantin.task.ui
 
 import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.cachedIn
 import androidx.paging.map
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.github.evaogbe.diswantin.data.ClockMonitor
 import io.github.evaogbe.diswantin.task.data.TaskRepository
 import io.github.evaogbe.diswantin.task.data.TaskSearchCriteria
+import io.github.evaogbe.diswantin.ui.viewmodel.BaseViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.WhileSubscribed
@@ -15,7 +16,6 @@ import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import java.time.Clock
 import java.time.LocalDate
 import java.util.regex.Pattern
 import javax.inject.Inject
@@ -25,13 +25,13 @@ import kotlin.time.Duration.Companion.seconds
 class TaskSearchViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     taskRepository: TaskRepository,
-    private val clock: Clock,
-) : ViewModel() {
+    clockMonitor: ClockMonitor,
+) : BaseViewModel(clockMonitor) {
     private val criteria = savedStateHandle.getMutableStateFlow(CRITERIA_KEY, TaskSearchCriteria())
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val searchResultPagingData = criteria.filterNot { it.isEmpty }.flatMapLatest { criteria ->
-        val doneBefore = LocalDate.now(clock).atStartOfDay(clock.zone).toInstant()
+        val doneBefore = LocalDate.now(clock.value).atStartOfDay(clock.value.zone).toInstant()
         taskRepository.searchTaskSummaries(criteria).map { searchResults ->
             searchResults.map {
                 TaskSummaryUiState.fromTaskSummary(it, doneBefore)
@@ -61,8 +61,8 @@ class TaskSearchViewModel @Inject constructor(
             startAfterDateRange = startAfterDateRange,
             scheduledDateRange = scheduledDateRange,
             doneRange = doneDateRange?.let { (startDate, endDate) ->
-                val start = startDate.atStartOfDay(clock.zone).toInstant()
-                val end = endDate.plusDays(1).atStartOfDay(clock.zone).toInstant()
+                val start = startDate.atStartOfDay(clock.value.zone).toInstant()
+                val end = endDate.plusDays(1).atStartOfDay(clock.value.zone).toInstant()
                 start to end
             },
             recurrenceDate = recurrenceDate,

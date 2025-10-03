@@ -62,7 +62,7 @@ import io.github.evaogbe.diswantin.ui.dialog.SelectableDatesWithMin
 import io.github.evaogbe.diswantin.ui.form.ClearableLayout
 import io.github.evaogbe.diswantin.ui.form.EditFieldButton
 import io.github.evaogbe.diswantin.ui.form.OutlinedIntegerField
-import io.github.evaogbe.diswantin.ui.preferences.LocalLocale
+import io.github.evaogbe.diswantin.ui.preferences.LocalClock
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.evaogbe.diswantin.ui.theme.ScreenLg
 import io.github.evaogbe.diswantin.ui.theme.SpaceMd
@@ -102,7 +102,7 @@ fun TaskRecurrenceFormTopBar(
             ) {
                 Text(stringResource(R.string.done_button))
             }
-        }
+        },
     )
 }
 
@@ -121,6 +121,7 @@ fun TaskRecurrentFormScreen(
     var weekdays by rememberSaveable(saver = persistentSetStateSaver()) {
         mutableStateOf(uiState?.weekdays ?: persistentSetOf())
     }
+    val clock = LocalClock.current
 
     LaunchedEffect(topBarAction) {
         when (topBarAction) {
@@ -128,7 +129,7 @@ fun TaskRecurrentFormScreen(
             TaskRecurrenceFormTopBarAction.Confirm -> {
                 taskFormViewModel.updateRecurrence(
                     TaskRecurrenceUiState(
-                        startDate = startDate ?: taskFormViewModel.today,
+                        startDate = startDate ?: LocalDate.now(clock),
                         endDate = endDate,
                         type = type ?: RecurrenceType.Day,
                         step = step,
@@ -151,7 +152,7 @@ fun TaskRecurrentFormScreen(
     }
 
     TaskRecurrenceFormScreen(
-        startDate = startDate ?: taskFormViewModel.today,
+        startDate = startDate ?: LocalDate.now(clock),
         onStartDateChange = { value ->
             startDate = value
 
@@ -170,7 +171,7 @@ fun TaskRecurrentFormScreen(
         type = type ?: RecurrenceType.Day,
         onTypeChange = { value ->
             if (value == RecurrenceType.Week && weekdays.isEmpty()) {
-                weekdays = persistentSetOf(taskFormViewModel.today.dayOfWeek)
+                weekdays = persistentSetOf(LocalDate.now(clock).dayOfWeek)
             }
 
             type = value
@@ -226,7 +227,6 @@ fun TaskRecurrenceFormScreen(
     onWeekdaysChange: (PersistentSet<DayOfWeek>) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val locale = LocalLocale.current
     var dialogType by rememberSaveable { mutableStateOf<RecurrenceDialogType?>(null) }
     val typeInput = rememberTextFieldState(
         initialText = pluralStringResource(
@@ -258,7 +258,8 @@ fun TaskRecurrenceFormScreen(
     )
     var monthFieldExpanded by remember { mutableStateOf(false) }
     val resources = LocalResources.current
-    val dateFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
+    val locale = resources.configuration.locales[0]
+    val dateFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale)
 
     LaunchedEffect(resources, type, step) {
         typeInput.setTextAndPlaceCursorAtEnd(
@@ -275,7 +276,7 @@ fun TaskRecurrenceFormScreen(
         )
     }
 
-    LaunchedEffect(resources, locale, type, startDate) {
+    LaunchedEffect(resources, type, startDate) {
         if (type in MonthOptions) {
             monthInput.setTextAndPlaceCursorAtEnd(
                 resources.getTaskRecurrenceText(
@@ -286,7 +287,6 @@ fun TaskRecurrenceFormScreen(
                         step = 1,
                         weekdays = persistentSetOf(),
                     ),
-                    locale = locale,
                 )
             )
         }
@@ -359,45 +359,40 @@ fun TaskRecurrenceFormScreen(
                     )
                     Spacer(Modifier.size(SpaceSm))
                     Row(horizontalArrangement = Arrangement.spacedBy(SpaceSm)) {
-                        DayOfWeek.entries
-                            .sortedByFirstDayOfWeek(locale)
-                            .forEach { weekday ->
-                                if (weekday in weekdays) {
-                                    Button(
-                                        onClick = { onWeekdaysChange(weekdays.remove(weekday)) },
-                                        modifier = Modifier.size(40.dp),
-                                        shape = CircleShape,
-                                        elevation = null,
-                                        contentPadding = PaddingValues(0.dp),
-                                    ) {
-                                        Text(
-                                            text = weekday.getDisplayName(
-                                                TextStyle.NARROW_STANDALONE,
-                                                locale
-                                            ),
-                                        )
-                                    }
-                                } else {
-                                    OutlinedButton(
-                                        onClick = { onWeekdaysChange(weekdays.add(weekday)) },
-                                        modifier = Modifier.size(40.dp),
-                                        shape = CircleShape,
-                                        contentPadding = PaddingValues(0.dp),
-                                    ) {
-                                        Text(
-                                            text = weekday.getDisplayName(
-                                                TextStyle.NARROW_STANDALONE,
-                                                locale
-                                            ),
-                                        )
-                                    }
+                        DayOfWeek.entries.sortedByFirstDayOfWeek(locale).forEach { weekday ->
+                            if (weekday in weekdays) {
+                                Button(
+                                    onClick = { onWeekdaysChange(weekdays.remove(weekday)) },
+                                    modifier = Modifier.size(40.dp),
+                                    shape = CircleShape,
+                                    elevation = null,
+                                    contentPadding = PaddingValues(0.dp),
+                                ) {
+                                    Text(
+                                        text = weekday.getDisplayName(
+                                            TextStyle.NARROW_STANDALONE, locale
+                                        ),
+                                    )
+                                }
+                            } else {
+                                OutlinedButton(
+                                    onClick = { onWeekdaysChange(weekdays.add(weekday)) },
+                                    modifier = Modifier.size(40.dp),
+                                    shape = CircleShape,
+                                    contentPadding = PaddingValues(0.dp),
+                                ) {
+                                    Text(
+                                        text = weekday.getDisplayName(
+                                            TextStyle.NARROW_STANDALONE, locale
+                                        ),
+                                    )
                                 }
                             }
+                        }
                     }
                 }
 
-                RecurrenceType.DayOfMonth,
-                RecurrenceType.WeekOfMonth -> {
+                RecurrenceType.DayOfMonth, RecurrenceType.WeekOfMonth -> {
                     Spacer(Modifier.size(SpaceMd))
                     Text(
                         stringResource(R.string.recurrence_monthly_type_label),
@@ -417,7 +412,7 @@ fun TaskRecurrenceFormScreen(
                                     expanded = monthFieldExpanded
                                 )
                             },
-                            lineLimits = TextFieldLineLimits.SingleLine,
+                            lineLimits = TextFieldLineLimits.MultiLine(),
                         )
                         ExposedDropdownMenu(
                             expanded = monthFieldExpanded,

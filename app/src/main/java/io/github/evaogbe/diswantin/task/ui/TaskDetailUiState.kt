@@ -12,6 +12,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
+import java.util.Locale
 
 @Parcelize
 data class TaskDetailTopBarState(val taskId: Long?, val isDone: Boolean) : Parcelable
@@ -33,9 +34,12 @@ sealed interface TaskDetailUiState {
         val id: Long,
         val name: String,
         val note: String,
-        val formattedDeadline: String?,
-        val formattedStartAfter: String?,
-        val formattedScheduledAt: String?,
+        val deadlineDate: LocalDate?,
+        val deadlineTime: LocalTime?,
+        val startAfterDate: LocalDate?,
+        val startAfterTime: LocalTime?,
+        val scheduledDate: LocalDate?,
+        val scheduledTime: LocalTime?,
         val recurrence: TaskRecurrenceUiState?,
         val isDone: Boolean,
         val parent: TaskSummaryUiState?,
@@ -58,9 +62,12 @@ sealed interface TaskDetailUiState {
             id = task.id,
             name = task.name,
             note = task.note,
-            formattedDeadline = formatDateTime(task.deadlineDate, task.deadlineTime),
-            formattedStartAfter = formatDateTime(task.startAfterDate, task.startAfterTime),
-            formattedScheduledAt = formatDateTime(task.scheduledDate, task.scheduledTime),
+            deadlineDate = task.deadlineDate,
+            deadlineTime = task.deadlineTime,
+            startAfterDate = task.startAfterDate,
+            startAfterTime = task.startAfterTime,
+            scheduledDate = task.scheduledDate,
+            scheduledTime = task.scheduledTime,
             recurrence = TaskRecurrenceUiState.tryFromEntities(recurrences),
             isDone = isTaskDone(
                 doneAt = task.doneAt,
@@ -86,14 +93,21 @@ sealed interface TaskDetailUiState {
     }
 }
 
-fun formatDateTime(date: LocalDate?, time: LocalTime?) = when {
+fun formatDateTime(date: LocalDate?, time: LocalTime?, locale: Locale) = when {
     date != null && time != null -> {
         date.atTime(time).format(
-            DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL, FormatStyle.SHORT),
+            DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL, FormatStyle.SHORT)
+                .withLocale(locale)
         )
     }
 
-    date != null -> date.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL))
-    time != null -> time.format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT))
+    date != null -> date.format(
+        DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL).withLocale(locale)
+    )
+
+    time != null -> time.format(
+        DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale)
+    )
+
     else -> null
 }

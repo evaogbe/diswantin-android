@@ -17,6 +17,7 @@ import io.github.evaogbe.diswantin.task.data.Tag
 import io.github.evaogbe.diswantin.task.data.TagRepository
 import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTagRepository
+import io.github.evaogbe.diswantin.testing.FixedClockMonitor
 import io.github.evaogbe.diswantin.testing.matches
 import io.github.evaogbe.diswantin.testing.stringResource
 import io.github.evaogbe.diswantin.ui.snackbar.SnackbarState
@@ -29,7 +30,6 @@ import io.mockk.spyk
 import kotlinx.coroutines.flow.flowOf
 import org.junit.Rule
 import org.junit.Test
-import java.time.Clock
 
 class TagListScreenTest {
     @get:Rule
@@ -184,7 +184,7 @@ class TagListScreenTest {
     }
 
     private fun createTagListViewModel(tagRepository: TagRepository): TagListViewModel {
-        val clock = Clock.systemDefaultZone()
-        return TagListViewModel(tagRepository, clock)
+        val clockMonitor = FixedClockMonitor()
+        return TagListViewModel(tagRepository, clockMonitor)
     }
 }

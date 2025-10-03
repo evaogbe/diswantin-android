@@ -6,6 +6,7 @@ import assertk.assertions.isEqualToIgnoringGivenProperties
 import assertk.assertions.isNull
 import io.github.evaogbe.diswantin.task.data.Tag
 import io.github.evaogbe.diswantin.testing.FakeTagRepository
+import io.github.evaogbe.diswantin.testing.FixedClockMonitor
 import io.github.evaogbe.diswantin.testing.MainDispatcherRule
 import io.github.serpro69.kfaker.lorem.LoremFaker
 import io.mockk.coEvery
@@ -17,9 +18,7 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
-import java.time.Clock
-import java.time.Instant
-import java.time.ZoneId
+import java.time.ZonedDateTime
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TagListViewModelTest {
@@ -31,11 +30,14 @@ class TagListViewModelTest {
     @Test
     fun `saveTag creates tag`() = runTest(mainDispatcherRule.testDispatcher) {
         val name = loremFaker.lorem.words()
-        val now = Instant.parse("2024-08-23T17:00:00Z")
-        val clock = Clock.fixed(now, ZoneId.of("America/New_York"))
+        val now = ZonedDateTime.parse("2024-08-23T13:00-04:00[America/New_York]")
+        val clockMonitor = FixedClockMonitor(now)
         val tagRepository = FakeTagRepository()
-        val viewModel = TagListViewModel(tagRepository, clock)
+        val viewModel = TagListViewModel(tagRepository, clockMonitor)
 
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.clock.collect()
+        }
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.userMessage.collect()
         }
@@ -44,7 +46,7 @@ class TagListViewModelTest {
 
         val tag = tagRepository.tags.single()
         assertThat(tag).isEqualToIgnoringGivenProperties(
-            Tag(name = name, createdAt = now, updatedAt = now),
+            Tag(name = name, createdAt = now.toInstant(), updatedAt = now.toInstant()),
             Tag::id,
         )
         assertThat(viewModel.userMessage.value).isNull()
@@ -54,12 +56,15 @@ class TagListViewModelTest {
     fun `saveTag shows error message when repository throws`() =
         runTest(mainDispatcherRule.testDispatcher) {
             val name = loremFaker.lorem.words()
-            val clock = createClock()
+            val clockMonitor = createClockMonitor()
             val tagRepository = spyk<FakeTagRepository>()
             coEvery { tagRepository.create(any()) } throws RuntimeException("Test")
 
-            val viewModel = TagListViewModel(tagRepository, clock)
+            val viewModel = TagListViewModel(tagRepository, clockMonitor)
 
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.clock.collect()
+            }
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.userMessage.collect()
             }
@@ -69,6 +74,6 @@ class TagListViewModelTest {
             assertThat(viewModel.userMessage.value).isEqualTo(TagListUserMessage.CreateError)
         }
 
-    private fun createClock() =
-        Clock.fixed(Instant.parse("2024-08-23T17:00:00Z"), ZoneId.of("America/New_York"))
+    private fun createClockMonitor() =
+        FixedClockMonitor(ZonedDateTime.parse("2024-08-23T13:00-04:00[America/New_York]"))
 }

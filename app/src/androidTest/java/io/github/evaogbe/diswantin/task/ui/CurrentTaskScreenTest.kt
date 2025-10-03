@@ -14,6 +14,7 @@ import io.github.evaogbe.diswantin.task.data.TaskRecurrence
 import io.github.evaogbe.diswantin.task.data.TaskRepository
 import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
+import io.github.evaogbe.diswantin.testing.FixedClockMonitor
 import io.github.evaogbe.diswantin.testing.matches
 import io.github.evaogbe.diswantin.testing.matchesSnackbar
 import io.github.evaogbe.diswantin.testing.stringResource
@@ -27,10 +28,8 @@ import io.mockk.spyk
 import kotlinx.coroutines.flow.flow
 import org.junit.Rule
 import org.junit.Test
-import java.time.Clock
-import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneId
+import java.time.ZonedDateTime
 
 class CurrentTaskScreenTest {
     @get:Rule
@@ -146,8 +145,8 @@ class CurrentTaskScreenTest {
 
     @Test
     fun displaysNextTaskName_whenClickSkip() {
-        val clock =
-            Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
+        val clockMonitor =
+            FixedClockMonitor(ZonedDateTime.parse("2024-08-22T04:00-04:00[America/New_York]"))
         val (task1, task2) = genTasks().take(2).toList()
         val db = FakeDatabase().apply {
             insertTask(task1)
@@ -162,7 +161,7 @@ class CurrentTaskScreenTest {
             )
         }
         val taskRepository = FakeTaskRepository(db)
-        val viewModel = CurrentTaskViewModel(taskRepository, clock)
+        val viewModel = CurrentTaskViewModel(taskRepository, clockMonitor)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -188,8 +187,8 @@ class CurrentTaskScreenTest {
     @Test
     fun displaysErrorMessage_whenSkipFails() {
         var snackbarState: SnackbarState? = null
-        val clock =
-            Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
+        val clockMonitor =
+            FixedClockMonitor(ZonedDateTime.parse("2024-08-22T04:00-04:00[America/New_York]"))
         val task = genTasks().first()
         val db = FakeDatabase().apply {
             insertTask(task)
@@ -205,7 +204,7 @@ class CurrentTaskScreenTest {
         val taskRepository = spyk(FakeTaskRepository(db))
         coEvery { taskRepository.skip(any()) } throws RuntimeException("Test")
 
-        val viewModel = CurrentTaskViewModel(taskRepository, clock)
+        val viewModel = CurrentTaskViewModel(taskRepository, clockMonitor)
 
         composeTestRule.setContent {
             DiswantinTheme {
@@ -316,20 +315,20 @@ class CurrentTaskScreenTest {
         }
     }
 
-    private fun createClock() =
-        Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
+    private fun createClockMonitor() =
+        FixedClockMonitor(ZonedDateTime.parse("2024-08-22T04:00-04:00[America/New_York]"))
 
     private fun createCurrentTaskViewModel(
         initDatabase: (FakeDatabase) -> Unit,
         initTaskRepositorySpy: ((TaskRepository) -> Unit)? = null,
     ): CurrentTaskViewModel {
-        val clock = createClock()
+        val clockMonitor = createClockMonitor()
         val db = FakeDatabase().also(initDatabase)
         val taskRepository = if (initTaskRepositorySpy == null) {
             FakeTaskRepository(db)
         } else {
             spyk(FakeTaskRepository(db)).also(initTaskRepositorySpy)
         }
-        return CurrentTaskViewModel(taskRepository, clock)
+        return CurrentTaskViewModel(taskRepository, clockMonitor)
     }
 }

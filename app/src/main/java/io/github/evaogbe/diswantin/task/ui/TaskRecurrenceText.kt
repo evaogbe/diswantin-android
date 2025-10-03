@@ -11,7 +11,6 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.tooling.preview.Preview
 import io.github.evaogbe.diswantin.R
 import io.github.evaogbe.diswantin.task.data.RecurrenceType
-import io.github.evaogbe.diswantin.ui.preferences.LocalLocale
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toPersistentSet
@@ -20,17 +19,16 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.time.format.TextStyle
-import java.util.Locale
 
 @Composable
 @ReadOnlyComposable
 fun taskRecurrenceText(recurrence: TaskRecurrenceUiState): String {
     val resources = LocalResources.current
-    val locale = LocalLocale.current
-    return resources.getTaskRecurrenceText(recurrence, locale)
+    return resources.getTaskRecurrenceText(recurrence)
 }
 
-fun Resources.getTaskRecurrenceText(recurrence: TaskRecurrenceUiState, locale: Locale): String {
+fun Resources.getTaskRecurrenceText(recurrence: TaskRecurrenceUiState): String {
+    val locale = configuration.locales[0]
     val startText = when (recurrence.type) {
         RecurrenceType.Day -> {
             getQuantityString(R.plurals.recurrence_daily, recurrence.step, recurrence.step)
@@ -67,7 +65,12 @@ fun Resources.getTaskRecurrenceText(recurrence: TaskRecurrenceUiState, locale: L
         }
 
         RecurrenceType.Year -> {
-            getQuantityString(R.plurals.recurrence_yearly, recurrence.step, recurrence.step)
+            getQuantityString(
+                R.plurals.recurrence_yearly,
+                recurrence.step,
+                recurrence.step,
+                recurrence.startDate.format(DateTimeFormatter.ofPattern("d MMM", locale)),
+            )
         }
     }
     return if (recurrence.endDate == null) {
@@ -75,7 +78,9 @@ fun Resources.getTaskRecurrenceText(recurrence: TaskRecurrenceUiState, locale: L
     } else {
         val endText = getString(
             R.string.recurrence_end,
-            recurrence.endDate.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT)),
+            recurrence.endDate.format(
+                DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT).withLocale(locale)
+            ),
         )
         "$startText; $endText"
     }

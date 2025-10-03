@@ -5,10 +5,10 @@ import androidx.annotation.MainThread
 import androidx.core.os.BundleCompat
 import androidx.core.os.bundleOf
 import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.github.evaogbe.diswantin.data.ClockMonitor
 import io.github.evaogbe.diswantin.data.Result
 import io.github.evaogbe.diswantin.data.getOrDefault
 import io.github.evaogbe.diswantin.task.data.EditTaskForm
@@ -20,6 +20,7 @@ import io.github.evaogbe.diswantin.task.data.TagRepository
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.task.data.TaskRecurrence
 import io.github.evaogbe.diswantin.task.data.TaskRepository
+import io.github.evaogbe.diswantin.ui.viewmodel.BaseViewModel
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
@@ -43,11 +44,10 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import java.time.Clock
 import java.time.DayOfWeek
-import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.ZonedDateTime
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
 
@@ -56,8 +56,8 @@ class TaskFormViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
     private val taskRepository: TaskRepository,
     private val tagRepository: TagRepository,
-    private val clock: Clock,
-) : ViewModel() {
+    clockMonitor: ClockMonitor,
+) : BaseViewModel(clockMonitor) {
     private val route = savedStateHandle.toRoute<TaskFormRoute.Main>()
 
     private val taskId = route.id
@@ -272,8 +272,6 @@ class TaskFormViewModel @Inject constructor(
         initialValue = TaskFormUiState.Pending,
     )
 
-    val today: LocalDate = LocalDate.now(clock)
-
     init {
         val recurrencesBundle = savedStateHandle.get<Bundle>(RECURRENCES_KEY)
         if (recurrencesBundle != null) {
@@ -420,10 +418,11 @@ class TaskFormViewModel @Inject constructor(
     fun saveTask() {
         val state = (uiState.value as? TaskFormUiState.Success) ?: return
         if (name.value.isBlank()) return
+        val now = ZonedDateTime.now(clock.value)
         val nonRecurringHasScheduledTime =
             state.scheduledDate == null && state.scheduledTime != null && state.recurrence == null
         val scheduledDate = if (nonRecurringHasScheduledTime) {
-            LocalDate.now(clock)
+            now.toLocalDate()
         } else {
             state.scheduledDate
         }
@@ -456,7 +455,6 @@ class TaskFormViewModel @Inject constructor(
                 )
             }
         }
-        val now = Instant.now(clock)
 
         if (taskId == null) {
             val form = NewTaskForm(
@@ -471,7 +469,7 @@ class TaskFormViewModel @Inject constructor(
                 tagIds = state.tags.map { it.id }.toSet(),
                 recurrences = recurrences,
                 parentTaskId = state.parent?.id,
-                now = now,
+                now = now.toInstant(),
             )
             viewModelScope.launch {
                 try {
@@ -527,7 +525,7 @@ class TaskFormViewModel @Inject constructor(
                                 state.parent == null -> PathUpdateType.Remove
                                 else -> PathUpdateType.Replace(state.parent.id)
                             },
-                            now = now,
+                            now = now.toInstant(),
                             existingId = taskId,
                             existingTagIds = existingTagIds,
                         )

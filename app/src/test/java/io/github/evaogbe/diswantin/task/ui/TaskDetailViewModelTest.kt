@@ -17,6 +17,7 @@ import io.github.evaogbe.diswantin.task.data.TaskRepository
 import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTagRepository
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
+import io.github.evaogbe.diswantin.testing.FixedClockMonitor
 import io.github.evaogbe.diswantin.testing.MainDispatcherRule
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.lorem.LoremFaker
@@ -35,10 +36,7 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
-import java.time.Clock
-import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneId
 import java.time.ZonedDateTime
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -79,6 +77,9 @@ class TaskDetailViewModelTest {
         )
 
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.clock.collect()
+        }
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect()
         }
 
@@ -90,9 +91,12 @@ class TaskDetailViewModelTest {
                 id = task1.id,
                 name = task1.name,
                 note = task1.note,
-                formattedDeadline = null,
-                formattedStartAfter = null,
-                formattedScheduledAt = null,
+                deadlineDate = null,
+                deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
+                scheduledDate = null,
+                scheduledTime = null,
                 recurrence = TaskRecurrenceUiState(
                     startDate = LocalDate.parse("2024-08-22"),
                     endDate = LocalDate.parse("2025-08-22"),
@@ -113,6 +117,9 @@ class TaskDetailViewModelTest {
         val viewModel = createTaskDetailViewModel({})
 
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.clock.collect()
+        }
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect()
         }
 
@@ -131,6 +138,9 @@ class TaskDetailViewModelTest {
                 },
             )
 
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.clock.collect()
+            }
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
             }
@@ -151,6 +161,9 @@ class TaskDetailViewModelTest {
                     }
                 })
 
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.clock.collect()
+            }
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
             }
@@ -173,6 +186,9 @@ class TaskDetailViewModelTest {
             )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.clock.collect()
+            }
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
             }
 
@@ -182,8 +198,8 @@ class TaskDetailViewModelTest {
     @Test
     fun `can toggle task done`() = runTest(mainDispatcherRule.testDispatcher) {
         val task = genTask()
-        val clock =
-            Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
+        val clockMonitor =
+            FixedClockMonitor(ZonedDateTime.parse("2024-08-22T04:00-04:00[America/New_York]"))
         val db = FakeDatabase().apply {
             insertTask(task)
         }
@@ -193,9 +209,12 @@ class TaskDetailViewModelTest {
             createSavedStateHandle(),
             taskRepository,
             tagRepository,
-            clock,
+            clockMonitor,
         )
 
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.clock.collect()
+        }
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect()
         }
@@ -205,9 +224,12 @@ class TaskDetailViewModelTest {
                 id = task.id,
                 name = task.name,
                 note = task.note,
-                formattedDeadline = null,
-                formattedStartAfter = null,
-                formattedScheduledAt = null,
+                deadlineDate = null,
+                deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
+                scheduledDate = null,
+                scheduledTime = null,
                 recurrence = null,
                 isDone = false,
                 parent = null,
@@ -223,9 +245,12 @@ class TaskDetailViewModelTest {
                 id = task.id,
                 name = task.name,
                 note = task.note,
-                formattedDeadline = null,
-                formattedStartAfter = null,
-                formattedScheduledAt = null,
+                deadlineDate = null,
+                deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
+                scheduledDate = null,
+                scheduledTime = null,
                 recurrence = null,
                 isDone = true,
                 parent = null,
@@ -241,9 +266,12 @@ class TaskDetailViewModelTest {
                 id = task.id,
                 name = task.name,
                 note = task.note,
-                formattedDeadline = null,
-                formattedStartAfter = null,
-                formattedScheduledAt = null,
+                deadlineDate = null,
+                deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
+                scheduledDate = null,
+                scheduledTime = null,
                 recurrence = null,
                 isDone = false,
                 parent = null,
@@ -264,6 +292,9 @@ class TaskDetailViewModelTest {
                 })
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.clock.collect()
+            }
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
             }
 
@@ -274,9 +305,12 @@ class TaskDetailViewModelTest {
                     id = task.id,
                     name = task.name,
                     note = task.note,
-                    formattedDeadline = null,
-                    formattedStartAfter = null,
-                    formattedScheduledAt = null,
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
                     recurrence = null,
                     isDone = false,
                     parent = null,
@@ -291,7 +325,7 @@ class TaskDetailViewModelTest {
         runTest(mainDispatcherRule.testDispatcher) {
             val task = genTask()
             val now = ZonedDateTime.parse("2024-08-22T08:00-04:00[America/New_York]")
-            val clock = Clock.fixed(now.toInstant(), now.zone)
+            val clockMonitor = FixedClockMonitor(now)
             val db = FakeDatabase().apply {
                 insertTask(task)
             }
@@ -304,9 +338,12 @@ class TaskDetailViewModelTest {
                 createSavedStateHandle(),
                 taskRepository,
                 tagRepository,
-                clock,
+                clockMonitor,
             )
 
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.clock.collect()
+            }
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
             }
@@ -318,9 +355,12 @@ class TaskDetailViewModelTest {
                     id = task.id,
                     name = task.name,
                     note = task.note,
-                    formattedDeadline = null,
-                    formattedStartAfter = null,
-                    formattedScheduledAt = null,
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
                     recurrence = null,
                     isDone = true,
                     parent = null,
@@ -338,6 +378,9 @@ class TaskDetailViewModelTest {
         })
 
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.clock.collect()
+        }
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect()
         }
 
@@ -346,9 +389,12 @@ class TaskDetailViewModelTest {
                 id = task.id,
                 name = task.name,
                 note = task.note,
-                formattedDeadline = null,
-                formattedStartAfter = null,
-                formattedScheduledAt = null,
+                deadlineDate = null,
+                deadlineTime = null,
+                startAfterDate = null,
+                startAfterTime = null,
+                scheduledDate = null,
+                scheduledTime = null,
                 recurrence = null,
                 isDone = false,
                 parent = null,
@@ -374,6 +420,9 @@ class TaskDetailViewModelTest {
             )
 
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.clock.collect()
+            }
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
             }
 
@@ -384,9 +433,12 @@ class TaskDetailViewModelTest {
                     id = task.id,
                     name = task.name,
                     note = task.note,
-                    formattedDeadline = null,
-                    formattedStartAfter = null,
-                    formattedScheduledAt = null,
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
                     recurrence = null,
                     isDone = false,
                     parent = null,
@@ -413,15 +465,15 @@ class TaskDetailViewModelTest {
         return savedStateHandle
     }
 
-    private fun createClock() =
-        Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
+    private fun createClockMonitor() =
+        FixedClockMonitor(ZonedDateTime.parse("2024-08-22T04:00-04:00[America/New_York]"))
 
     private fun createTaskDetailViewModel(
         initDatabase: (FakeDatabase) -> Unit,
         initTaskRepositorySpy: ((TaskRepository) -> Unit)? = null,
         initTagRepositorySpy: ((TagRepository) -> Unit)? = null,
     ): TaskDetailViewModel {
-        val clock = createClock()
+        val clockMonitor = createClockMonitor()
         val db = FakeDatabase().also(initDatabase)
         val taskRepository = if (initTaskRepositorySpy == null) {
             FakeTaskRepository(db)
@@ -437,7 +489,7 @@ class TaskDetailViewModelTest {
             createSavedStateHandle(),
             taskRepository,
             tagRepository,
-            clock,
+            clockMonitor,
         )
     }
 }

@@ -1,6 +1,5 @@
 package io.github.evaogbe.diswantin.task.ui
 
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasText
@@ -18,10 +17,10 @@ import io.github.evaogbe.diswantin.task.data.TaskRepository
 import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTagRepository
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
+import io.github.evaogbe.diswantin.testing.FixedClockMonitor
 import io.github.evaogbe.diswantin.testing.matches
 import io.github.evaogbe.diswantin.testing.stringResource
 import io.github.evaogbe.diswantin.ui.loadstate.PendingLayoutTestTag
-import io.github.evaogbe.diswantin.ui.preferences.LocalLocale
 import io.github.evaogbe.diswantin.ui.snackbar.SnackbarState
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.serpro69.kfaker.Faker
@@ -33,12 +32,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flow
 import org.junit.Rule
 import org.junit.Test
-import java.time.Clock
-import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.ZoneId
-import java.util.Locale
+import java.time.ZonedDateTime
 
 class TaskDetailScreenTest {
     @get:Rule
@@ -50,8 +46,8 @@ class TaskDetailScreenTest {
 
     @Test
     fun displaysTask() {
-        val clock =
-            Clock.fixed(Instant.parse("2024-08-23T21:00:00Z"), ZoneId.of("America/New_York"))
+        val clockMonitor =
+            FixedClockMonitor(ZonedDateTime.parse("2024-08-23T17:00-04:00[America/New_York]"))
         val task = genTask().copy(
             deadlineDate = LocalDate.parse("2024-08-23"),
             deadlineTime = LocalTime.parse("17:00"),
@@ -65,23 +61,21 @@ class TaskDetailScreenTest {
             createSavedStateHandle(),
             taskRepository,
             tagRepository,
-            clock,
+            clockMonitor,
         )
 
         composeTestRule.setContent {
-            CompositionLocalProvider(LocalLocale provides Locale.US) {
-                DiswantinTheme {
-                    TaskDetailScreen(
-                        onPopBackStack = {},
-                        setTopBarState = {},
-                        topBarAction = null,
-                        topBarActionHandled = {},
-                        showSnackbar = {},
-                        onNavigateToTask = {},
-                        onNavigateToTag = {},
-                        taskDetailViewModel = viewModel,
-                    )
-                }
+            DiswantinTheme {
+                TaskDetailScreen(
+                    onPopBackStack = {},
+                    setTopBarState = {},
+                    topBarAction = null,
+                    topBarActionHandled = {},
+                    showSnackbar = {},
+                    onNavigateToTask = {},
+                    onNavigateToTag = {},
+                    taskDetailViewModel = viewModel,
+                )
             }
         }
 
@@ -315,14 +309,14 @@ class TaskDetailScreenTest {
 
     private fun createSavedStateHandle() = SavedStateHandle(mapOf("id" to 1L))
 
-    private fun createClock() =
-        Clock.fixed(Instant.parse("2024-08-22T08:00:00Z"), ZoneId.of("America/New_York"))
+    private fun createClockMonitor() =
+        FixedClockMonitor(ZonedDateTime.parse("2024-08-22T04:00-04:00[America/New_York]"))
 
     private fun createTaskDetailViewModel(
         initDatabase: (FakeDatabase) -> Unit,
         initTaskRepositorySpy: ((TaskRepository) -> Unit)? = null,
     ): TaskDetailViewModel {
-        val clock = createClock()
+        val clockMonitor = createClockMonitor()
         val db = FakeDatabase().also(initDatabase)
         val taskRepository = if (initTaskRepositorySpy == null) {
             FakeTaskRepository(db)
@@ -334,7 +328,7 @@ class TaskDetailScreenTest {
             createSavedStateHandle(),
             taskRepository,
             tagRepository,
-            clock,
+            clockMonitor,
         )
     }
 }

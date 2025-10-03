@@ -8,6 +8,7 @@ import assertk.assertions.isEqualTo
 import io.github.evaogbe.diswantin.task.data.Task
 import io.github.evaogbe.diswantin.testing.FakeDatabase
 import io.github.evaogbe.diswantin.testing.FakeTaskRepository
+import io.github.evaogbe.diswantin.testing.FixedClockMonitor
 import io.github.evaogbe.diswantin.testing.MainDispatcherRule
 import io.github.serpro69.kfaker.Faker
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -19,7 +20,6 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
-import java.time.Clock
 import java.util.regex.Pattern
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -49,6 +49,9 @@ class TaskSearchViewModelTest {
                 tasks.forEach(db::insertTask)
             }
 
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.clock.collect()
+            }
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect()
             }
@@ -99,9 +102,9 @@ class TaskSearchViewModelTest {
     private fun createTaskSearchViewModel(
         initDatabase: (FakeDatabase) -> Unit,
     ): TaskSearchViewModel {
-        val clock = Clock.systemDefaultZone()
+        val clockMonitor = FixedClockMonitor()
         val db = FakeDatabase().also(initDatabase)
         val taskRepository = FakeTaskRepository(db)
-        return TaskSearchViewModel(SavedStateHandle(), taskRepository, clock)
+        return TaskSearchViewModel(SavedStateHandle(), taskRepository, clockMonitor)
     }
 }

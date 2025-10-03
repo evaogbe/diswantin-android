@@ -8,9 +8,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.input.TextFieldState
-import androidx.compose.foundation.text.input.clearText
-import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -21,8 +18,6 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -30,7 +25,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -38,14 +32,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.navigation.NavController
-import androidx.navigation.NavDestination.Companion.hasRoute
-import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
 import androidx.navigation.toRoute
 import io.github.evaogbe.diswantin.R
@@ -94,18 +83,15 @@ import io.github.evaogbe.diswantin.task.ui.TaskSearchRoute
 import io.github.evaogbe.diswantin.task.ui.TaskSearchScreen
 import io.github.evaogbe.diswantin.task.ui.TaskSearchTopBar
 import io.github.evaogbe.diswantin.task.ui.TaskSearchTopBarAction
-import io.github.evaogbe.diswantin.ui.snackbar.SnackbarHandler
 import io.github.evaogbe.diswantin.ui.theme.DiswantinTheme
 import io.github.evaogbe.diswantin.ui.tooling.DevicePreviews
-import kotlinx.coroutines.launch
 
 @Composable
-fun DiswantinApp() {
-    val navController = rememberNavController()
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentDestination = navBackStackEntry?.destination
-
-    val query = rememberTextFieldState()
+fun DiswantinApp(appState: DiswantinAppState) {
+    val navController = appState.navController
+    val currentNavDestination = appState.currentNavDestination
+    val currentBottomBarDestination = appState.currentBottomBarDestination
+    val query = appState.query
     var topBarState by rememberSaveable {
         mutableStateOf<TopBarState>(
             TopBarState.CurrentTask(
@@ -114,28 +100,10 @@ fun DiswantinApp() {
             ),
         )
     }
-
     var fabClicked by rememberSaveable { mutableStateOf(false) }
 
-    val coroutineScope = rememberCoroutineScope()
-    val snackbarHostState = remember { SnackbarHostState() }
-    val showSnackbar = remember<SnackbarHandler> {
-        { state ->
-            coroutineScope.launch {
-                val result = snackbarHostState.showSnackbar(
-                    message = state.message,
-                    actionLabel = state.actionLabel,
-                    withDismissAction = state.actionLabel != null,
-                )
-                if (result == SnackbarResult.ActionPerformed) {
-                    state.onAction()
-                }
-            }
-        }
-    }
-
-    LaunchedEffect(currentDestination) {
-        snackbarHostState.currentSnackbarData?.dismiss()
+    LaunchedEffect(currentNavDestination) {
+        appState.dismissSnackbar()
     }
 
     Scaffold(
@@ -143,50 +111,39 @@ fun DiswantinApp() {
             DiswantinTopBar(
                 topBarState = topBarState,
                 setTopBarState = { topBarState = it },
-                query = query,
-                navController = navController,
+                appState = appState,
             )
         },
         bottomBar = {
-            if (BottomBarDestination.entries.any { it.matches(currentDestination) }) {
+            if (currentBottomBarDestination != null) {
                 DiswantinBottomBar(
-                    isCurrentRoute = { it.matches(currentDestination) },
-                    navigate = {
-                        navController.navigate(it.route) {
-                            popUpTo(navController.graph.findStartDestination().id) {
-                                saveState = true
-                            }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    },
+                    isCurrentRoute = { currentBottomBarDestination == it },
+                    navigate = appState::navigateToTopLevel,
                 )
             }
         },
         snackbarHost = {
-            SnackbarHost(hostState = snackbarHostState, modifier = Modifier.imePadding())
+            SnackbarHost(hostState = appState.snackbarHostState, modifier = Modifier.imePadding())
         },
         floatingActionButton = {
-            val navigateToNewTaskForm = {
-                navController.navigate(route = TaskFormRoute.Main.new(name = null))
-            }
-
-            when {
-                currentDestination?.hasRoute<CurrentTaskRoute>() == true -> {
-                    DiswantinFab(onClick = navigateToNewTaskForm)
+            when (currentBottomBarDestination) {
+                BottomBarDestination.CurrentTask -> {
+                    DiswantinFab(onClick = appState::navigateToNewTaskFormFromFab)
                 }
 
-                currentDestination?.hierarchy.orEmpty().any { it.hasRoute<AdviceRoute>() } -> {
-                    DiswantinFab(onClick = navigateToNewTaskForm)
+                BottomBarDestination.Advice -> {
+                    DiswantinFab(onClick = appState::navigateToNewTaskFormFromFab)
                 }
 
-                currentDestination?.hasRoute<TagListRoute>() == true -> {
+                BottomBarDestination.TagList -> {
                     DiswantinFab(onClick = { fabClicked = true })
                 }
 
-                currentDestination?.hasRoute<DueTodayRoute>() == true -> {
-                    DiswantinFab(onClick = navigateToNewTaskForm)
+                BottomBarDestination.DueToday -> {
+                    DiswantinFab(onClick = appState::navigateToNewTaskFormFromFab)
                 }
+
+                else -> {}
             }
         },
     ) { innerPadding ->
@@ -206,7 +163,7 @@ fun DiswantinApp() {
                             topBarState = it
                         }
                     },
-                    showSnackbar = showSnackbar,
+                    showSnackbar = appState::showSnackbar,
                     onNavigateToAdvice = {
                         navController.navigate(route = AdviceRoute.BodySensation) {
                             popUpTo(navController.graph.findStartDestination().id) {
@@ -235,7 +192,7 @@ fun DiswantinApp() {
                     onSelectTag = {
                         navController.navigate(route = TagDetailRoute(id = it))
                     },
-                    showSnackbar = showSnackbar,
+                    showSnackbar = appState::showSnackbar,
                     fabClicked = fabClicked,
                     fabClickHandled = { fabClicked = false },
                 )
@@ -263,7 +220,7 @@ fun DiswantinApp() {
                             topBarState = it
                         }
                     },
-                    showSnackbar = showSnackbar,
+                    showSnackbar = appState::showSnackbar,
                     onNavigateToTask = {
                         navController.navigate(route = TaskDetailRoute(id = it))
                     },
@@ -290,7 +247,7 @@ fun DiswantinApp() {
                             topBarState = it
                         }
                     },
-                    showSnackbar = showSnackbar,
+                    showSnackbar = appState::showSnackbar,
                     onSelectTask = {
                         navController.navigate(route = TaskDetailRoute(id = it))
                     },
@@ -311,7 +268,7 @@ fun DiswantinApp() {
                             topBarState = it
                         }
                     },
-                    showSnackbar = showSnackbar,
+                    showSnackbar = appState::showSnackbar,
                     onAddTask = {
                         navController.navigate(route = TaskFormRoute.Main.new(name = it))
                     },
@@ -344,7 +301,7 @@ fun DiswantinApp() {
                                 topBarState = it
                             }
                         },
-                        showSnackbar = showSnackbar,
+                        showSnackbar = appState::showSnackbar,
                         onEditRecurrence = {
                             taskFormViewModel.commitInputs()
                             navController.navigate(route = TaskFormRoute.Recurrence)
@@ -397,7 +354,7 @@ fun DiswantinApp() {
                                 topBarState = it
                             }
                         },
-                        showSnackbar = showSnackbar,
+                        showSnackbar = appState::showSnackbar,
                         onAddTask = null,
                         onSelectSearchResult = {
                             taskFormViewModel.updateParent(ParentTask(id = it.id, name = it.name))
@@ -531,13 +488,9 @@ fun DiswantinApp() {
 fun DiswantinTopBar(
     topBarState: TopBarState,
     setTopBarState: (TopBarState) -> Unit,
-    query: TextFieldState,
-    navController: NavController,
+    appState: DiswantinAppState,
 ) {
-    val navigateToTaskSearchFromTopLevel = {
-        query.clearText()
-        navController.navigate(route = TaskSearchRoute)
-    }
+    val navController = appState.navController
 
     SharedTransitionLayout {
         AnimatedContent(
@@ -549,7 +502,7 @@ fun DiswantinTopBar(
                 is TopBarState.CurrentTask -> {
                     CurrentTaskTopBar(
                         uiState = targetTopBarState.uiState,
-                        onSearchTask = navigateToTaskSearchFromTopLevel,
+                        onSearchTask = appState::navigateToTaskSearchFromTopLevel,
                         onRefresh = {
                             setTopBarState(
                                 targetTopBarState.copy(action = CurrentTaskTopBarAction.Refresh)
@@ -567,7 +520,7 @@ fun DiswantinTopBar(
 
                 is TopBarState.AdviceStart -> {
                     StartAdviceTopBar(
-                        onSearchTask = navigateToTaskSearchFromTopLevel,
+                        onSearchTask = appState::navigateToTaskSearchFromTopLevel,
                         sharedTransitionScope = this@SharedTransitionLayout,
                         animatedVisibilityScope = this@AnimatedContent,
                     )
@@ -575,7 +528,7 @@ fun DiswantinTopBar(
 
                 is TopBarState.AdviceInner -> {
                     InnerAdviceTopBar(
-                        onSearchTask = navigateToTaskSearchFromTopLevel,
+                        onSearchTask = appState::navigateToTaskSearchFromTopLevel,
                         onBackClick = navController::popBackStack,
                         onRestart = {
                             navController.navigate(route = AdviceRoute.BodySensation) {
@@ -590,7 +543,7 @@ fun DiswantinTopBar(
 
                 is TopBarState.TagList -> {
                     TagListTopBar(
-                        onSearchTask = navigateToTaskSearchFromTopLevel,
+                        onSearchTask = appState::navigateToTaskSearchFromTopLevel,
                         sharedTransitionScope = this@SharedTransitionLayout,
                         animatedVisibilityScope = this@AnimatedContent,
                     )
@@ -598,7 +551,7 @@ fun DiswantinTopBar(
 
                 is TopBarState.DueToday -> {
                     DueTodayTopBar(
-                        onSearchTask = navigateToTaskSearchFromTopLevel,
+                        onSearchTask = appState::navigateToTaskSearchFromTopLevel,
                         sharedTransitionScope = this@SharedTransitionLayout,
                         animatedVisibilityScope = this@AnimatedContent,
                     )
@@ -678,7 +631,7 @@ fun DiswantinTopBar(
 
                 is TopBarState.TaskSearch -> {
                     TaskSearchTopBar(
-                        query = query,
+                        query = appState.query,
                         onBackClick = navController::popBackStack,
                         onSearch = {
                             setTopBarState(

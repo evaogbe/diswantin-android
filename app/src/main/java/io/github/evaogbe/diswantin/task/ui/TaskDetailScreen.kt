@@ -306,6 +306,12 @@ fun TaskDetailLayout(
     onNavigateToTag: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val resources = LocalResources.current
+    val locale = resources.configuration.locales[0]
+    val formattedDeadline = formatDateTime(uiState.deadlineDate, uiState.deadlineTime, locale)
+    val formattedStartAfter = formatDateTime(uiState.startAfterDate, uiState.startAfterTime, locale)
+    val formattedScheduledAt = formatDateTime(uiState.scheduledDate, uiState.scheduledTime, locale)
+
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         LazyColumn(
             modifier = Modifier
@@ -345,12 +351,12 @@ fun TaskDetailLayout(
                 }
             }
 
-            if (uiState.formattedDeadline != null) {
+            if (formattedDeadline != null) {
                 item {
                     ListItem(
                         headlineContent = {
                             SelectionContainer {
-                                Text(text = uiState.formattedDeadline)
+                                Text(text = formattedDeadline)
                             }
                         },
                         overlineContent = { Text(stringResource(R.string.deadline_label)) },
@@ -358,12 +364,12 @@ fun TaskDetailLayout(
                 }
             }
 
-            if (uiState.formattedStartAfter != null) {
+            if (formattedStartAfter != null) {
                 item {
                     ListItem(
                         headlineContent = {
                             SelectionContainer {
-                                Text(text = uiState.formattedStartAfter)
+                                Text(text = formattedStartAfter)
                             }
                         },
                         overlineContent = { Text(stringResource(R.string.start_after_label)) },
@@ -371,12 +377,12 @@ fun TaskDetailLayout(
                 }
             }
 
-            if (uiState.formattedScheduledAt != null) {
+            if (formattedScheduledAt != null) {
                 item {
                     ListItem(
                         headlineContent = {
                             SelectionContainer {
-                                Text(text = uiState.formattedScheduledAt)
+                                Text(text = formattedScheduledAt)
                             }
                         },
                         overlineContent = { Text(stringResource(R.string.scheduled_at_label)) },
@@ -469,9 +475,12 @@ private fun TaskDetailScreenPreview_Minimal() {
                     id = 2L,
                     name = "Shower",
                     note = "",
-                    formattedDeadline = null,
-                    formattedStartAfter = null,
-                    formattedScheduledAt = null,
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = null,
                     recurrence = null,
                     isDone = false,
                     parent = null,
@@ -513,9 +522,12 @@ private fun TaskDetailScreenPreview_Detailed() {
                     id = 2L,
                     name = "Shower",
                     note = "Wash hair and deep condition before appointment at hair salon",
-                    formattedDeadline = formatDateTime(LocalDate.now(), null),
-                    formattedStartAfter = formatDateTime(null, LocalTime.now()),
-                    formattedScheduledAt = null,
+                    deadlineDate = LocalDate.now(),
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = LocalTime.now(),
+                    scheduledDate = null,
+                    scheduledTime = null,
                     recurrence = null,
                     isDone = true,
                     parent = TaskSummaryUiState(id = 1L, name = "Brush teeth", isDone = false),
@@ -573,9 +585,12 @@ private fun TaskDetailLayoutPreview() {
                     id = 2L,
                     name = "Shower",
                     note = "",
-                    formattedDeadline = null,
-                    formattedStartAfter = null,
-                    formattedScheduledAt = formatDateTime(null, LocalTime.now()),
+                    deadlineDate = null,
+                    deadlineTime = null,
+                    startAfterDate = null,
+                    startAfterTime = null,
+                    scheduledDate = null,
+                    scheduledTime = LocalTime.now(),
                     recurrence = TaskRecurrenceUiState(
                         startDate = LocalDate.now(),
                         endDate = null,

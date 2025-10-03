@@ -1,29 +1,31 @@
 package io.github.evaogbe.diswantin.task.ui
 
 import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import androidx.paging.cachedIn
 import androidx.paging.map
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.github.evaogbe.diswantin.data.ClockMonitor
 import io.github.evaogbe.diswantin.data.Result
 import io.github.evaogbe.diswantin.task.data.EditTagForm
 import io.github.evaogbe.diswantin.task.data.Tag
 import io.github.evaogbe.diswantin.task.data.TagRepository
 import io.github.evaogbe.diswantin.task.data.TaskRepository
+import io.github.evaogbe.diswantin.ui.viewmodel.BaseViewModel
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import javax.inject.Inject
@@ -34,23 +36,23 @@ class TagDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val tagRepository: TagRepository,
     taskRepository: TaskRepository,
-    private val clock: Clock,
-) : ViewModel() {
+    clockMonitor: ClockMonitor,
+) : BaseViewModel(clockMonitor) {
     private val tagId = savedStateHandle.toRoute<TagDetailRoute>().id
 
     private val initialized = MutableStateFlow(false)
 
     private val userMessage = MutableStateFlow<TagDetailUserMessage?>(null)
 
-    private val startOfToday
-        get() = LocalDate.now(clock).atStartOfDay(clock.zone).toInstant()
-
-    val taskSummaryPagingData =
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val taskSummaryPagingData = clock.flatMapLatest { clock ->
+        val startOfToday = LocalDate.now(clock).atStartOfDay(clock.zone).toInstant()
         taskRepository.getTaskSummariesByTagId(tagId, startOfToday).map { pagingData ->
             pagingData.map {
                 TaskSummaryUiState.fromTaskSummary(it, startOfToday)
             }
-        }.cachedIn(viewModelScope)
+        }
+    }.cachedIn(viewModelScope)
 
     private val tagStream = tagRepository.getTagById(tagId).onEach {
         if (it != null) {
@@ -102,7 +104,7 @@ class TagDetailViewModel @Inject constructor(
                 tagRepository.update(
                     EditTagForm(
                         name = name,
-                        now = Instant.now(clock),
+                        now = Instant.now(clock.value),
                         existingId = tagId,
                     )
                 )
