@@ -47,7 +47,8 @@ class FakeTagRepository(private val db: FakeDatabase = FakeDatabase()) :
     }
 
     override suspend fun update(form: EditTagForm) {
-        db.updateTag(form.updatedTag)
+        val tag = db.tagTable.value[form.existingId]!!
+        db.updateTag(form.getUpdatedTag(tag))
     }
 
     override suspend fun delete(tag: Tag) {

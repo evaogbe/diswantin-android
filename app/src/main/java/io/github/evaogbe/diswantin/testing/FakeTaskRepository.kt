@@ -410,29 +410,33 @@ class FakeTaskRepository(private val db: FakeDatabase = FakeDatabase()) : TaskRe
     }
 
     override suspend fun update(form: EditTaskForm): Task {
-        db.updateTask(form.updatedTask)
-        form.tagIdsToRemove.forEach { db.deleteTaskTag(it) }
-        form.tagIdsToAdd.forEach {
-            db.insertTaskTag(TaskTag(taskId = form.updatedTask.id, tagId = it))
+        val existingTask = db.taskTable.value[form.existingId]!!
+        val updatedTask = form.getUpdatedTask(existingTask)
+        db.updateTask(updatedTask)
+
+        form.tagIdChanges.old.forEach { db.deleteTaskTag(it) }
+        form.tagIdChanges.new.forEach {
+            db.insertTaskTag(TaskTag(taskId = form.existingId, tagId = it))
         }
-        form.recurrencesToRemove.forEach { db.deleteTaskRecurrence(it.id) }
-        form.recurrencesToAdd.forEach(db::insertTaskRecurrence)
+
+        val existingRecurrences =
+            db.taskRecurrenceTable.value.values.filter { it.taskId == form.existingId }
+        val recurrenceChanges = form.getRecurrenceChanges(existingRecurrences)
+        recurrenceChanges.old.forEach { db.deleteTaskRecurrence(it.id) }
+        recurrenceChanges.new.forEach(db::insertTaskRecurrence)
 
         when (form.parentUpdateType) {
             is PathUpdateType.Keep -> {}
             is PathUpdateType.Remove -> {
-                db.deleteTaskPathAncestors(form.updatedTask.id)
+                db.deleteTaskPathAncestors(form.existingId)
             }
 
             is PathUpdateType.Replace -> {
-                db.connectTaskPath(
-                    parentId = form.parentUpdateType.id,
-                    childId = form.updatedTask.id,
-                )
+                db.connectTaskPath(parentId = form.parentUpdateType.id, childId = form.existingId)
             }
         }
 
-        return form.updatedTask
+        return updatedTask
     }
 
     override suspend fun delete(id: Long) {

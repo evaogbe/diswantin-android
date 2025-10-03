@@ -458,7 +458,7 @@ class TaskFormViewModel @Inject constructor(
         }
         val now = Instant.now(clock)
 
-        if (isNew) {
+        if (taskId == null) {
             val form = NewTaskForm(
                 name = name.value,
                 note = note.value,
@@ -487,10 +487,7 @@ class TaskFormViewModel @Inject constructor(
         } else {
             viewModelScope.launch {
                 try {
-                    val existingTask = checkNotNull(existingTaskStream.first().getOrNull())
                     val existingTagsResult = existingTagsStream.first()
-                    val existingRecurrences =
-                        existingRecurrencesStream.first().getOrDefault(emptyList())
                     val existingParentResult = existingParentStream.first()
                     val hasTags = tagFieldState.value != TagFieldState.Hidden
                     val taskCountResult = taskCountStream.first()
@@ -531,9 +528,8 @@ class TaskFormViewModel @Inject constructor(
                                 else -> PathUpdateType.Replace(state.parent.id)
                             },
                             now = now,
-                            existingTask = existingTask,
+                            existingId = taskId,
                             existingTagIds = existingTagIds,
-                            existingRecurrences = existingRecurrences,
                         )
                     )
                     isSaved.value = true

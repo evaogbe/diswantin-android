@@ -921,55 +921,58 @@ interface TaskDao {
     suspend fun deleteAncestors(id: Long)
 
     @Query("DELETE FROM task_tag WHERE task_id == :taskId AND tag_id in (:tagIds)")
-    suspend fun removeTagsFromTask(taskId: Long, tagIds: Set<Long>)
+    suspend fun removeTagsFromTask(taskId: Long, tagIds: Collection<Long>)
 
     @Transaction
-    suspend fun update(form: EditTaskForm) {
-        update(form.updatedTask)
+    suspend fun update(form: EditTaskForm): Task {
+        val existingTask = getTaskById(form.existingId).first()
+        val existingRecurrences = getTaskRecurrencesByTaskId(form.existingId).first()
+        val updatedTask = form.getUpdatedTask(existingTask)
+        val recurrenceChanges = form.getRecurrenceChanges(existingRecurrences)
+        update(updatedTask)
 
-        if (form.recurrencesToRemove.isNotEmpty()) {
-            deleteRecurrences(form.recurrencesToRemove)
+        if (recurrenceChanges.old.isNotEmpty()) {
+            deleteRecurrences(recurrenceChanges.old)
         }
 
-        if (form.recurrencesToAdd.isNotEmpty()) {
-            insertRecurrences(form.recurrencesToAdd)
+        if (recurrenceChanges.new.isNotEmpty()) {
+            insertRecurrences(recurrenceChanges.new)
         }
 
-        if (form.tagIdsToRemove.isNotEmpty()) {
-            removeTagsFromTask(form.updatedTask.id, form.tagIdsToRemove)
+        if (form.tagIdChanges.old.isNotEmpty()) {
+            removeTagsFromTask(form.existingId, form.tagIdChanges.old)
         }
 
-        if (form.tagIdsToAdd.isNotEmpty()) {
+        if (form.tagIdChanges.new.isNotEmpty()) {
             val newTaskTags =
-                form.tagIdsToAdd.map { TaskTag(taskId = form.updatedTask.id, tagId = it) }
+                form.tagIdChanges.new.map { TaskTag(taskId = form.existingId, tagId = it) }
             insertTaskTags(newTaskTags)
         }
 
         when (form.parentUpdateType) {
             is PathUpdateType.Keep -> {}
             is PathUpdateType.Remove -> {
-                deleteAncestors(form.updatedTask.id)
+                deleteAncestors(form.existingId)
             }
 
             is PathUpdateType.Replace -> {
-                if (hasPath(
-                        ancestor = form.updatedTask.id, descendant = form.parentUpdateType.id
-                    )
-                ) {
-                    val existingParentId = getParent(form.updatedTask.id).first()?.id
-                    val existingChildIds = getChildIds(form.updatedTask.id)
+                if (hasPath(ancestor = form.existingId, descendant = form.parentUpdateType.id)) {
+                    val existingParentId = getParent(form.existingId).first()?.id
+                    val existingChildIds = getChildIds(form.existingId)
                     if (existingParentId != null && existingChildIds.isNotEmpty()) {
                         decrementDepth(parentId = existingParentId, childIds = existingChildIds)
                     }
 
-                    deletePathsByTaskId(form.updatedTask.id)
+                    deletePathsByTaskId(form.existingId)
                 } else {
-                    deleteAncestors(form.updatedTask.id)
+                    deleteAncestors(form.existingId)
                 }
 
-                insertChain(parentId = form.parentUpdateType.id, childId = form.updatedTask.id)
+                insertChain(parentId = form.parentUpdateType.id, childId = form.existingId)
             }
         }
+
+        return updatedTask
     }
 
     @Query("DELETE FROM task WHERE id = :id")

@@ -100,8 +100,7 @@ class LocalTaskRepository @Inject constructor(private val taskDao: TaskDao) : Ta
     }
 
     override suspend fun update(form: EditTaskForm): Task {
-        taskDao.update(form)
-        return form.updatedTask
+        return taskDao.update(form)
     }
 
     override suspend fun delete(id: Long) {

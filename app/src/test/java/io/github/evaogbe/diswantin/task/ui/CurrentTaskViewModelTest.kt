@@ -85,9 +85,8 @@ class CurrentTaskViewModelTest {
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
                     now = Instant.now(clock),
-                    existingTask = task1,
+                    existingId = task1.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = emptyList(),
                 )
             )
 

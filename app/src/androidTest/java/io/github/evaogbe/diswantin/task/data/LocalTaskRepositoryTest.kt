@@ -109,9 +109,8 @@ class LocalTaskRepositoryTest {
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task2,
+                    existingId = task2.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = emptyList(),
                 )
             )
 
@@ -133,9 +132,8 @@ class LocalTaskRepositoryTest {
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task1,
+                    existingId = task1.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = emptyList(),
                 )
             )
 
@@ -157,9 +155,8 @@ class LocalTaskRepositoryTest {
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task1,
+                    existingId = task1.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = emptyList(),
                 )
             )
 
@@ -181,9 +178,8 @@ class LocalTaskRepositoryTest {
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task2,
+                    existingId = task2.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = emptyList(),
                 )
             )
 
@@ -205,9 +201,8 @@ class LocalTaskRepositoryTest {
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task1,
+                    existingId = task1.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = emptyList(),
                 )
             )
 
@@ -229,9 +224,8 @@ class LocalTaskRepositoryTest {
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task2,
+                    existingId = task2.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = emptyList(),
                 )
             )
 
@@ -260,12 +254,10 @@ class LocalTaskRepositoryTest {
                     ),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task2,
+                    existingId = task2.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = emptyList(),
                 )
             )
-            var taskRecurrences2 = taskRepository.getTaskRecurrencesByTaskId(task2.id).first()
 
             assertThat(awaitItem()).isNotNull()
                 .isDataClassEqualTo(task1.toCurrentTask(recurring = false))
@@ -285,9 +277,8 @@ class LocalTaskRepositoryTest {
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task1,
+                    existingId = task1.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = emptyList(),
                 )
             )
 
@@ -306,12 +297,11 @@ class LocalTaskRepositoryTest {
                     scheduledDate = task2.scheduledDate,
                     scheduledTime = task2.scheduledTime,
                     tagIds = emptySet(),
-                    recurrences = taskRecurrences2,
+                    recurrences = taskRepository.getTaskRecurrencesByTaskId(task2.id).first(),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task2,
+                    existingId = task2.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = taskRecurrences2,
                 )
             )
 
@@ -333,9 +323,8 @@ class LocalTaskRepositoryTest {
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task1,
+                    existingId = task1.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = emptyList(),
                 )
             )
 
@@ -357,9 +346,8 @@ class LocalTaskRepositoryTest {
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task1,
+                    existingId = task1.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = emptyList(),
                 )
             )
 
@@ -378,12 +366,11 @@ class LocalTaskRepositoryTest {
                     scheduledDate = task2.scheduledDate,
                     scheduledTime = task2.scheduledTime,
                     tagIds = emptySet(),
-                    recurrences = taskRecurrences2,
+                    recurrences = taskRepository.getTaskRecurrencesByTaskId(task2.id).first(),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task2,
+                    existingId = task2.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = taskRecurrences2,
                 )
             )
 
@@ -405,9 +392,8 @@ class LocalTaskRepositoryTest {
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task1,
+                    existingId = task1.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = emptyList(),
                 )
             )
 
@@ -429,9 +415,8 @@ class LocalTaskRepositoryTest {
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task1,
+                    existingId = task1.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = emptyList(),
                 )
             )
 
@@ -449,12 +434,11 @@ class LocalTaskRepositoryTest {
                     scheduledDate = task2.scheduledDate,
                     scheduledTime = task2.scheduledTime,
                     tagIds = emptySet(),
-                    recurrences = taskRecurrences2,
+                    recurrences = taskRepository.getTaskRecurrencesByTaskId(task2.id).first(),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task2,
+                    existingId = task2.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = taskRecurrences2,
                 )
             )
 
@@ -476,9 +460,8 @@ class LocalTaskRepositoryTest {
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task1,
+                    existingId = task1.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = emptyList(),
                 )
             )
 
@@ -499,9 +482,8 @@ class LocalTaskRepositoryTest {
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task1,
+                    existingId = task1.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = emptyList(),
                 )
             )
 
@@ -530,12 +512,10 @@ class LocalTaskRepositoryTest {
                     ),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task1,
+                    existingId = task1.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = emptyList(),
                 )
             )
-            var taskRecurrences1 = taskRepository.getTaskRecurrencesByTaskId(task1.id).first()
 
             assertThat(awaitItem()).isNotNull()
                 .isDataClassEqualTo(task1.toCurrentTask(recurring = true))
@@ -552,12 +532,11 @@ class LocalTaskRepositoryTest {
                     scheduledDate = task2.scheduledDate,
                     scheduledTime = LocalTime.parse("12:59"),
                     tagIds = emptySet(),
-                    recurrences = taskRecurrences2,
+                    recurrences = taskRepository.getTaskRecurrencesByTaskId(task2.id).first(),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task2,
+                    existingId = task2.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = taskRecurrences2,
                 )
             )
 
@@ -586,12 +565,10 @@ class LocalTaskRepositoryTest {
                     ),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task1,
+                    existingId = task1.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = taskRecurrences1,
                 )
             )
-            taskRecurrences1 = taskRepository.getTaskRecurrencesByTaskId(task1.id).first()
 
             assertThat(awaitItem()).isNotNull()
                 .isDataClassEqualTo(task1.toCurrentTask(recurring = true))
@@ -624,12 +601,10 @@ class LocalTaskRepositoryTest {
                     ),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task2,
+                    existingId = task2.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = taskRecurrences2,
                 )
             )
-            taskRecurrences2 = taskRepository.getTaskRecurrencesByTaskId(task2.id).first()
 
             assertThat(awaitItem()).isNotNull()
                 .isDataClassEqualTo(task2.toCurrentTask(recurring = true))
@@ -670,9 +645,8 @@ class LocalTaskRepositoryTest {
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Replace(task2.id),
                     now = now.toInstant(),
-                    existingTask = task3,
+                    existingId = task3.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = emptyList(),
                 )
             )
 
@@ -722,12 +696,10 @@ class LocalTaskRepositoryTest {
                     ),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task2,
+                    existingId = task2.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = taskRecurrences2,
                 )
             )
-            taskRecurrences2 = taskRepository.getTaskRecurrencesByTaskId(task2.id).first()
 
             assertThat(awaitItem()).isNotNull()
                 .isDataClassEqualTo(task3.toCurrentTask(recurring = false))
@@ -754,12 +726,10 @@ class LocalTaskRepositoryTest {
                     ),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task3,
+                    existingId = task3.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = emptyList(),
                 )
             )
-            val taskRecurrences3 = taskRepository.getTaskRecurrencesByTaskId(task3.id).first()
 
             assertThat(awaitItem()).isNotNull()
                 .isDataClassEqualTo(task1.toCurrentTask(recurring = true))
@@ -785,12 +755,10 @@ class LocalTaskRepositoryTest {
                     ),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task2,
+                    existingId = task2.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = taskRecurrences2,
                 )
             )
-            taskRecurrences2 = taskRepository.getTaskRecurrencesByTaskId(task2.id).first()
 
             assertThat(awaitItem()).isNotNull()
                 .isDataClassEqualTo(task2.toCurrentTask(recurring = true))
@@ -807,12 +775,11 @@ class LocalTaskRepositoryTest {
                     scheduledDate = null,
                     scheduledTime = null,
                     tagIds = emptySet(),
-                    recurrences = taskRecurrences1,
+                    recurrences = taskRepository.getTaskRecurrencesByTaskId(task1.id).first(),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task1,
+                    existingId = task1.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = taskRecurrences1,
                 )
             )
 
@@ -830,12 +797,11 @@ class LocalTaskRepositoryTest {
                     scheduledDate = task2.scheduledDate,
                     scheduledTime = LocalTime.parse("13:01"),
                     tagIds = emptySet(),
-                    recurrences = taskRecurrences2,
+                    recurrences = taskRepository.getTaskRecurrencesByTaskId(task2.id).first(),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task2,
+                    existingId = task2.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = taskRecurrences2,
                 )
             )
 
@@ -856,9 +822,8 @@ class LocalTaskRepositoryTest {
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task3,
+                    existingId = task3.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = taskRecurrences3,
                 )
             )
 
@@ -909,9 +874,8 @@ class LocalTaskRepositoryTest {
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task,
+                    existingId = task.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = emptyList(),
                 )
             )
 
@@ -931,9 +895,8 @@ class LocalTaskRepositoryTest {
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task,
+                    existingId = task.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = emptyList(),
                 )
             )
 
@@ -954,9 +917,8 @@ class LocalTaskRepositoryTest {
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task,
+                    existingId = task.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = emptyList(),
                 )
             )
 
@@ -976,9 +938,8 @@ class LocalTaskRepositoryTest {
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task,
+                    existingId = task.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = emptyList(),
                 )
             )
 
@@ -999,9 +960,8 @@ class LocalTaskRepositoryTest {
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task,
+                    existingId = task.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = emptyList(),
                 )
             )
 
@@ -1029,15 +989,13 @@ class LocalTaskRepositoryTest {
                     ),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task,
+                    existingId = task.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = emptyList(),
                 )
             )
 
             assertThat(awaitItem()).isNull()
 
-            val taskRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id).first()
             task = taskRepository.update(
                 EditTaskForm(
                     name = task.name,
@@ -1049,12 +1007,11 @@ class LocalTaskRepositoryTest {
                     scheduledDate = task.scheduledDate,
                     scheduledTime = LocalTime.parse("13:00"),
                     tagIds = emptySet(),
-                    recurrences = taskRecurrences,
+                    recurrences = taskRepository.getTaskRecurrencesByTaskId(task.id).first(),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task,
+                    existingId = task.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = taskRecurrences,
                 )
             )
 
@@ -1082,9 +1039,8 @@ class LocalTaskRepositoryTest {
                     ),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task,
+                    existingId = task.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = taskRecurrences,
                 )
             )
 
@@ -1135,9 +1091,8 @@ class LocalTaskRepositoryTest {
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task,
+                    existingId = task.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = emptyList(),
                 )
             )
 
@@ -1157,9 +1112,8 @@ class LocalTaskRepositoryTest {
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task,
+                    existingId = task.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = emptyList(),
                 )
             )
 
@@ -1180,9 +1134,8 @@ class LocalTaskRepositoryTest {
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task,
+                    existingId = task.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = emptyList(),
                 )
             )
 
@@ -1202,9 +1155,8 @@ class LocalTaskRepositoryTest {
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task,
+                    existingId = task.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = emptyList(),
                 )
             )
 
@@ -1232,15 +1184,13 @@ class LocalTaskRepositoryTest {
                     ),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task,
+                    existingId = task.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = emptyList(),
                 )
             )
 
             assertThat(awaitItem()).isNull()
 
-            val taskRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id).first()
             task = taskRepository.update(
                 EditTaskForm(
                     name = task.name,
@@ -1262,9 +1212,8 @@ class LocalTaskRepositoryTest {
                     ),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task,
+                    existingId = task.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = taskRecurrences,
                 )
             )
 
@@ -1425,9 +1374,8 @@ class LocalTaskRepositoryTest {
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Replace(task3.id),
                     now = now.toInstant(),
-                    existingTask = task1,
+                    existingId = task1.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = emptyList(),
                 )
             )
 
@@ -1455,9 +1403,8 @@ class LocalTaskRepositoryTest {
                     ),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task1,
+                    existingId = task1.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = emptyList(),
                 )
             )
 
@@ -1478,10 +1425,8 @@ class LocalTaskRepositoryTest {
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Remove,
                     now = now.toInstant(),
-                    existingTask = task1,
+                    existingId = task1.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task1.id)
-                        .first(),
                 )
             )
 
@@ -1502,9 +1447,8 @@ class LocalTaskRepositoryTest {
                     recurrences = emptyList(),
                     parentUpdateType = PathUpdateType.Replace(task1.id),
                     now = now.toInstant(),
-                    existingTask = task3,
+                    existingId = task3.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = emptyList(),
                 )
             )
 
@@ -1574,10 +1518,8 @@ class LocalTaskRepositoryTest {
                     ),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task,
+                    existingId = task.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
-                        .first(),
                 )
             )
 
@@ -1604,10 +1546,8 @@ class LocalTaskRepositoryTest {
                     ),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task,
+                    existingId = task.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
-                        .first(),
                 )
             )
 
@@ -1678,10 +1618,8 @@ class LocalTaskRepositoryTest {
                     ),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task,
+                    existingId = task.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
-                        .first(),
                 )
             )
 
@@ -1708,10 +1646,8 @@ class LocalTaskRepositoryTest {
                     ),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task,
+                    existingId = task.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
-                        .first(),
                 )
             )
 
@@ -1739,10 +1675,8 @@ class LocalTaskRepositoryTest {
                     ),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task,
+                    existingId = task.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
-                        .first(),
                 )
             )
 
@@ -1769,10 +1703,8 @@ class LocalTaskRepositoryTest {
                     ),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task,
+                    existingId = task.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
-                        .first(),
                 )
             )
 
@@ -1838,10 +1770,8 @@ class LocalTaskRepositoryTest {
                     ),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task,
+                    existingId = task.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
-                        .first(),
                 )
             )
 
@@ -1868,10 +1798,8 @@ class LocalTaskRepositoryTest {
                     ),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task,
+                    existingId = task.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
-                        .first(),
                 )
             )
 
@@ -1950,10 +1878,8 @@ class LocalTaskRepositoryTest {
                         ),
                         parentUpdateType = PathUpdateType.Keep,
                         now = now.toInstant(),
-                        existingTask = task,
+                        existingId = task.id,
                         existingTagIds = emptySet(),
-                        existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
-                            .first(),
                     )
                 )
 
@@ -2032,10 +1958,8 @@ class LocalTaskRepositoryTest {
                         ),
                         parentUpdateType = PathUpdateType.Keep,
                         now = now.toInstant(),
-                        existingTask = task,
+                        existingId = task.id,
                         existingTagIds = emptySet(),
-                        existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
-                            .first(),
                     )
                 )
 
@@ -2113,10 +2037,8 @@ class LocalTaskRepositoryTest {
                         ),
                         parentUpdateType = PathUpdateType.Keep,
                         now = now.toInstant(),
-                        existingTask = task,
+                        existingId = task.id,
                         existingTagIds = emptySet(),
-                        existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
-                            .first(),
                     )
                 )
 
@@ -2194,10 +2116,8 @@ class LocalTaskRepositoryTest {
                         ),
                         parentUpdateType = PathUpdateType.Keep,
                         now = now.toInstant(),
-                        existingTask = task,
+                        existingId = task.id,
                         existingTagIds = emptySet(),
-                        existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
-                            .first(),
                     )
                 )
 
@@ -2275,10 +2195,8 @@ class LocalTaskRepositoryTest {
                         ),
                         parentUpdateType = PathUpdateType.Keep,
                         now = now.toInstant(),
-                        existingTask = task,
+                        existingId = task.id,
                         existingTagIds = emptySet(),
-                        existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
-                            .first(),
                     )
                 )
 
@@ -2356,10 +2274,8 @@ class LocalTaskRepositoryTest {
                         ),
                         parentUpdateType = PathUpdateType.Keep,
                         now = now.toInstant(),
-                        existingTask = task,
+                        existingId = task.id,
                         existingTagIds = emptySet(),
-                        existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
-                            .first(),
                     )
                 )
 
@@ -2425,10 +2341,8 @@ class LocalTaskRepositoryTest {
                     ),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task,
+                    existingId = task.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
-                        .first(),
                 )
             )
 
@@ -2455,10 +2369,8 @@ class LocalTaskRepositoryTest {
                     ),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task,
+                    existingId = task.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
-                        .first(),
                 )
             )
 
@@ -2486,10 +2398,8 @@ class LocalTaskRepositoryTest {
                     ),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task,
+                    existingId = task.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
-                        .first(),
                 )
             )
 
@@ -2553,10 +2463,8 @@ class LocalTaskRepositoryTest {
                     ),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task,
+                    existingId = task.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
-                        .first(),
                 )
             )
 
@@ -2583,10 +2491,8 @@ class LocalTaskRepositoryTest {
                     ),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task,
+                    existingId = task.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
-                        .first(),
                 )
             )
 
@@ -2688,10 +2594,8 @@ class LocalTaskRepositoryTest {
                     ),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task,
+                    existingId = task.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
-                        .first(),
                 )
             )
 
@@ -2719,10 +2623,8 @@ class LocalTaskRepositoryTest {
                     ),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task,
+                    existingId = task.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
-                        .first(),
                 )
             )
 
@@ -2751,10 +2653,8 @@ class LocalTaskRepositoryTest {
                     ),
                     parentUpdateType = PathUpdateType.Keep,
                     now = now.toInstant(),
-                    existingTask = task,
+                    existingId = task.id,
                     existingTagIds = emptySet(),
-                    existingRecurrences = taskRepository.getTaskRecurrencesByTaskId(task.id)
-                        .first(),
                 )
             )
 
@@ -5619,9 +5519,8 @@ class LocalTaskRepositoryTest {
                 recurrences = emptyList(),
                 parentUpdateType = PathUpdateType.Keep,
                 now = now.toInstant(),
-                existingTask = task2,
+                existingId = task2.id,
                 existingTagIds = emptySet(),
-                existingRecurrences = emptyList(),
             )
         )
 
@@ -5658,9 +5557,8 @@ class LocalTaskRepositoryTest {
                 recurrences = emptyList(),
                 parentUpdateType = PathUpdateType.Replace(updatedTask2.id),
                 now = now.toInstant(),
-                existingTask = task3,
+                existingId = task3.id,
                 existingTagIds = emptySet(),
-                existingRecurrences = emptyList(),
             )
         )
 
@@ -5697,9 +5595,8 @@ class LocalTaskRepositoryTest {
                 recurrences = emptyList(),
                 parentUpdateType = PathUpdateType.Remove,
                 now = now.toInstant(),
-                existingTask = updatedTask2,
+                existingId = updatedTask2.id,
                 existingTagIds = emptySet(),
-                existingRecurrences = emptyList(),
             )
         )
 
@@ -5736,9 +5633,8 @@ class LocalTaskRepositoryTest {
                 recurrences = emptyList(),
                 parentUpdateType = PathUpdateType.Replace(task1.id),
                 now = now.toInstant(),
-                existingTask = task3,
+                existingId = task3.id,
                 existingTagIds = emptySet(),
-                existingRecurrences = emptyList(),
             )
         )
 
@@ -5775,9 +5671,8 @@ class LocalTaskRepositoryTest {
                 recurrences = emptyList(),
                 parentUpdateType = PathUpdateType.Replace(task3.id),
                 now = now.toInstant(),
-                existingTask = task1,
+                existingId = task1.id,
                 existingTagIds = emptySet(),
-                existingRecurrences = emptyList(),
             )
         )
 
@@ -5832,9 +5727,8 @@ class LocalTaskRepositoryTest {
                 recurrences = emptyList(),
                 parentUpdateType = PathUpdateType.Replace(updatedTask2.id),
                 now = now.toInstant(),
-                existingTask = task3,
+                existingId = task3.id,
                 existingTagIds = emptySet(),
-                existingRecurrences = emptyList(),
             )
         )
 
@@ -5871,9 +5765,8 @@ class LocalTaskRepositoryTest {
                 recurrences = emptyList(),
                 parentUpdateType = PathUpdateType.Replace(updatedTask2.id),
                 now = now.toInstant(),
-                existingTask = task1,
+                existingId = task1.id,
                 existingTagIds = emptySet(),
-                existingRecurrences = emptyList(),
             )
         )
 
